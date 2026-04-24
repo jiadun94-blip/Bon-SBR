@@ -31,26 +31,30 @@
         .grand-total { border-top: 2px dashed #4a5568; margin-top: 12px; padding-top: 12px; font-weight: 900; color: #fc8181; font-size: 20px; }
         .btn-save { width: 100%; padding: 18px; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; color: white; background: #27ae60; margin-top: 20px; font-size: 18px; text-transform: uppercase; box-shadow: 0 5px 0 #1e8449; }
 
-        /* PERBAIKAN KHUSUS PRINT AGAR GEDE */
-        @media print {
-            .no-print { display: none !important; }
-            .print-area { display: block !important; width: 100% !important; margin: 0; padding: 0; font-family: 'Roboto', sans-serif; color: #000; }
-            .dashed { border-top: 2pt dashed #000; margin: 8pt 0; }
-            .p-brand-row { display: flex; align-items: center; justify-content: center; gap: 10pt; margin-bottom: 5pt; }
-            .p-logo { width: 50pt; height: 50pt; border: 3pt solid #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 25pt; }
-            .p-title-big { font-weight: 900; font-size: 28pt; }
-            .p-addr { text-align:center; font-size: 14pt; margin-bottom: 10pt; }
-            .p-row-wide { display: flex; justify-content: space-between; font-weight: 700; font-size: 16pt; border-bottom: 1pt solid #000; padding-bottom: 3pt; }
-            .p-agen-title { font-size: 22pt; font-weight: 900; text-align: center; text-transform: uppercase; margin: 8pt 0; }
-            .p-drv-info { text-align: center; font-size: 15pt; font-weight: 700; margin-bottom: 8pt; }
-            .item-row { margin-bottom: 6pt; border-bottom: 1pt dashed #000; padding-bottom: 3pt; }
-            .item-name { display: block; font-weight: 900; font-size: 18pt; text-transform: uppercase; }
-            .item-line { display: flex; justify-content: space-between; font-weight: 700; font-size: 16pt; }
-            .p-sum-row { display: flex; justify-content: space-between; font-weight: 700; font-size: 16pt; margin-bottom: 5pt; }
-            .p-grand-title { border-bottom: 4pt double #000; font-size: 20pt; padding-top: 4pt; }
-            .sig-section { display: flex; justify-content: space-around; margin-top: 40pt; text-align: center; }
-            .sig-box { width: 140pt; padding-top: 60pt; border-bottom: 2pt solid #000; font-weight: 900; font-size: 14pt; }
-            .footer-msg { text-align: center; margin-top: 40pt; font-size: 14pt; font-weight: 900; }
+               @media print {
+            @page { size: 210mm auto; margin: 0; }
+            body { background: white; padding: 0; margin: 0; zoom: 1.0; }
+            .container { box-shadow: none; border: none; padding: 0; width: 100%; max-width: 100%; }
+            .no-print, .section-label, .table-scroll, .summary-box, header, #noticeTunggakan { display: none !important; }
+            .print-area { display: block !important; width: 85%; margin: 10mm auto; font-family: 'Roboto', sans-serif; }
+            .dashed { border-top: 3px dashed #000; margin: 10px 0; }
+            .p-brand-row { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 10px; }
+            .p-logo { width: 60px; height: 60px; border: 4px solid #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 30px; }
+            .p-title-big { font-weight: 900; font-size: 38px; text-align: left; }
+            .p-addr { text-align:center; font-size: 24px; font-weight: 400; margin-bottom: 15px; }
+            .p-row-wide { display: flex; justify-content: space-between; font-weight: 700; font-size: 26px; margin-bottom: 8px; border-bottom: 1px solid #000; padding-bottom: 4px; }
+            .p-agen-title { font-size: 30px; font-weight: 900; text-align: center; text-transform: uppercase; margin: 10px 0; }
+            .p-drv-info { text-align: center; font-size: 24px; font-weight: 700; margin-bottom: 10px; }
+            .item-row { margin-bottom: 8px; border-bottom: 1px dashed #000; padding-bottom: 4px; }
+            .item-name { display: block; font-weight: 900; font-size: 26px; text-transform: uppercase; }
+            .item-line { display: flex; justify-content: space-between; font-weight: 700; font-size: 26px; }
+            .print-summary { margin-top: 15px; }
+            .p-sum-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 700; font-size: 26px; padding-bottom: 4px; }
+            .p-line-divider { border-top: 2px solid #000; margin: 5px 0; }
+            .p-grand-title { border-bottom: 6px double #000; font-size: 30px; padding-top: 5px; }
+            .sig-section { display: flex; justify-content: space-around; margin-top: 50px; text-align: center; }
+            .sig-box { width: 200px; padding-top: 80px; border-bottom: 3px solid #000; font-weight: 900; font-size: 22px; }
+            .footer-msg { text-align: center; margin-top: 50px; font-size: 22px; font-weight: 900; }
         }
         .print-area { display: none; }
     </style>
