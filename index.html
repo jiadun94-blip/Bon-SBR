@@ -7,17 +7,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
-        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; font-size: 18px; }
+        /* Font Utama diperbesar sedikit (17px) */
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; font-size: 17px; }
         .container { background: white; padding: 12px; border-radius: 15px; max-width: 600px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
         header h2 { text-align: center; margin: 0 0 15px; color: #1a202c; font-size: 25px; text-transform: uppercase; font-weight: 900; }
         
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-        .info-grid select, .info-grid input { width: 100%; padding: 12px 8px; border: 2px solid #cbd5e0; border-radius: 10px; font-size: 18px; box-sizing: border-box; outline: none; font-weight: 700; color: #000; }
-        .section-label { font-size: 18px; font-weight: 900; padding: 10px; background: #1a202c; color: white; border-radius: 6px; margin: 15px 0 8px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+        .info-grid select, .info-grid input { width: 100%; padding: 12px 8px; border: 2px solid #cbd5e0; border-radius: 10px; font-size: 17px; box-sizing: border-box; outline: none; font-weight: 700; color: #000; }
+        .section-label { font-size: 17px; font-weight: 900; padding: 10px; background: #1a202c; color: white; border-radius: 6px; margin: 15px 0 8px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
         
         table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
-        th { font-size: 15px; text-align: left; padding: 8px 5px; background: #edf2f7; border-bottom: 2px solid #cbd5e0; font-weight: 900; }
-        td { padding: 8px 5px; border-bottom: 1px solid #e2e8f0; font-size: 17px; font-weight: 700; }
+        th { font-size: 14px; text-align: left; padding: 8px 5px; background: #edf2f7; border-bottom: 2px solid #cbd5e0; font-weight: 900; }
+        td { padding: 8px 5px; border-bottom: 1px solid #e2e8f0; font-size: 16px; font-weight: 700; }
         .btn-action { background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 900; }
 
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
@@ -25,25 +26,28 @@
         .form-group label { display: block; font-weight: 900; margin-bottom: 5px; font-size: 16px; }
         .form-group select, .form-group input { width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 19px; font-weight: 700; }
 
-        .sub-display { background: #f8fafc; padding: 10px; font-size: 18px; font-weight: 900; text-align: right; border: 2px solid #cbd5e0; border-top: none; display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .sub-display { background: #f8fafc; padding: 10px; font-size: 17px; font-weight: 900; text-align: right; border: 2px solid #cbd5e0; border-top: none; display: flex; justify-content: space-between; margin-bottom: 10px; }
         .pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #e2e8f0; padding: 12px; border-radius: 10px; }
-        .input-manual { width: 100%; padding: 12px; border: 2px solid #4a5568; border-radius: 8px; font-weight: 900; text-align: right; box-sizing: border-box; font-size: 23px; background: #fff; }
+        .input-manual { width: 100%; padding: 12px; border: 2px solid #4a5568; border-radius: 8px; font-weight: 900; text-align: right; box-sizing: border-box; font-size: 22px; background: #fff; }
 
         .summary-box { background: #1a202c; padding: 18px; border-radius: 12px; margin-top: 15px; color: white; }
-        .sum-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 19px; }
-        .grand-total { border-top: 2px dashed #4a5568; margin-top: 12px; padding-top: 12px; font-weight: 900; color: #fc8181; font-size: 23px; }
+        .sum-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 18px; }
+        .grand-total { border-top: 2px dashed #4a5568; margin-top: 12px; padding-top: 12px; font-weight: 900; color: #fc8181; font-size: 22px; }
 
         .btn-save { width: 100%; padding: 20px; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; color: white; background: #27ae60; margin-top: 20px; font-size: 21px; text-transform: uppercase; box-shadow: 0 5px 0 #1e8449; }
 
         @media print {
-            @page { size: auto; margin: 80; }
+            @page { size: auto; margin: 70; }
             .no-print, .modal, .section-label, .summary-box, header, .btn-save { display: none !important; }
             .container { box-shadow: none; border: none; padding: 0; width: 100%; }
-            .print-area { display: block !important; width: 100%; padding: 15px; font-family: 'Roboto Mono', monospace !important; font-size: 27px; }
-            .dashed { border-top: 3px dashed #000; margin: 12px 0; }
-            .p-title-big { font-weight: 900; font-size: 35px; text-align: center; }
-            .p-row-wide { display: flex; justify-content: space-between; margin-bottom: 5px; }
-            .p-grand-title { border-top: 3px solid #000; border-bottom: 5px double #000; font-size: 33px; padding: 10px 0; margin-top: 15px; font-weight: 900; }
+            /* FONT STRUK NAIK 2px (Sekitar 26px - 28px) */
+            .print-area { display: block !important; width: 100%; padding: 15px; font-family: 'Roboto Mono', monospace !important; font-size: 26px; }
+            .dashed { border-top: 3px dashed #000; margin: 10px 0; }
+            .p-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+            .p-title { font-weight: 900; font-size: 32px; text-align: center; }
+            .p-center { text-align: center; }
+            .p-line { border-top: 3px solid #000; margin: 15px 0 5px; }
+            .p-footer { display: flex; justify-content: space-between; margin-top: 35px; font-size: 22px; }
         }
         .print-area { display: none; }
     </style>
@@ -59,27 +63,27 @@
         <select id="pilihAgen" onchange="updateBon()"><option value="">-- AGEN --</option></select>
         <select id="driver1"><option value="">-- DRIVER 1 --</option></select>
         <select id="pilihMobil"><option value="">-- MOBIL --</option></select>
-        <select id="driver2"><option value="">-- DRIVER 2 --</option></select>
+        <select id="driver2"><option value="">-- DRIVER 2 (Ops) --</option></select>
     </div>
 
     <div class="no-print">
-        <div class="section-label"><span>📦 DIKIRIM :</span><button class="btn-action" style="background:#27ae60" onclick="openModal('Kirim')">+ TAMBAH</button></div>
+        <div class="section-label"><span>📦 DIKIRIM :</span><button class="btn-action" style="background:#27ae60" onclick="openModal('Kirim')">+ ITEM</button></div>
         <table id="tabelKirim"><thead><tr><th>BARANG</th><th>QTY</th><th>TOTAL</th><th>#</th></tr></thead><tbody></tbody></table>
         <div class="sub-display"><span>SUBTOTAL:</span><span id="subKirim">Rp 0</span></div>
 
-        <div class="section-label"><span>🔄 RETUR :</span><button class="btn-action" style="background:#e67e22" onclick="openModal('Retur')">+ TAMBAH</button></div>
+        <div class="section-label"><span>🔄 RETUR :</span><button class="btn-action" style="background:#e67e22" onclick="openModal('Retur')">+ ITEM</button></div>
         <table id="tabelRetur"><thead><tr><th>BARANG</th><th>QTY</th><th>TOTAL</th><th>#</th></tr></thead><tbody></tbody></table>
         <div class="sub-display"><span>SUBTOTAL:</span><span id="subRetur">Rp 0</span></div>
 
         <div class="section-label">💵 PEMBAYARAN :</div>
         <div class="pay-row">
-            <div><label style="font-size:15px; font-weight:900;">CASH</label><input type="text" id="inputCash" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
-            <div><label style="font-size:15px; font-weight:900;">TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
+            <div><label style="font-size:14px; font-weight:900;">CASH</label><input type="text" id="inputCash" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
+            <div><label style="font-size:14px; font-weight:900;">TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
         </div>
 
         <div class="section-label">📄 BON LAMA :</div>
-        <div style="background:#fffaf0; padding:12px; border-radius:10px; border:3px solid #ed8936;">
-            <input type="text" id="inputBonLama" class="input-manual" style="background:transparent; border:none; padding:0; height:auto;" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
+        <div style="background:#fffaf0; padding:10px; border-radius:10px; border:2px solid #ed8936;">
+            <input type="text" id="inputBonLama" class="input-manual" style="background:transparent; border:none; height:auto;" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
         </div>
     </div>
 
@@ -90,25 +94,35 @@
         <div class="sum-row grand-total"><span>SISA AKHIR:</span><span id="txtGrand">Rp 0</span></div>
     </div>
     
-    <button class="btn-save no-print" id="btnSimpan" onclick="simpanDanOtomatisPrint()">SIMPAN & PRINT</button>
+    <button class="btn-save no-print" id="btnSimpan" onclick="simpanDanPrint()">SIMPAN & PRINT</button>
 
     <div class="print-area">
-        <div class="p-title-big">SBR PUTRA FOOD</div>
-        <div style="text-align:center">Lembang, Bandung Barat</div><div class="dashed"></div>
-        <div class="p-row-wide"><span>NO: <span id="p-nota"></span></span> <span><span id="p-tgl"></span></span></div>
-        <div id="p-agen" style="font-weight:900; text-align:center; font-size:33px; margin:10px 0; text-decoration:underline;"></div>
-        <div id="p-drv" style="text-align:center;"></div><div class="dashed"></div>
+        <div class="p-title">SBR PUTRA FOOD</div>
+        <div class="p-center">Lembang, Bandung Barat</div>
+        <div class="dashed"></div>
+        <div class="p-row"><span>NO: <span id="p-nota"></span></span> <span>TGL: <span id="p-tgl"></span></span></div>
+        <div id="p-agen" class="p-center" style="font-weight:900; font-size:30px; text-decoration:underline; margin:5px 0;"></div>
+        <div id="p-drv" class="p-center"></div>
+        <div class="dashed"></div>
+
         <div id="print-items-kirim"></div>
-        <div id="print-items-retur"></div><div class="dashed"></div>
-        <div class="p-row-wide"><span>Total Kirim:</span><span id="p-tk"></span></div>
-        <div class="p-row-wide"><span>Total Retur:</span><span id="p-tr"></span></div>
-        <div class="p-row-wide"><span>Bon Lama:</span><span id="p-sb"></span></div>
+        <div id="print-items-retur"></div>
+        
         <div class="dashed"></div>
-        <div class="p-row-wide" style="font-weight:900"><span>TOTAL TAGIHAN:</span><span id="p-tt"></span></div>
-        <div class="dashed"></div>
-        <div class="p-row-wide"><span>Bayar CASH:</span><span id="p-byr-cash"></span></div>
-        <div class="p-row-wide"><span>Bayar TRF:</span><span id="p-byr-trf"></span></div>
-        <div class="p-row-wide p-grand-title"><span>SISA BON:</span><span id="p-gt"></span></div>
+        <div class="p-row"><span>Total Kirim:</span><span id="p-tk"></span></div>
+        <div class="p-row"><span>Total Retur:</span><span id="p-tr"></span></div>
+        <div class="p-row"><span>Bon Lama:</span><span id="p-bl"></span></div>
+        
+        <div class="dashed"></div> <div class="p-row" style="font-weight:900;"><span>TOTAL TAGIHAN:</span><span id="p-tt"></span></div>
+        <div class="dashed"></div> <div class="p-row"><span>Bayar CASH:</span><span id="p-cash"></span></div>
+        <div class="p-row"><span>Bayar TRF:</span><span id="p-trf"></span></div>
+        <div class="p-line"></div>
+        <div class="p-row" style="font-weight:900; font-size:28px;"><span>SISA BON:</span><span id="p-gt"></span></div>
+        
+        <div class="p-footer">
+            <span>PENERIMA</span>
+            <span>HORMAT KAMI</span>
+        </div>
     </div>
 </div>
 
@@ -117,8 +131,7 @@
     let database = { harga: {}, barang: [], karyawan: [], kendaraan: [] };
     let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim';
 
-    // Perbaikan: Fungsi pembersih angka 0 saat klik
-    function clearZero(el) { if(el.value === "0" || el.value === 0) el.value = ""; }
+    function clearZero(el) { if(el.value === "0") el.value = ""; }
 
     async function init() {
         try {
@@ -138,12 +151,11 @@
             });
             d.kendaraan.forEach(x => document.getElementById('pilihMobil').options.add(new Option(x[0], x[0])));
             
-            // Pop-Up Barang (Kembali ke default "-- Pilih Barang --")
             const mBarang = document.getElementById('modalBarang');
             mBarang.options.add(new Option("-- Pilih Barang --", ""));
             database.barang.forEach(b => mBarang.options.add(new Option(b, b)));
             resetForm();
-        } catch(e) { console.log("Error"); }
+        } catch(e) { console.log("Init Error"); }
     }
 
     function resetForm() {
@@ -158,15 +170,15 @@
     function openModal(mode) { 
         if(!document.getElementById('pilihAgen').value) return alert("Pilih Agen!");
         currentMode = mode; 
-        document.getElementById('modalBarang').value = ""; // Kembali ke -- Pilih Barang --
-        document.getElementById('modalQty').value = "0"; 
+        document.getElementById('modalBarang').value = "";
+        document.getElementById('modalQty').value = "0";
         document.getElementById('modalInput').style.display = "block"; 
     }
     function closeModal() { document.getElementById('modalInput').style.display = "none"; }
 
     function addItem() {
         const b = document.getElementById('modalBarang').value;
-        if(!b) return alert("Pilih barang dulu!");
+        if(!b) return alert("Pilih barang!");
         const s = document.getElementById('modalSatuan').value;
         const q = parseFloat(document.getElementById('modalQty').value) || 0;
         const h = database.harga[document.getElementById('pilihAgen').value]?.[`${b}_${s}`] || 0;
@@ -205,39 +217,40 @@
         const bl = getAngka('inputBonLama');
         const cs = getAngka('inputCash');
         const tf = getAngka('inputTrf');
-        document.getElementById('subKirim').innerText = "Rp " + tk.toLocaleString('id-ID');
-        document.getElementById('subRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
         document.getElementById('txtKirim').innerText = "Rp " + tk.toLocaleString('id-ID');
         document.getElementById('txtRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
         document.getElementById('txtBon').innerText = "Rp " + bl.toLocaleString('id-ID');
         document.getElementById('txtGrand').innerText = "Rp " + (tk - tr + bl - cs - tf).toLocaleString('id-ID');
     }
 
-    async function simpanDanOtomatisPrint() {
+    async function simpanDanPrint() {
         const btn = document.getElementById('btnSimpan');
         const ag = document.getElementById('pilihAgen').value;
         if(!ag) return alert("Pilih Agen!");
-        
+
         const tk = itemsKirim.reduce((a, b) => a + b.total, 0);
         const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
         const bl = getAngka('inputBonLama');
+        const cs = getAngka('inputCash');
+        const tf = getAngka('inputTrf');
 
+        // Isi ke Struk Print
         document.getElementById('p-nota').innerText = document.getElementById('noNota').value;
         document.getElementById('p-tgl').innerText = document.getElementById('tglNota').value;
         document.getElementById('p-agen').innerText = ag.toUpperCase();
-        document.getElementById('p-drv').innerText = document.getElementById('driver1').value + " [" + document.getElementById('pilihMobil').value + "]";
+        document.getElementById('p-drv').innerText = "DRV: " + document.getElementById('driver1').value + " [ " + document.getElementById('pilihMobil').value + " ]";
         
-        let hK = ""; itemsKirim.forEach(i => hK += `<div class="p-row-wide"><span>${i.barang} (${i.qty}${i.satuan})</span><span>${i.total.toLocaleString()}</span></div>`);
-        let hR = ""; itemsRetur.forEach(i => hR += `<div class="p-row-wide" style="color:red"><span>[R] ${i.barang}</span><span>-${i.total.toLocaleString()}</span></div>`);
+        let hK = ""; itemsKirim.forEach(i => hK += `<div style="margin-bottom:5px;">${i.barang}<br>${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}<span style="float:right">${i.total.toLocaleString()}</span></div>`);
+        let hR = ""; itemsRetur.forEach(i => hR += `<div style="margin-bottom:5px;">[RETUR] ${i.barang}<br>${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}<span style="float:right">-${i.total.toLocaleString()}</span></div>`);
         
         document.getElementById('print-items-kirim').innerHTML = hK;
         document.getElementById('print-items-retur').innerHTML = hR;
         document.getElementById('p-tk').innerText = "Rp " + tk.toLocaleString();
         document.getElementById('p-tr').innerText = "Rp " + tr.toLocaleString();
-        document.getElementById('p-sb').innerText = "Rp " + bl.toLocaleString();
+        document.getElementById('p-bl').innerText = "Rp " + bl.toLocaleString();
         document.getElementById('p-tt').innerText = "Rp " + (tk - tr + bl).toLocaleString();
-        document.getElementById('p-byr-cash').innerText = "Rp " + getAngka('inputCash').toLocaleString();
-        document.getElementById('p-byr-trf').innerText = "Rp " + getAngka('inputTrf').toLocaleString();
+        document.getElementById('p-cash').innerText = "Rp " + cs.toLocaleString();
+        document.getElementById('p-trf').innerText = "Rp " + tf.toLocaleString();
         document.getElementById('p-gt').innerText = document.getElementById('txtGrand').innerText;
 
         btn.innerText = "MENYIMPAN..."; btn.disabled = true;
