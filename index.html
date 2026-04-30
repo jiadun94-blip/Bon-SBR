@@ -7,57 +7,58 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
-        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; }
+        /* Font seluruh aplikasi diperbesar 3px dari sebelumnya (rata-rata jadi 18px) */
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; font-size: 18px; }
         .container { background: white; padding: 12px; border-radius: 15px; max-width: 600px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
-        header h2 { text-align: center; margin: 0 0 15px; color: #1a202c; font-size: 22px; text-transform: uppercase; font-weight: 900; }
+        header h2 { text-align: center; margin: 0 0 15px; color: #1a202c; font-size: 25px; text-transform: uppercase; font-weight: 900; }
         
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-        .info-grid select, .info-grid input { width: 100%; padding: 12px 8px; border: 2px solid #cbd5e0; border-radius: 10px; font-size: 15px; box-sizing: border-box; outline: none; font-weight: 700; color: #000; }
-        .section-label { font-size: 15px; font-weight: 900; padding: 10px; background: #1a202c; color: white; border-radius: 6px; margin: 15px 0 8px; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
+        .info-grid select, .info-grid input { width: 100%; padding: 12px 8px; border: 2px solid #cbd5e0; border-radius: 10px; font-size: 18px; box-sizing: border-box; outline: none; font-weight: 700; color: #000; }
+        .section-label { font-size: 18px; font-weight: 900; padding: 10px; background: #1a202c; color: white; border-radius: 6px; margin: 15px 0 8px; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
         
         table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
-        th { font-size: 12px; text-align: left; padding: 8px 5px; background: #edf2f7; border-bottom: 2px solid #cbd5e0; font-weight: 900; }
-        td { padding: 8px 5px; border-bottom: 1px solid #e2e8f0; font-size: 14px; font-weight: 700; }
-        .btn-action { background: #4a5568; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        th { font-size: 15px; text-align: left; padding: 8px 5px; background: #edf2f7; border-bottom: 2px solid #cbd5e0; font-weight: 900; }
+        td { padding: 8px 5px; border-bottom: 1px solid #e2e8f0; font-size: 17px; font-weight: 700; }
+        .btn-action { background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 900; }
 
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
         .modal-content { background: white; margin: 15% auto; padding: 20px; border-radius: 15px; width: 85%; max-width: 400px; box-shadow: 0 5px 30px rgba(0,0,0,0.3); }
-        .modal-content h3 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .modal-content h3 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 21px; }
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-weight: 900; margin-bottom: 5px; font-size: 13px; }
-        .form-group select, .form-group input { width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 16px; font-weight: 700; }
+        .form-group label { display: block; font-weight: 900; margin-bottom: 5px; font-size: 16px; }
+        .form-group select, .form-group input { width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 19px; font-weight: 700; }
         .modal-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .btn-cancel { padding: 12px; background: #e2e8f0; border: none; border-radius: 8px; font-weight: 900; }
-        .btn-confirm { padding: 12px; background: #27ae60; color: white; border: none; border-radius: 8px; font-weight: 900; }
+        .btn-cancel { padding: 12px; background: #e2e8f0; border: none; border-radius: 8px; font-weight: 900; font-size: 16px; }
+        .btn-confirm { padding: 12px; background: #27ae60; color: white; border: none; border-radius: 8px; font-weight: 900; font-size: 16px; }
 
-        .sub-display { background: #f8fafc; padding: 8px 12px; font-size: 15px; font-weight: 900; text-align: right; border: 2px solid #cbd5e0; border-top: none; border-radius: 0 0 8px 8px; display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .sub-display { background: #f8fafc; padding: 8px 12px; font-size: 18px; font-weight: 900; text-align: right; border: 2px solid #cbd5e0; border-top: none; border-radius: 0 0 8px 8px; display: flex; justify-content: space-between; margin-bottom: 10px; }
         .pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #e2e8f0; padding: 12px; border-radius: 10px; }
-        .input-manual { width: 100%; padding: 12px; border: 2px solid #4a5568; border-radius: 8px; font-weight: 900; text-align: right; box-sizing: border-box; font-size: 20px; background: #fff; }
+        .input-manual { width: 100%; padding: 12px; border: 2px solid #4a5568; border-radius: 8px; font-weight: 900; text-align: right; box-sizing: border-box; font-size: 23px; background: #fff; }
         .summary-box { background: #1a202c; padding: 18px; border-radius: 12px; margin-top: 15px; color: white; }
-        .sum-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 16px; }
-        .grand-total { border-top: 2px dashed #4a5568; margin-top: 12px; padding-top: 12px; font-weight: 900; color: #fc8181; font-size: 20px; }
-        .btn-save { width: 100%; padding: 18px; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; color: white; background: #27ae60; margin-top: 20px; font-size: 18px; text-transform: uppercase; box-shadow: 0 5px 0 #1e8449; }
+        .sum-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 19px; }
+        .grand-total { border-top: 2px dashed #4a5568; margin-top: 12px; padding-top: 12px; font-weight: 900; color: #fc8181; font-size: 23px; }
+        .btn-save { width: 100%; padding: 20px; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; color: white; background: #27ae60; margin-top: 20px; font-size: 21px; text-transform: uppercase; box-shadow: 0 5px 0 #1e8449; }
 
         /* PRINT STRATEGY */
         @media print {
-            @page { size: auto; margin: 0; }
+            @page { size: auto; margin: 90; }
             html, body { background: white; margin: 0; padding: 0; width: 100%; }
-            .no-print, .modal, .section-label, .summary-box, header, .btn-save { display: none !important; }
+            .no-print, .modal, .section-label, .summary-box, header, .btn-save, #noticeTunggakan { display: none !important; }
             .container { box-shadow: none; border: none; padding: 0; width: 100%; max-width: 100%; margin: 0; }
             .print-area { 
                 display: block !important; 
                 width: 100% !important; 
-                padding: 20px; 
+                padding: 15px; 
                 box-sizing: border-box;
                 font-family: 'Roboto Mono', monospace !important; 
-                font-size: 24px; /* Ukuran font struk diperbesar */
+                font-size: 27px; /* Font struk diperbesar */
             }
-            .dashed { border-top: 3px dashed #000; margin: 15px 0; }
-            .p-title-big { font-weight: 900; font-size: 32px; text-align: center; }
-            .p-row-wide { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 24px; }
-            .item-row { margin-bottom: 10px; border-bottom: 1px dotted #888; padding-bottom: 5px; }
-            .item-line { display: flex; justify-content: space-between; font-size: 24px; }
-            .p-grand-title { border-top: 3px solid #000; border-bottom: 5px double #000; font-size: 30px; padding: 10px 0; margin-top: 15px; font-weight: 900; }
+            .dashed { border-top: 3px dashed #000; margin: 12px 0; }
+            .p-title-big { font-weight: 900; font-size: 35px; text-align: center; }
+            .p-row-wide { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 27px; }
+            .item-row { margin-bottom: 8px; padding-bottom: 4px; }
+            .item-line { display: flex; justify-content: space-between; font-size: 27px; }
+            .p-grand-title { border-top: 3px solid #000; border-bottom: 5px double #000; font-size: 33px; padding: 10px 0; margin-top: 15px; font-weight: 900; }
         }
         .print-area { display: none; }
     </style>
@@ -76,7 +77,7 @@
         <select id="driver2"><option value="">-- DRIVER 2 --</option></select>
     </div>
     
-    <div id="noticeTunggakan" class="no-print" style="display:none; background:#fff5f5; color:#c53030; padding:12px; border-radius:8px; border:3px solid #fc8181; margin-bottom:12px; font-weight:900; font-size:14px; text-align:center;"></div>
+    <div id="noticeTunggakan" class="no-print" style="display:none; background:#fff5f5; color:#c53030; padding:12px; border-radius:8px; border:3px solid #fc8181; margin-bottom:12px; font-weight:900; font-size:16px; text-align:center;"></div>
 
     <div class="no-print">
         <div class="section-label">
@@ -101,8 +102,8 @@
 
         <div class="section-label">💵 PEMBAYARAN :</div>
         <div class="pay-row">
-            <div class="pay-item"><label style="font-size:12px; font-weight:900;">CASH</label><input type="text" id="inputCash" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
-            <div class="pay-item"><label style="font-size:12px; font-weight:900;">TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
+            <div class="pay-item"><label style="font-size:15px; font-weight:900;">CASH</label><input type="text" id="inputCash" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
+            <div class="pay-item"><label style="font-size:15px; font-weight:900;">TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
         </div>
 
         <div class="section-label">📄 BON LAMA :</div>
@@ -129,11 +130,7 @@
             </div>
             <div class="form-group">
                 <label>Satuan</label>
-                <select id="modalSatuan">
-                    <option>Ball</option>
-                    <option>Pack</option>
-                    <option>Pcs</option>
-                </select>
+                <select id="modalSatuan"><option>Ball</option><option>Pack</option><option>Pcs</option></select>
             </div>
             <div class="form-group">
                 <label>Jumlah (Qty)</label>
@@ -151,7 +148,7 @@
         <div style="text-align:center">Lembang, Bandung Barat</div><div class="dashed"></div>
         
         <div class="p-row-wide"><span>NO: <span id="p-nota"></span></span> <span>TGL: <span id="p-tgl"></span></span></div>
-        <div id="p-agen" style="font-weight:900; text-align:center; font-size:30px; margin:10px 0; text-decoration:underline;"></div>
+        <div id="p-agen" style="font-weight:900; text-align:center; font-size:33px; margin:10px 0; text-decoration:underline;"></div>
         <div id="p-drv" style="text-align:center; margin-bottom:10px;"></div><div class="dashed"></div>
         
         <div id="print-items-kirim"></div>
@@ -160,7 +157,11 @@
         <div class="p-row-wide"><span>Total Kirim:</span><span id="p-tk"></span></div>
         <div class="p-row-wide"><span>Total Retur:</span><span id="p-tr"></span></div>
         <div class="p-row-wide"><span>Bon Lama:</span><span id="p-sb"></span></div>
+        
+        <div class="dashed"></div>
         <div class="p-row-wide" style="font-weight:900"><span>TOTAL TAGIHAN:</span><span id="p-tt"></span></div>
+        <div class="dashed"></div>
+        
         <div class="p-row-wide"><span>Bayar CASH:</span><span id="p-byr-cash"></span></div>
         <div class="p-row-wide"><span>Bayar TRF:</span><span id="p-byr-trf"></span></div>
         
@@ -205,17 +206,29 @@
                 document.getElementById('driver1').options.add(new Option(x,x)); 
                 document.getElementById('driver2').options.add(new Option(x,x)); 
             });
-            database.kendaraan.forEach(x => document.getElementById('pilihMobil').options.add(new Option(x,x)));
+            database.kendaraan.forEach(x => document.getElementById('pilihMobil').options.add(new Option(x[0],x[0])));
             
             const mBarang = document.getElementById('modalBarang');
             database.barang.forEach(b => mBarang.options.add(new Option(b, b)));
 
-            document.getElementById('tglNota').valueAsDate = new Date();
-            document.getElementById('noNota').value = "SBR-" + new Date().getTime().toString().slice(-6);
+            // Reset manual saat pertama kali load
+            resetInputs();
         } catch(e) { alert("Gagal koneksi database!"); }
     }
 
-    // Modal Logic
+    // Fungsi Reset Input Agar Kembali Ke Nol
+    function resetInputs() {
+        document.getElementById('tglNota').valueAsDate = new Date();
+        document.getElementById('noNota').value = "SBR-" + new Date().getTime().toString().slice(-6);
+        document.getElementById('inputCash').value = "0";
+        document.getElementById('inputTrf').value = "0";
+        document.getElementById('inputBonLama').value = "0";
+        itemsKirim = [];
+        itemsRetur = [];
+        renderTables();
+        hitungTotal();
+    }
+
     function openModal(mode) {
         if(!document.getElementById('pilihAgen').value) { alert("Pilih Agen Dulu!"); return; }
         currentMode = mode;
@@ -330,25 +343,28 @@
         document.getElementById('p-byr-trf').innerText = "Rp " + tf.toLocaleString('id-ID');
         document.getElementById('p-gt').innerText = document.getElementById('txtGrand').innerText;
 
-        // KIRIM KE GOOGLE SHEETS
         try {
             btn.innerText = "⏳ MENYIMPAN..."; btn.disabled = true;
+            // Kirim ke Google Sheets
             const payload = {
                 noNota: document.getElementById('noNota').value,
                 tanggal: document.getElementById('tglNota').value,
                 agen: agen,
                 items: [...itemsKirim.map(i=>({...i, tipe:'Kirim'})), ...itemsRetur.map(i=>({...i, tipe:'Retur'}))],
+                cash: cs,
+                trf: tf,
+                bonLama: bl,
                 grandTotal: document.getElementById('txtGrand').innerText
             };
-            await fetch(webAppUrl, { method: "POST", body: JSON.stringify(payload) });
+            await fetch(webAppUrl, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
             
-            // JALANKAN PRINT
-            setTimeout(() => { window.print(); }, 500);
+            window.print();
         } catch(e) { alert("Simpan Gagal!"); }
         finally { btn.disabled = false; btn.innerText = "SIMPAN & PRINT"; }
     }
 
-    window.onafterprint = () => { if(confirm("Selesai? Refresh halaman?")) location.reload(); };
+    // Refresh halaman agar semua kembali ke 0
+    window.onafterprint = () => { location.reload(); };
     window.onload = init;
 </script>
 </body>
