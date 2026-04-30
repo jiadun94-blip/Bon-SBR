@@ -40,10 +40,10 @@
 
         /* PRINT STRATEGY */
         @media print {
-            @page { size: auto; margin: 0; }
-            html, body { background: white; margin: 0; padding: 0; width: 100%; }
+            @page { size: auto; margin: 80; }
+            html, body { background: white; margin: 80; padding: 0; width: 100%; }
             .no-print, .modal, .section-label, .summary-box, header, .btn-save { display: none !important; }
-            .container { box-shadow: none; border: none; padding: 0; width: 100%; max-width: 100%; margin: 0; }
+            .container { box-shadow: none; border: none; padding: 0; width: 100%; max-width: 100%; margin: 80; }
             .print-area { 
                 display: block !important; 
                 width: 100% !important; 
@@ -53,11 +53,11 @@
                 font-size: 24px; /* Ukuran font struk diperbesar */
             }
             .dashed { border-top: 3px dashed #000; margin: 15px 0; }
-            .p-title-big { font-weight: 900; font-size: 32px; text-align: center; }
-            .p-row-wide { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 24px; }
+            .p-title-big { font-weight: 900; font-size: 36px; text-align: center; }
+            .p-row-wide { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 30px; }
             .item-row { margin-bottom: 10px; border-bottom: 1px dotted #888; padding-bottom: 5px; }
-            .item-line { display: flex; justify-content: space-between; font-size: 24px; }
-            .p-grand-title { border-top: 3px solid #000; border-bottom: 5px double #000; font-size: 30px; padding: 10px 0; margin-top: 15px; font-weight: 900; }
+            .item-line { display: flex; justify-content: space-between; font-size: 30px; }
+            .p-grand-title { border-top: 3px solid #000; border-bottom: 5px double #000; font-size: 34px; padding: 10px 0; margin-top: 15px; font-weight: 900; }
         }
         .print-area { display: none; }
     </style>
