@@ -38,13 +38,26 @@
         .grand-total { border-top: 2px dashed #4a5568; margin-top: 12px; padding-top: 12px; font-weight: 900; color: #fc8181; font-size: 20px; }
         .btn-save { width: 100%; padding: 18px; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; color: white; background: #27ae60; margin-top: 20px; font-size: 18px; text-transform: uppercase; box-shadow: 0 5px 0 #1e8449; }
 
+        /* PRINT STRATEGY */
         @media print {
+            @page { size: auto; margin: 0; }
+            html, body { background: white; margin: 0; padding: 0; width: 100%; }
             .no-print, .modal, .section-label, .summary-box, header, .btn-save { display: none !important; }
-            .print-area { display: block !important; width: 100% !important; font-family: 'Roboto Mono', monospace !important; }
-            .dashed { border-top: 2px dashed #000; margin: 10px 0; }
-            .p-brand-row { display: flex; align-items: center; justify-content: center; font-weight: 900; }
-            .item-row { margin-bottom: 5px; border-bottom: 1px dotted #888; }
-            .item-line { display: flex; justify-content: space-between; }
+            .container { box-shadow: none; border: none; padding: 0; width: 100%; max-width: 100%; margin: 0; }
+            .print-area { 
+                display: block !important; 
+                width: 100% !important; 
+                padding: 20px; 
+                box-sizing: border-box;
+                font-family: 'Roboto Mono', monospace !important; 
+                font-size: 24px; /* Ukuran font struk diperbesar */
+            }
+            .dashed { border-top: 3px dashed #000; margin: 15px 0; }
+            .p-title-big { font-weight: 900; font-size: 32px; text-align: center; }
+            .p-row-wide { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 24px; }
+            .item-row { margin-bottom: 10px; border-bottom: 1px dotted #888; padding-bottom: 5px; }
+            .item-line { display: flex; justify-content: space-between; font-size: 24px; }
+            .p-grand-title { border-top: 3px solid #000; border-bottom: 5px double #000; font-size: 30px; padding: 10px 0; margin-top: 15px; font-weight: 900; }
         }
         .print-area { display: none; }
     </style>
@@ -134,18 +147,30 @@
     </div>
 
     <div class="print-area">
-        <div class="p-brand-row">SBR PUTRA FOOD</div>
+        <div class="p-title-big">SBR PUTRA FOOD</div>
         <div style="text-align:center">Lembang, Bandung Barat</div><div class="dashed"></div>
-        <div>NO: <span id="p-nota"></span> | TGL: <span id="p-tgl"></span></div>
-        <div id="p-agen" style="font-weight:900; text-align:center; font-size:20px; margin:5px 0"></div>
-        <div id="p-drv" style="text-align:center"></div><div class="dashed"></div>
+        
+        <div class="p-row-wide"><span>NO: <span id="p-nota"></span></span> <span>TGL: <span id="p-tgl"></span></span></div>
+        <div id="p-agen" style="font-weight:900; text-align:center; font-size:30px; margin:10px 0; text-decoration:underline;"></div>
+        <div id="p-drv" style="text-align:center; margin-bottom:10px;"></div><div class="dashed"></div>
+        
         <div id="print-items-kirim"></div>
         <div id="print-items-retur"></div><div class="dashed"></div>
-        <div class="item-line"><span>Total Kirim:</span><span id="p-tk"></span></div>
-        <div class="item-line"><span>Total Retur:</span><span id="p-tr"></span></div>
-        <div class="item-line"><span>Bon Sisa:</span><span id="p-sb"></span></div><div class="dashed"></div>
-        <div class="item-line" style="font-weight:900; font-size:18px"><span>SISA BON:</span><span id="p-gt"></span></div>
-        <div style="text-align:center; margin-top:20px">*** TERIMA KASIH ***</div>
+        
+        <div class="p-row-wide"><span>Total Kirim:</span><span id="p-tk"></span></div>
+        <div class="p-row-wide"><span>Total Retur:</span><span id="p-tr"></span></div>
+        <div class="p-row-wide"><span>Bon Lama:</span><span id="p-sb"></span></div>
+        <div class="p-row-wide" style="font-weight:900"><span>TOTAL TAGIHAN:</span><span id="p-tt"></span></div>
+        <div class="p-row-wide"><span>Bayar CASH:</span><span id="p-byr-cash"></span></div>
+        <div class="p-row-wide"><span>Bayar TRF:</span><span id="p-byr-trf"></span></div>
+        
+        <div class="p-row-wide p-grand-title"><span>SISA BON:</span><span id="p-gt"></span></div>
+        
+        <div style="display:flex; justify-content:space-around; margin-top:50px; text-align:center">
+            <div>PENERIMA<br><br><br>..........</div>
+            <div>HORMAT KAMI<br><br><br>..........</div>
+        </div>
+        <div style="text-align:center; margin-top:40px; font-style:italic">*** TERIMA KASIH ***</div>
     </div>
 </div>
 
@@ -156,12 +181,7 @@
     let itemsRetur = [];
     let currentMode = 'Kirim';
 
-    // Poin 2 & 3: Fungsi untuk menghapus angka 0 saat diklik
-    function clearZero(el) {
-        if(el.value === "0" || el.value === "0,00") {
-            el.value = "";
-        }
-    }
+    function clearZero(el) { if(el.value === "0") el.value = ""; }
 
     async function init() {
         try {
@@ -192,18 +212,18 @@
 
             document.getElementById('tglNota').valueAsDate = new Date();
             document.getElementById('noNota').value = "SBR-" + new Date().getTime().toString().slice(-6);
-        } catch(e) { alert("Gagal koneksi!"); }
+        } catch(e) { alert("Gagal koneksi database!"); }
     }
 
+    // Modal Logic
     function openModal(mode) {
         if(!document.getElementById('pilihAgen').value) { alert("Pilih Agen Dulu!"); return; }
         currentMode = mode;
         document.getElementById('modalTitle').innerText = "Tambah " + mode;
-        document.getElementById('modalQty').value = "0"; // Reset ke 0
-        document.getElementById('modalBarang').selectedIndex = 0; // Reset ke "-- Pilih Barang --"
+        document.getElementById('modalQty').value = "0";
+        document.getElementById('modalBarang').selectedIndex = 0;
         document.getElementById('modalInput').style.display = "block";
     }
-
     function closeModal() { document.getElementById('modalInput').style.display = "none"; }
 
     function addItem() {
@@ -211,9 +231,7 @@
         const satuan = document.getElementById('modalSatuan').value;
         const qty = parseFloat(document.getElementById('modalQty').value) || 0;
         const agen = document.getElementById('pilihAgen').value;
-
-        if(!barang) { alert("Pilih barang dulu!"); return; }
-        if(qty <= 0) { alert("Isi jumlah barang!"); return; }
+        if(!barang || qty <= 0) { alert("Barang & Qty harus diisi!"); return; }
 
         const harga = database.harga[agen]?.[`${barang}_${satuan}`] || 0;
         const newItem = { barang, satuan, qty, harga, total: qty * harga };
@@ -224,9 +242,9 @@
         renderTables(); closeModal(); hitungTotal();
     }
 
-    function removeItem(index, mode) {
-        if(mode === 'Kirim') itemsKirim.splice(index, 1);
-        else itemsRetur.splice(index, 1);
+    function removeItem(idx, mode) {
+        if(mode === 'Kirim') itemsKirim.splice(idx, 1);
+        else itemsRetur.splice(idx, 1);
         renderTables(); hitungTotal();
     }
 
@@ -251,9 +269,7 @@
         el.value = val === "" ? "0" : Number(val).toLocaleString('id-ID'); 
     }
 
-    function getAngka(id) { 
-        return parseFloat(document.getElementById(id).value.replace(/[^0-9]/g, '')) || 0; 
-    }
+    function getAngka(id) { return parseFloat(document.getElementById(id).value.replace(/[^0-9]/g, '')) || 0; }
 
     function updateBon() {
         const ag = document.getElementById('pilihAgen').value; 
@@ -268,6 +284,7 @@
         const tk = itemsKirim.reduce((a, b) => a + b.total, 0);
         const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
         const bl = getAngka('inputBonLama'), cs = getAngka('inputCash'), tf = getAngka('inputTrf');
+        
         document.getElementById('txtKirim').innerText = "Rp " + tk.toLocaleString('id-ID');
         document.getElementById('txtRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
         document.getElementById('txtBon').innerText = "Rp " + bl.toLocaleString('id-ID');
@@ -277,26 +294,61 @@
     }
 
     async function simpanDanOtomatisPrint() {
-        const btn = document.getElementById('btnSimpan'); 
-        const payload = {
-            noNota: document.getElementById('noNota').value, 
-            tanggal: document.getElementById('tglNota').value,
-            agen: document.getElementById('pilihAgen').value, 
-            driver1: document.getElementById('driver1').value, 
-            mobil: document.getElementById('pilihMobil').value, 
-            totalKirim: document.getElementById('txtKirim').innerText,
-            totalRetur: document.getElementById('txtRetur').innerText, 
-            grandTotal: document.getElementById('txtGrand').innerText,
-            items: [...itemsKirim.map(i=>({...i, tipe:'Kirim'})), ...itemsRetur.map(i=>({...i, tipe:'Retur'}))]
-        };
+        const btn = document.getElementById('btnSimpan');
+        const agen = document.getElementById('pilihAgen').value;
+        if(!agen) { alert("Pilih Agen!"); return; }
+
+        // MAPPING DATA KE PRINT AREA
+        const t = document.getElementById('tglNota').value.split('-');
+        document.getElementById('p-nota').innerText = document.getElementById('noNota').value;
+        document.getElementById('p-tgl').innerText = t[2]+"/"+t[1]+"/"+t[0];
+        document.getElementById('p-agen').innerText = agen.toUpperCase();
+        document.getElementById('p-drv').innerText = `DRV: ${document.getElementById('driver1').value} [${document.getElementById('pilihMobil').value}]`;
+        
+        let hK = "", hR = "";
+        itemsKirim.forEach(it => {
+            hK += `<div class="item-row"><span>${it.barang}</span><div class="item-line"><span>${it.qty} ${it.satuan} x ${it.harga.toLocaleString('id-ID')}</span><span>${it.total.toLocaleString('id-ID')}</span></div></div>`;
+        });
+        itemsRetur.forEach(it => {
+            hR += `<div class="item-row" style="color:red"><span>[RETUR] ${it.barang}</span><div class="item-line"><span>${it.qty} ${it.satuan} x ${it.harga.toLocaleString('id-ID')}</span><span>${it.total.toLocaleString('id-ID')}</span></div></div>`;
+        });
+        
+        document.getElementById('print-items-kirim').innerHTML = hK;
+        document.getElementById('print-items-retur').innerHTML = hR;
+        
+        const tk = itemsKirim.reduce((a, b) => a + b.total, 0);
+        const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
+        const bl = getAngka('inputBonLama');
+        const cs = getAngka('inputCash');
+        const tf = getAngka('inputTrf');
+        
+        document.getElementById('p-tk').innerText = "Rp " + tk.toLocaleString('id-ID');
+        document.getElementById('p-tr').innerText = "Rp " + tr.toLocaleString('id-ID');
+        document.getElementById('p-sb').innerText = "Rp " + bl.toLocaleString('id-ID');
+        document.getElementById('p-tt').innerText = "Rp " + (tk - tr + bl).toLocaleString('id-ID');
+        document.getElementById('p-byr-cash').innerText = "Rp " + cs.toLocaleString('id-ID');
+        document.getElementById('p-byr-trf').innerText = "Rp " + tf.toLocaleString('id-ID');
+        document.getElementById('p-gt').innerText = document.getElementById('txtGrand').innerText;
+
+        // KIRIM KE GOOGLE SHEETS
         try {
-            btn.innerText = "⏳..."; btn.disabled = true;
+            btn.innerText = "⏳ MENYIMPAN..."; btn.disabled = true;
+            const payload = {
+                noNota: document.getElementById('noNota').value,
+                tanggal: document.getElementById('tglNota').value,
+                agen: agen,
+                items: [...itemsKirim.map(i=>({...i, tipe:'Kirim'})), ...itemsRetur.map(i=>({...i, tipe:'Retur'}))],
+                grandTotal: document.getElementById('txtGrand').innerText
+            };
             await fetch(webAppUrl, { method: "POST", body: JSON.stringify(payload) });
-            // Print logic here...
-            window.print();
-        } catch (e) { alert("Gagal!"); } finally { btn.disabled = false; btn.innerText = "SIMPAN & PRINT"; }
+            
+            // JALANKAN PRINT
+            setTimeout(() => { window.print(); }, 500);
+        } catch(e) { alert("Simpan Gagal!"); }
+        finally { btn.disabled = false; btn.innerText = "SIMPAN & PRINT"; }
     }
 
+    window.onafterprint = () => { if(confirm("Selesai? Refresh halaman?")) location.reload(); };
     window.onload = init;
 </script>
 </body>
