@@ -40,8 +40,8 @@
            STRATEGI PRINT MOBILE (ROBOTO MONO)
         =========================================== */
         @media print {
-            @page { size: auto; margin: 0; }
-            html, body { background: white; margin: 0; padding: 0; width: 100%; height: auto; -webkit-print-color-adjust: exact; }
+            @page { size: auto; margin: 80; }
+            html, body { background: white; margin: 80; padding: 0; width: 100%; height: auto; -webkit-print-color-adjust: exact; }
             
             /* Sembunyikan elemen UI */
             .no-print, .section-label, .summary-box, header, #noticeTunggakan, .btn-save { display: none !important; }
@@ -53,7 +53,7 @@
             .print-area { 
                 display: block !important; 
                 width: 100% !important; 
-                margin: 0; 
+                margin: 80; 
                 padding: 15px; 
                 box-sizing: border-box;
                 font-family: 'Roboto Mono', monospace !important; /* Font sesuai screenshot */
@@ -63,20 +63,20 @@
             .dashed { border-top: 2px dashed #000; margin: 10px 0; }
             .p-brand-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 5px; }
             .p-logo { width: 50px; height: 50px; border: 3px solid #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 22px; }
-            .p-title-big { font-weight: 900; font-size: 26px; letter-spacing: -1px; }
-            .p-addr { text-align:center; font-size: 14px; margin-bottom: 10px; }
+            .p-title-big { font-weight: 900; font-size: 30px; letter-spacing: -1px; }
+            .p-addr { text-align:center; font-size: 26px; margin-bottom: 10px; }
             
-            .p-row-wide { display: flex; justify-content: space-between; font-weight: 700; font-size: 16px; margin-bottom: 5px; border-bottom: 1px solid #000; padding-bottom: 3px; }
-            .p-agen-title { font-size: 24px; font-weight: 900; text-align: center; margin: 10px 0; text-decoration: underline; }
-            .p-drv-info { text-align: center; font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+            .p-row-wide { display: flex; justify-content: space-between; font-weight: 700; font-size: 26px; margin-bottom: 5px; border-bottom: 1px solid #000; padding-bottom: 3px; }
+            .p-agen-title { font-size: 30px; font-weight: 900; text-align: center; margin: 10px 0; text-decoration: underline; }
+            .p-drv-info { text-align: center; font-size: 24px; font-weight: 700; margin-bottom: 10px; }
             
             /* Item list agar rapi secara vertikal */
             .item-row { margin-bottom: 8px; border-bottom: 1px dotted #888; padding-bottom: 5px; page-break-inside: avoid; }
-            .item-name { display: block; font-weight: 900; font-size: 18px; text-transform: uppercase; }
+            .item-name { display: block; font-weight: 900; font-size: 26px; text-transform: uppercase; }
             .item-line { display: flex; justify-content: space-between; font-weight: 400; font-size: 17px; }
             
-            .p-sum-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: 700; font-size: 18px; }
-            .p-grand-title { border-top: 3px solid #000; border-bottom: 5px double #000; font-size: 22px; padding: 8px 0; margin-top: 10px; }
+            .p-sum-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: 700; font-size: 28px; }
+            .p-grand-title { border-top: 3px solid #000; border-bottom: 5px double #000; font-size: 30px; padding: 8px 0; margin-top: 10px; }
             
             .sig-section { display: flex; justify-content: space-around; margin-top: 40px; text-align: center; }
             .sig-box { width: 130px; padding-top: 60px; border-bottom: 2px solid #000; font-weight: 900; font-size: 15px; }
