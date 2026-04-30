@@ -7,17 +7,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
+        
+        /* Tampilan Layar HP */
         body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; font-size: 17px; }
         .container { background: white; padding: 12px; border-radius: 15px; max-width: 600px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
         header h2 { text-align: center; margin: 0 0 15px; color: #1a202c; font-size: 25px; text-transform: uppercase; font-weight: 900; }
         
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
         .info-grid select, .info-grid input { width: 100%; padding: 12px 8px; border: 2px solid #cbd5e0; border-radius: 10px; font-size: 17px; box-sizing: border-box; outline: none; font-weight: 700; color: #000; }
+        
         .section-label { font-size: 17px; font-weight: 900; padding: 10px; background: #1a202c; color: white; border-radius: 6px; margin: 15px 0 8px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
         
         table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
         th { font-size: 14px; text-align: left; padding: 8px 5px; background: #edf2f7; border-bottom: 2px solid #cbd5e0; font-weight: 900; }
         td { padding: 8px 5px; border-bottom: 1px solid #e2e8f0; font-size: 16px; font-weight: 700; }
+        
         .btn-action { background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 900; }
 
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
@@ -26,6 +30,7 @@
         .form-group select, .form-group input { width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 19px; font-weight: 700; }
 
         .sub-display { background: #f8fafc; padding: 10px; font-size: 17px; font-weight: 900; text-align: right; border: 2px solid #cbd5e0; border-top: none; display: flex; justify-content: space-between; margin-bottom: 10px; }
+        
         .pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #e2e8f0; padding: 12px; border-radius: 10px; }
         .input-manual { width: 100%; padding: 12px; border: 2px solid #4a5568; border-radius: 8px; font-weight: 900; text-align: right; box-sizing: border-box; font-size: 22px; background: #fff; }
 
@@ -35,17 +40,28 @@
 
         .btn-save { width: 100%; padding: 20px; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; color: white; background: #27ae60; margin-top: 20px; font-size: 21px; text-transform: uppercase; box-shadow: 0 5px 0 #1e8449; }
 
+        /* PENGATURAN PRINT (STRUK) */
         @media print {
-            @page { size: auto; margin: 80; }
-            .no-print, .modal, .section-label, .summary-box, header, .btn-save { display: none !important; }
-            .container { box-shadow: none; border: none; padding: 0; width: 100%; }
-            .print-area { display: block !important; width: 100%; padding: 15px; font-family: 'Roboto Mono', monospace !important; font-size: 26px; }
+            @page { size: auto; margin: 70; }
+            .no-print, .modal, .section-label, .summary-box, header, .btn-save, .container > .no-print { display: none !important; }
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; border: none; padding: 0; width: 100%; max-width: 100%; }
+            
+            /* Font Struk Naik 2px dari sebelumnya */
+            .print-area { 
+                display: block !important; 
+                width: 100%; 
+                padding: 10px; 
+                font-family: 'Roboto Mono', monospace !important; 
+                font-size: 26px; /* Font utama struk */
+                page-break-inside: avoid;
+            }
             .dashed { border-top: 3px dashed #000; margin: 10px 0; }
             .p-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
-            .p-title { font-weight: 900; font-size: 32px; text-align: center; }
+            .p-title { font-weight: 900; font-size: 34px; text-align: center; margin-bottom: 5px; }
             .p-center { text-align: center; }
             .p-line { border-top: 3px solid #000; margin: 15px 0 5px; }
-            .p-footer { display: flex; justify-content: space-between; margin-top: 35px; font-size: 22px; }
+            .p-footer { display: flex; justify-content: space-between; margin-top: 40px; font-size: 22px; }
         }
         .print-area { display: none; }
     </style>
@@ -121,6 +137,21 @@
         <div class="p-footer"><span>PENERIMA</span><span>HORMAT KAMI</span></div>
     </div>
 </div>
+        
+
+<div id="modalInput" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle">Tambah Item</h3>
+        <div class="form-group"><label>Barang</label><select id="modalBarang"></select></div>
+        <div class="form-group"><label>Satuan</label><select id="modalSatuan"><option>Ball</option><option>Pack</option><option>Pcs</option></select></div>
+        <div class="form-group"><label>Qty</label><input type="number" id="modalQty" value="0" onfocus="clearZero(this)"></div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
+            <button onclick="closeModal()" style="padding:10px; border-radius:8px;">BATAL</button>
+            <button onclick="addItem()" style="background:#27ae60; color:white; border:none; border-radius:8px; font-weight:900;">SIMPAN</button>
+        </div>
+        <p style="font-size: 12px; color: #666; margin-top: 10px;">*Ganti Qty jadi 0 untuk menghapus item ini.</p>
+    </div>
+</div>
 
 <script>
     const webAppUrl = "https://script.google.com/macros/s/AKfycbyA7m3C3oQia1eS3ui8fU870Q1_NTXg-_1wMlJlysLDsRoVNLN10zisLpEU0CDFlBY/exec";
@@ -181,14 +212,10 @@
         currentMode = mode;
         editIndex = idx;
         const item = mode === 'Kirim' ? itemsKirim[idx] : itemsRetur[idx];
-        
         document.getElementById('modalBarang').value = item.barang;
         document.getElementById('modalSatuan').value = item.satuan;
         document.getElementById('modalQty').value = item.qty;
-        
-        // Kunci nama barang agar harga tetap sinkron, tapi satuan boleh diubah
         document.getElementById('modalBarang').disabled = true;
-        
         document.getElementById('modalTitle').innerText = "Edit Satuan/Qty";
         document.getElementById('modalInput').style.display = "block";
     }
@@ -205,16 +232,12 @@
             if(currentMode === 'Kirim') itemsKirim.splice(editIndex, 1); 
             else itemsRetur.splice(editIndex, 1);
         } else {
-            // Cari harga berdasarkan agen + barang + satuan (terbaru)
             const h = database.harga[document.getElementById('pilihAgen').value]?.[`${b}_${s}`] || 0;
             const it = { barang: b, satuan: s, qty: q, harga: h, total: q * h };
-            
             if (editIndex > -1) {
-                if(currentMode === 'Kirim') itemsKirim[editIndex] = it; 
-                else itemsRetur[editIndex] = it;
+                if(currentMode === 'Kirim') itemsKirim[editIndex] = it; else itemsRetur[editIndex] = it;
             } else {
-                if(currentMode === 'Kirim') itemsKirim.push(it); 
-                else itemsRetur.push(it);
+                if(currentMode === 'Kirim') itemsKirim.push(it); else itemsRetur.push(it);
             }
         }
         render(); closeModal(); hitungTotal();
@@ -288,23 +311,7 @@
         window.print();
         location.reload(); 
     }
-
     window.onload = init;
 </script>
-
-<div id="modalInput" class="modal">
-    <div class="modal-content">
-        <h3 id="modalTitle">Edit Item</h3>
-        <div class="form-group"><label>Barang</label><select id="modalBarang"></select></div>
-        <div class="form-group"><label>Satuan</label><select id="modalSatuan"><option>Ball</option><option>Pack</option><option>Pcs</option></select></div>
-        <div class="form-group"><label>Qty</label><input type="number" id="modalQty" value="0" onfocus="clearZero(this)"></div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
-            <button onclick="closeModal()" style="padding:10px; border-radius:8px;">BATAL</button>
-            <button onclick="addItem()" style="background:#27ae60; color:white; border:none; border-radius:8px; font-weight:900;">SIMPAN</button>
-        </div>
-        <p style="font-size: 12px; color: #666; margin-top: 10px;">*Ganti Qty ke 0 untuk menghapus item ini.</p>
-    </div>
-</div>
-
 </body>
 </html>
