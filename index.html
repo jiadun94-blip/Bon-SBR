@@ -40,28 +40,31 @@
 
         .btn-save { width: 100%; padding: 20px; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; color: white; background: #27ae60; margin-top: 20px; font-size: 21px; text-transform: uppercase; box-shadow: 0 5px 0 #1e8449; }
 
-        /* PENGATURAN PRINT (STRUK) */
+        /* PENGATURAN PRINT (STRUK) DENGAN RUANG AMAN */
         @media print {
-            @page { size: auto; margin: 70; }
-            .no-print, .modal, .section-label, .summary-box, header, .btn-save, .container > .no-print { display: none !important; }
-            body { background: white; padding: 0; }
+            @page { size: auto; margin: 0; }
+            .no-print, .modal, .section-label, .summary-box, header, .btn-save { display: none !important; }
+            body { background: white; padding: 0; margin: 0; }
             .container { box-shadow: none; border: none; padding: 0; width: 100%; max-width: 100%; }
             
-            /* Font Struk Naik 2px dari sebelumnya */
             .print-area { 
                 display: block !important; 
                 width: 100%; 
-                padding: 10px; 
+                padding: 40px 50px; 
+                box-sizing: border-box;
                 font-family: 'Roboto Mono', monospace !important; 
-                font-size: 26px; /* Font utama struk */
+                font-size: 24px; 
                 page-break-inside: avoid;
+                color: #000;
             }
-            .dashed { border-top: 3px dashed #000; margin: 10px 0; }
-            .p-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
-            .p-title { font-weight: 900; font-size: 34px; text-align: center; margin-bottom: 5px; }
+            .dashed { border-top: 3px dashed #000; margin: 10px 0; width: 100%; }
+            .p-row { display: flex; justify-content: space-between; margin-bottom: 4px; width: 100%; }
+            .p-title { font-weight: 900; font-size: 32px; text-align: center; margin-bottom: 5px; }
             .p-center { text-align: center; }
-            .p-line { border-top: 3px solid #000; margin: 15px 0 5px; }
-            .p-footer { display: flex; justify-content: space-between; margin-top: 40px; font-size: 22px; }
+            .p-line { border-top: 3px solid #000; margin: 15px 0 5px; width: 100%; }
+            .p-footer { display: flex; justify-content: space-between; margin-top: 40px; font-size: 20px; width: 100%; }
+            
+            span[style*="float:right"] { float: right; padding-right: 5px; }
         }
         .print-area { display: none; }
     </style>
@@ -149,12 +152,13 @@
             <button onclick="closeModal()" style="padding:10px; border-radius:8px;">BATAL</button>
             <button onclick="addItem()" style="background:#27ae60; color:white; border:none; border-radius:8px; font-weight:900;">SIMPAN</button>
         </div>
-        <p style="font-size: 12px; color: #666; margin-top: 10px;">*Ganti Qty jadi 0 untuk menghapus item ini.</p>
     </div>
 </div>
 
 <script>
+    // MASUKKAN URL WEB APP ANDA DI SINI
     const webAppUrl = "https://script.google.com/macros/s/AKfycbzULqqUgLluzRoABaR3LhhtxCOF8th8K2xa4QroBfxWraHeIuv6VMi5pBJHpWXelG0x/exec";
+    
     let database = { harga: {}, barang: [], karyawan: [], kendaraan: [] };
     let itemsKirim = []; let itemsRetur = []; 
     let currentMode = 'Kirim';
@@ -198,8 +202,7 @@
 
     function openModal(mode) { 
         if(!document.getElementById('pilihAgen').value) return alert("Pilih Agen!");
-        currentMode = mode; 
-        editIndex = -1;
+        currentMode = mode; editIndex = -1;
         document.getElementById('modalBarang').disabled = false;
         document.getElementById('modalBarang').value = "";
         document.getElementById('modalSatuan').value = "Ball";
@@ -209,8 +212,7 @@
     }
 
     function editItem(idx, mode) {
-        currentMode = mode;
-        editIndex = idx;
+        currentMode = mode; editIndex = idx;
         const item = mode === 'Kirim' ? itemsKirim[idx] : itemsRetur[idx];
         document.getElementById('modalBarang').value = item.barang;
         document.getElementById('modalSatuan').value = item.satuan;
@@ -285,31 +287,66 @@
         const btn = document.getElementById('btnSimpan');
         const ag = document.getElementById('pilihAgen').value;
         if(!ag) return alert("Pilih Agen!");
-        const tk = itemsKirim.reduce((a, b) => a + b.total, 0);
-        const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
-        const bl = getAngka('inputBonLama');
 
-        document.getElementById('p-nota').innerText = document.getElementById('noNota').value;
-        document.getElementById('p-tgl').innerText = document.getElementById('tglNota').value;
+        // 1. Kumpulkan Data Payload
+        const payload = {
+            noNota: document.getElementById('noNota').value,
+            tanggal: document.getElementById('tglNota').value,
+            agen: ag,
+            driver1: document.getElementById('driver1').value,
+            driver2: document.getElementById('driver2').value,
+            mobil: document.getElementById('pilihMobil').value,
+            totalKirim: itemsKirim.reduce((a, b) => a + b.total, 0),
+            totalRetur: itemsRetur.reduce((a, b) => a + b.total, 0),
+            sisaBonLama: getAngka('inputBonLama'),
+            bayarCash: getAngka('inputCash'),
+            bayarTrf: getAngka('inputTrf'),
+            items: [
+                ...itemsKirim.map(i => ({nama: i.barang, qty: i.qty, satuan: i.satuan, tipe: "Kirim"})),
+                ...itemsRetur.map(i => ({nama: i.barang, qty: i.qty, satuan: i.satuan, tipe: "Retur"}))
+            ]
+        };
+
+        // 2. Siapkan Area Print
+        document.getElementById('p-nota').innerText = payload.noNota;
+        document.getElementById('p-tgl').innerText = payload.tanggal;
         document.getElementById('p-agen').innerText = ag.toUpperCase();
-        document.getElementById('p-drv').innerText = "DRV: " + document.getElementById('driver1').value + " [ " + document.getElementById('pilihMobil').value + " ]";
+        document.getElementById('p-drv').innerText = "DRV: " + payload.driver1 + " [ " + payload.mobil + " ]";
         
-        let hK = ""; itemsKirim.forEach(i => hK += `<div style="margin-bottom:5px;">${i.barang}<br>${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}<span style="float:right">${i.total.toLocaleString()}</span></div>`);
-        let hR = ""; itemsRetur.forEach(i => hR += `<div style="margin-bottom:5px;">[RETUR] ${i.barang}<br>${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}<span style="float:right">-${i.total.toLocaleString()}</span></div>`);
+        let hK = ""; itemsKirim.forEach(i => hK += `<div>${i.barang}<br>${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}<span style="float:right">${i.total.toLocaleString()}</span></div>`);
+        let hR = ""; itemsRetur.forEach(i => hR += `<div>[RETUR] ${i.barang}<br>${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}<span style="float:right">-${i.total.toLocaleString()}</span></div>`);
         
         document.getElementById('print-items-kirim').innerHTML = hK;
         document.getElementById('print-items-retur').innerHTML = hR;
-        document.getElementById('p-tk').innerText = "Rp " + tk.toLocaleString();
-        document.getElementById('p-tr').innerText = "Rp " + tr.toLocaleString();
-        document.getElementById('p-bl').innerText = "Rp " + bl.toLocaleString();
-        document.getElementById('p-tt').innerText = "Rp " + (tk - tr + bl).toLocaleString();
-        document.getElementById('p-cash').innerText = "Rp " + getAngka('inputCash').toLocaleString();
-        document.getElementById('p-trf').innerText = "Rp " + getAngka('inputTrf').toLocaleString();
+        document.getElementById('p-tk').innerText = "Rp " + payload.totalKirim.toLocaleString();
+        document.getElementById('p-tr').innerText = "Rp " + payload.totalRetur.toLocaleString();
+        document.getElementById('p-bl').innerText = "Rp " + payload.sisaBonLama.toLocaleString();
+        document.getElementById('p-tt').innerText = "Rp " + (payload.totalKirim - payload.totalRetur + payload.sisaBonLama).toLocaleString();
+        document.getElementById('p-cash').innerText = "Rp " + payload.bayarCash.toLocaleString();
+        document.getElementById('p-trf').innerText = "Rp " + payload.bayarTrf.toLocaleString();
         document.getElementById('p-gt').innerText = document.getElementById('txtGrand').innerText;
 
+        // 3. Eksekusi Simpan & Print
         btn.innerText = "MENYIMPAN..."; btn.disabled = true;
-        window.print();
-        location.reload(); 
+
+        try {
+            const response = await fetch(webAppUrl, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+            const res = await response.json();
+            if(res.result === "success") {
+                window.print();
+                alert("Data Berhasil Disimpan!");
+                location.reload();
+            } else {
+                alert("Gagal Simpan ke Spreadsheet!");
+                btn.innerText = "SIMPAN & PRINT"; btn.disabled = false;
+            }
+        } catch(e) {
+            alert("Error Koneksi: " + e.message);
+            btn.innerText = "SIMPAN & PRINT"; btn.disabled = false;
+        }
     }
     window.onload = init;
 </script>
