@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SBR Putra Food - RPP02N Final Indo</title>
+    <title>SBR Putra Food - RPP02N Final Fixed</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
@@ -194,13 +194,16 @@
         const ag = document.getElementById('pilihAgen').value; if(!ag) return alert("Pilih Agen!");
         
         const noNota = document.getElementById('noNota').value; 
-        
-        // --- FORMAT TANGGAL INDONESIA (DD-MM-YYYY) ---
-        const tglInput = document.getElementById('tglNota').value; // YYYY-MM-DD
+        const tglInput = document.getElementById('tglNota').value; 
         const [y, m, d] = tglInput.split('-');
         const tglIndo = `${d}-${m}-${y}`;
 
-        const drv = document.getElementById('driver1').value; const mobil = document.getElementById('pilihMobil').value;
+        // --- HANDLING MULTI DRIVER ---
+        const drv1 = document.getElementById('driver1').value;
+        const drv2 = document.getElementById('driver2').value;
+        const drvGabung = drv2 ? `${drv1} / ${drv2}` : drv1; // Gabung jika ada Driver 2
+
+        const mobil = document.getElementById('pilihMobil').value;
         const tk = itemsKirim.reduce((a, b) => a + b.total, 0); const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
         const bl = getAngka('inputBonLama'); const cash = getAngka('inputCash'); const trf = getAngka('inputTrf');
         const sisa = (tk - tr + bl - cash - trf);
@@ -212,7 +215,7 @@
         p += `\x1B\x21\x00\x1B\x45\x00Lembang, Bandung Barat\n------------------------------------------------\n`;
         p += `\x1B\x61\x00` + buatBaris(`NO: ${noNota}`, `TGL: ${tglIndo}`);
         p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10${ag.toUpperCase()}\n`;
-        p += `\x1B\x21\x00\x1B\x45\x00DRV: ${drv} [ ${mobil} ]\n------------------------------------------------\n\x1B\x61\x00`;
+        p += `\x1B\x21\x00\x1B\x45\x00DRV: ${drvGabung} [ ${mobil} ]\n------------------------------------------------\n\x1B\x61\x00`;
 
         itemsKirim.forEach(i => {
             p += `${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, i.total.toLocaleString());
