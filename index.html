@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SBR Putra Food - RPP02N Fix</title>
+    <title>SBR Putra Food - RPP02N Final Indo</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
@@ -193,7 +193,13 @@
         if(!btCharacteristic) return alert("Koneksikan Printer!");
         const ag = document.getElementById('pilihAgen').value; if(!ag) return alert("Pilih Agen!");
         
-        const noNota = document.getElementById('noNota').value; const tgl = document.getElementById('tglNota').value;
+        const noNota = document.getElementById('noNota').value; 
+        
+        // --- FORMAT TANGGAL INDONESIA (DD-MM-YYYY) ---
+        const tglInput = document.getElementById('tglNota').value; // YYYY-MM-DD
+        const [y, m, d] = tglInput.split('-');
+        const tglIndo = `${d}-${m}-${y}`;
+
         const drv = document.getElementById('driver1').value; const mobil = document.getElementById('pilihMobil').value;
         const tk = itemsKirim.reduce((a, b) => a + b.total, 0); const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
         const bl = getAngka('inputBonLama'); const cash = getAngka('inputCash'); const trf = getAngka('inputTrf');
@@ -204,7 +210,7 @@
 
         let p = `\x1B\x40\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10SBR PUTRA FOOD\n`;
         p += `\x1B\x21\x00\x1B\x45\x00Lembang, Bandung Barat\n------------------------------------------------\n`;
-        p += `\x1B\x61\x00` + buatBaris(`NO: ${noNota}`, `TGL: ${tgl}`);
+        p += `\x1B\x61\x00` + buatBaris(`NO: ${noNota}`, `TGL: ${tglIndo}`);
         p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10${ag.toUpperCase()}\n`;
         p += `\x1B\x21\x00\x1B\x45\x00DRV: ${drv} [ ${mobil} ]\n------------------------------------------------\n\x1B\x61\x00`;
 
@@ -224,12 +230,17 @@
         p += `------------------------------------------------\n` + buatBaris(`Bon Lama:`, `Rp ${bl.toLocaleString()}`);
         p += `------------------------------------------------\n\x1B\x45\x01` + buatBaris(`TOTAL TAGIHAN:`, `Rp ${(tk - tr + bl).toLocaleString()}`) + `\x1B\x45\x00`;
         p += `------------------------------------------------\n` + buatBaris(`Bayar CASH:`, `Rp ${cash.toLocaleString()}`) + buatBaris(`Bayar TRF:`, `Rp ${trf.toLocaleString()}`);
-        p += `------------------------------------------------\n\x1B\x45\x01` + buatBaris(`SISA BON:`, `Rp ${sisa.toLocaleString()}`) + `\x1B\x45\x00`;
-        p += `\n` + buatBaris(`PENERIMA`, `HORMAT KAMI`) + `\n\n\n\n\n\n`; 
+        p += `------------------------------------------------\n\x1B\x45\x01` + buatBaris(`SISA BON:`, `Rp ${sisa.toLocaleString()}`) + `\x1B\x45\x00\n\n`;
+        
+        p += `\x1B\x61\x01` + buatBaris(`  PENERIMA  `, `  HORMAT KAMI  `);
+        p += `\n\n\n(            )      (            )\n`;
+        p += `------------------------------------------------\n`;
+        p += `\x1B\x45\x01TERIMA KASIH ATAS KEPERCAYAAN ANDA\x1B\x45\x00\n`;
+        p += `SBR PUTRA FOOD - Order System\n\n\n\n\n`; 
 
         try {
             await printToBT(p);
-            alert("Cetak Berhasil!");
+            alert("Nota Berhasil Dicetak!");
             location.reload();
         } catch (e) { alert("Gagal: " + e); }
     }
