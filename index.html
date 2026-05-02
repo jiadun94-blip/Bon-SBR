@@ -3,248 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SBR Putra Food - Order System</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <title>SBR Putra Food - RPP02N Fix</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
-        
-        /* Tampilan Layar HP */
         body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; font-size: 17px; }
         .container { background: white; padding: 12px; border-radius: 15px; max-width: 600px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
         header h2 { text-align: center; margin: 0 0 15px; color: #1a202c; font-size: 25px; text-transform: uppercase; font-weight: 900; }
-        
+        .bt-panel { margin-bottom: 15px; text-align: center; background: #edf2f7; padding: 10px; border-radius: 10px; border: 1px solid #cbd5e0; }
+        #btnConnect { width: 100%; padding: 12px; background: #3182ce; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; }
+        #statusBT { font-size: 12px; font-weight: bold; margin-top: 5px; display: block; color: #e53e3e; }
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
         .info-grid select, .info-grid input { width: 100%; padding: 12px 8px; border: 2px solid #cbd5e0; border-radius: 10px; font-size: 17px; box-sizing: border-box; outline: none; font-weight: 700; color: #000; }
-        
         .section-label { font-size: 17px; font-weight: 900; padding: 10px; background: #1a202c; color: white; border-radius: 6px; margin: 15px 0 8px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
-        
         table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
         th { font-size: 14px; text-align: left; padding: 8px 5px; background: #edf2f7; border-bottom: 2px solid #cbd5e0; font-weight: 900; }
         td { padding: 8px 5px; border-bottom: 1px solid #e2e8f0; font-size: 16px; font-weight: 700; }
-        
         .btn-action { background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 900; }
-
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
         .modal-content { background: white; margin: 15% auto; padding: 20px; border-radius: 15px; width: 85%; max-width: 400px; box-shadow: 0 5px 30px rgba(0,0,0,0.3); }
         .form-group label { display: block; font-weight: 900; margin-bottom: 5px; font-size: 16px; }
         .form-group select, .form-group input { width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 19px; font-weight: 700; }
-
         .sub-display { background: #f8fafc; padding: 10px; font-size: 17px; font-weight: 900; text-align: right; border: 2px solid #cbd5e0; border-top: none; display: flex; justify-content: space-between; margin-bottom: 10px; }
-        
         .pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #e2e8f0; padding: 12px; border-radius: 10px; }
         .input-manual { width: 100%; padding: 12px; border: 2px solid #4a5568; border-radius: 8px; font-weight: 900; text-align: right; box-sizing: border-box; font-size: 22px; background: #fff; }
-
         .summary-box { background: #1a202c; padding: 18px; border-radius: 12px; margin-top: 15px; color: white; }
         .sum-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 18px; }
         .grand-total { border-top: 2px dashed #4a5568; margin-top: 12px; padding-top: 12px; font-weight: 900; color: #fc8181; font-size: 22px; }
-
         .btn-save { width: 100%; padding: 20px; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; color: white; background: #27ae60; margin-top: 20px; font-size: 21px; text-transform: uppercase; box-shadow: 0 5px 0 #1e8449; }
-
-        /* PENGATURAN PRINT (STRUK) DENGAN RUANG AMAN */
-        @media print {
-            @page { size: auto; margin: 0; }
-            .no-print, .modal, .section-label, .summary-box, header, .btn-save { display: none !important; }
-            body { background: white; padding: 0; margin: 0; }
-            .container { box-shadow: none; border: none; padding: 0; width: 100%; max-width: 100%; }
-            
-            .print-area { 
-                display: block !important; 
-                width: 100%; 
-                padding: 80px 100px; 
-                box-sizing: border-box;
-                font-family: 'Roboto Mono', monospace !important; 
-                font-size: 24px; 
-                page-break-inside: avoid;
-                color: #000;
-            }
-            .dashed { border-top: 3px dashed #000; margin: 10px 0; width: 100%; }
-            .p-row { display: flex; justify-content: space-between; margin-bottom: 4px; width: 100%; }
-            .p-title { font-weight: 900; font-size: 32px; text-align: center; margin-bottom: 5px; }
-            .p-center { text-align: center; }
-            .p-line { border-top: 3px solid #000; margin: 15px 0 5px; width: 100%; }
-            .p-footer { display: flex; justify-content: space-between; margin-top: 40px; font-size: 20px; width: 100%; }
-            
-            span[style*="float:right"] { float: right; padding-right: 5px; }
-        }
-        .print-area { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <header class="no-print"><h2>SBR PUTRA FOOD</h2></header>
-    
-    <div class="info-grid no-print">
-        <input type="text" id="noNota" readonly>
-        <input type="date" id="tglNota">
+    <header><h2>SBR PUTRA FOOD</h2></header>
+    <div class="bt-panel">
+        <button id="btnConnect" onclick="connectBT()">🔗 HUBUNGKAN PRINTER</button>
+        <small id="statusBT">Status: Terputus</small>
+    </div>
+    <div class="info-grid">
+        <input type="text" id="noNota" readonly><input type="date" id="tglNota">
         <select id="pilihAgen" onchange="updateBon()"><option value="">-- AGEN --</option></select>
         <select id="driver1"><option value="">-- DRIVER 1 --</option></select>
         <select id="pilihMobil"><option value="">-- MOBIL --</option></select>
         <select id="driver2"><option value="">-- DRIVER 2 (Ops) --</option></select>
     </div>
-
-    <div class="no-print">
+    <div>
         <div class="section-label"><span>📦 DIKIRIM :</span><button class="btn-action" style="background:#27ae60" onclick="openModal('Kirim')">+ ITEM</button></div>
         <table id="tabelKirim"><thead><tr><th>BARANG</th><th>QTY</th><th>TOTAL</th><th>#</th></tr></thead><tbody></tbody></table>
         <div class="sub-display"><span>SUBTOTAL:</span><span id="subKirim">Rp 0</span></div>
-
         <div class="section-label"><span>🔄 RETUR :</span><button class="btn-action" style="background:#e67e22" onclick="openModal('Retur')">+ ITEM</button></div>
         <table id="tabelRetur"><thead><tr><th>BARANG</th><th>QTY</th><th>TOTAL</th><th>#</th></tr></thead><tbody></tbody></table>
         <div class="sub-display"><span>SUBTOTAL:</span><span id="subRetur">Rp 0</span></div>
-
         <div class="section-label">💵 PEMBAYARAN :</div>
         <div class="pay-row">
             <div><label style="font-size:14px; font-weight:900;">CASH</label><input type="text" id="inputCash" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
             <div><label style="font-size:14px; font-weight:900;">TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
         </div>
-
         <div class="section-label">📄 BON LAMA :</div>
         <div style="background:#fffaf0; padding:10px; border-radius:10px; border:2px solid #ed8936;">
             <input type="text" id="inputBonLama" class="input-manual" style="background:transparent; border:none; height:auto;" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
         </div>
     </div>
-
-    <div class="summary-box no-print">
+    <div class="summary-box">
         <div class="sum-row"><span>Kirim:</span><span id="txtKirim">Rp 0</span></div>
         <div class="sum-row"><span>Retur:</span><span id="txtRetur">Rp 0</span></div>
         <div class="sum-row"><span>Bon Lama:</span><span id="txtBon">Rp 0</span></div>
         <div class="sum-row grand-total"><span>SISA AKHIR:</span><span id="txtGrand">Rp 0</span></div>
     </div>
-    
-    <button class="btn-save no-print" id="btnSimpan" onclick="simpanDanPrint()">SIMPAN & PRINT</button>
-
-    <div class="print-area">
-        <div class="p-title">SBR PUTRA FOOD</div>
-        <div class="p-center">Lembang, Bandung Barat</div>
-        <div class="dashed"></div>
-        <div class="p-row"><span>NO: <span id="p-nota"></span></span> <span>TGL: <span id="p-tgl"></span></span></div>
-        <div id="p-agen" class="p-center" style="font-weight:900; font-size:30px; text-decoration:underline; margin:5px 0;"></div>
-        <div id="p-drv" class="p-center"></div>
-        <div class="dashed"></div>
-        <div id="print-items-kirim"></div>
-        <div class="dashed"></div>
-        <div class="p-row"><span>Total Kirim:</span><span id="p-tk"></span></div>
-        <div class="dashed"></div>
-        <div id="print-items-retur"></div>
-        <div class="dashed"></div>
-        <div class="p-row"><span>Total Retur:</span><span id="p-tr"></span></div>
-        <div class="dashed"></div>
-        <div class="p-row"><span>Bon Lama:</span><span id="p-bl"></span></div>
-        <div class="dashed"></div>
-        <div class="p-row" style="font-weight:900;"><span>TOTAL TAGIHAN:</span><span id="p-tt"></span></div>
-        <div class="dashed"></div>
-        <div class="p-row"><span>Bayar CASH:</span><span id="p-cash"></span></div>
-        <div class="p-row"><span>Bayar TRF:</span><span id="p-trf"></span></div>
-        <div class="p-line"></div>
-        <div class="p-row" style="font-weight:900; font-size:28px;"><span>SISA BON:</span><span id="p-gt"></span></div>
-        <div class="p-footer"><span>PENERIMA</span><span>HORMAT KAMI</span></div>
-    </div>
+    <button class="btn-save" id="btnSimpan" onclick="simpanDanPrint()">SIMPAN & PRINT</button>
 </div>
-        
 
 <div id="modalInput" class="modal">
     <div class="modal-content">
-        <h3 id="modalTitle">Tambah Item</h3>
+        <h3>Tambah Item</h3>
         <div class="form-group"><label>Barang</label><select id="modalBarang"></select></div>
         <div class="form-group"><label>Satuan</label><select id="modalSatuan"><option>Ball</option><option>Pack</option><option>Pcs</option></select></div>
         <div class="form-group"><label>Qty</label><input type="number" id="modalQty" value="0" onfocus="clearZero(this)"></div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
-            <button onclick="closeModal()" style="padding:10px; border-radius:8px;">BATAL</button>
+            <button onclick="closeModal()">BATAL</button>
             <button onclick="addItem()" style="background:#27ae60; color:white; border:none; border-radius:8px; font-weight:900;">SIMPAN</button>
         </div>
     </div>
 </div>
 
 <script>
-    // MASUKKAN URL WEB APP ANDA DI SINI
-    const webAppUrl = "https://script.google.com/macros/s/AKfycbzULqqUgLluzRoABaR3LhhtxCOF8th8K2xa4QroBfxWraHeIuv6VMi5pBJHpWXelG0x/exec";
-    
+    const webAppUrl = "https://script.google.com/macros/s/AKfycbyA7m3C3oQia1eS3ui8fU870Q1_NTXg-_1wMlJlysLDsRoVNLN10zisLpEU0CDFlBY/exec";
     let database = { harga: {}, barang: [], karyawan: [], kendaraan: [] };
-    let itemsKirim = []; let itemsRetur = []; 
-    let currentMode = 'Kirim';
-    let editIndex = -1;
+    let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim'; let editIndex = -1;
+    let btDevice = null; let btCharacteristic = null;
+
+    async function connectBT() {
+        const statusEl = document.getElementById('statusBT');
+        try {
+            btDevice = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', '49535343-fe7d-41aa-8956-727e70a347d5']
+            });
+            const server = await btDevice.gatt.connect();
+            const services = await server.getPrimaryServices();
+            btCharacteristic = (await services[0].getCharacteristics()).find(c => c.properties.write || c.properties.writeWithoutResponse);
+            statusEl.innerText = "Status: Terhubung (" + btDevice.name + ")";
+            statusEl.style.color = "#27ae60";
+        } catch (e) { alert("BT Gagal: " + e); }
+    }
+
+    async function printToBT(text) {
+        if (!btCharacteristic) throw "Hubungkan Printer!";
+        const data = new TextEncoder().encode(text);
+        for (let i = 0; i < data.length; i += 20) {
+            await btCharacteristic.writeValue(data.slice(i, i + 20));
+            await new Promise(r => setTimeout(r, 45)); 
+        }
+    }
 
     function clearZero(el) { if(el.value === "0" || el.value === 0) el.value = ""; }
-
     async function init() {
         try {
             const r = await fetch(webAppUrl); const d = await r.json();
             database.barang = d.barang.map(x => x[1]);
-            d.agen.forEach(x => { 
-                document.getElementById('pilihAgen').options.add(new Option(x[0], x[0])); 
-                database.harga[x[0]] = { "bon": x[3] || 0 }; 
-            });
-            d.harga.forEach(x => { 
-                if(!database.harga[x[0]]) database.harga[x[0]] = {}; 
-                database.harga[x[0]][`${x[1]}_${x[2]}`] = x[3]; 
-            });
-            d.karyawan.forEach(x => { 
-                document.getElementById('driver1').options.add(new Option(x[0],x[0])); 
-                document.getElementById('driver2').options.add(new Option(x[0],x[0])); 
-            });
+            d.agen.forEach(x => { document.getElementById('pilihAgen').options.add(new Option(x[0], x[0])); database.harga[x[0]] = { "bon": x[3] || 0 }; });
+            d.harga.forEach(x => { if(!database.harga[x[0]]) database.harga[x[0]] = {}; database.harga[x[0]][`${x[1]}_${x[2]}`] = x[3]; });
+            d.karyawan.forEach(x => { document.getElementById('driver1').options.add(new Option(x[0],x[0])); document.getElementById('driver2').options.add(new Option(x[0],x[0])); });
             d.kendaraan.forEach(x => document.getElementById('pilihMobil').options.add(new Option(x[0], x[0])));
-            
             const mBarang = document.getElementById('modalBarang');
             mBarang.options.add(new Option("-- Pilih Barang --", ""));
             database.barang.forEach(b => mBarang.options.add(new Option(b, b)));
             resetForm();
         } catch(e) { console.log("Init Error"); }
     }
-
     function resetForm() {
         document.getElementById('tglNota').valueAsDate = new Date();
         document.getElementById('noNota').value = "SBR" + Date.now().toString().slice(-6);
-        document.getElementById('inputCash').value = "0";
-        document.getElementById('inputTrf').value = "0";
-        document.getElementById('inputBonLama').value = "0";
+        document.getElementById('inputCash').value = "0"; document.getElementById('inputTrf').value = "0"; document.getElementById('inputBonLama').value = "0";
         itemsKirim = []; itemsRetur = []; render(); hitungTotal();
     }
-
     function openModal(mode) { 
         if(!document.getElementById('pilihAgen').value) return alert("Pilih Agen!");
-        currentMode = mode; editIndex = -1;
-        document.getElementById('modalBarang').disabled = false;
-        document.getElementById('modalBarang').value = "";
-        document.getElementById('modalSatuan').value = "Ball";
-        document.getElementById('modalQty').value = "0";
-        document.getElementById('modalTitle').innerText = "Tambah Item";
+        currentMode = mode; editIndex = -1; document.getElementById('modalBarang').disabled = false;
+        document.getElementById('modalBarang').value = ""; document.getElementById('modalQty').value = "0";
         document.getElementById('modalInput').style.display = "block"; 
     }
-
-    function editItem(idx, mode) {
-        currentMode = mode; editIndex = idx;
-        const item = mode === 'Kirim' ? itemsKirim[idx] : itemsRetur[idx];
-        document.getElementById('modalBarang').value = item.barang;
-        document.getElementById('modalSatuan').value = item.satuan;
-        document.getElementById('modalQty').value = item.qty;
-        document.getElementById('modalBarang').disabled = true;
-        document.getElementById('modalTitle').innerText = "Edit Satuan/Qty";
-        document.getElementById('modalInput').style.display = "block";
-    }
-
     function closeModal() { document.getElementById('modalInput').style.display = "none"; }
-
     function addItem() {
-        const b = document.getElementById('modalBarang').value;
-        if(!b) return alert("Pilih barang!");
-        const s = document.getElementById('modalSatuan').value;
-        const q = parseFloat(document.getElementById('modalQty').value) || 0;
-        
-        if (editIndex > -1 && q === 0) {
-            if(currentMode === 'Kirim') itemsKirim.splice(editIndex, 1); 
-            else itemsRetur.splice(editIndex, 1);
-        } else {
-            const h = database.harga[document.getElementById('pilihAgen').value]?.[`${b}_${s}`] || 0;
-            const it = { barang: b, satuan: s, qty: q, harga: h, total: q * h };
-            if (editIndex > -1) {
-                if(currentMode === 'Kirim') itemsKirim[editIndex] = it; else itemsRetur[editIndex] = it;
-            } else {
-                if(currentMode === 'Kirim') itemsKirim.push(it); else itemsRetur.push(it);
-            }
-        }
+        const b = document.getElementById('modalBarang').value; if(!b) return alert("Pilih barang!");
+        const s = document.getElementById('modalSatuan').value; const q = parseFloat(document.getElementById('modalQty').value) || 0;
+        const h = database.harga[document.getElementById('pilihAgen').value]?.[`${b}_${s}`] || 0;
+        const it = { barang: b, satuan: s, qty: q, harga: h, total: q * h };
+        if (editIndex > -1) {
+            if(q === 0) (currentMode === 'Kirim' ? itemsKirim : itemsRetur).splice(editIndex, 1);
+            else (currentMode === 'Kirim' ? itemsKirim : itemsRetur)[editIndex] = it;
+        } else { if(q > 0) (currentMode === 'Kirim' ? itemsKirim : itemsRetur).push(it); }
         render(); closeModal(); hitungTotal();
     }
-
+    function editItem(idx, mode) {
+        currentMode = mode; editIndex = idx; const item = mode === 'Kirim' ? itemsKirim[idx] : itemsRetur[idx];
+        document.getElementById('modalBarang').value = item.barang; document.getElementById('modalBarang').disabled = true;
+        document.getElementById('modalSatuan').value = item.satuan; document.getElementById('modalQty').value = item.qty;
+        document.getElementById('modalInput').style.display = "block";
+    }
     function render() {
         const draw = (data, id, mode) => {
             const tb = document.getElementById(id).querySelector('tbody'); tb.innerHTML = '';
@@ -257,96 +174,64 @@
         };
         draw(itemsKirim, 'tabelKirim', 'Kirim'); draw(itemsRetur, 'tabelRetur', 'Retur');
     }
-
     function formatRupiah(el) { let v = el.value.replace(/[^0-9]/g, ''); el.value = v === "" ? "0" : Number(v).toLocaleString('id-ID'); }
     function getAngka(id) { return parseFloat(document.getElementById(id).value.replace(/[^0-9]/g, '')) || 0; }
-
     function updateBon() {
         const ag = document.getElementById('pilihAgen').value;
-        const bon = database.harga[ag]?.bon || 0;
-        document.getElementById('inputBonLama').value = bon.toLocaleString('id-ID');
+        document.getElementById('inputBonLama').value = (database.harga[ag]?.bon || 0).toLocaleString('id-ID');
         hitungTotal();
     }
-
     function hitungTotal() {
-        const tk = itemsKirim.reduce((a, b) => a + b.total, 0);
-        const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
-        const bl = getAngka('inputBonLama');
-        const cs = getAngka('inputCash');
-        const tf = getAngka('inputTrf');
-        
-        document.getElementById('subKirim').innerText = "Rp " + tk.toLocaleString('id-ID');
-        document.getElementById('subRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
-        document.getElementById('txtKirim').innerText = "Rp " + tk.toLocaleString('id-ID');
-        document.getElementById('txtRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
-        document.getElementById('txtBon').innerText = "Rp " + bl.toLocaleString('id-ID');
-        document.getElementById('txtGrand').innerText = "Rp " + (tk - tr + bl - cs - tf).toLocaleString('id-ID');
+        const tk = itemsKirim.reduce((a, b) => a + b.total, 0); const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
+        const bl = getAngka('inputBonLama'); const cs = getAngka('inputCash'); const tf = getAngka('inputTrf');
+        document.getElementById('subKirim').innerText = "Rp " + tk.toLocaleString('id-ID'); document.getElementById('subRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
+        document.getElementById('txtKirim').innerText = "Rp " + tk.toLocaleString('id-ID'); document.getElementById('txtRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
+        document.getElementById('txtBon').innerText = "Rp " + bl.toLocaleString('id-ID'); document.getElementById('txtGrand').innerText = "Rp " + (tk - tr + bl - cs - tf).toLocaleString('id-ID');
     }
 
     async function simpanDanPrint() {
-        const btn = document.getElementById('btnSimpan');
-        const ag = document.getElementById('pilihAgen').value;
-        if(!ag) return alert("Pilih Agen!");
-
-        // 1. Kumpulkan Data Payload
-        const payload = {
-            noNota: document.getElementById('noNota').value,
-            tanggal: document.getElementById('tglNota').value,
-            agen: ag,
-            driver1: document.getElementById('driver1').value,
-            driver2: document.getElementById('driver2').value,
-            mobil: document.getElementById('pilihMobil').value,
-            totalKirim: itemsKirim.reduce((a, b) => a + b.total, 0),
-            totalRetur: itemsRetur.reduce((a, b) => a + b.total, 0),
-            sisaBonLama: getAngka('inputBonLama'),
-            bayarCash: getAngka('inputCash'),
-            bayarTrf: getAngka('inputTrf'),
-            items: [
-                ...itemsKirim.map(i => ({nama: i.barang, qty: i.qty, satuan: i.satuan, tipe: "Kirim"})),
-                ...itemsRetur.map(i => ({nama: i.barang, qty: i.qty, satuan: i.satuan, tipe: "Retur"}))
-            ]
-        };
-
-        // 2. Siapkan Area Print
-        document.getElementById('p-nota').innerText = payload.noNota;
-        document.getElementById('p-tgl').innerText = payload.tanggal;
-        document.getElementById('p-agen').innerText = ag.toUpperCase();
-        document.getElementById('p-drv').innerText = "DRV: " + payload.driver1 + " [ " + payload.mobil + " ]";
+        if(!btCharacteristic) return alert("Koneksikan Printer!");
+        const ag = document.getElementById('pilihAgen').value; if(!ag) return alert("Pilih Agen!");
         
-        let hK = ""; itemsKirim.forEach(i => hK += `<div>${i.barang}<br>${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}<span style="float:right">${i.total.toLocaleString()}</span></div>`);
-        let hR = ""; itemsRetur.forEach(i => hR += `<div>[RETUR] ${i.barang}<br>${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}<span style="float:right">-${i.total.toLocaleString()}</span></div>`);
-        
-        document.getElementById('print-items-kirim').innerHTML = hK;
-        document.getElementById('print-items-retur').innerHTML = hR;
-        document.getElementById('p-tk').innerText = "Rp " + payload.totalKirim.toLocaleString();
-        document.getElementById('p-tr').innerText = "Rp " + payload.totalRetur.toLocaleString();
-        document.getElementById('p-bl').innerText = "Rp " + payload.sisaBonLama.toLocaleString();
-        document.getElementById('p-tt').innerText = "Rp " + (payload.totalKirim - payload.totalRetur + payload.sisaBonLama).toLocaleString();
-        document.getElementById('p-cash').innerText = "Rp " + payload.bayarCash.toLocaleString();
-        document.getElementById('p-trf').innerText = "Rp " + payload.bayarTrf.toLocaleString();
-        document.getElementById('p-gt').innerText = document.getElementById('txtGrand').innerText;
+        const noNota = document.getElementById('noNota').value; const tgl = document.getElementById('tglNota').value;
+        const drv = document.getElementById('driver1').value; const mobil = document.getElementById('pilihMobil').value;
+        const tk = itemsKirim.reduce((a, b) => a + b.total, 0); const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
+        const bl = getAngka('inputBonLama'); const cash = getAngka('inputCash'); const trf = getAngka('inputTrf');
+        const sisa = (tk - tr + bl - cash - trf);
 
-        // 3. Eksekusi Simpan & Print
-        btn.innerText = "MENYIMPAN..."; btn.disabled = true;
+        const lebar = 48;
+        const buatBaris = (l, r) => { let space = lebar - l.length - r.length; return l + " ".repeat(Math.max(1, space)) + r + "\n"; };
+
+        let p = `\x1B\x40\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10SBR PUTRA FOOD\n`;
+        p += `\x1B\x21\x00\x1B\x45\x00Lembang, Bandung Barat\n------------------------------------------------\n`;
+        p += `\x1B\x61\x00` + buatBaris(`NO: ${noNota}`, `TGL: ${tgl}`);
+        p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10${ag.toUpperCase()}\n`;
+        p += `\x1B\x21\x00\x1B\x45\x00DRV: ${drv} [ ${mobil} ]\n------------------------------------------------\n\x1B\x61\x00`;
+
+        itemsKirim.forEach(i => {
+            p += `${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, i.total.toLocaleString());
+        });
+
+        if(itemsRetur.length > 0) {
+            p += `------------------------------------------------\n`;
+            itemsRetur.forEach(i => {
+                p += `[RETUR] ${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, `-${i.total.toLocaleString()}`);
+            });
+        }
+
+        p += `------------------------------------------------\n` + buatBaris(`Total Kirim:`, `Rp ${tk.toLocaleString()}`);
+        p += `================================================\n` + buatBaris(`Total Retur:`, `Rp ${tr.toLocaleString()}`);
+        p += `------------------------------------------------\n` + buatBaris(`Bon Lama:`, `Rp ${bl.toLocaleString()}`);
+        p += `------------------------------------------------\n\x1B\x45\x01` + buatBaris(`TOTAL TAGIHAN:`, `Rp ${(tk - tr + bl).toLocaleString()}`) + `\x1B\x45\x00`;
+        p += `------------------------------------------------\n` + buatBaris(`Bayar CASH:`, `Rp ${cash.toLocaleString()}`) + buatBaris(`Bayar TRF:`, `Rp ${trf.toLocaleString()}`);
+        p += `------------------------------------------------\n\x1B\x45\x01` + buatBaris(`SISA BON:`, `Rp ${sisa.toLocaleString()}`) + `\x1B\x45\x00`;
+        p += `\n` + buatBaris(`PENERIMA`, `HORMAT KAMI`) + `\n\n\n\n\n\n`; 
 
         try {
-            const response = await fetch(webAppUrl, {
-                method: "POST",
-                body: JSON.stringify(payload)
-            });
-            const res = await response.json();
-            if(res.result === "success") {
-                window.print();
-                alert("Data Berhasil Disimpan!");
-                location.reload();
-            } else {
-                alert("Gagal Simpan ke Spreadsheet!");
-                btn.innerText = "SIMPAN & PRINT"; btn.disabled = false;
-            }
-        } catch(e) {
-            alert("Error Koneksi: " + e.message);
-            btn.innerText = "SIMPAN & PRINT"; btn.disabled = false;
-        }
+            await printToBT(p);
+            alert("Cetak Berhasil!");
+            location.reload();
+        } catch (e) { alert("Gagal: " + e); }
     }
     window.onload = init;
 </script>
