@@ -193,59 +193,93 @@
         if(!btCharacteristic) return alert("Koneksikan Printer!");
         const ag = document.getElementById('pilihAgen').value; if(!ag) return alert("Pilih Agen!");
         
+        const btn = document.getElementById('btnSimpan');
         const noNota = document.getElementById('noNota').value; 
         const tglInput = document.getElementById('tglNota').value; 
         const [y, m, d] = tglInput.split('-');
         const tglIndo = `${d}-${m}-${y}`;
 
-        // --- HANDLING MULTI DRIVER ---
         const drv1 = document.getElementById('driver1').value;
         const drv2 = document.getElementById('driver2').value;
-        const drvGabung = drv2 ? `${drv1} / ${drv2}` : drv1; // Gabung jika ada Driver 2
-
+        const drvGabung = drv2 ? `${drv1} / ${drv2}` : drv1; 
         const mobil = document.getElementById('pilihMobil').value;
+
         const tk = itemsKirim.reduce((a, b) => a + b.total, 0); const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
         const bl = getAngka('inputBonLama'); const cash = getAngka('inputCash'); const trf = getAngka('inputTrf');
         const sisa = (tk - tr + bl - cash - trf);
 
-        const lebar = 48;
-        const buatBaris = (l, r) => { let space = lebar - l.length - r.length; return l + " ".repeat(Math.max(1, space)) + r + "\n"; };
+        // --- DATA UNTUK SPREADSHEET ---
+        const payload = {
+            noNota: noNota,
+            tanggal: tglInput,
+            agen: ag,
+            driver1: drv1,
+            driver2: drv2,
+            mobil: mobil,
+            totalKirim: tk,
+            totalRetur: tr,
+            sisaBonLama: bl,
+            bayarCash: cash,
+            bayarTrf: trf,
+            items: [
+                ...itemsKirim.map(i => ({nama: i.barang, qty: i.qty, satuan: i.satuan, tipe: "Kirim"})),
+                ...itemsRetur.map(i => ({nama: i.barang, qty: i.qty, satuan: i.satuan, tipe: "Retur"}))
+            ]
+        };
 
-        let p = `\x1B\x40\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10SBR PUTRA FOOD\n`;
-        p += `\x1B\x21\x00\x1B\x45\x00Lembang, Bandung Barat\n------------------------------------------------\n`;
-        p += `\x1B\x61\x00` + buatBaris(`NO: ${noNota}`, `TGL: ${tglIndo}`);
-        p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10${ag.toUpperCase()}\n`;
-        p += `\x1B\x21\x00\x1B\x45\x00DRV: ${drvGabung} [ ${mobil} ]\n------------------------------------------------\n\x1B\x61\x00`;
-
-        itemsKirim.forEach(i => {
-            p += `${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, i.total.toLocaleString());
-        });
-
-        if(itemsRetur.length > 0) {
-            p += `------------------------------------------------\n`;
-            itemsRetur.forEach(i => {
-                p += `[RETUR] ${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, `-${i.total.toLocaleString()}`);
-            });
-        }
-
-        p += `------------------------------------------------\n` + buatBaris(`Total Kirim:`, `Rp ${tk.toLocaleString()}`);
-        p += `================================================\n` + buatBaris(`Total Retur:`, `Rp ${tr.toLocaleString()}`);
-        p += `------------------------------------------------\n` + buatBaris(`Bon Lama:`, `Rp ${bl.toLocaleString()}`);
-        p += `------------------------------------------------\n\x1B\x45\x01` + buatBaris(`TOTAL TAGIHAN:`, `Rp ${(tk - tr + bl).toLocaleString()}`) + `\x1B\x45\x00`;
-        p += `------------------------------------------------\n` + buatBaris(`Bayar CASH:`, `Rp ${cash.toLocaleString()}`) + buatBaris(`Bayar TRF:`, `Rp ${trf.toLocaleString()}`);
-        p += `------------------------------------------------\n\x1B\x45\x01` + buatBaris(`SISA BON:`, `Rp ${sisa.toLocaleString()}`) + `\x1B\x45\x00\n\n`;
-        
-        p += `\x1B\x61\x01` + buatBaris(`  PENERIMA  `, `  HORMAT KAMI  `);
-        p += `\n\n\n(            )      (            )\n`;
-        p += `------------------------------------------------\n`;
-        p += `\x1B\x45\x01TERIMA KASIH ATAS KEPERCAYAAN ANDA\x1B\x45\x00\n`;
-        p += `SBR PUTRA FOOD - Order System\n\n\n\n\n`; 
+        btn.innerText = "MENYIMPAN..."; btn.disabled = true;
 
         try {
+            // KIRIM KE SPREADSHEET
+            const response = await fetch(webAppUrl, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+            const resJson = await response.json();
+
+            if (resJson.result !== "success") throw new Error("Gagal simpan ke Sheets");
+
+            // PROSES CETAK
+            const lebar = 48;
+            const buatBaris = (l, r) => { let space = lebar - l.length - r.length; return l + " ".repeat(Math.max(1, space)) + r + "\n"; };
+
+            let p = `\x1B\x40\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10SBR PUTRA FOOD\n`;
+            p += `\x1B\x21\x00\x1B\x45\x00Lembang, Bandung Barat\n------------------------------------------------\n`;
+            p += `\x1B\x61\x00` + buatBaris(`NO: ${noNota}`, `TGL: ${tglIndo}`);
+            p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10${ag.toUpperCase()}\n`;
+            p += `\x1B\x21\x00\x1B\x45\x00DRV: ${drvGabung} [ ${mobil} ]\n------------------------------------------------\n\x1B\x61\x00`;
+
+            itemsKirim.forEach(i => {
+                p += `${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, i.total.toLocaleString());
+            });
+
+            if(itemsRetur.length > 0) {
+                p += `------------------------------------------------\n`;
+                itemsRetur.forEach(i => {
+                    p += `[RETUR] ${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, `-${i.total.toLocaleString()}`);
+                });
+            }
+
+            p += `------------------------------------------------\n` + buatBaris(`Total Kirim:`, `Rp ${tk.toLocaleString()}`);
+            p += `================================================\n` + buatBaris(`Total Retur:`, `Rp ${tr.toLocaleString()}`);
+            p += `------------------------------------------------\n` + buatBaris(`Bon Lama:`, `Rp ${bl.toLocaleString()}`);
+            p += `------------------------------------------------\n\x1B\x45\x01` + buatBaris(`TOTAL TAGIHAN:`, `Rp ${(tk - tr + bl).toLocaleString()}`) + `\x1B\x45\x00`;
+            p += `------------------------------------------------\n` + buatBaris(`Bayar CASH:`, `Rp ${cash.toLocaleString()}`) + buatBaris(`Bayar TRF:`, `Rp ${trf.toLocaleString()}`);
+            p += `------------------------------------------------\n\x1B\x45\x01` + buatBaris(`SISA BON:`, `Rp ${sisa.toLocaleString()}`) + `\x1B\x45\x00\n\n`;
+            
+            p += `\x1B\x61\x01` + buatBaris(`  PENERIMA  `, `  HORMAT KAMI  `);
+            p += `\n\n\n(            )      (            )\n`;
+            p += `------------------------------------------------\n`;
+            p += `\x1B\x45\x01TERIMA KASIH ATAS KEPERCAYAAN ANDA\x1B\x45\x00\n`;
+            p += `SBR PUTRA FOOD - Order System\n\n\n\n\n`; 
+
             await printToBT(p);
-            alert("Nota Berhasil Dicetak!");
+            alert("Nota Berhasil Disimpan & Dicetak!");
             location.reload();
-        } catch (e) { alert("Gagal: " + e); }
+        } catch (e) { 
+            alert("Terjadi Kesalahan: " + e.message); 
+            btn.innerText = "SIMPAN & PRINT"; btn.disabled = false;
+        }
     }
     window.onload = init;
 </script>
