@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SBR Putra Food - Fix Notif Position</title>
+    <title>SBR Putra Food - Auto Clear Zero</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
@@ -11,7 +11,6 @@
         .container { background: white; padding: 12px; border-radius: 15px; max-width: 600px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
         header h2 { text-align: center; margin: 0 5px 5px; color: #1a202c; font-size: 25px; text-transform: uppercase; font-weight: 900; }
         
-        /* Area Notifikasi di bawah Logo */
         .notif-bar { text-align: center; margin-bottom: 15px; padding: 8px; border-radius: 8px; background: #fff5f5; border: 1px solid #feb2b2; }
         #statusBT { font-size: 13px; font-weight: 900; color: #e53e3e; display: block; }
         #notifBon { font-size: 14px; font-weight: 900; color: #c53030; display: none; margin-top: 5px; animation: blink 1s infinite; }
@@ -81,13 +80,13 @@
 
         <div class="section-label">💵 PEMBAYARAN :</div>
         <div class="pay-row">
-            <div><label style="font-size:12px; font-weight:900;">CASH</label><input type="text" id="inputCash" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()"></div>
-            <div><label style="font-size:12px; font-weight:900;">TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()"></div>
+            <div><label style="font-size:12px; font-weight:900;">CASH</label><input type="text" id="inputCash" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
+            <div><label style="font-size:12px; font-weight:900;">TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
         </div>
 
         <div class="section-label">📄 BON LAMA :</div>
         <div style="background:#fffaf0; padding:10px; border-radius:10px; border:2px solid #ed8936;">
-            <input type="text" id="inputBonLama" class="input-manual" style="background:transparent; border:none; height:auto;" value="0" oninput="formatRupiah(this); hitungTotal()">
+            <input type="text" id="inputBonLama" class="input-manual" style="background:transparent; border:none; height:auto;" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
         </div>
     </div>
 
@@ -120,7 +119,7 @@
         </div>
         <div style="margin-bottom:20px">
             <label style="font-weight:900">Qty</label>
-            <input type="number" id="modalQty" style="width:100%; padding:12px; font-size:18px" value="0">
+            <input type="number" id="modalQty" style="width:100%; padding:12px; font-size:18px" value="0" onfocus="clearZero(this)">
         </div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
             <button onclick="closeModal()" style="padding:15px; border-radius:10px; font-weight:900">BATAL</button>
@@ -135,6 +134,13 @@
     let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim'; let editIndex = -1;
     let btDevice = null; let btCharacteristic = null;
     let lastPrintData = "";
+
+    // FUNGSI UNTUK MENGHAPUS ANGKA 0 SAAT DIKLIK
+    function clearZero(el) { 
+        if (el.value === "0" || el.value === 0) { 
+            el.value = ""; 
+        } 
+    }
 
     async function connectBT() {
         const statusEl = document.getElementById('statusBT');
@@ -192,7 +198,6 @@
         if(ag && database.harga[ag]) {
             const bon = database.harga[ag].bon || 0;
             document.getElementById('inputBonLama').value = bon.toLocaleString('id-ID');
-            // Logika Notifikasi di Bawah Logo
             if(bon > 0) nBon.style.display = "block";
             else nBon.style.display = "none";
             hitungTotal();
