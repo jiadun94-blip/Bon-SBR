@@ -3,48 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SBR Putra Food - RPP02N Pro Reprint</title>
+    <title>SBR Putra Food - Fix Notif Position</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
         body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; font-size: 17px; }
         .container { background: white; padding: 12px; border-radius: 15px; max-width: 600px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
-        header h2 { text-align: center; margin: 0 0 15px; color: #1a202c; font-size: 25px; text-transform: uppercase; font-weight: 900; }
-        .bt-panel { margin-bottom: 15px; text-align: center; background: #edf2f7; padding: 10px; border-radius: 10px; border: 1px solid #cbd5e0; }
-        #btnConnect { width: 100%; padding: 12px; background: #3182ce; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; }
-        #statusBT { font-size: 12px; font-weight: bold; margin-top: 5px; display: block; color: #e53e3e; }
+        header h2 { text-align: center; margin: 0 5px 5px; color: #1a202c; font-size: 25px; text-transform: uppercase; font-weight: 900; }
+        
+        /* Area Notifikasi di bawah Logo */
+        .notif-bar { text-align: center; margin-bottom: 15px; padding: 8px; border-radius: 8px; background: #fff5f5; border: 1px solid #feb2b2; }
+        #statusBT { font-size: 13px; font-weight: 900; color: #e53e3e; display: block; }
+        #notifBon { font-size: 14px; font-weight: 900; color: #c53030; display: none; margin-top: 5px; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+
+        .bt-panel { margin-bottom: 15px; text-align: center; }
+        #btnConnect { width: 100%; padding: 12px; background: #3182ce; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 0 #2a4365; }
+        
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
         .info-grid select, .info-grid input { width: 100%; padding: 12px 8px; border: 2px solid #cbd5e0; border-radius: 10px; font-size: 17px; box-sizing: border-box; outline: none; font-weight: 700; color: #000; }
+        
         .section-label { font-size: 17px; font-weight: 900; padding: 10px; background: #1a202c; color: white; border-radius: 6px; margin: 15px 0 8px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
         th { font-size: 14px; text-align: left; padding: 8px 5px; background: #edf2f7; border-bottom: 2px solid #cbd5e0; font-weight: 900; }
         td { padding: 8px 5px; border-bottom: 1px solid #e2e8f0; font-size: 16px; font-weight: 700; }
+        
         .btn-action { background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 900; }
+        
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
-        .modal-content { background: white; margin: 15% auto; padding: 20px; border-radius: 15px; width: 85%; max-width: 400px; box-shadow: 0 5px 30px rgba(0,0,0,0.3); }
-        .form-group label { display: block; font-weight: 900; margin-bottom: 5px; font-size: 16px; }
-        .form-group select, .form-group input { width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 19px; font-weight: 700; }
+        .modal-content { background: white; margin: 15% auto; padding: 20px; border-radius: 15px; width: 85%; max-width: 400px; }
+        
         .sub-display { background: #f8fafc; padding: 10px; font-size: 17px; font-weight: 900; text-align: right; border: 2px solid #cbd5e0; border-top: none; display: flex; justify-content: space-between; margin-bottom: 10px; }
+        
         .pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #e2e8f0; padding: 12px; border-radius: 10px; }
         .input-manual { width: 100%; padding: 12px; border: 2px solid #4a5568; border-radius: 8px; font-weight: 900; text-align: right; box-sizing: border-box; font-size: 22px; background: #fff; }
+        
         .summary-box { background: #1a202c; padding: 18px; border-radius: 12px; margin-top: 15px; color: white; }
         .sum-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 18px; }
         .grand-total { border-top: 2px dashed #4a5568; margin-top: 12px; padding-top: 12px; font-weight: 900; color: #fc8181; font-size: 22px; }
         
-        /* Layout Tombol Bawah */
-        .action-group { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-top: 20px; }
-        .btn-save { padding: 20px; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; color: white; background: #27ae60; font-size: 20px; text-transform: uppercase; box-shadow: 0 5px 0 #1e8449; }
-        .btn-reprint { padding: 20px; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; color: white; background: #e67e22; font-size: 16px; text-transform: uppercase; box-shadow: 0 5px 0 #b35d15; opacity: 0.5; }
+        .action-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 20px; }
+        .btn-save { padding: 15px 5px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; color: white; background: #27ae60; font-size: 14px; box-shadow: 0 4px 0 #1e8449; }
+        .btn-reprint { padding: 15px 5px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; color: white; background: #e67e22; font-size: 14px; box-shadow: 0 4px 0 #b35d15; opacity: 0.5; }
+        .btn-reset { padding: 15px 5px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; color: white; background: #e53e3e; font-size: 14px; box-shadow: 0 4px 0 #9b2c2c; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header><h2>SBR PUTRA FOOD</h2></header>
+    
+    <div class="notif-bar">
+        <span id="statusBT">⚠️ Printer Belum Terhubung</span>
+        <span id="notifBon">📢 PERINGATAN: AGEN PUNYA BON SISA!</span>
+    </div>
+
     <div class="bt-panel">
         <button id="btnConnect" onclick="connectBT()">🔗 HUBUNGKAN PRINTER</button>
-        <small id="statusBT">Status: Terputus</small>
     </div>
+
     <div class="info-grid">
         <input type="text" id="noNota" readonly><input type="date" id="tglNota">
         <select id="pilihAgen" onchange="updateBon()"><option value="">-- AGEN --</option></select>
@@ -52,23 +69,28 @@
         <select id="pilihMobil"><option value="">-- MOBIL --</option></select>
         <select id="driver2"><option value="">-- DRIVER 2 (Ops) --</option></select>
     </div>
+
     <div>
         <div class="section-label"><span>📦 DIKIRIM :</span><button class="btn-action" style="background:#27ae60" onclick="openModal('Kirim')">+ ITEM</button></div>
         <table id="tabelKirim"><thead><tr><th>BARANG</th><th>QTY</th><th>TOTAL</th><th>#</th></tr></thead><tbody></tbody></table>
         <div class="sub-display"><span>SUBTOTAL:</span><span id="subKirim">Rp 0</span></div>
+
         <div class="section-label"><span>🔄 RETUR :</span><button class="btn-action" style="background:#e67e22" onclick="openModal('Retur')">+ ITEM</button></div>
         <table id="tabelRetur"><thead><tr><th>BARANG</th><th>QTY</th><th>TOTAL</th><th>#</th></tr></thead><tbody></tbody></table>
         <div class="sub-display"><span>SUBTOTAL:</span><span id="subRetur">Rp 0</span></div>
+
         <div class="section-label">💵 PEMBAYARAN :</div>
         <div class="pay-row">
-            <div><label style="font-size:14px; font-weight:900;">CASH</label><input type="text" id="inputCash" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
-            <div><label style="font-size:14px; font-weight:900;">TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
+            <div><label style="font-size:12px; font-weight:900;">CASH</label><input type="text" id="inputCash" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()"></div>
+            <div><label style="font-size:12px; font-weight:900;">TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()"></div>
         </div>
+
         <div class="section-label">📄 BON LAMA :</div>
         <div style="background:#fffaf0; padding:10px; border-radius:10px; border:2px solid #ed8936;">
-            <input type="text" id="inputBonLama" class="input-manual" style="background:transparent; border:none; height:auto;" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
+            <input type="text" id="inputBonLama" class="input-manual" style="background:transparent; border:none; height:auto;" value="0" oninput="formatRupiah(this); hitungTotal()">
         </div>
     </div>
+
     <div class="summary-box">
         <div class="sum-row"><span>Kirim:</span><span id="txtKirim">Rp 0</span></div>
         <div class="sum-row"><span>Retur:</span><span id="txtRetur">Rp 0</span></div>
@@ -79,18 +101,30 @@
     <div class="action-group">
         <button class="btn-save" id="btnSimpan" onclick="simpanDanPrint()">SIMPAN & PRINT</button>
         <button class="btn-reprint" id="btnReprint" onclick="reprintNota()" disabled>REPRINT</button>
+        <button class="btn-reset" onclick="location.reload()">RESET FORM</button>
     </div>
 </div>
 
 <div id="modalInput" class="modal">
     <div class="modal-content">
-        <h3>Tambah Item</h3>
-        <div class="form-group"><label>Barang</label><select id="modalBarang"></select></div>
-        <div class="form-group"><label>Satuan</label><select id="modalSatuan"><option>Ball</option><option>Pack</option><option>Pcs</option></select></div>
-        <div class="form-group"><label>Qty</label><input type="number" id="modalQty" value="0" onfocus="clearZero(this)"></div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
-            <button onclick="closeModal()">BATAL</button>
-            <button onclick="addItem()" style="background:#27ae60; color:white; border:none; border-radius:8px; font-weight:900;">SIMPAN</button>
+        <h3 id="modalTitle">Tambah Item</h3>
+        <div style="margin-bottom:10px">
+            <label style="font-weight:900">Barang</label>
+            <select id="modalBarang" style="width:100%; padding:12px; font-size:18px"></select>
+        </div>
+        <div style="margin-bottom:10px">
+            <label style="font-weight:900">Satuan</label>
+            <select id="modalSatuan" style="width:100%; padding:12px; font-size:18px">
+                <option>Ball</option><option>Pack</option><option>Pcs</option>
+            </select>
+        </div>
+        <div style="margin-bottom:20px">
+            <label style="font-weight:900">Qty</label>
+            <input type="number" id="modalQty" style="width:100%; padding:12px; font-size:18px" value="0">
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <button onclick="closeModal()" style="padding:15px; border-radius:10px; font-weight:900">BATAL</button>
+            <button onclick="addItem()" style="padding:15px; border-radius:10px; font-weight:900; background:#27ae60; color:white; border:none">SIMPAN</button>
         </div>
     </div>
 </div>
@@ -100,7 +134,7 @@
     let database = { harga: {}, barang: [], karyawan: [], kendaraan: [] };
     let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim'; let editIndex = -1;
     let btDevice = null; let btCharacteristic = null;
-    let lastPrintData = ""; // Variabel untuk menyimpan data reprint
+    let lastPrintData = "";
 
     async function connectBT() {
         const statusEl = document.getElementById('statusBT');
@@ -112,9 +146,11 @@
             const server = await btDevice.gatt.connect();
             const services = await server.getPrimaryServices();
             btCharacteristic = (await services[0].getCharacteristics()).find(c => c.properties.write || c.properties.writeWithoutResponse);
-            statusEl.innerText = "Status: Terhubung (" + btDevice.name + ")";
+            statusEl.innerText = "✅ Printer Terhubung: " + btDevice.name;
             statusEl.style.color = "#27ae60";
-        } catch (e) { alert("BT Gagal: " + e); }
+            document.querySelector('.notif-bar').style.background = "#f0fff4";
+            document.querySelector('.notif-bar').style.border = "1px solid #c6f6d5";
+        } catch (e) { alert("Bluetooth Error!"); }
     }
 
     async function printToBT(text) {
@@ -126,8 +162,13 @@
         }
     }
 
-    function clearZero(el) { if(el.value === "0" || el.value === 0) el.value = ""; }
+    function formatRupiah(el) { 
+        let v = el.value.replace(/[^0-9]/g, ''); 
+        el.value = v === "" ? "0" : Number(v).toLocaleString('id-ID'); 
+    }
     
+    function getAngka(id) { return parseFloat(document.getElementById(id).value.replace(/[^0-9]/g, '')) || 0; }
+
     async function init() {
         try {
             const r = await fetch(webAppUrl); const d = await r.json();
@@ -137,23 +178,36 @@
             d.karyawan.forEach(x => { document.getElementById('driver1').options.add(new Option(x[0],x[0])); document.getElementById('driver2').options.add(new Option(x[0],x[0])); });
             d.kendaraan.forEach(x => document.getElementById('pilihMobil').options.add(new Option(x[0], x[0])));
             const mBarang = document.getElementById('modalBarang');
-            mBarang.options.add(new Option("-- Pilih Barang --", ""));
+            mBarang.options.add(new Option("-- PILIH BARANG --", ""));
             database.barang.forEach(b => mBarang.options.add(new Option(b, b)));
-            resetForm();
-        } catch(e) { console.log("Init Error"); }
+            
+            document.getElementById('tglNota').valueAsDate = new Date();
+            document.getElementById('noNota').value = "SBR" + Date.now().toString().slice(-6);
+        } catch(e) { console.log("Gagal memuat data"); }
     }
 
-    function resetForm() {
-        document.getElementById('tglNota').valueAsDate = new Date();
-        document.getElementById('noNota').value = "SBR" + Date.now().toString().slice(-6);
-        document.getElementById('inputCash').value = "0"; document.getElementById('inputTrf').value = "0"; document.getElementById('inputBonLama').value = "0";
-        itemsKirim = []; itemsRetur = []; render(); hitungTotal();
+    function updateBon() {
+        const ag = document.getElementById('pilihAgen').value;
+        const nBon = document.getElementById('notifBon');
+        if(ag && database.harga[ag]) {
+            const bon = database.harga[ag].bon || 0;
+            document.getElementById('inputBonLama').value = bon.toLocaleString('id-ID');
+            // Logika Notifikasi di Bawah Logo
+            if(bon > 0) nBon.style.display = "block";
+            else nBon.style.display = "none";
+            hitungTotal();
+        } else {
+            nBon.style.display = "none";
+        }
     }
 
     function openModal(mode) { 
         if(!document.getElementById('pilihAgen').value) return alert("Pilih Agen!");
-        currentMode = mode; editIndex = -1; document.getElementById('modalBarang').disabled = false;
-        document.getElementById('modalBarang').value = ""; document.getElementById('modalQty').value = "0";
+        currentMode = mode; editIndex = -1;
+        document.getElementById('modalTitle').innerText = "Tambah " + mode;
+        document.getElementById('modalBarang').disabled = false;
+        document.getElementById('modalBarang').value = ""; 
+        document.getElementById('modalQty').value = "0";
         document.getElementById('modalInput').style.display = "block"; 
     }
 
@@ -185,40 +239,34 @@
                 const r = tb.insertRow();
                 r.innerHTML = `<td>${it.barang}<br><small>${it.satuan}@${it.harga.toLocaleString()}</small></td>
                                <td>${it.qty}</td><td>${it.total.toLocaleString()}</td>
-                               <td><button class="btn-action" style="background:#3182ce" onclick="editItem(${idx},'${mode}')">EDIT</button></td>`;
+                               <td><button class="btn-action" style="background:#3182ce" onclick="editItem(${idx},'${mode}')">EDT</button></td>`;
             });
         };
         draw(itemsKirim, 'tabelKirim', 'Kirim'); draw(itemsRetur, 'tabelRetur', 'Retur');
     }
 
-    function formatRupiah(el) { let v = el.value.replace(/[^0-9]/g, ''); el.value = v === "" ? "0" : Number(v).toLocaleString('id-ID'); }
-    function getAngka(id) { return parseFloat(document.getElementById(id).value.replace(/[^0-9]/g, '')) || 0; }
-    
-    function updateBon() {
-        const ag = document.getElementById('pilihAgen').value;
-        document.getElementById('inputBonLama').value = (database.harga[ag]?.bon || 0).toLocaleString('id-ID');
-        hitungTotal();
-    }
-
     function hitungTotal() {
-        const tk = itemsKirim.reduce((a, b) => a + b.total, 0); const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
-        const bl = getAngka('inputBonLama'); const cs = getAngka('inputCash'); const tf = getAngka('inputTrf');
-        document.getElementById('subKirim').innerText = "Rp " + tk.toLocaleString('id-ID'); document.getElementById('subRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
-        document.getElementById('txtKirim').innerText = "Rp " + tk.toLocaleString('id-ID'); document.getElementById('txtRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
-        document.getElementById('txtBon').innerText = "Rp " + bl.toLocaleString('id-ID'); document.getElementById('txtGrand').innerText = "Rp " + (tk - tr + bl - cs - tf).toLocaleString('id-ID');
+        const tk = itemsKirim.reduce((a, b) => a + b.total, 0); 
+        const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
+        const bl = getAngka('inputBonLama'); 
+        const cs = getAngka('inputCash'); 
+        const tf = getAngka('inputTrf');
+        
+        document.getElementById('subKirim').innerText = "Rp " + tk.toLocaleString('id-ID'); 
+        document.getElementById('subRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
+        document.getElementById('txtKirim').innerText = "Rp " + tk.toLocaleString('id-ID'); 
+        document.getElementById('txtRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
+        document.getElementById('txtBon').innerText = "Rp " + bl.toLocaleString('id-ID'); 
+        document.getElementById('txtGrand').innerText = "Rp " + (tk - tr + bl - cs - tf).toLocaleString('id-ID');
     }
 
     async function reprintNota() {
-        if(!lastPrintData) return alert("Belum ada data untuk dicetak!");
-        if(!btCharacteristic) return alert("Hubungkan Printer!");
-        try {
-            await printToBT(lastPrintData);
-            alert("Reprint Berhasil!");
-        } catch(e) { alert("Reprint Gagal: " + e); }
+        if(!lastPrintData || !btCharacteristic) return alert("Data kosong / Printer Off");
+        try { await printToBT(lastPrintData); alert("Berhasil Reprint!"); } catch(e) { alert("Reprint Gagal!"); }
     }
 
     async function simpanDanPrint() {
-        if(!btCharacteristic) return alert("Koneksikan Printer!");
+        if(!btCharacteristic) return alert("Hubungkan Printer!");
         const ag = document.getElementById('pilihAgen').value; if(!ag) return alert("Pilih Agen!");
         
         const noNota = document.getElementById('noNota').value; 
@@ -229,10 +277,13 @@
         const drv1 = document.getElementById('driver1').value;
         const drv2 = document.getElementById('driver2').value;
         const drvGabung = drv2 ? `${drv1} / ${drv2}` : drv1;
-
         const mobil = document.getElementById('pilihMobil').value;
-        const tk = itemsKirim.reduce((a, b) => a + b.total, 0); const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
-        const bl = getAngka('inputBonLama'); const cash = getAngka('inputCash'); const trf = getAngka('inputTrf');
+
+        const tk = itemsKirim.reduce((a, b) => a + b.total, 0); 
+        const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
+        const bl = getAngka('inputBonLama'); 
+        const cash = getAngka('inputCash'); 
+        const trf = getAngka('inputTrf');
         const sisa = (tk - tr + bl - cash - trf);
 
         const lebar = 48;
@@ -244,15 +295,10 @@
         p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10${ag.toUpperCase()}\n`;
         p += `\x1B\x21\x00\x1B\x45\x00DRV: ${drvGabung} [ ${mobil} ]\n------------------------------------------------\n\x1B\x61\x00`;
 
-        itemsKirim.forEach(i => {
-            p += `${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, i.total.toLocaleString());
-        });
-
+        itemsKirim.forEach(i => { p += `${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, i.total.toLocaleString()); });
         if(itemsRetur.length > 0) {
             p += `------------------------------------------------\n`;
-            itemsRetur.forEach(i => {
-                p += `[RETUR] ${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, `-${i.total.toLocaleString()}`);
-            });
+            itemsRetur.forEach(i => { p += `[RETUR] ${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, `-${i.total.toLocaleString()}`); });
         }
 
         p += `------------------------------------------------\n` + buatBaris(`Total Kirim:`, `Rp ${tk.toLocaleString()}`);
@@ -261,27 +307,16 @@
         p += `------------------------------------------------\n\x1B\x45\x01` + buatBaris(`TOTAL TAGIHAN:`, `Rp ${(tk - tr + bl).toLocaleString()}`) + `\x1B\x45\x00`;
         p += `------------------------------------------------\n` + buatBaris(`Bayar CASH:`, `Rp ${cash.toLocaleString()}`) + buatBaris(`Bayar TRF:`, `Rp ${trf.toLocaleString()}`);
         p += `------------------------------------------------\n\x1B\x45\x01` + buatBaris(`SISA BON:`, `Rp ${sisa.toLocaleString()}`) + `\x1B\x45\x00\n\n`;
-        
-        p += `\x1B\x61\x01` + buatBaris(`  PENERIMA  `, `  HORMAT KAMI  `);
-        p += `\n\n\n(            )      (            )\n`;
-        p += `------------------------------------------------\n`;
-        p += `\x1B\x45\x01TERIMA KASIH ATAS KEPERCAYAAN ANDA\x1B\x45\x00\n`;
-        p += `SBR PUTRA FOOD - Order System\n\n\n\n\n`; 
+        p += `\x1B\x61\x01` + buatBaris(`  PENERIMA  `, `  HORMAT KAMI  `) + `\n\n\n(            )      (            )\n------------------------------------------------\n`;
+        p += `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`; 
 
         try {
             await printToBT(p);
-            
-            // SIMPAN DATA REPRINT SEBELUM RESET
             lastPrintData = p; 
             document.getElementById('btnReprint').disabled = false;
             document.getElementById('btnReprint').style.opacity = "1";
-            
-            alert("Nota Berhasil Dicetak! Tombol REPRINT sekarang aktif.");
-            
-            // Catatan: Jika ingin langsung reset form, jalankan resetForm(), 
-            // tapi tombol reprint akan tetap berfungsi karena lastPrintData disimpan di memory.
-            resetForm(); 
-        } catch (e) { alert("Gagal: " + e); }
+            alert("Berhasil!");
+        } catch (e) { alert("Printer Error!"); }
     }
     window.onload = init;
 </script>
