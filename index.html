@@ -311,7 +311,7 @@
         p += `------------------------------------------------\n\x1B\x45\x01` + buatBaris(`TOTAL TAGIHAN:`, `Rp ${(tk - tr + bl).toLocaleString()}`) + `\x1B\x45\x00`;
         p += `------------------------------------------------\n` + buatBaris(`Bayar CASH:`, `Rp ${cash.toLocaleString()}`) + buatBaris(`Bayar TRF:`, `Rp ${trf.toLocaleString()}`);
         p += `------------------------------------------------\n\x1B\x45\x01` + buatBaris(`SISA BON:`, `Rp ${sisa.toLocaleString()}`) + `\x1B\x45\x00\n\n`;
-        p += `\x1B\x61\x01` + buatBaris(`  PENERIMA  `, `  HORMAT KAMI  `) + `\n\n\n(            )      (            )\n------------------------------------------------\n`;
+        p += `\x1B\x61\x01` + buatBaris(`    `, `    `) + `\n\n\n                              \n------------------------------------------------\n`;
         p += `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`; 
 
         try { await printToBT(p); lastPrintData = p; document.getElementById('btnReprint').disabled = false; document.getElementById('btnReprint').style.opacity = "1"; } catch (e) { alert("Printer Error!"); }
