@@ -10,37 +10,27 @@
         body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; font-size: 17px; }
         .container { background: white; padding: 12px; border-radius: 15px; max-width: 600px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
         header h2 { text-align: center; margin: 0 5px 5px; color: #1a202c; font-size: 25px; text-transform: uppercase; font-weight: 900; }
-        
         .notif-bar { text-align: center; margin-bottom: 15px; padding: 8px; border-radius: 8px; background: #fff5f5; border: 1px solid #feb2b2; }
         #statusBT { font-size: 13px; font-weight: 900; color: #e53e3e; display: block; }
         #notifBon { font-size: 14px; font-weight: 900; color: #c53030; display: none; margin-top: 5px; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0.5; } }
-
         .bt-panel { margin-bottom: 15px; text-align: center; }
         #btnConnect { width: 100%; padding: 12px; background: #3182ce; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 0 #2a4365; }
-        
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
         .info-grid select, .info-grid input { width: 100%; padding: 12px 8px; border: 2px solid #cbd5e0; border-radius: 10px; font-size: 17px; box-sizing: border-box; outline: none; font-weight: 700; color: #000; }
-        
         .section-label { font-size: 17px; font-weight: 900; padding: 10px; background: #1a202c; color: white; border-radius: 6px; margin: 15px 0 8px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
         th { font-size: 14px; text-align: left; padding: 8px 5px; background: #edf2f7; border-bottom: 2px solid #cbd5e0; font-weight: 900; }
         td { padding: 8px 5px; border-bottom: 1px solid #e2e8f0; font-size: 16px; font-weight: 700; }
-        
         .btn-action { background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 900; }
-        
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
         .modal-content { background: white; margin: 15% auto; padding: 20px; border-radius: 15px; width: 85%; max-width: 400px; }
-        
         .sub-display { background: #f8fafc; padding: 10px; font-size: 17px; font-weight: 900; text-align: right; border: 2px solid #cbd5e0; border-top: none; display: flex; justify-content: space-between; margin-bottom: 10px; }
-        
         .pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #e2e8f0; padding: 12px; border-radius: 10px; }
         .input-manual { width: 100%; padding: 12px; border: 2px solid #4a5568; border-radius: 8px; font-weight: 900; text-align: right; box-sizing: border-box; font-size: 22px; background: #fff; }
-        
         .summary-box { background: #1a202c; padding: 18px; border-radius: 12px; margin-top: 15px; color: white; }
         .sum-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 18px; }
         .grand-total { border-top: 2px dashed #4a5568; margin-top: 12px; padding-top: 12px; font-weight: 900; color: #fc8181; font-size: 22px; }
-        
         .action-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 20px; }
         .btn-save { padding: 15px 5px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; color: white; background: #27ae60; font-size: 14px; box-shadow: 0 4px 0 #1e8449; }
         .btn-reprint { padding: 15px 5px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; color: white; background: #e67e22; font-size: 14px; box-shadow: 0 4px 0 #b35d15; opacity: 0.5; }
@@ -129,18 +119,15 @@
 </div>
 
 <script>
-    const webAppUrl = "https://script.google.com/macros/s/AKfycbz3f4ltxhl45Uf2NanNtbFcbEIOIoNvaKu1OlzaxiABLtOTrzQHmQtz-tgt9VbLWg51/exec";
+    // GANTI DENGAN URL DEPLOYMENT TERBARU ANDA
+    const webAppUrl = "https://script.google.com/macros/s/AKfycbymh-_gOVw6dF3uakH7j2Bdqxv9ErLywSxOUyR4pJo5rHfvawjIJwAwO4iDi0cwzXvF/exec";
+    
     let database = { harga: {}, barang: [], karyawan: [], kendaraan: [] };
     let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim'; let editIndex = -1;
     let btDevice = null; let btCharacteristic = null;
     let lastPrintData = "";
 
-    // FUNGSI UNTUK MENGHAPUS ANGKA 0 SAAT DIKLIK
-    function clearZero(el) { 
-        if (el.value === "0" || el.value === 0) { 
-            el.value = ""; 
-        } 
-    }
+    function clearZero(el) { if (el.value === "0" || el.value === 0) el.value = ""; }
 
     async function connectBT() {
         const statusEl = document.getElementById('statusBT');
@@ -154,8 +141,6 @@
             btCharacteristic = (await services[0].getCharacteristics()).find(c => c.properties.write || c.properties.writeWithoutResponse);
             statusEl.innerText = "✅ Printer Terhubung: " + btDevice.name;
             statusEl.style.color = "#27ae60";
-            document.querySelector('.notif-bar').style.background = "#f0fff4";
-            document.querySelector('.notif-bar').style.border = "1px solid #c6f6d5";
         } catch (e) { alert("Bluetooth Error!"); }
     }
 
@@ -179,10 +164,17 @@
         try {
             const r = await fetch(webAppUrl); const d = await r.json();
             database.barang = d.barang.map(x => x[1]);
-            d.agen.forEach(x => { document.getElementById('pilihAgen').options.add(new Option(x[0], x[0])); database.harga[x[0]] = { "bon": x[3] || 0 }; });
-            d.harga.forEach(x => { if(!database.harga[x[0]]) database.harga[x[0]] = {}; database.harga[x[0]][`${x[1]}_${x[2]}`] = x[3]; });
+            d.agen.forEach(x => { 
+                document.getElementById('pilihAgen').options.add(new Option(x[0], x[0])); 
+                database.harga[x[0]] = { "bon": x[3] || 0 }; 
+            });
+            d.harga.forEach(x => { 
+                if(!database.harga[x[0]]) database.harga[x[0]] = {}; 
+                database.harga[x[0]][`${x[1]}_${x[2]}`] = x[3]; 
+            });
             d.karyawan.forEach(x => { document.getElementById('driver1').options.add(new Option(x[0],x[0])); document.getElementById('driver2').options.add(new Option(x[0],x[0])); });
             d.kendaraan.forEach(x => document.getElementById('pilihMobil').options.add(new Option(x[0], x[0])));
+            
             const mBarang = document.getElementById('modalBarang');
             mBarang.options.add(new Option("-- PILIH BARANG --", ""));
             database.barang.forEach(b => mBarang.options.add(new Option(b, b)));
@@ -198,11 +190,8 @@
         if(ag && database.harga[ag]) {
             const bon = database.harga[ag].bon || 0;
             document.getElementById('inputBonLama').value = bon.toLocaleString('id-ID');
-            if(bon > 0) nBon.style.display = "block";
-            else nBon.style.display = "none";
+            nBon.style.display = bon > 0 ? "block" : "none";
             hitungTotal();
-        } else {
-            nBon.style.display = "none";
         }
     }
 
@@ -256,7 +245,6 @@
         const bl = getAngka('inputBonLama'); 
         const cs = getAngka('inputCash'); 
         const tf = getAngka('inputTrf');
-        
         document.getElementById('subKirim').innerText = "Rp " + tk.toLocaleString('id-ID'); 
         document.getElementById('subRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
         document.getElementById('txtKirim').innerText = "Rp " + tk.toLocaleString('id-ID'); 
@@ -265,25 +253,14 @@
         document.getElementById('txtGrand').innerText = "Rp " + (tk - tr + bl - cs - tf).toLocaleString('id-ID');
     }
 
-    async function reprintNota() {
-        if(!lastPrintData || !btCharacteristic) return alert("Data kosong / Printer Off");
-        try { await printToBT(lastPrintData); alert("Berhasil Reprint!"); } catch(e) { alert("Reprint Gagal!"); }
-    }
-
     async function simpanDanPrint() {
-        if(!btCharacteristic) return alert("Hubungkan Printer!");
         const ag = document.getElementById('pilihAgen').value; if(!ag) return alert("Pilih Agen!");
         
         const noNota = document.getElementById('noNota').value; 
         const tglInput = document.getElementById('tglNota').value; 
-        const [y, m, d] = tglInput.split('-');
-        const tglIndo = `${d}-${m}-${y}`;
-
         const drv1 = document.getElementById('driver1').value;
         const drv2 = document.getElementById('driver2').value;
-        const drvGabung = drv2 ? `${drv1} / ${drv2}` : drv1;
         const mobil = document.getElementById('pilihMobil').value;
-
         const tk = itemsKirim.reduce((a, b) => a + b.total, 0); 
         const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
         const bl = getAngka('inputBonLama'); 
@@ -291,6 +268,29 @@
         const trf = getAngka('inputTrf');
         const sisa = (tk - tr + bl - cash - trf);
 
+        // Gabung Items untuk Spreadsheet
+        const gabungItems = [
+            ...itemsKirim.map(it => ({ nama: it.barang, qty: it.qty, satuan: it.satuan, tipe: "Kirim" })),
+            ...itemsRetur.map(it => ({ nama: it.barang, qty: it.qty, satuan: it.satuan, tipe: "Retur" }))
+        ];
+
+        const payload = {
+            noNota, tanggal: tglInput, agen: ag, driver1: drv1, driver2: drv2, mobil,
+            totalKirim: tk, totalRetur: tr, sisaBonLama: bl, bayarCash: cash, bayarTrf: trf,
+            items: gabungItems
+        };
+
+        // SIMPAN KE SPREADSHEET
+        try {
+            await fetch(webAppUrl, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
+            alert("Data Berhasil Disimpan ke Spreadsheet!");
+        } catch (e) { alert("Gagal Simpan Database!"); }
+
+        // PRINT LOGIC
+        if(!btCharacteristic) return alert("Printer tidak terhubung, data hanya disimpan.");
+        
+        const [y, m, d] = tglInput.split('-');
+        const tglIndo = `${d}-${m}-${y}`;
         const lebar = 48;
         const buatBaris = (l, r) => { let space = lebar - l.length - r.length; return l + " ".repeat(Math.max(1, space)) + r + "\n"; };
 
@@ -298,14 +298,13 @@
         p += `\x1B\x21\x00\x1B\x45\x00Lembang, Bandung Barat\n------------------------------------------------\n`;
         p += `\x1B\x61\x00` + buatBaris(`NO: ${noNota}`, `TGL: ${tglIndo}`);
         p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10${ag.toUpperCase()}\n`;
-        p += `\x1B\x21\x00\x1B\x45\x00DRV: ${drvGabung} [ ${mobil} ]\n------------------------------------------------\n\x1B\x61\x00`;
+        p += `\x1B\x21\x00\x1B\x45\x00DRV: ${drv1}${drv2?'/'+drv2:''} [ ${mobil} ]\n------------------------------------------------\n\x1B\x61\x00`;
 
         itemsKirim.forEach(i => { p += `${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, i.total.toLocaleString()); });
         if(itemsRetur.length > 0) {
             p += `------------------------------------------------\n`;
             itemsRetur.forEach(i => { p += `[RETUR] ${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, `-${i.total.toLocaleString()}`); });
         }
-
         p += `------------------------------------------------\n` + buatBaris(`Total Kirim:`, `Rp ${tk.toLocaleString()}`);
         p += `================================================\n` + buatBaris(`Total Retur:`, `Rp ${tr.toLocaleString()}`);
         p += `------------------------------------------------\n` + buatBaris(`Bon Lama:`, `Rp ${bl.toLocaleString()}`);
@@ -315,14 +314,10 @@
         p += `\x1B\x61\x01` + buatBaris(`  PENERIMA  `, `  HORMAT KAMI  `) + `\n\n\n(            )      (            )\n------------------------------------------------\n`;
         p += `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`; 
 
-        try {
-            await printToBT(p);
-            lastPrintData = p; 
-            document.getElementById('btnReprint').disabled = false;
-            document.getElementById('btnReprint').style.opacity = "1";
-            alert("Berhasil!");
-        } catch (e) { alert("Printer Error!"); }
+        try { await printToBT(p); lastPrintData = p; document.getElementById('btnReprint').disabled = false; document.getElementById('btnReprint').style.opacity = "1"; } catch (e) { alert("Printer Error!"); }
     }
+
+    async function reprintNota() { if(lastPrintData && btCharacteristic) await printToBT(lastPrintData); }
     window.onload = init;
 </script>
 </body>
