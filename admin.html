@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBR Admin - Master Data</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --p-color: #2c3e50; --s-color: #27ae60; }
+        body { font-family: 'Roboto', sans-serif; margin: 0; background: #f0f2f5; }
+        nav { background: #1a202c; color: white; padding: 15px; display: flex; justify-content: space-between; }
+        .nav-tabs { display: flex; background: white; border-bottom: 2px solid #dfe6e9; overflow-x: auto; }
+        .tab-btn { padding: 15px; border: none; background: none; cursor: pointer; font-weight: bold; color: #636e72; }
+        .tab-btn.active { color: #0984e3; border-bottom: 3px solid #0984e3; }
+        .container { padding: 20px; max-width: 900px; margin: auto; }
+        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        .btn { padding: 8px 12px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; }
+        .btn-add { background: var(--s-color); color: white; margin-bottom: 10px; }
+        .btn-del { background: #d63031; color: white; }
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 10% auto; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; }
+        input, select { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+<script>
+    // PROTEKSI: Jika bukan admin, tendang ke login
+    if (localStorage.getItem("userRole") !== "admin") {
+        window.location.href = "index.html";
+    }
+</script>
+
+<nav>
+    <h3 style="margin:0">SBR ADMIN</h3>
+    <button onclick="localStorage.clear(); window.location.href='index.html'" style="background:none; color:white; border:1px solid white; cursor:pointer;">LOGOUT</button>
+</nav>
+
+<div class="nav-tabs">
+    <button class="tab-btn active" onclick="openTab(event, 'agen')">AGEN</button>
+    <button class="tab-btn" onclick="openTab(event, 'harga')">HARGA</button>
+    <button class="tab-btn" onclick="openTab(event, 'karyawan')">KARYAWAN</button>
+    <button class="tab-btn" onclick="openTab(event, 'kendaraan')">MOBIL</button>
+    <button class="tab-btn" onclick="window.location.href='bon.html'" style="color:var(--s-color)">+ BUAT BON</button>
+</div>
+
+<div class="container">
+    <button class="btn btn-add" id="btnTambah" onclick="showModal()">+ TAMBAH DATA</button>
+    <div class="card">
+        <table id="mainTable">
+            <thead id="thead"></thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Generic -->
+<div id="modalForm" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle">Form Data</h3>
+        <div id="formFields"></div>
+        <button class="btn btn-add" onclick="simpanData()">SIMPAN</button>
+        <button class="btn" onclick="document.getElementById('modalForm').style.display='none'">BATAL</button>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentTab = 'agen';
+
+    function openTab(evt, tab) {
+        currentTab = tab;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        evt.currentTarget.classList.add('active');
+        loadData();
+    }
+
+    async function loadData() {
+        const tbody = document.getElementById('tbody');
+        const thead = document.getElementById('thead');
+        tbody.innerHTML = "Loading...";
+        
+        let { data } = await client.from(currentTab).select('*');
+        
+        thead.innerHTML = ""; tbody.innerHTML = "";
+        if (currentTab === 'agen') {
+            thead.innerHTML = "<tr><th>Agen</th><th>Saldo</th><th>Aksi</th></tr>";
+            data.forEach(d => tbody.innerHTML += `<tr><td>${d.nama_agen}</td><td>${d.saldo_bon}</td><td><button class="btn-del" onclick="hapus('${d.nama_agen}')">X</button></td></tr>`);
+        } else if (currentTab === 'harga') {
+            thead.innerHTML = "<tr><th>Agen</th><th>Barang</th><th>Harga</th><th>Aksi</th></tr>";
+            data.forEach(d => tbody.innerHTML += `<tr><td>${d.nama_agen}</td><td>${d.nama_barang}</td><td>${d.harga_jual}</td><td><button class="btn-del" onclick="hapus('${d.id}')">X</button></td></tr>`);
+        } else if (currentTab === 'karyawan') {
+            thead.innerHTML = "<tr><th>Nama</th><th>Role</th><th>Aksi</th></tr>";
+            data.forEach(d => tbody.innerHTML += `<tr><td>${d.nama_karyawan}</td><td>${d.role}</td><td><button class="btn-del" onclick="hapus('${d.nama_karyawan}')">X</button></td></tr>`);
+        } else if (currentTab === 'kendaraan') {
+            thead.innerHTML = "<tr><th>Plat Nomor</th><th>Aksi</th></tr>";
+            data.forEach(d => tbody.innerHTML += `<tr><td>${d.plat_nomor}</td><td><button class="btn-del" onclick="hapus('${d.plat_nomor}')">X</button></td></tr>`);
+        }
+    }
+
+    async function showModal() {
+        const fields = document.getElementById('formFields');
+        fields.innerHTML = "";
+        document.getElementById('modalForm').style.display = 'block';
+
+        if (currentTab === 'agen') {
+            fields.innerHTML = `<input id="i1" placeholder="Nama Agen"><input id="i2" type="number" placeholder="Saldo Awal">`;
+        } else if (currentTab === 'harga') {
+            const {data:ag} = await client.from('agen').select('nama_agen');
+            const {data:br} = await client.from('barang').select('nama_barang');
+            fields.innerHTML = `<select id="i1">${ag.map(x=>`<option>${x.nama_agen}</option>`)}</select>
+                                <select id="i2">${br.map(x=>`<option>${x.nama_barang}</option>`)}</select>
+                                <select id="i3"><option>Ball</option><option>Pack</option><option>Pcs</option></select>
+                                <input id="i4" type="number" placeholder="Harga Jual">`;
+        } else if (currentTab === 'karyawan') {
+            fields.innerHTML = `<input id="i1" placeholder="Nama Karyawan"><input id="i2" placeholder="PIN"><select id="i3"><option>driver</option><option>admin</option></select>`;
+        } else if (currentTab === 'kendaraan') {
+            fields.innerHTML = `<input id="i1" placeholder="Plat Nomor">`;
+        }
+    }
+
+    async function simpanData() {
+        let p = {};
+        if (currentTab === 'agen') p = { nama_agen: document.getElementById('i1').value, saldo_bon: document.getElementById('i2').value };
+        else if (currentTab === 'harga') p = { nama_agen: document.getElementById('i1').value, nama_barang: document.getElementById('i2').value, satuan: document.getElementById('i3').value, harga_jual: document.getElementById('i4').value };
+        else if (currentTab === 'karyawan') p = { nama_karyawan: document.getElementById('i1').value, password: document.getElementById('i2').value, role: document.getElementById('i3').value, aktif:true };
+        else if (currentTab === 'kendaraan') p = { plat_nomor: document.getElementById('i1').value };
+
+        await client.from(currentTab).upsert(p);
+        document.getElementById('modalForm').style.display = 'none';
+        loadData();
+    }
+
+    async function hapus(id) {
+        if (!confirm("Hapus data?")) return;
+        let col = currentTab === 'harga' ? 'id' : (currentTab === 'kendaraan' ? 'plat_nomor' : (currentTab === 'agen' ? 'nama_agen' : 'nama_karyawan'));
+        await client.from(currentTab).delete().eq(col, id);
+        loadData();
+    }
+
+    window.onload = loadData;
+</script>
+</body>
+</html>

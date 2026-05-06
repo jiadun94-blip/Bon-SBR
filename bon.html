@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SBR Putra Food - Input Nota</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="theme-color" content="#2c3e50">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; font-size: 17px; }
+        .container { background: white; padding: 12px; border-radius: 15px; max-width: 600px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        header h2 { margin: 0; color: #1a202c; font-size: 22px; text-transform: uppercase; font-weight: 900; }
+        .btn-logout { background: #e53e3e; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 900; cursor: pointer; font-size: 12px; }
+        
+        .bt-panel { margin-bottom: 10px; text-align: center; background: #edf2f7; padding: 10px; border-radius: 10px; border: 1px solid #cbd5e0; }
+        #btnConnect { width: 100%; padding: 12px; background: #3182ce; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; }
+        #statusBT { font-size: 12px; font-weight: bold; margin-top: 5px; display: block; color: #e53e3e; }
+        
+        #notifBon { display: none; background: #fff5f5; color: #c53030; padding: 12px; border-radius: 10px; border: 2px solid #feb2b2; text-align: center; font-weight: 900; margin-bottom: 15px; animation: blinker 1s linear infinite; font-size: 18px; }
+        @keyframes blinker { 50% { opacity: 0.3; border-color: transparent; } }
+
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .info-grid select, .info-grid input { width: 100%; padding: 12px 8px; border: 2px solid #cbd5e0; border-radius: 10px; font-size: 17px; box-sizing: border-box; outline: none; font-weight: 700; color: #000; }
+        .section-label { font-size: 17px; font-weight: 900; padding: 10px; background: #1a202c; color: white; border-radius: 6px; margin: 15px 0 8px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
+        th { font-size: 14px; text-align: left; padding: 8px 5px; background: #edf2f7; border-bottom: 2px solid #cbd5e0; font-weight: 900; }
+        td { padding: 8px 5px; border-bottom: 1px solid #e2e8f0; font-size: 16px; font-weight: 700; }
+        .btn-action { background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 900; }
+        
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
+        .modal-content { background: white; margin: 15% auto; padding: 20px; border-radius: 15px; width: 85%; max-width: 400px; box-shadow: 0 5px 30px rgba(0,0,0,0.3); }
+        .form-group label { display: block; font-weight: 900; margin-bottom: 5px; font-size: 16px; }
+        .form-group select, .form-group input { width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 19px; font-weight: 700; }
+        
+        .sub-display { background: #f8fafc; padding: 10px; font-size: 17px; font-weight: 900; text-align: right; border: 2px solid #cbd5e0; border-top: none; display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #e2e8f0; padding: 12px; border-radius: 10px; }
+        .input-manual { width: 100%; padding: 12px; border: 2px solid #4a5568; border-radius: 8px; font-weight: 900; text-align: right; box-sizing: border-box; font-size: 22px; background: #fff; }
+        
+        .summary-box { background: #1a202c; padding: 18px; border-radius: 12px; margin-top: 15px; color: white; }
+        .sum-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 18px; }
+        .grand-total { border-top: 2px dashed #4a5568; margin-top: 12px; padding-top: 12px; font-weight: 900; color: #fc8181; font-size: 22px; }
+        
+        .btn-save { width: 100%; padding: 20px; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; color: white; background: #27ae60; margin-top: 20px; font-size: 21px; text-transform: uppercase; box-shadow: 0 5px 0 #1e8449; }
+        .after-save-panel { display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn-reprint { padding: 15px; background: #805ad5; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #553c9a; }
+        .btn-clear { padding: 15px; background: #718096; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #4a5568; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h2>SBR PUTRA FOOD</h2>
+        <button class="btn-logout" onclick="logout()">LOGOUT</button>
+    </header>
+
+    <div class="bt-panel">
+        <button id="btnConnect" onclick="connectBT()">🔗 HUBUNGKAN PRINTER</button>
+        <small id="statusBT">Status: Terputus</small>
+    </div>
+
+    <div id="notifBon">⚠️ AGEN INI PUNYA BON LAMA!</div>
+
+    <div class="info-grid">
+        <input type="text" id="noNota" readonly placeholder="No. Nota">
+        <input type="date" id="tglNota">
+        <select id="pilihAgen" onchange="updateBon()"><option value="">-- AGEN --</option></select>
+        <select id="driver1" disabled style="background:#edf2f7; color:#4a5568;"><option value="">-- DRIVER 1 --</option></select>
+        <select id="pilihMobil"><option value="">-- MOBIL --</option></select>
+        <select id="driver2"><option value="">-- DRIVER 2 (Ops) --</option></select>
+    </div>
+
+    <div>
+        <div class="section-label"><span>📦 DIKIRIM :</span><button class="btn-action" style="background:#27ae60" onclick="openModal('Kirim')">+ ITEM</button></div>
+        <table id="tabelKirim"><thead><tr><th>BARANG</th><th>QTY</th><th>TOTAL</th><th>#</th></tr></thead><tbody></tbody></table>
+        <div class="sub-display"><span>SUBTOTAL:</span><span id="subKirim">Rp 0</span></div>
+
+        <div class="section-label"><span>🔄 RETUR :</span><button class="btn-action" style="background:#e67e22" onclick="openModal('Retur')">+ ITEM</button></div>
+        <table id="tabelRetur"><thead><tr><th>BARANG</th><th>QTY</th><th>TOTAL</th><th>#</th></tr></thead><tbody></tbody></table>
+        <div class="sub-display"><span>SUBTOTAL:</span><span id="subRetur">Rp 0</span></div>
+
+        <div class="section-label">💵 PEMBAYARAN :</div>
+        <div class="pay-row">
+            <div><label style="font-size:14px; font-weight:900;">CASH</label><input type="text" id="inputCash" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
+            <div><label style="font-size:14px; font-weight:900;">TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
+        </div>
+        
+        <div class="section-label">📄 BON LAMA :</div>
+        <div style="background:#fffaf0; padding:10px; border-radius:10px; border:2px solid #ed8936;">
+            <input type="text" id="inputBonLama" class="input-manual" style="background:transparent; border:none; height:auto;" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
+        </div>
+    </div>
+
+    <div class="summary-box">
+        <div class="sum-row"><span>Kirim:</span><span id="txtKirim">Rp 0</span></div>
+        <div class="sum-row"><span>Retur:</span><span id="txtRetur">Rp 0</span></div>
+        <div class="sum-row"><span>Bon Lama:</span><span id="txtBon">Rp 0</span></div>
+        <div class="sum-row grand-total"><span>SISA AKHIR:</span><span id="txtGrand">Rp 0</span></div>
+    </div>
+
+    <button class="btn-save" id="btnSimpan" onclick="simpanDanPrint()">SIMPAN & PRINT</button>
+
+    <div id="afterSavePanel" class="after-save-panel">
+        <button class="btn-reprint" onclick="reprintLast()">🔄 REPRINT</button>
+        <button class="btn-clear" onclick="location.reload()">➕ NOTA BARU</button>
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="modalInput" class="modal">
+    <div class="modal-content">
+        <h3>Tambah Item</h3>
+        <div class="form-group"><label>Barang</label><select id="modalBarang"></select></div>
+        <div class="form-group"><label>Satuan</label><select id="modalSatuan"><option>Ball</option><option>Pack</option><option>Pcs</option></select></div>
+        <div class="form-group"><label>Qty</label><input type="number" id="modalQty" value="0" onfocus="clearZero(this)"></div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
+            <button onclick="closeModal()" style="padding:10px; border-radius:8px; border:1px solid #ccc;">BATAL</button>
+            <button onclick="addItem()" style="background:#27ae60; color:white; border:none; border-radius:8px; font-weight:900;">SIMPAN</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const userAktif = localStorage.getItem("userNama");
+    if (!userAktif) { window.location.href = "index.html"; }
+    function logout() { localStorage.clear(); window.location.href = "index.html"; }
+
+    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let database = { harga: {}, barang: [] };
+    let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim'; let editIndex = -1;
+    let btCharacteristic = null;
+    let lastPrintText = "";
+
+    function clearZero(el) { if(el.value === "0" || el.value === 0) el.value = ""; }
+
+    async function init() {
+        try {
+            const { data: agen } = await clientSupabase.from('agen').select('*');
+            if(agen) {
+                agen.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen));
+                const selAgen = document.getElementById('pilihAgen');
+                selAgen.innerHTML = '<option value="">-- AGEN --</option>';
+                agen.forEach(a => {
+                    const labelBon = a.saldo_bon > 0 ? ` (!)` : "";
+                    selAgen.options.add(new Option(a.nama_agen + labelBon, a.nama_agen));
+                    database.harga[a.nama_agen] = { "bon": a.saldo_bon || 0 };
+                });
+            }
+
+            const { data: harga } = await clientSupabase.from('harga').select('*');
+            if(harga) {
+                harga.forEach(h => {
+                    if(!database.harga[h.nama_agen]) database.harga[h.nama_agen] = {};
+                    database.harga[h.nama_agen][`${h.nama_barang}_${h.satuan}`] = h.harga_jual;
+                });
+            }
+
+            const { data: karyawan } = await clientSupabase.from('karyawan').select('*').eq('aktif', true);
+            const d1 = document.getElementById('driver1');
+            const d2 = document.getElementById('driver2');
+            if(karyawan) {
+                karyawan.forEach(k => {
+                    d1.options.add(new Option(k.nama_karyawan, k.nama_karyawan));
+                    d2.options.add(new Option(k.nama_karyawan, k.nama_karyawan));
+                });
+            }
+            d1.value = userAktif;
+
+            const { data: mobil } = await clientSupabase.from('kendaraan').select('*');
+            const selMobil = document.getElementById('pilihMobil');
+            if(mobil) mobil.forEach(m => selMobil.options.add(new Option(m.plat_nomor, m.plat_nomor)));
+
+            resetForm();
+        } catch(e) { console.error("Init Error:", e); }
+    }
+
+    function resetForm() {
+        document.getElementById('tglNota').valueAsDate = new Date();
+        document.getElementById('noNota').value = "SBR-" + Date.now().toString().slice(-6);
+        itemsKirim = []; itemsRetur = []; render(); hitungTotal();
+    }
+
+    function updateBon() {
+        const ag = document.getElementById('pilihAgen').value;
+        const saldoBon = database.harga[ag]?.bon || 0;
+        document.getElementById('inputBonLama').value = saldoBon.toLocaleString('id-ID');
+        document.getElementById('notifBon').style.display = saldoBon > 0 ? "block" : "none";
+        hitungTotal();
+    }
+
+    function openModal(mode) { 
+        const ag = document.getElementById('pilihAgen').value;
+        if(!ag) return alert("Pilih Agen!");
+        currentMode = mode; editIndex = -1; 
+        const mBarang = document.getElementById('modalBarang');
+        mBarang.innerHTML = '<option value="">-- Pilih Barang --</option>';
+        mBarang.disabled = false;
+        const daftarHargaAgen = database.harga[ag];
+        let listBarangTersedia = [];
+        for (let key in daftarHargaAgen) {
+            if (key !== "bon") {
+                const namaB = key.split('_')[0];
+                if (!listBarangTersedia.includes(namaB)) listBarangTersedia.push(namaB);
+            }
+        }
+        listBarangTersedia.sort().forEach(b => { mBarang.options.add(new Option(b, b)); });
+        document.getElementById('modalQty').value = "0";
+        document.getElementById('modalInput').style.display = "block"; 
+    }
+
+    function closeModal() { document.getElementById('modalInput').style.display = "none"; }
+
+    function addItem() {
+        const ag = document.getElementById('pilihAgen').value;
+        const b = document.getElementById('modalBarang').value;
+        const s = document.getElementById('modalSatuan').value;
+        const q = parseFloat(document.getElementById('modalQty').value) || 0;
+        const h = database.harga[ag]?.[`${b}_${s}`];
+        if (h === undefined) return alert("Satuan " + s + " tidak tersedia untuk barang ini!");
+        const it = { barang: b, satuan: s, qty: q, harga: h, total: q * h };
+        if (editIndex > -1) {
+            if(q === 0) (currentMode === 'Kirim' ? itemsKirim : itemsRetur).splice(editIndex, 1);
+            else (currentMode === 'Kirim' ? itemsKirim : itemsRetur)[editIndex] = it;
+        } else { if(q > 0) (currentMode === 'Kirim' ? itemsKirim : itemsRetur).push(it); }
+        render(); closeModal(); hitungTotal();
+    }
+
+    function editItem(idx, mode) {
+        currentMode = mode; editIndex = idx; 
+        const item = mode === 'Kirim' ? itemsKirim[idx] : itemsRetur[idx];
+        document.getElementById('modalBarang').innerHTML = `<option value="${item.barang}">${item.barang}</option>`;
+        document.getElementById('modalBarang').disabled = true;
+        document.getElementById('modalSatuan').value = item.satuan; 
+        document.getElementById('modalQty').value = item.qty;
+        document.getElementById('modalInput').style.display = "block";
+    }
+
+    function render() {
+        const draw = (data, id, mode) => {
+            const tb = document.getElementById(id).querySelector('tbody'); tb.innerHTML = '';
+            data.forEach((it, idx) => {
+                const r = tb.insertRow();
+                r.innerHTML = `<td>${it.barang}<br><small>${it.satuan}@${it.harga.toLocaleString()}</small></td>
+                               <td>${it.qty}</td><td>${it.total.toLocaleString()}</td>
+                               <td><button class="btn-action" style="background:#3182ce" onclick="editItem(${idx},'${mode}')">EDIT</button></td>`;
+            });
+        };
+        draw(itemsKirim, 'tabelKirim', 'Kirim'); draw(itemsRetur, 'tabelRetur', 'Retur');
+    }
+
+    function formatRupiah(el) { let v = el.value.replace(/[^0-9]/g, ''); el.value = v === "" ? "0" : Number(v).toLocaleString('id-ID'); }
+    function getAngka(id) { return parseFloat(document.getElementById(id).value.replace(/[^0-9]/g, '')) || 0; }
+
+    function hitungTotal() {
+        const tk = itemsKirim.reduce((a, b) => a + b.total, 0); 
+        const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
+        const bl = getAngka('inputBonLama'); 
+        const cs = getAngka('inputCash'); 
+        const tf = getAngka('inputTrf');
+        const sisa = (tk - tr + bl - cs - tf);
+        document.getElementById('subKirim').innerText = "Rp " + tk.toLocaleString('id-ID');
+        document.getElementById('subRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
+        document.getElementById('txtKirim').innerText = "Rp " + tk.toLocaleString('id-ID');
+        document.getElementById('txtRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
+        document.getElementById('txtBon').innerText = "Rp " + bl.toLocaleString('id-ID');
+        document.getElementById('txtGrand').innerText = "Rp " + sisa.toLocaleString('id-ID');
+    }
+
+    async function connectBT() {
+        try {
+            const device = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+            });
+            const server = await device.gatt.connect();
+            const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+            const characteristics = await service.getCharacteristics();
+            btCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
+            document.getElementById('statusBT').innerText = "Status: Terhubung (" + device.name + ")";
+            document.getElementById('statusBT').style.color = "#27ae60";
+        } catch (e) { alert("BT Gagal: " + e); }
+    }
+
+    async function printToBT(text) {
+        if (!btCharacteristic) return;
+        const data = new TextEncoder().encode(text);
+        for (let i = 0; i < data.length; i += 20) {
+            await btCharacteristic.writeValue(data.slice(i, i + 20));
+            await new Promise(r => setTimeout(r, 45)); 
+        }
+    }
+
+    async function reprintLast() {
+        if(!lastPrintText) return alert("Simpan nota dulu!");
+        if(!btCharacteristic) return alert("Printer belum terhubung!");
+        await printToBT(lastPrintText);
+    }
+
+    async function simpanDanPrint() {
+        const ag = document.getElementById('pilihAgen').value;
+        if(!ag) return alert("Pilih Agen!");
+        const btn = document.getElementById('btnSimpan');
+        btn.innerText = "MENYIMPAN..."; btn.disabled = true;
+
+        try {
+            const noNota = document.getElementById('noNota').value;
+            const tglInput = document.getElementById('tglNota').value;
+            const [y, m, d] = tglInput.split('-');
+            const tglIndo = `${d}-${m}-${y}`;
+            const drv1 = document.getElementById('driver1').value;
+            const drv2 = document.getElementById('driver2').value;
+            const drvGabung = drv2 ? `${drv1} / ${drv2}` : drv1;
+            const mobil = document.getElementById('pilihMobil').value;
+            
+            const tk = itemsKirim.reduce((a, b) => a + b.total, 0);
+            const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
+            const bl = getAngka('inputBonLama');
+            const cash = getAngka('inputCash');
+            const trf = getAngka('inputTrf');
+            const tagihanBersih = tk - tr + bl;
+            const sisa = tagihanBersih - cash - trf;
+
+            await clientSupabase.from('transaksi').insert([{
+                no_nota: noNota, nama_agen: ag, tanggal: tglInput,
+                driver_1: drv1, driver_2: drv2, plat_nomor: mobil, 
+                total_kirim: tk, total_retur: tr, bon_lama: bl, 
+                bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
+            }]);
+
+            const details = [
+                ...itemsKirim.map(i => ({ no_nota: noNota, nama_barang: i.barang, qty: i.qty, satuan: i.satuan, tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
+                ...itemsRetur.map(i => ({ no_nota: noNota, nama_barang: i.barang, qty: i.qty, satuan: i.satuan, tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
+            ];
+            await clientSupabase.from('transaksi_detail').insert(details);
+            await clientSupabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
+
+            // STRUK PRINT
+            const lebar = 48; 
+            const buatBaris = (l, r) => { 
+                let space = lebar - l.length - String(r).length; 
+                return l + " ".repeat(Math.max(1, space)) + r + "\n"; 
+            };
+
+            let p = `\x1B\x40\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10SBR PUTRA FOOD\n`;
+            p += `\x1B\x21\x00\x1B\x45\x00Lembang, Bandung Barat\n------------------------------------------------\n`;
+            p += `\x1B\x61\x00` + buatBaris(`NO: ${noNota}`, `TGL: ${tglIndo}`);
+            p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10${ag.toUpperCase()}\n`;
+            p += `\x1B\x21\x00\x1B\x45\x00DRV: ${drvGabung} [ ${mobil} ]\n------------------------------------------------\n\x1B\x61\x00`;
+            
+            itemsKirim.forEach(i => { 
+                p += `${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, i.total.toLocaleString()); 
+            });
+            p += `------------------------------------------------\n` + buatBaris(`TOTAL KIRIM:`, `Rp ${tk.toLocaleString()}`);
+
+            if(itemsRetur.length > 0) {
+                p += `\n\x1B\x45\x01BARANG RETUR:\x1B\x45\x00\n`;
+                itemsRetur.forEach(i => { 
+                    p += `[RETUR] ${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, `-${i.total.toLocaleString()}`); 
+                });
+                p += `------------------------------------------------\n` + buatBaris(`TOTAL RETUR:`, `Rp ${tr.toLocaleString()}`);
+            }
+
+            p += `\n` + buatBaris(`BON LAMA:`, `Rp ${bl.toLocaleString()}`);
+            p += `================================================\n`;
+            p += `\x1B\x45\x01` + buatBaris(`TOTAL TAGIHAN:`, `Rp ${tagihanBersih.toLocaleString()}`) + `\x1B\x45\x00`;
+            p += `------------------------------------------------\n`;
+            p += buatBaris(`Bayar CASH:`, `Rp ${cash.toLocaleString()}`);
+            p += buatBaris(`Bayar TRF:`, `Rp ${trf.toLocaleString()}`);
+            p += `------------------------------------------------\n`;
+            p += `\x1B\x45\x01\x1B\x21\x10` + buatBaris(`SISA BON:`, `Rp ${sisa.toLocaleString()}`) + `\x1B\x45\x00\x1B\x21\x00\n\n`;
+            p += `\x1B\x61\x01` + `\n\n\n` + `( ............................ )\n` + `------------------------------------------------\n`;
+            p += `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`;
+            
+            lastPrintText = p;
+            if(btCharacteristic) await printToBT(p);
+
+            // AKTIFKAN TOMBOL REPRINT & CLEAR FORM
+            document.getElementById('afterSavePanel').style.display = 'grid';
+            btn.style.display = 'none';
+
+        } catch (e) {
+            alert("Error: " + e.message);
+            btn.innerText = "SIMPAN & PRINT"; btn.disabled = false;
+        }
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Akun | SBR Putra Food</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Roboto Condensed', sans-serif;
+            background: url('bg1.jpg') no-repeat center center fixed;
+            background-size: cover;
+            height: 100vh; display: flex; align-items: center; justify-content: center;
+        }
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.45); z-index: 1;
+        }
+        .register-card {
+            position: relative; z-index: 2;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 40px; border-radius: 20px;
+            width: 380px; text-align: center; color: white;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+        h2 { font-size: 32px; margin-bottom: 30px; font-weight: 300; letter-spacing: 1px; text-transform: uppercase; }
+        
+        .input-group { position: relative; margin-bottom: 25px; }
+        .input-group input {
+            width: 100%; padding: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px; color: white; font-size: 16px; outline: none;
+            transition: 0.3s;
+        }
+        .input-group label {
+            position: absolute; left: 12px; top: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            transition: 0.3s ease all;
+            pointer-events: none;
+            font-size: 16px;
+        }
+        .input-group input:focus ~ label,
+        .input-group input:not(:placeholder-shown) ~ label {
+            top: -20px; left: 5px; font-size: 12px; color: #fff; font-weight: bold;
+        }
+
+        .btn-register {
+            width: 100%; padding: 14px; background: #5a822d;
+            border: none; border-radius: 10px; color: white;
+            font-size: 18px; font-weight: bold; cursor: pointer;
+            transition: 0.3s ease; text-transform: uppercase;
+        }
+        .btn-register:hover { background: #72a339; transform: translateY(-2px); }
+        
+        .back-login {
+            margin-top: 25px; font-size: 14px; color: rgba(255, 255, 255, 0.8);
+        }
+        .login-link { color: #fff; font-weight: bold; cursor: pointer; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="overlay"></div>
+
+<div class="register-card">
+    <h2>Daftar Akun Baru</h2>
+    
+    <div class="input-group">
+        <input type="text" id="regNama" placeholder=" " required>
+        <label>Nama Lengkap Karyawan</label>
+    </div>
+
+    <div class="input-group">
+        <input type="password" id="regPass" placeholder=" " required>
+        <label>Buat Password</label>
+    </div>
+
+    <div class="input-group">
+        <input type="password" id="confirmPass" placeholder=" " required>
+        <label>Konfirmasi Password</label>
+    </div>
+
+    <button class="btn-register" id="btnProses" onclick="prosesDaftar()">Daftar Sekarang</button>
+
+    <div class="back-login">
+        Sudah punya akun? <span class="login-link" onclick="window.location.href='index.html'">Login di sini</span>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function prosesDaftar() {
+        const nama = document.getElementById('regNama').value;
+        const pass = document.getElementById('regPass').value;
+        const confirm = document.getElementById('confirmPass').value;
+        const btn = document.getElementById('btnProses');
+
+        // Validasi Sederhana
+        if(!nama || !pass) return alert("Mohon isi semua data!");
+        if(pass !== confirm) return alert("Password konfirmasi tidak cocok!");
+
+        btn.disabled = true;
+        btn.innerText = "Memproses...";
+
+        try {
+            // Cek apakah nama sudah terdaftar
+            const { data: cekUser } = await supabaseClient
+                .from('karyawan')
+                .select('nama_karyawan')
+                .eq('nama_karyawan', nama)
+                .maybeSingle();
+
+            if(cekUser) {
+                alert("Nama karyawan ini sudah terdaftar!");
+                btn.disabled = false;
+                btn.innerText = "Daftar Sekarang";
+                return;
+            }
+
+            // Input ke tabel karyawan dengan role 'user'
+            const { error } = await supabaseClient
+                .from('karyawan')
+                .insert([{
+                    nama_karyawan: nama,
+                    password: pass, // Catatan: Sebaiknya gunakan Auth Supabase untuk enkripsi asli
+                    role: 'user',
+                    aktif: true
+                }]);
+
+            if (error) throw error;
+
+            alert("Pendaftaran Berhasil! Silakan Login.");
+            window.location.href = "index.html";
+
+        } catch (e) {
+            alert("Terjadi kesalahan: " + e.message);
+            btn.disabled = false;
+            btn.innerText = "Daftar Sekarang";
+        }
+    }
+</script>
+
+</body>
+</html>
