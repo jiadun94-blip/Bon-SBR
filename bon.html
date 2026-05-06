@@ -110,7 +110,7 @@
 
     <div id="afterSavePanel" class="after-save-panel">
         <button class="btn-reprint" onclick="reprintLast()">🔄 REPRINT</button>
-        <button class="btn-clear" onclick="location.reload()">➕ NOTA BARU</button>
+        <button class="btn-clear" onclick="resetFormForNewNota()">➕ NOTA BARU</button>
     </div>
 </div>
 
@@ -188,7 +188,24 @@
     function resetForm() {
         document.getElementById('tglNota').valueAsDate = new Date();
         document.getElementById('noNota').value = "SBR-" + Date.now().toString().slice(-6);
+        document.getElementById('pilihAgen').value = "";
+        document.getElementById('pilihMobil').value = "";
+        document.getElementById('driver2').value = "";
+        document.getElementById('inputCash').value = "0";
+        document.getElementById('inputTrf').value = "0";
+        document.getElementById('inputBonLama').value = "0";
+        document.getElementById('notifBon').style.display = "none";
         itemsKirim = []; itemsRetur = []; render(); hitungTotal();
+    }
+
+    // FUNGSI KHUSUS UNTUK NOTA BARU (Tanpa Refresh Bluetooth)
+    function resetFormForNewNota() {
+        resetForm();
+        document.getElementById('afterSavePanel').style.display = 'none';
+        document.getElementById('btnSimpan').style.display = 'block';
+        document.getElementById('btnSimpan').disabled = false;
+        document.getElementById('btnSimpan').innerText = "SIMPAN & PRINT";
+        lastPrintText = "";
     }
 
     function updateBon() {
@@ -385,7 +402,7 @@
             lastPrintText = p;
             if(btCharacteristic) await printToBT(p);
 
-            // AKTIFKAN TOMBOL REPRINT & CLEAR FORM
+            // Tampilkan Panel Pasca Simpan
             document.getElementById('afterSavePanel').style.display = 'grid';
             btn.style.display = 'none';
 
