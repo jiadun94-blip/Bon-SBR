@@ -130,7 +130,7 @@
 </div>
 
 <script>
-    const webAppUrl = "https://script.google.com/macros/s/AKfycbyA7m3C3oQia1eS3ui8fU870Q1_NTXg-_1wMlJlysLDsRoVNLN10zisLpEU0CDFlBY/exec";
+    const webAppUrl = "https://script.google.com/macros/s/AKfycbxwnM5YDD_j92dUKSul87dL7cpLr2BpxiEkSma33yf_OLZfZBfMfVNcU1rJsJ4fOabb/exec";
     let database = { harga: {}, barang: [], karyawan: [], kendaraan: [] };
     let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim'; let editIndex = -1;
     let btDevice = null; let btCharacteristic = null;
@@ -315,7 +315,7 @@
         p += `------------------------------------------------\n\x1B\x45\x01` + buatBaris(`TOTAL TAGIHAN:`, `Rp ${(tk - tr + bl).toLocaleString()}`) + `\x1B\x45\x00`;
         p += `------------------------------------------------\n` + buatBaris(`Bayar CASH:`, `Rp ${cash.toLocaleString()}`) + buatBaris(`Bayar TRF:`, `Rp ${trf.toLocaleString()}`);
         p += `------------------------------------------------\n\x1B\x45\x01` + buatBaris(`SISA BON:`, `Rp ${sisa.toLocaleString()}`) + `\x1B\x45\x00\n\n`;
-        p += `\x1B\x61\x01` + buatBaris(`  PENERIMA  `, `  HORMAT KAMI  `) + `\n\n\n(            )      (            )\n------------------------------------------------\n`;
+        p += `\x1B\x61\x01` + buatBaris + `\n\n\n(            )      (            )\n------------------------------------------------\n`;
         p += `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`; 
 
         try {
