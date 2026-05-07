@@ -106,11 +106,12 @@
 </div>
 
 <script>
-    // DATA KONEKSI SUPABASE PAK HADIAT
+    // DATA KONEKSI SUPABASE
     const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
+    // Load data 'Remember Me'
     window.onload = () => {
         const saved = localStorage.getItem("rememberedUser");
         if(saved) {
@@ -131,6 +132,7 @@
         btn.disabled = true;
 
         try {
+            // Ambil data karyawan berdasarkan nama
             const { data, error } = await supabaseClient
                 .from('karyawan')
                 .select('*')
@@ -138,23 +140,28 @@
                 .single();
 
             if (error || !data) throw new Error("Nama Karyawan tidak ditemukan!");
-            if (!data.aktif) throw new Error("Akun Anda sedang dinonaktifkan!");
-            if (data.password !== pass) throw new Error("Password salah!");
+            if (!data.aktif) throw new Error("Akun Anda sedang dinonaktifkan Admin!");
+            if (data.password !== pass) throw new Error("Password yang Anda masukkan salah!");
 
-            // SIMPAN SESI
+            // SIMPAN DATA LOGIN KE BROWSER
             localStorage.setItem("userNama", data.nama_karyawan);
             localStorage.setItem("userRole", data.role);
             
-            if(remember) localStorage.setItem("rememberedUser", user);
-            else localStorage.removeItem("rememberedUser");
+            if(remember) {
+                localStorage.setItem("rememberedUser", user);
+            } else {
+                localStorage.removeItem("rememberedUser");
+            }
 
             alert("Selamat datang, " + data.nama_karyawan + "!");
 
-            // LOGIKA REDIRECT BERDASARKAN ROLE
+            // LOGIKA PENGALIHAN BERDASARKAN ROLE
             if (data.role === 'admin') {
                 window.location.href = "dashboard.html";
+            } else if (data.role === 'driver') {
+                window.location.href = "dashboard_driver.html";
             } else {
-                // Ke bon.html untuk Driver atau User biasa
+                // Default jika role user biasa
                 window.location.href = "dashboard_driver.html";
             }
 
