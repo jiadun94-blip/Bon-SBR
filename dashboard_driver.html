@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBRdigital | Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #1e272e; --success: #72a339; --danger: #d63031; }
+        body { font-family: 'Roboto Condensed', sans-serif; background: #f1f2f6; margin: 0; padding: 15px; }
+        .header { background: var(--primary); color: white; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .user-info h3 { margin: 0; font-size: 18px; }
+        .user-info span { font-size: 12px; opacity: 0.8; text-transform: uppercase; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; text-decoration: none; color: var(--primary); font-weight: bold; border: 1px solid #ddd; }
+        .card:active { transform: scale(0.95); background: #f9f9f9; }
+        .card i { font-size: 24px; display: block; margin-bottom: 8px; }
+        .stat-val { display: block; font-size: 20px; color: var(--success); margin-top: 5px; }
+        .alert-oli { background: #ffeaa7; border-left: 5px solid #f1c40f; padding: 12px; border-radius: 8px; margin-bottom: 15px; color: #d35400; display: none; font-weight: bold; }
+        .hidden { display: none; }
+        .btn-out { background: #ff7675; border: none; color: white; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="user-info">
+        <h3 id="uNama">Memuat...</h3>
+        <span id="uRole">...</span>
+    </div>
+    <button class="btn-out" onclick="logout()">LOGOUT</button>
+</div>
+
+<div id="oliWarning" class="alert-oli">⚠️ Perhatian: Ada unit wajib ganti oli!</div>
+
+<div id="areaDriver" class="hidden">
+    <div class="grid">
+        <a href="Bon.html" class="card" style="background: var(--success); color: white; border: none;">📝 BUAT BON BARU</a>
+        <a href="monitoring_kendaraan.html" class="card">🕒 Update KM Unit</a>
+        <a href="riwayat.html" class="card">📜 Riwayat Kirim</a>
+    </div>
+</div>
+
+<script>
+    const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const _supabase = supabase.createClient(SB_URL, SB_KEY);
+
+    const nama = localStorage.getItem("userNama");
+    const role = localStorage.getItem("userRole");
+
+    if (!nama) {
+        window.location.replace("index.html");
+    } else {
+        document.getElementById('uNama').innerText = nama;
+        document.getElementById('uRole').innerText = role;
+
+        if (role === 'admin') {
+            document.getElementById('areaAdmin').classList.remove('hidden');
+            fetchAdminData();
+        } else {
+            document.getElementById('areaDriver').classList.remove('hidden');
+        }
+    }
+
+    async function fetchAdminData() {
+        // Ambil saldo_bon dari tabel agen
+        const { data: agn } = await _supabase.from('agen').select('saldo_bon');
+        if (agn) {
+            let total = agn.reduce((sum, i) => sum + (i.saldo_bon || 0), 0);
+            document.getElementById('txtPiutang').innerText = "Rp " + total.toLocaleString('id-ID');
+        }
+
+        // Cek Oli dari monitoring_kendaraan
+        const { data: mon } = await _supabase.from('monitoring_kendaraan').select('*');
+        if (mon) {
+            let bahaya = mon.some(m => (m.km_saat_ini - m.km_terakhir_oli) > 4500);
+            if (bahaya) document.getElementById('oliWarning').style.display = 'block';
+        }
+    }
+
+    function logout() {
+        localStorage.clear();
+        window.location.replace("index.html");
+    }
+</script>
+</body>
+</html>

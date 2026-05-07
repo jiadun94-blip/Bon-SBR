@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekap Transaksi | SBRdigital</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Roboto Condensed', sans-serif; background: #f1f2f6; margin: 0; padding: 15px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #ddd; }
+        h3 { margin-top: 0; color: #1e272e; border-bottom: 2px solid #72a339; padding-bottom: 10px; }
+        
+        .filter-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; background: #e9ecef; padding: 15px; border-radius: 8px; }
+        .filter-item { flex: 1; min-width: 150px; }
+        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #666; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        
+        .btn-cari { background: #1e272e; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; align-self: flex-end; height: 40px; }
+        
+        .summary-box { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: #72a339; color: white; padding: 15px; border-radius: 10px; text-align: center; }
+        .stat-card span { display: block; font-size: 22px; font-weight: bold; }
+
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th { background: #1e272e; color: white; padding: 12px; text-align: left; font-size: 14px; position: sticky; top: 0; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 13px; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        
+        .badge-cash { background: #2ecc71; color: white; padding: 3px 7px; border-radius: 4px; font-size: 11px; }
+        .badge-transfer { background: #3498db; color: white; padding: 3px 7px; border-radius: 4px; font-size: 11px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h3>Laporan Rekap Transaksi</h3>
+    
+    <div class="filter-group">
+        <div class="filter-item">
+            <label>Dari Tanggal</label>
+            <input type="date" id="tglMulai">
+        </div>
+        <div class="filter-item">
+            <label>Sampai Tanggal</label>
+            <input type="date" id="tglSelesai">
+        </div>
+        <div class="filter-item">
+            <label>Cari Agen</label>
+            <input type="text" id="cariAgen" placeholder="Nama Agen...">
+        </div>
+        <button class="btn-cari" onclick="muatLaporan()">TAMPILKAN</button>
+    </div>
+
+    <div class="summary-box">
+        <div class="stat-card">
+            Total Nilai Kirim
+            <span id="totalKirim">Rp 0</span>
+        </div>
+        <div class="stat-card" style="background: #2980b9;">
+            Total Terbayar
+            <span id="totalBayar">Rp 0</span>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Tanggal</th>
+                    <th>Nama Agen</th>
+                    <th>Driver</th>
+                    <th>Total Kirim</th>
+                    <th>Pembayaran</th>
+                    <th>Nota</th>
+                </tr>
+            </thead>
+            <tbody id="bodyRekap">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const _sb = supabase.createClient(SB_URL, SB_KEY);
+
+    // Set tanggal default ke hari ini
+    window.onload = () => {
+        const hariIni = new Date().toISOString().split('T')[0];
+        document.getElementById('tglMulai').value = hariIni;
+        document.getElementById('tglSelesai').value = hariIni;
+        muatLaporan();
+    };
+
+    async function muatLaporan() {
+        const tglAwal = document.getElementById('tglMulai').value;
+        const tglAkhir = document.getElementById('tglSelesai').value;
+        const namaAgen = document.getElementById('cariAgen').value.toLowerCase();
+
+        let query = _sb.from('transaksi').select('*')
+            .gte('tanggal', tglAwal)
+            .lte('tanggal', tglAkhir)
+            .order('tanggal', { ascending: false });
+
+        const { data, error } = await query;
+
+        if (error) {
+            alert("Gagal ambil data!");
+            return;
+        }
+
+        const tbody = document.getElementById('bodyRekap');
+        tbody.innerHTML = "";
+        
+        let sumKirim = 0;
+        let sumBayar = 0;
+
+        // Filter manual untuk Nama Agen agar lebih fleksibel
+        const filteredData = data.filter(item => 
+            item.nama_agen.toLowerCase().includes(namaAgen)
+        );
+
+        filteredData.forEach(t => {
+            const bayarTotal = (t.bayar_cash || 0) + (t.bayar_transfer || 0);
+            sumKirim += (t.total_kirim || 0);
+            sumBayar += bayarTotal;
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${new Date(t.tanggal).toLocaleDateString('id-ID')}</td>
+                    <td><b>${t.nama_agen}</b></td>
+                    <td>${t.driver_1}</td>
+                    <td>Rp ${(t.total_kirim || 0).toLocaleString()}</td>
+                    <td>
+                        <span class="badge-cash">C: ${t.bayar_cash?.toLocaleString() || 0}</span>
+                        <span class="badge-transfer">T: ${t.bayar_transfer?.toLocaleString() || 0}</span>
+                    </td>
+                    <td>${t.no_nota || '-'}</td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('totalKirim').innerText = "Rp " + sumKirim.toLocaleString();
+        document.getElementById('totalBayar').innerText = "Rp " + sumBayar.toLocaleString();
+    }
+</script>
+</body>
+</html>
