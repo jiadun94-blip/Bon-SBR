@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBRdigital | Data Agen</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #1e272e; color: white; }
+        input { padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+        .btn { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; color: white; }
+        .btn-add { background: #5a822d; }
+        .btn-del { background: #d63031; padding: 5px 10px; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h3>Tambah Agen Baru</h3>
+    <input type="text" id="nama_agen" placeholder="Nama Agen">
+    <input type="text" id="alamat" placeholder="Alamat (Cikarang, Serang, dll)">
+    <input type="number" id="no_tlp" placeholder="No Telepon (628...)">
+    <button class="btn btn-add" onclick="tambahAgen()">Simpan Agen</button>
+</div>
+
+<div class="card">
+    <h3>Daftar Agen</h3>
+    <table id="tabelAgen">
+        <thead>
+            <tr>
+                <th>Nama Agen</th>
+                <th>Alamat</th>
+                <th>Saldo Bon</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+    const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const _sb = supabase.createClient(SB_URL, SB_KEY);
+
+    async function muatAgen() {
+        const { data, error } = await _sb.from('agen').select('*').order('nama_agen', { ascending: true });
+        const tbody = document.querySelector("#tabelAgen tbody");
+        tbody.innerHTML = "";
+        data.forEach(a => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${a.nama_agen}</td>
+                    <td>${a.alamat}</td>
+                    <td>Rp ${a.saldo_bon.toLocaleString()}</td>
+                    <td><button class="btn btn-del" onclick="hapusAgen(${a.id})">Hapus</button></td>
+                </tr>`;
+        });
+    }
+
+    async function tambahAgen() {
+        const n = document.getElementById('nama_agen').value;
+        const a = document.getElementById('alamat').value;
+        const t = document.getElementById('no_tlp').value;
+        
+        await _sb.from('agen').insert([{ nama_agen: n, alamat: a, no_tlp: t, saldo_bon: 0 }]);
+        alert("Agen Berhasil Ditambah");
+        location.reload();
+    }
+
+    async function hapusAgen(id) {
+        if(confirm("Hapus agen ini?")) {
+            await _sb.from('agen').delete().eq('id', id);
+            muatAgen();
+        }
+    }
+
+    muatAgen();
+</script>
+</body>
+</html>

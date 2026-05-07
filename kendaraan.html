@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBRdigital | Armada</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; background: #f1f2f6; padding: 15px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #ddd; margin-bottom: 20px; }
+        .form-group { margin-bottom: 10px; }
+        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .btn-save { background: #1e272e; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 15px; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: #f8f9fa; font-size: 13px; }
+        .btn-del { background: #ff7675; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h3>Tambah / Edit Armada</h3>
+    <div class="form-group"><input type="text" id="plat" placeholder="Plat Nomor (Contoh: D 8976 FR)"></div>
+    <div class="form-group"><input type="text" id="tipe" placeholder="Tipe / Nama Unit (Contoh: GM Box 1)"></div>
+    <button class="btn-save" onclick="simpanKendaraan()">SIMPAN UNIT</button>
+</div>
+
+<div class="card">
+    <h3>Daftar Kendaraan SBR</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Plat Nomor</th>
+                <th>Tipe Unit</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody id="listMobil"></tbody>
+    </table>
+</div>
+
+<script>
+    const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const _sb = supabase.createClient(SB_URL, SB_KEY);
+
+    async function muatMobil() {
+        const { data } = await _sb.from('kendaraan').select('*').order('id', { ascending: false });
+        const tbody = document.getElementById('listMobil');
+        tbody.innerHTML = "";
+        data?.forEach(m => {
+            tbody.innerHTML += `<tr>
+                <td><b>${m.plat_nomor}</b></td>
+                <td>${m.tipe_mobil}</td>
+                <td><button class="btn-del" onclick="hapusMobil(${m.id})">Hapus</button></td>
+            </tr>`;
+        });
+    }
+
+    async function simpanKendaraan() {
+        const p = document.getElementById('plat').value;
+        const t = document.getElementById('tipe').value;
+        if(!p || !t) return alert("Isi plat dan tipe unit!");
+
+        await _sb.from('kendaraan').upsert({ plat_nomor: p, tipe_mobil: t }, { onConflict: 'plat_nomor' });
+        location.reload();
+    }
+
+    async function hapusMobil(id) {
+        if(confirm("Hapus unit ini?")) {
+            await _sb.from('kendaraan').delete().eq('id', id);
+            muatMobil();
+        }
+    }
+    muatMobil();
+</script>
+</body>
+</html>

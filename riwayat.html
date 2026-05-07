@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBRdigital | Riwayat Pengiriman</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; background: #f1f2f6; padding: 10px; }
+        .header { background: #1e272e; color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
+        .row-transaksi { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #72a339; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .row-transaksi h4 { margin: 0 0 5px 0; color: #333; }
+        .row-transaksi p { margin: 2px 0; font-size: 13px; color: #666; }
+        .badge-total { float: right; background: #f1f2f6; padding: 5px 10px; border-radius: 5px; font-weight: bold; color: #2e7d32; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h3 style="margin:0">📜 Riwayat Pengiriman</h3>
+    <small>Data pengiriman barang agen harian</small>
+</div>
+
+<div id="containerRiwayat">
+    </div>
+
+<script>
+    const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const _sb = supabase.createClient(SB_URL, SB_KEY);
+
+    async function muatRiwayat() {
+        // Ambil data transaksi terbaru
+        const { data, error } = await _sb.from('transaksi').select('*').order('tanggal', { ascending: false });
+        const container = document.getElementById('containerRiwayat');
+        container.innerHTML = "";
+
+        if(data.length === 0) {
+            container.innerHTML = "<p style='text-align:center'>Belum ada data pengiriman.</p>";
+            return;
+        }
+
+        data.forEach(t => {
+            container.innerHTML += `
+                <div class="row-transaksi">
+                    <div class="badge-total">Rp ${t.total_kirim?.toLocaleString('id-ID')}</div>
+                    <h4>${t.nama_agen}</h4>
+                    <p>📅 ${new Date(t.tanggal).toLocaleDateString('id-ID')}</p>
+                    <p>🚛 Unit: ${t.plat_nomor} | Driver: ${t.driver_1}</p>
+                    <p style="font-size: 11px; margin-top:5px; border-top: 1px dashed #ddd; padding-top:5px;">
+                        Nota: ${t.no_nota || '-'} | Cash: ${t.bayar_cash || 0} | Trans: ${t.bayar_transfer || 0}
+                    </p>
+                </div>
+            `;
+        });
+    }
+    muatRiwayat();
+</script>
+</body>
+</html>

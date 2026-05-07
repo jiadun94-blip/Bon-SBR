@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SBR Fleet Control System</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --p-color: #1a202c; --s-color: #2ecc71; --danger: #e74c3c; --bg: #f8fafc; --accent: #3498db; --warn: #f1c40f; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 15px; background: var(--bg); color: #2d3748; }
+        .container { max-width: 500px; margin: auto; }
+        
+        /* Dashboard Card - Tampilan Bersih */
+        .unit-card { background: white; border-radius: 15px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-left: 6px solid #cbd5e0; transition: 0.2s; }
+        .unit-card.critical { border-left-color: var(--danger); background: #fff5f5; }
+        .unit-card:active { transform: scale(0.98); }
+        
+        .main-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; font-weight: 700; }
+        .stat-box { background: #f1f5f9; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; }
+        .stat-label { font-size: 9px; color: #64748b; display: block; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px; }
+        
+        /* Modal Detail */
+        #modalDetail { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; overflow-y: auto; padding: 20px 0; }
+        .modal-content { background: white; margin: auto; width: 92%; max-width: 450px; border-radius: 20px; padding: 25px; box-sizing: border-box; }
+        .section-header { background: var(--p-color); color: white; padding: 8px 15px; border-radius: 8px; font-size: 11px; font-weight: 800; margin: 20px 0 10px 0; text-transform: uppercase; }
+        
+        /* Service Checklist */
+        .service-group { border: 1px solid #edf2f7; border-radius: 12px; overflow: hidden; }
+        .service-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; align-items: center; }
+        .status-tag { padding: 3px 10px; border-radius: 6px; font-size: 10px; font-weight: 900; }
+        .tag-ok { background: #dcfce7; color: #166534; }
+        .tag-danger { background: #fee2e2; color: #991b1b; }
+
+        input, select, button { width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 10px; border: 2px solid #e2e8f0; font-weight: bold; font-size: 14px; box-sizing: border-box; }
+        button { background: var(--p-color); color: white; border: none; cursor: pointer; transition: 0.3s; }
+        
+        /* Penempatan WA Alert Baru */
+        .btn-wa { background: #25D366; color: white; margin-top: 5px; font-weight: 900; box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3); }
+        .btn-update { background: var(--accent); }
+        .btn-close { background: #f1f5f9; color: #475569; margin-top: 10px; }
+        .status-red { color: var(--danger); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div style="text-align: center; margin: 15px 0 25px 0;">
+        <h2 style="margin: 0; font-weight: 900; color: var(--p-color); letter-spacing: -1px;">SBR FLEET CONTROL</h2>
+        <span style="font-size: 11px; color: #64748b; font-weight: bold;">PANEL MONITORING ARMADA</span>
+    </div>
+
+    <div style="background: white; padding: 20px; border-radius: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; border: 1px solid #e2e8f0;">
+        <label style="font-size: 10px; font-weight: 900; color: var(--accent); margin-bottom: 8px; display: block;">📍 UPDATE ODOMETER HARIAN</label>
+        <select id="selMobilQuick"></select>
+        <input type="number" id="valKMQuick" placeholder="Input KM Sekarang..." inputmode="numeric">
+        <button onclick="quickUpdateKM()" style="background: var(--p-color); margin-bottom: 10px;">SIMPAN ODOMETER</button>
+        
+        <button class="btn-wa" onclick="sendWAAlert()">📢 KIRIM ALERT WA KE GRUP</button>
+    </div>
+
+    <div id="dashboard"></div>
+</div>
+
+<div id="modalDetail">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+            <div>
+                <h2 id="m_unit" style="margin: 0; font-size: 22px;"></h2>
+                <span id="m_plat" style="font-weight: 900; color: var(--accent); font-size: 15px;"></span>
+            </div>
+            <div style="text-align: right;">
+                <span id="m_km" style="font-size: 22px; font-weight: 900;"></span><br>
+                <small style="color: #64748b; font-weight: 800;">ODO KM</small>
+            </div>
+        </div>
+
+        <div class="section-header" style="background: var(--s-color);">🛠️ Servis Berkala</div>
+        <div class="service-group" id="group_berkala"></div>
+
+        <div class="section-header" style="background: var(--warn);">⚙️ Servis Mendalam</div>
+        <div class="service-group" id="group_mendalam"></div>
+
+        <div class="section-header" style="background: var(--accent);">🔄 UPDATE LOG MAINTENANCE</div>
+        <select id="m_jenis">
+            <option value="km_terakhir_oli">Ganti Oli (5rb)</option>
+            <option value="km_terakhir_servis_berkala">Servis Berkala (10rb)</option>
+            <option value="km_terakhir_servis_mendalam">Servis Mendalam (20rb)</option>
+            <option value="km_terakhir_servis_gardan">Ganti Oli Gardan (40rb)</option>
+            <option value="tgl_kir_expired">Update KIR</option>
+            <option value="tgl_pajak_expired">Update Pajak</option>
+        </select>
+        <input type="text" id="m_val" placeholder="KM Baru / Pilih Tgl">
+        <button class="btn-update" onclick="submitMaintenance()">SIMPAN DATA</button>
+        <button class="btn-close" onclick="closeModal()">TUTUP</button>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let listArmada = [];
+    let activePlat = "";
+
+    document.getElementById('m_jenis').addEventListener('change', function() {
+        const inp = document.getElementById('m_val');
+        inp.type = this.value.includes('tgl') ? 'date' : 'number';
+    });
+
+    async function init() {
+        const { data } = await clientSupabase.from('monitoring_kendaraan').select('*').order('nama_unit');
+        listArmada = data || [];
+        const dash = document.getElementById('dashboard');
+        const sel = document.getElementById('selMobilQuick');
+        
+        dash.innerHTML = '<div style="font-weight: 800; font-size: 11px; margin-bottom: 10px; color: #64748b;">RINGKASAN STATUS UNIT:</div>';
+        sel.innerHTML = '<option value="">-- PILIH MOBIL --</option>';
+
+        listArmada.forEach(v => {
+            sel.options.add(new Option(`${v.nama_unit} (${v.plat_nomor})`, v.plat_nomor));
+            const sisaOli = (v.km_terakhir_oli + 5000) - v.km_saat_ini;
+            const sisaKIR = v.tgl_kir_expired ? Math.ceil((new Date(v.tgl_kir_expired) - new Date()) / 86400000) : '-';
+            const sisaPajak = v.tgl_pajak_expired ? Math.ceil((new Date(v.tgl_pajak_expired) - new Date()) / 86400000) : '-';
+            const isCritical = sisaOli < 500 || sisaKIR < 14 || sisaPajak < 14;
+
+            dash.innerHTML += `
+                <div class="unit-card ${isCritical?'critical':''}" onclick="openDetail('${v.plat_nomor}')">
+                    <div class="main-info">
+                        <strong style="font-size:17px;">${v.nama_unit}</strong>
+                        <span style="background:#eef2ff; color:var(--accent); padding:4px 10px; border-radius:8px; font-size:12px; font-weight:900;">${v.plat_nomor}</span>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-box"><span class="stat-label">SISA OLI</span><span class="${sisaOli<500?'status-red':''}">${sisaOli.toLocaleString()} KM</span></div>
+                        <div class="stat-box"><span class="stat-label">SISA KIR</span><span class="${sisaKIR<14?'status-red':''}">${sisaKIR} Hr</span></div>
+                        <div class="stat-box"><span class="stat-label">SISA PAJAK</span><span class="${sisaPajak<14?'status-red':''}">${sisaPajak} Hr</span></div>
+                        <div class="stat-box"><span class="stat-label">ODO KM</span>${(v.km_saat_ini||0).toLocaleString()}</div>
+                    </div>
+                </div>`;
+        });
+    }
+
+    function sendWAAlert() {
+        let pesan = "*⚠️ REMINDER SERVICE ARMADA SBR ⚠️*%0A%0AMohon perhatian rekan-rekan driver, unit berikut sudah masuk masa perawatan:%0A";
+        let adaData = false;
+        listArmada.forEach(v => {
+            const sisaOli = (v.km_terakhir_oli + 5000) - v.km_saat_ini;
+            const sisaKIR = v.tgl_kir_expired ? Math.ceil((new Date(v.tgl_kir_expired) - new Date()) / 86400000) : 999;
+            const sisaPajak = v.tgl_pajak_expired ? Math.ceil((new Date(v.tgl_pajak_expired) - new Date()) / 86400000) : 999;
+            if(sisaOli < 500 || sisaKIR < 14 || sisaPajak < 14) {
+                adaData = true;
+                pesan += `%0A- *${v.nama_unit} (${v.plat_nomor})*:`;
+                if(sisaOli < 500) pesan += `%0A  • Sisa Oli: ${sisaOli.toLocaleString()} KM`;
+                if(sisaKIR < 14) pesan += `%0A  • Sisa KIR: ${sisaKIR} Hari`;
+                if(sisaPajak < 14) pesan += `%0A  • Sisa Pajak: ${sisaPajak} Hari`;
+                pesan += "%0A";
+            }
+        });
+        if(!adaData) return alert("Semua unit dalam kondisi aman.");
+        pesan += "%0AMohon segera diagendakan ke bengkel/kantor. Terima kasih. 🙏";
+        window.open(`https://wa.me/?text=${pesan}`, '_blank');
+    }
+
+    async function openDetail(plat) {
+        activePlat = plat;
+        const v = listArmada.find(x => x.plat_nomor === plat);
+        document.getElementById('m_unit').innerText = v.nama_unit;
+        document.getElementById('m_plat').innerText = v.plat_nomor;
+        document.getElementById('m_km').innerText = (v.km_saat_ini||0).toLocaleString();
+        
+        renderList('group_berkala', [
+            {n:"Oli Mesin", l:v.km_terakhir_oli, i:5000},
+            {n:"Filter Oli", l:v.km_terakhir_servis_berkala||0, i:10000},
+            {n:"Filter Udara/AC", l:v.km_terakhir_servis_berkala||0, i:10000},
+            {n:"Spooring Balancing", l:v.km_terakhir_servis_berkala||0, i:10000}
+        ], v.km_saat_ini);
+
+        renderList('group_mendalam', [
+            {n:"Kampas/Minyak Rem", l:v.km_terakhir_servis_mendalam||0, i:20000},
+            {n:"Busi (Spark Plugs)", l:v.km_terakhir_servis_mendalam||0, i:20000},
+            {n:"Suspensi/Kaki2", l:v.km_terakhir_servis_mendalam||0, i:20000},
+            {n:"Oli Transmisi/Gardan", l:v.km_terakhir_servis_gardan||0, i:40000}
+        ], v.km_saat_ini);
+
+        document.getElementById('modalDetail').style.display = "block";
+    }
+
+    function renderList(id, items, kmNow) {
+        const container = document.getElementById(id);
+        container.innerHTML = "";
+        items.forEach(item => {
+            const sisa = (item.l + item.i) - kmNow;
+            let tag = "tag-ok", txt = "AMAN";
+            if(sisa < 0) { tag = "tag-danger"; txt = "LEWAT"; }
+            else if(sisa < 1000) { tag = "tag-warn"; txt = "SIAPKAN"; }
+            container.innerHTML += `<div class="service-item"><span>${item.n}</span><span class="status-tag ${tag}">${txt} (${sisa.toLocaleString()} KM)</span></div>`;
+        });
+    }
+
+    function closeModal() { document.getElementById('modalDetail').style.display = "none"; }
+
+    async function quickUpdateKM() {
+        const plat = document.getElementById('selMobilQuick').value;
+        const km = parseInt(document.getElementById('valKMQuick').value);
+        if(!plat || !km) return alert("Pilih unit & isi KM!");
+        await clientSupabase.from('monitoring_kendaraan').update({ km_saat_ini: km }).eq('plat_nomor', plat);
+        location.reload();
+    }
+
+    async function submitMaintenance() {
+        const kol = document.getElementById('m_jenis').value;
+        const val = document.getElementById('m_val').value;
+        if(!val) return alert("Isi nilai update!");
+        const upd = {}; upd[kol] = kol.includes('tgl') ? val : parseInt(val);
+        await clientSupabase.from('monitoring_kendaraan').update(upd).eq('plat_nomor', activePlat);
+        location.reload();
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
