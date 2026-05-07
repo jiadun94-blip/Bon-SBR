@@ -6,51 +6,47 @@
     <title>SBRdigital | Driver Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Roboto Condensed', sans-serif; background: #72a339; margin: 0; padding: 20px; }
-        .card-main { background: white; padding: 30px 20px; border-radius: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-        .user-info { text-align: center; margin-bottom: 30px; }
-        .user-info h2 { margin: 0; color: #1e272e; }
-        .user-info p { margin: 5px 0; color: #666; font-size: 14px; }
+        /* CSS IDENTIK DENGAN ADMIN AGAR TIDAK SYIRIK */
+        body { font-family: 'Roboto Condensed', sans-serif; background: #f1f2f6; margin: 0; padding: 15px; }
+        .welcome { margin-bottom: 10px; font-size: 14px; color: #666; text-align: center; }
+        .header { background: #1e272e; color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .header h2 span { color: #72a339; }
         
-        .menu-list { display: flex; flex-direction: column; gap: 15px; }
+        .grid-menu { display: grid; grid-template-columns: 1fr; gap: 15px; }
         .btn-menu { 
-            display: flex; align-items: center; background: #f1f2f6; 
-            padding: 20px; border-radius: 15px; text-decoration: none; 
-            color: #1e272e; font-weight: bold; font-size: 18px; border: 1px solid #ddd;
+            background: white; padding: 25px; border-radius: 15px; text-align: left; 
+            text-decoration: none; color: #333; font-weight: bold; border: 1px solid #ddd;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; align-items: center;
         }
-        .btn-menu .icon { margin-right: 15px; font-size: 24px; }
-        .btn-menu:active { background: #e2e3e7; transform: scale(0.98); }
+        .btn-menu:active { transform: scale(0.98); background: #f9f9f9; }
+        .icon { font-size: 32px; margin-right: 20px; }
         
-        .btn-keluar { margin-top: 30px; background: transparent; border: 1px solid #d63031; color: #d63031; width: 100%; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .btn-logout { width: 100%; margin-top: 25px; padding: 15px; background: transparent; color: #d63031; border: 1px solid #d63031; border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: bold; font-size: 16px; }
     </style>
 </head>
 <body>
 
-<div class="card-main">
-    <div class="user-info">
-        <p>Halo, Driver SBR!</p>
-        <h2 id="driverNama">PENGGUNA</h2>
-    </div>
+<div class="welcome">Selamat bekerja, Pak <b id="driverNama">Driver</b></div>
 
-    <div class="menu-list">
-        <a href="./bon.html" class="btn-menu">
-            <span class="icon">➕</span>
-            BUAT BON BARU
-        </a>
-
-        <a href="./riwayat.html" class="btn-menu">
-            <span class="icon">📋</span>
-            RIWAYAT KIRIMAN
-        </a>
-        
-        <a href="./monitoring_kendaraan.html" class="btn-menu">
-            <span class="icon">🔧</span>
-            CEK OLI / UNIT
-        </a>
-    </div>
-
-    <button class="btn-keluar" onclick="logout()">KELUAR AKUN</button>
+<div class="header">
+    <h2 style="margin:0; letter-spacing: 2px;">SBR<span>digital</span> DRIVER</h2>
 </div>
+
+<div class="grid-menu">
+    <a href="./bon.html" class="btn-menu">
+        <span class="icon">📝</span> BUAT BON BARU
+    </a>
+
+    <a href="./riwayat.html" class="btn-menu">
+        <span class="icon">📋</span> RIWAYAT KIRIMAN SAYA
+    </a>
+    
+    <a href="./monitoring_kendaraan.html" class="btn-menu">
+        <span class="icon">🔧</span> MONITORING UNIT / CEK OLI
+    </a>
+</div>
+
+<button class="btn-logout" onclick="logout()">KELUAR DARI SISTEM</button>
 
 <script>
     const userNama = localStorage.getItem("userNama");
