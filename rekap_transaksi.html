@@ -3,82 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rekap Transaksi | SBRdigital</title>
+    <title>SBR | Laporan Transaksi Terpadu</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Roboto Condensed', sans-serif; background: #f1f2f6; margin: 0; padding: 15px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #ddd; }
-        h3 { margin-top: 0; color: #1e272e; border-bottom: 2px solid #72a339; padding-bottom: 10px; }
-        
-        .filter-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; background: #e9ecef; padding: 15px; border-radius: 8px; }
-        .filter-item { flex: 1; min-width: 150px; }
-        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #666; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-        
-        .btn-cari { background: #1e272e; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; align-self: flex-end; height: 40px; }
-        
-        .summary-box { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .stat-card { background: #72a339; color: white; padding: 15px; border-radius: 10px; text-align: center; }
-        .stat-card span { display: block; font-size: 22px; font-weight: bold; }
+        /* Layout Dasar sesuai Screenshot Bapak */
+        body { 
+            font-family: 'Roboto Condensed', sans-serif; 
+            background-color: #f1f5f9; 
+            margin: 0; 
+            padding: 20px;
+        }
 
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th { background: #1e272e; color: white; padding: 12px; text-align: left; font-size: 14px; position: sticky; top: 0; }
-        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 13px; }
-        tr:nth-child(even) { background: #f9f9f9; }
+        .main-card {
+            background: white;
+            max-width: 1100px;
+            margin: 0 auto;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            padding: 25px;
+        }
         
-        .badge-cash { background: #2ecc71; color: white; padding: 3px 7px; border-radius: 4px; font-size: 11px; }
-        .badge-transfer { background: #3498db; color: white; padding: 3px 7px; border-radius: 4px; font-size: 11px; }
+        .header-title-box { 
+            background-color: #f0f2f5; 
+            padding: 15px 20px; 
+            border-radius: 12px; 
+            margin-bottom: 25px; 
+            text-align: center; 
+        }
+        .header-title-box h2 { 
+            margin: 0; 
+            font-size: 18px; 
+            color: #1e293b; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+        }
+
+        /* Filter Area */
+        .filter-section { 
+            background-color: #f8fafc; 
+            border: 1px solid #e2e8f0; 
+            padding: 15px; 
+            border-radius: 12px; 
+            margin-bottom: 25px; 
+            display: flex; 
+            gap: 10px; 
+            justify-content: center; 
+            align-items: center; 
+            flex-wrap: wrap;
+        }
+
+        input[type="date"] { 
+            padding: 8px 12px; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 8px; 
+            font-family: inherit; 
+        }
+
+        .btn { 
+            padding: 9px 20px; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            border: none; 
+            font-size: 13px;
+        }
+        .btn-tampilkan { background-color: #1e293b; color: white; }
+        .btn-excel { background-color: #22c55e; color: white; }
+
+        /* Tabel Slim, Center, & Freeze */
+        .table-container { 
+            width: 100%; 
+            overflow-x: auto; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 8px; 
+        }
+        table { border-collapse: separate; border-spacing: 0; width: 100%; }
+        
+        th { 
+            background: #1e293b; color: white; 
+            padding: 10px 5px; font-size: 11px; 
+            border: 1px solid #334155; text-align: center;
+            position: sticky; top: 0; z-index: 10;
+        }
+        
+        td { 
+            padding: 4px 8px; border: 1px solid #e2e8f0; 
+            font-size: 12px; text-align: center; 
+            white-space: nowrap; width: 1%; 
+        }
+
+        /* Sticky Column Agen (Freeze) */
+        .sticky-col { 
+            position: sticky; left: 0; 
+            background: white; z-index: 5; 
+            border-right: 2px solid #cbd5e1 !important; 
+        }
+        th.sticky-col { z-index: 11; background: #0f172a; }
+        tr:nth-child(even) td.sticky-col { background: #f8fafc; }
+
+        /* Detail Click Styling */
+        .link-detail { text-decoration: underline; cursor: pointer; font-weight: bold; }
+        .text-kirim { color: #2563eb; }
+        .text-retur { color: #dc2626; }
+
+        /* Modal Pop-up Styling */
+        .modal { 
+            display: none; position: fixed; z-index: 100; 
+            left: 0; top: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
+        }
+        .modal-content { 
+            background: white; margin: 5% auto; 
+            border-radius: 12px; width: 90%; max-width: 550px; 
+            overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2); 
+        }
+        .modal-header { 
+            background: #f8fafc; padding: 15px 20px; 
+            display: flex; justify-content: space-between; 
+            align-items: center; border-bottom: 1px solid #e2e8f0; 
+        }
+        .modal-body { padding: 20px; max-height: 450px; overflow-y: auto; }
+        .close-btn { font-size: 24px; cursor: pointer; color: #64748b; font-weight: bold; }
+        
+        .table-pop { width: 100%; border-collapse: collapse; }
+        .table-pop th { background: #f1f5f9; color: #334155; padding: 10px; border: 1px solid #e2e8f0; font-size: 13px; position: static; }
+        .table-pop td { padding: 8px; border: 1px solid #e2e8f0; font-size: 13px; text-align: center; }
+
+        .lunas { color: #16a34a; font-weight: bold; }
+        .pending { color: #ea580c; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h3>Laporan Rekap Transaksi</h3>
-    
-    <div class="filter-group">
-        <div class="filter-item">
-            <label>Dari Tanggal</label>
-            <input type="date" id="tglMulai">
-        </div>
-        <div class="filter-item">
-            <label>Sampai Tanggal</label>
-            <input type="date" id="tglSelesai">
-        </div>
-        <div class="filter-item">
-            <label>Cari Agen</label>
-            <input type="text" id="cariAgen" placeholder="Nama Agen...">
-        </div>
-        <button class="btn-cari" onclick="muatLaporan()">TAMPILKAN</button>
+<div class="main-card">
+    <div class="header-title-box">
+        <h2>Rekap Transaksi & Pengiriman SBR</h2>
     </div>
 
-    <div class="summary-box">
-        <div class="stat-card">
-            Total Nilai Kirim
-            <span id="totalKirim">Rp 0</span>
-        </div>
-        <div class="stat-card" style="background: #2980b9;">
-            Total Terbayar
-            <span id="totalBayar">Rp 0</span>
-        </div>
+    <div class="filter-section">
+        <input type="date" id="tglMulai">
+        <span>s/d</span>
+        <input type="date" id="tglSelesai">
+        <button class="btn btn-tampilkan" onclick="muatLaporan()">TAMPILKAN DATA</button>
+        <button class="btn btn-excel" onclick="exportKeExcel()">DOWNLOAD EXCEL</button>
     </div>
 
     <div class="table-container">
-        <table>
+        <table id="tabelLaporan">
             <thead>
                 <tr>
-                    <th>Tanggal</th>
-                    <th>Nama Agen</th>
-                    <th>Driver</th>
-                    <th>Total Kirim</th>
-                    <th>Pembayaran</th>
-                    <th>Nota</th>
+                    <th class="sticky-col">AGEN</th>
+                    <th>TGL</th>
+                    <th>NOTA</th>
+                    <th>DRIVER 1</th>
+                    <th>DRIVER 2</th>
+                    <th>KIRIM (Klik)</th>
+                    <th>RETUR (Klik)</th>
+                    <th>TAGIHAN</th>
+                    <th>STATUS</th>
                 </tr>
             </thead>
-            <tbody id="bodyRekap">
-                </tbody>
+            <tbody id="isiTabel">
+                <tr><td colspan="9" style="padding:40px; color:#94a3b8;">Silakan tentukan tanggal dan klik Tampilkan Data</td></tr>
+            </tbody>
         </table>
+    </div>
+</div>
+
+<div id="modalDetail" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalJudul" style="margin:0; font-size:16px; color:#1e293b;">Rincian Item</h3>
+            <span class="close-btn" onclick="tutupModal()">&times;</span>
+        </div>
+        <div class="modal-body" id="modalIsi">
+            </div>
     </div>
 </div>
 
@@ -87,65 +189,96 @@
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     const _sb = supabase.createClient(SB_URL, SB_KEY);
 
-    // Set tanggal default ke hari ini
     window.onload = () => {
-        const hariIni = new Date().toISOString().split('T')[0];
-        document.getElementById('tglMulai').value = hariIni;
-        document.getElementById('tglSelesai').value = hariIni;
-        muatLaporan();
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('tglMulai').value = today;
+        document.getElementById('tglSelesai').value = today;
     };
 
     async function muatLaporan() {
-        const tglAwal = document.getElementById('tglMulai').value;
-        const tglAkhir = document.getElementById('tglSelesai').value;
-        const namaAgen = document.getElementById('cariAgen').value.toLowerCase();
+        const body = document.getElementById('isiTabel');
+        body.innerHTML = "<tr><td colspan='9' style='padding:20px;'>Memproses...</td></tr>";
 
-        let query = _sb.from('transaksi').select('*')
-            .gte('tanggal', tglAwal)
-            .lte('tanggal', tglAkhir)
+        const { data, error } = await _sb.from('transaksi')
+            .select('*')
+            .gte('tanggal', document.getElementById('tglMulai').value)
+            .lte('tanggal', document.getElementById('tglSelesai').value)
             .order('tanggal', { ascending: false });
 
-        const { data, error } = await query;
+        if (error) { alert("Error: " + error.message); return; }
+        if (data.length === 0) { body.innerHTML = "<tr><td colspan='9' style='padding:20px;'>Tidak ada data transaksi.</td></tr>"; return; }
 
-        if (error) {
-            alert("Gagal ambil data!");
-            return;
-        }
+        body.innerHTML = "";
+        data.forEach(t => {
+            const netto = (t.total_kirim || 0) - (t.total_retur || 0);
+            const bayar = (t.bayar_cash || 0) + (t.bayar_transfer || 0);
+            const sisa = netto - bayar;
 
-        const tbody = document.getElementById('bodyRekap');
-        tbody.innerHTML = "";
-        
-        let sumKirim = 0;
-        let sumBayar = 0;
-
-        // Filter manual untuk Nama Agen agar lebih fleksibel
-        const filteredData = data.filter(item => 
-            item.nama_agen.toLowerCase().includes(namaAgen)
-        );
-
-        filteredData.forEach(t => {
-            const bayarTotal = (t.bayar_cash || 0) + (t.bayar_transfer || 0);
-            sumKirim += (t.total_kirim || 0);
-            sumBayar += bayarTotal;
-
-            tbody.innerHTML += `
+            body.innerHTML += `
                 <tr>
-                    <td>${new Date(t.tanggal).toLocaleDateString('id-ID')}</td>
-                    <td><b>${t.nama_agen}</b></td>
-                    <td>${t.driver_1}</td>
-                    <td>Rp ${(t.total_kirim || 0).toLocaleString()}</td>
-                    <td>
-                        <span class="badge-cash">C: ${t.bayar_cash?.toLocaleString() || 0}</span>
-                        <span class="badge-transfer">T: ${t.bayar_transfer?.toLocaleString() || 0}</span>
-                    </td>
-                    <td>${t.no_nota || '-'}</td>
+                    <td class="sticky-col" style="text-align:left; font-weight:bold;">${t.nama_agen}</td>
+                    <td>${t.tanggal}</td>
+                    <td>${t.no_nota}</td>
+                    <td>${t.driver_1 || '-'}</td>
+                    <td>${t.driver_2 || '-'}</td>
+                    <td class="link-detail text-kirim" onclick="bukaPopUpDetail('${t.no_nota}', 'Kirim')">${(t.total_kirim || 0).toLocaleString()}</td>
+                    <td class="link-detail text-retur" onclick="bukaPopUpDetail('${t.no_nota}', 'Retur')">${(t.total_retur || 0).toLocaleString()}</td>
+                    <td style="font-weight:bold; color:#2563eb;">${netto.toLocaleString()}</td>
+                    <td class="${sisa <= 0 ? 'lunas' : 'pending'}">${sisa <= 0 ? 'LUNAS' : 'PENDING'}</td>
                 </tr>
             `;
         });
+    }
 
-        document.getElementById('totalKirim').innerText = "Rp " + sumKirim.toLocaleString();
-        document.getElementById('totalBayar').innerText = "Rp " + sumBayar.toLocaleString();
+    async function bukaPopUpDetail(noNota, tipeKlik) {
+        const modalIsi = document.getElementById('modalIsi');
+        document.getElementById('modalJudul').innerText = `Rincian ${tipeKlik} - Nota: ${noNota}`;
+        modalIsi.innerHTML = "<p style='text-align:center;'>Mencari rincian barang...</p>";
+        document.getElementById('modalDetail').style.display = "block";
+
+        // Query berdasarkan tipe yang diklik (Kirim atau Retur)
+        const { data, error } = await _sb.from('transaksi_detail')
+            .select('nama_barang, qty, satuan, harga_satuan')
+            .eq('no_nota', noNota)
+            .eq('tipe', tipeKlik);
+
+        if (error) { modalIsi.innerHTML = "Gagal: " + error.message; return; }
+        if (!data || data.length === 0) { modalIsi.innerHTML = `<p style='text-align:center;'>Data ${tipeKlik} tidak ditemukan.</p>`; return; }
+
+        let tabelDetail = `
+            <table class="table-pop">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;">Nama Barang</th>
+                        <th>Qty</th>
+                        <th>Satuan</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+        
+        data.forEach(item => {
+            tabelDetail += `
+                <tr>
+                    <td style="text-align:left;">${item.nama_barang}</td>
+                    <td style="font-weight:bold;">${item.qty.toLocaleString()}</td>
+                    <td>${item.satuan}</td>
+                </tr>`;
+        });
+
+        tabelDetail += `</tbody></table>`;
+        modalIsi.innerHTML = tabelDetail;
+    }
+
+    function tutupModal() { document.getElementById('modalDetail').style.display = "none"; }
+    
+    // Klik di luar kotak modal untuk menutup
+    window.onclick = (event) => { if (event.target == document.getElementById('modalDetail')) tutupModal(); }
+
+    function exportKeExcel() {
+        const wb = XLSX.utils.table_to_book(document.getElementById("tabelLaporan"));
+        XLSX.writeFile(wb, `Rekap_SBR_Lengkap.xlsx`);
     }
 </script>
+
 </body>
 </html>

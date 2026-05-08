@@ -3,58 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SBRdigital | Riwayat Pengiriman</title>
+    <title>SBR | Report Berwarna & Kontras</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; background: #f1f2f6; padding: 10px; }
-        .header { background: #1e272e; color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
-        .row-transaksi { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #72a339; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .row-transaksi h4 { margin: 0 0 5px 0; color: #333; }
-        .row-transaksi p { margin: 2px 0; font-size: 13px; color: #666; }
-        .badge-total { float: right; background: #f1f2f6; padding: 5px 10px; border-radius: 5px; font-weight: bold; color: #2e7d32; }
+        body { font-family: 'Roboto Condensed', sans-serif; background-color: #f1f5f9; margin: 0; padding: 10px; }
+        .main-card { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 15px; }
+        
+        .header-box { background: #f0f2f5; padding: 10px; border-radius: 6px; margin-bottom: 15px; text-align: center; border: 1px solid #e2e8f0; }
+        .header-box h2 { margin: 0; font-size: 16px; text-transform: uppercase; color: #334155; }
+
+        .filter-section { display: flex; gap: 8px; justify-content: center; margin-bottom: 15px; align-items: center; font-size: 13px; flex-wrap: wrap; }
+        input[type="date"], button { padding: 5px 10px; border-radius: 4px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 13px; }
+        input[readonly] { background-color: #f8fafc; color: #64748b; cursor: not-allowed; }
+        button { background: #1e293b; color: white; cursor: pointer; border: none; font-weight: bold; }
+
+        .table-container { width: 100%; max-height: 75vh; overflow: auto; border: 1px solid #333; }
+        table { width: auto; min-width: 100%; border-collapse: separate; border-spacing: 0; background: white; }
+        
+        th, td { border: 1px solid #333; padding: 2px 6px; font-size: 11px; text-align: center; white-space: nowrap; }
+        
+        /* FREEZE HEADER & KOLOM */
+        thead tr th { position: sticky; top: 0; z-index: 20; background: #f8fafc; }
+        thead tr:nth-child(2) th { top: 21px; }
+        .sticky-col-1 { position: sticky; left: 0; z-index: 25; background: #fff; border-right: 1px solid #333; }
+        .sticky-col-2 { position: sticky; left: 35px; z-index: 25; background: #fff; border-right: 2px solid #333; }
+        thead th.sticky-col-1, thead th.sticky-col-2 { z-index: 30; background: #f1f5f9; }
+
+        .head-driver { background: #90ee90 !important; color: #000; font-weight: bold; }
+        .row-day { background: #f1f5f9; font-weight: bold; text-align: left; }
+
+        /* Badge Agen Berwarna */
+        .badge-agen { 
+            display: block; 
+            font-size: 10.5px;
+            font-weight: bold;
+            line-height: 1.3;
+            margin: 1px 0;
+            padding: 2px 4px;
+            border-radius: 3px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .text-bold { font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h3 style="margin:0">📜 Riwayat Pengiriman</h3>
-    <small>Data pengiriman barang agen harian</small>
-</div>
-
-<div id="containerRiwayat">
+<div class="main-card">
+    <div class="header-box">
+        <h2>Report Mingguan Agen vs Driver (Auto-Color)</h2>
     </div>
+
+    <div class="filter-section">
+        <span>Mulai:</span>
+        <input type="date" id="tglAwal" onchange="updateTglAkhir()">
+        <span>s/d</span>
+        <input type="date" id="tglAkhirDisplay" readonly>
+        <button onclick="muatReport()">TAMPILKAN DATA</button>
+    </div>
+
+    <div class="table-container">
+        <table id="tabelReport">
+            <thead>
+                <tr id="headerDriver">
+                    <th class="sticky-col-1">Tgl</th>
+                    <th class="sticky-col-2">Shift</th>
+                </tr>
+                <tr id="subHeaderJumlah">
+                    <th colspan="2" class="sticky-col-1">Total Kirim</th>
+                </tr>
+            </thead>
+            <tbody id="bodyReport">
+                <tr><td colspan="13" style="padding:15px;">Pilih tanggal mulai...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
 
 <script>
     const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     const _sb = supabase.createClient(SB_URL, SB_KEY);
 
-    async function muatRiwayat() {
-        // Ambil data transaksi terbaru
-        const { data, error } = await _sb.from('transaksi').select('*').order('tanggal', { ascending: false });
-        const container = document.getElementById('containerRiwayat');
-        container.innerHTML = "";
+    const listDriver = ["Mpang", "Ikih", "Ebod", "Kido", "Ugun", "Dena", "Bento", "Ahen", "Nur", "Aceng", "Robbi"];
 
-        if(data.length === 0) {
-            container.innerHTML = "<p style='text-align:center'>Belum ada data pengiriman.</p>";
-            return;
+    // Fungsi Generate Warna & Kontras
+    function getBadgeStyle(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
         }
+        const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+        const hex = "00000".substring(0, 6 - c.length) + c;
+        const color = "#" + hex;
 
-        data.forEach(t => {
-            container.innerHTML += `
-                <div class="row-transaksi">
-                    <div class="badge-total">Rp ${t.total_kirim?.toLocaleString('id-ID')}</div>
-                    <h4>${t.nama_agen}</h4>
-                    <p>📅 ${new Date(t.tanggal).toLocaleDateString('id-ID')}</p>
-                    <p>🚛 Unit: ${t.plat_nomor} | Driver: ${t.driver_1}</p>
-                    <p style="font-size: 11px; margin-top:5px; border-top: 1px dashed #ddd; padding-top:5px;">
-                        Nota: ${t.no_nota || '-'} | Cash: ${t.bayar_cash || 0} | Trans: ${t.bayar_transfer || 0}
-                    </p>
-                </div>
-            `;
+        // Hitung Kecerahan (YIQ) untuk nentukan warna font (putih/hitam)
+        const r = parseInt(hex.substr(0,2), 16);
+        const g = parseInt(hex.substr(2,2), 16);
+        const b = parseInt(hex.substr(4,2), 16);
+        const yiq = ((r*299)+(g*587)+(b*114))/1000;
+        const textColor = (yiq >= 128) ? 'black' : 'white';
+
+        return `background-color: ${color}; color: ${textColor};`;
+    }
+
+    window.onload = () => {
+        const d = new Date();
+        d.setDate(d.getDate() - 6);
+        document.getElementById('tglAwal').value = d.toISOString().split('T')[0];
+        updateTglAkhir();
+        renderHeader();
+    };
+
+    function updateTglAkhir() {
+        const tglMulai = new Date(document.getElementById('tglAwal').value);
+        if(!isNaN(tglMulai)) {
+            const tglSelesai = new Date(tglMulai);
+            tglSelesai.setDate(tglSelesai.getDate() + 6);
+            document.getElementById('tglAkhirDisplay').value = tglSelesai.toISOString().split('T')[0];
+        }
+    }
+
+    function renderHeader() {
+        const headRow = document.getElementById('headerDriver');
+        const subRow = document.getElementById('subHeaderJumlah');
+        listDriver.forEach(dv => {
+            headRow.innerHTML += `<th class="head-driver">${dv}</th>`;
+            subRow.innerHTML += `<th id="total-${dv}" class="head-driver">0</th>`;
         });
     }
-    muatRiwayat();
+
+    async function muatReport() {
+        const tglAwal = document.getElementById('tglAwal').value;
+        const tglAkhir = document.getElementById('tglAkhirDisplay').value;
+        const body = document.getElementById('bodyReport');
+        body.innerHTML = "<tr><td colspan='13' style='padding:20px;'>Memuat data...</td></tr>";
+
+        const { data, error } = await _sb.from('transaksi')
+            .select('tanggal, nama_agen, driver_1, driver_2, created_at')
+            .gte('tanggal', tglAwal)
+            .lte('tanggal', tglAkhir);
+
+        if (error) { alert(error.message); return; }
+
+        body.innerHTML = "";
+        let counts = {};
+        listDriver.forEach(dv => counts[dv] = 0);
+
+        for (let i = 0; i < 7; i++) {
+            let curr = new Date(tglAwal);
+            curr.setDate(curr.getDate() + i);
+            let tglStr = curr.toISOString().split('T')[0];
+            let hari = curr.toLocaleDateString('id-ID', { weekday: 'long' });
+
+            body.innerHTML += `<tr class="row-day"><td colspan="13" style="padding:4px 10px;">${hari}, ${tglStr}</td></tr>`;
+
+            const shifts = [
+                { nama: "Subuh", jam: [4, 9] },
+                { nama: "Siang", jam: [10, 17] },
+                { nama: "Malam", jam: [18, 3] }
+            ];
+
+            shifts.forEach(sh => {
+                let row = `<tr>`;
+                if (sh.nama === "Subuh") row += `<td rowspan="3" class="text-bold sticky-col-1">${tglStr.split('-').reverse()[0]}</td>`;
+                row += `<td class="text-bold sticky-col-2">${sh.nama}</td>`;
+
+                listDriver.forEach(dv => {
+                    const filtered = data.filter(d => {
+                        if (d.tanggal !== tglStr || (d.driver_1 !== dv && d.driver_2 !== dv)) return false;
+                        let jamInput = new Date(d.created_at).getHours();
+                        return sh.nama === "Malam" ? (jamInput >= 18 || jamInput <= 3) : (jamInput >= sh.jam[0] && jamInput <= sh.jam[1]);
+                    });
+
+                    let agenHtml = filtered.map(f => {
+                        const style = getBadgeStyle(f.nama_agen);
+                        return `<span class="badge-agen" style="${style}">${f.nama_agen}</span>`;
+                    }).join('');
+                    
+                    row += `<td>${agenHtml}</td>`;
+                    counts[dv] += filtered.length;
+                });
+                row += `</tr>`;
+                body.innerHTML += row;
+            });
+        }
+        listDriver.forEach(dv => document.getElementById(`total-${dv}`).innerText = counts[dv]);
+    }
 </script>
 </body>
 </html>

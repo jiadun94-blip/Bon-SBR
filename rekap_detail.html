@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekap Detail Item | SBRdigital</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Roboto Condensed', sans-serif; background: #f1f2f6; margin: 0; padding: 15px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #ddd; }
+        
+        .no-print { display: flex; flex-wrap: wrap; gap: 10px; background: #e9ecef; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        .btn { border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; }
+        .btn-cari { background: #1e272e; }
+        .btn-excel { background: #27ae60; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+        .head-main { background: #1e272e; color: white; }
+        .head-detail { background: #f8f9fa; color: #333; font-style: italic; }
+        th, td { padding: 10px; border: 1px solid #dee2e6; text-align: left; font-size: 13px; }
+        
+        .row-item { background: #ffffff; }
+        .text-retur { color: #d63031; font-weight: bold; }
+        .grand-total { background: #72a339; color: white; font-weight: bold; }
+        
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h3 class="no-print">Laporan Rincian Barang (Kirim & Retur)</h3>
+    
+    <div class="no-print">
+        <input type="date" id="tglMulai" style="padding:10px; border-radius:8px; border:1px solid #ccc;">
+        <input type="date" id="tglSelesai" style="padding:10px; border-radius:8px; border:1px solid #ccc;">
+        <button class="btn btn-cari" onclick="muatRekapDetail()">TAMPILKAN DATA</button>
+        <button class="btn btn-excel" onclick="exportExcelDetail()">DOWNLOAD EXCEL</button>
+    </div>
+
+    <table id="tabelMasterDetail">
+        <thead>
+            <tr class="head-main">
+                <th>No. Nota / Agen</th>
+                <th>Nama Barang</th>
+                <th>Qty Kirim</th>
+                <th>Qty Retur</th>
+                <th>Harga Satuan</th>
+                <th>Subtotal Netto</th>
+            </tr>
+        </thead>
+        <tbody id="bodyRekap">
+            <tr><td colspan="6" style="text-align:center">Pilih tanggal dan klik Tampilkan</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const _sb = supabase.createClient(SB_URL, SB_KEY);
+
+    window.onload = () => {
+        const h = new Date().toISOString().split('T')[0];
+        document.getElementById('tglMulai').value = h;
+        document.getElementById('tglSelesai').value = h;
+    };
+
+    async function muatRekapDetail() {
+        const t1 = document.getElementById('tglMulai').value;
+        const t2 = document.getElementById('tglSelesai').value;
+        const tbody = document.getElementById('bodyRekap');
+        tbody.innerHTML = "<tr><td colspan='6' style='text-align:center'>Sedang menyusun rincian barang...</td></tr>";
+
+        // 1. Ambil data transaksi (Master)
+        const { data: transaksi, error: err1 } = await _sb.from('transaksi')
+            .select('*').gte('tanggal', t1).lte('tanggal', t2).order('no_nota');
+
+        // 2. Ambil data rincian barang (Detail)
+        const { data: detail, error: err2 } = await _sb.from('transaksi_detail').select('*');
+
+        if (err1 || err2) {
+            alert("Gagal ambil data. Cek koneksi."); return;
+        }
+
+        tbody.innerHTML = "";
+        let grandTotalSemua = 0;
+
+        transaksi.forEach(t => {
+            // Filter barang yang sesuai dengan nomor nota ini
+            const items = detail.filter(d => d.no_nota === t.no_nota);
+            
+            // Baris Header Per Nota
+            tbody.innerHTML += `
+                <tr style="background:#e3f2fd; font-weight:bold;">
+                    <td colspan="5">Nota: ${t.no_nota} | Agen: ${t.nama_agen}</td>
+                    <td>Rp ${(t.total_kirim - t.total_retur).toLocaleString()}</td>
+                </tr>
+            `;
+
+            items.forEach(i => {
+                const qKirim = parseFloat(i.qty_kirim) || 0;
+                const qRetur = parseFloat(i.qty_retur) || 0;
+                const hrg = parseFloat(i.harga_jual) || 0;
+                const subNetto = (qKirim - qRetur) * hrg;
+
+                tbody.innerHTML += `
+                    <tr class="row-item">
+                        <td style="color:#999; font-size:11px;"># ${i.no_nota}</td>
+                        <td>${i.nama_barang}</td>
+                        <td>${qKirim} ${i.satuan || ''}</td>
+                        <td class="${qRetur > 0 ? 'text-retur' : ''}">${qRetur}</td>
+                        <td>${hrg.toLocaleString()}</td>
+                        <td>${subNetto.toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+            grandTotalSemua += (t.total_kirim - t.total_retur);
+        });
+
+        tbody.innerHTML += `
+            <tr class="grand-total">
+                <td colspan="5" style="text-align:right">TOTAL OMZET NETTO:</td>
+                <td>Rp ${grandTotalSemua.toLocaleString()}</td>
+            </tr>
+        `;
+    }
+
+    function exportExcelDetail() {
+        const table = document.getElementById("tabelMasterDetail");
+        const wb = XLSX.utils.table_to_book(table, { sheet: "Detail Kirim Retur" });
+        XLSX.writeFile(wb, `Rincian_SBR_${new Date().getTime()}.xlsx`);
+    }
+</script>
+</body>
+</html>
