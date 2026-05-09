@@ -110,7 +110,7 @@
     async function cariNotaAktif() {
         const plat = document.getElementById('selMobil').value;
         if(!plat) return;
-        const { data } = await _sb.from('transaksi').select('*').eq('plat_nomor', plat).order('created_at', { ascending: false }).limit(5);
+        const { data } = await _sb.from('transaksi').select('*').eq('plat_nomor', plat).order('created_at', { ascending: false }).limit(3);
         dataNotaTerakhir = data;
         const container = document.getElementById('notaList');
         container.innerHTML = '';
