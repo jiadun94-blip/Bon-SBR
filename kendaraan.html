@@ -3,41 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SBRdigital | Armada</title>
+    <title>SBR | Master Armada</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: sans-serif; background: #f1f2f6; padding: 15px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #ddd; margin-bottom: 20px; }
-        .form-group { margin-bottom: 10px; }
-        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-        .btn-save { background: #1e272e; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; background: white; margin-top: 15px; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-        th { background: #f8f9fa; font-size: 13px; }
-        .btn-del { background: #ff7675; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        body { 
+            font-family: 'Roboto Condensed', sans-serif; 
+            background-color: #1a1a1a; 
+            color: #eee; 
+            margin: 0; padding: 15px;
+            user-select: none; /* Mencegah seleksi teks saat tekan lama */
+        }
+
+        .card { 
+            background: #252525; 
+            border-radius: 8px; 
+            padding: 15px; 
+            border: 1px solid #333; 
+            margin-bottom: 20px; 
+        }
+
+        .header-title {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        /* FORM INPUT 2 KOLOM */
+        .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        @media (max-width: 600px) { .grid-form { grid-template-columns: 1fr; } }
+
+        label { display: block; font-size: 11px; color: #aaa; margin-bottom: 5px; font-weight: bold; }
+        input { 
+            width: 100%; padding: 12px; background: #333; border: 1px solid #444; 
+            color: #fff; border-radius: 4px; box-sizing: border-box; font-family: inherit;
+        }
+
+        .btn-save { 
+            background: #3b4c64; color: white; border: none; padding: 15px; 
+            border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; 
+            text-transform: uppercase; margin-top: 15px;
+        }
+
+        /* TABEL MODEL AGEN (ZEBRA STYLE) */
+        .table-container { width: 100%; overflow-x: auto; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; background: white; color: #000; }
+        th { background: #f1f1f1; color: #333; padding: 12px 8px; font-size: 11px; text-transform: uppercase; border: 1px solid #ddd; }
+        td { padding: 12px 8px; border: 1px solid #ddd; font-size: 14px; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .text-bold { font-weight: bold; }
+
+        /* MENU TEKAN LAMA (CONTEXT MENU) */
+        #contextMenu {
+            display: none; position: absolute; background: #333; color: white;
+            border-radius: 8px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            z-index: 1000; min-width: 120px;
+        }
+        .menu-item { padding: 12px 20px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #444; }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-item:hover { background: #444; }
+        .menu-edit { color: #5fb8ff; }
+        .menu-delete { color: #ff7675; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h3>Tambah / Edit Armada</h3>
-    <div class="form-group"><input type="text" id="plat" placeholder="Plat Nomor (Contoh: D 8976 FR)"></div>
-    <div class="form-group"><input type="text" id="tipe" placeholder="Tipe / Nama Unit (Contoh: GM Box 1)"></div>
-    <button class="btn-save" onclick="simpanKendaraan()">SIMPAN UNIT</button>
+    <div class="header-title">TAMBAH / EDIT ARMADA</div>
+    <div class="grid-form">
+        <input type="hidden" id="editId">
+        <div class="form-group">
+            <label>NOMOR PLAT</label>
+            <input type="text" id="plat" placeholder="E 1234 ABC">
+        </div>
+        <div class="form-group">
+            <label>TIPE UNIT</label>
+            <input type="text" id="tipe" placeholder="L-300 BOX">
+        </div>
+    </div>
+    <button class="btn-save" id="btnSimpan" onclick="simpanKendaraan()">SIMPAN DATA ARMADA</button>
 </div>
 
 <div class="card">
-    <h3>Daftar Kendaraan SBR</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Plat Nomor</th>
-                <th>Tipe Unit</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-        <tbody id="listMobil"></tbody>
-    </table>
+    <div class="header-title">DATA ARMADA TERINPUT</div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th width="40">NO</th>
+                    <th>PLAT NOMOR</th>
+                    <th>TIPE UNIT</th>
+                </tr>
+            </thead>
+            <tbody id="listMobil">
+                <!-- Data looping -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Popup Menu Tekan Lama -->
+<div id="contextMenu">
+    <div class="menu-item menu-edit" onclick="handleEdit()">📝 EDIT DATA</div>
+    <div class="menu-item menu-delete" onclick="handleDelete()">🗑️ HAPUS UNIT</div>
+    <div class="menu-item" onclick="tutupMenu()">❌ BATAL</div>
 </div>
 
 <script>
@@ -45,34 +121,92 @@
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     const _sb = supabase.createClient(SB_URL, SB_KEY);
 
+    let selectedData = null;
+    let timer;
+
     async function muatMobil() {
-        const { data } = await _sb.from('kendaraan').select('*').order('id', { ascending: false });
+        const { data } = await _sb.from('kendaraan').select('*').order('plat_nomor', { ascending: true });
         const tbody = document.getElementById('listMobil');
         tbody.innerHTML = "";
-        data?.forEach(m => {
-            tbody.innerHTML += `<tr>
-                <td><b>${m.plat_nomor}</b></td>
+        
+        data?.forEach((m, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td align="center">${index + 1}</td>
+                <td class="text-bold">${m.plat_nomor}</td>
                 <td>${m.tipe_mobil}</td>
-                <td><button class="btn-del" onclick="hapusMobil(${m.id})">Hapus</button></td>
-            </tr>`;
+            `;
+
+            // Fitur Tekan Lama (Long Press)
+            tr.onmousedown = (e) => startPress(e, m);
+            tr.ontouchstart = (e) => startPress(e, m);
+            tr.onmouseup = () => clearTimeout(timer);
+            tr.ontouchend = () => clearTimeout(timer);
+
+            tbody.appendChild(tr);
         });
     }
 
-    async function simpanKendaraan() {
-        const p = document.getElementById('plat').value;
-        const t = document.getElementById('tipe').value;
-        if(!p || !t) return alert("Isi plat dan tipe unit!");
-
-        await _sb.from('kendaraan').upsert({ plat_nomor: p, tipe_mobil: t }, { onConflict: 'plat_nomor' });
-        location.reload();
+    function startPress(e, data) {
+        timer = setTimeout(() => {
+            selectedData = data;
+            showMenu(e);
+        }, 600); // 0.6 detik tekan lama
     }
 
-    async function hapusMobil(id) {
-        if(confirm("Hapus unit ini?")) {
-            await _sb.from('kendaraan').delete().eq('id', id);
+    function showMenu(e) {
+        const menu = document.getElementById('contextMenu');
+        menu.style.display = 'block';
+        // Posisi menu mengikuti sentuhan/klik
+        const posX = e.pageX || e.touches[0].pageX;
+        const posY = e.pageY || e.touches[0].pageY;
+        menu.style.left = posX + 'px';
+        menu.style.top = posY + 'px';
+    }
+
+    function tutupMenu() {
+        document.getElementById('contextMenu').style.display = 'none';
+    }
+
+    function handleEdit() {
+        document.getElementById('editId').value = selectedData.id;
+        document.getElementById('plat').value = selectedData.plat_nomor;
+        document.getElementById('tipe').value = selectedData.tipe_mobil;
+        document.getElementById('btnSimpan').innerText = "UPDATE DATA ARMADA";
+        tutupMenu();
+        window.scrollTo(0,0);
+    }
+
+    async function handleDelete() {
+        if(confirm(`Hapus armada ${selectedData.plat_nomor}?`)) {
+            await _sb.from('kendaraan').delete().eq('id', selectedData.id);
             muatMobil();
         }
+        tutupMenu();
     }
+
+    async function simpanKendaraan() {
+        const id = document.getElementById('editId').value;
+        const p = document.getElementById('plat').value.trim().toUpperCase();
+        const t = document.getElementById('tipe').value.trim();
+        if(!p || !t) return alert("Isi data!");
+
+        const payload = { plat_nomor: p, tipe_mobil: t };
+        if(id) payload.id = id;
+
+        await _sb.from('kendaraan').upsert(payload, { onConflict: 'plat_nomor' });
+        
+        // Reset Form
+        document.getElementById('editId').value = "";
+        document.getElementById('plat').value = "";
+        document.getElementById('tipe').value = "";
+        document.getElementById('btnSimpan').innerText = "SIMPAN DATA ARMADA";
+        muatMobil();
+    }
+
+    // Klik di mana saja untuk tutup menu
+    window.onclick = () => tutupMenu();
+
     muatMobil();
 </script>
 </body>

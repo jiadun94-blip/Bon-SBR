@@ -3,152 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SBR | Laporan Transaksi Terpadu</title>
+    <title>SBR | Rekap Terpadu v5</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        /* Layout Dasar sesuai Screenshot Bapak */
+        /* TEMA CHARCOAL BASE - KHAS PAK HADIAT */
         body { 
             font-family: 'Roboto Condensed', sans-serif; 
-            background-color: #f1f5f9; 
-            margin: 0; 
-            padding: 20px;
+            background-color: #121212; 
+            color: #eee; 
+            margin: 0; padding: 10px;
         }
 
-        .main-card {
-            background: white;
-            max-width: 1100px;
-            margin: 0 auto;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            padding: 25px;
-        }
-        
-        .header-title-box { 
-            background-color: #f0f2f5; 
-            padding: 15px 20px; 
-            border-radius: 12px; 
-            margin-bottom: 25px; 
-            text-align: center; 
-        }
-        .header-title-box h2 { 
-            margin: 0; 
-            font-size: 18px; 
-            color: #1e293b; 
-            text-transform: uppercase; 
-            letter-spacing: 1px;
-        }
-
-        /* Filter Area */
-        .filter-section { 
-            background-color: #f8fafc; 
-            border: 1px solid #e2e8f0; 
+        .card { 
+            background: #1e1e1e; 
+            border-radius: 8px; 
             padding: 15px; 
-            border-radius: 12px; 
-            margin-bottom: 25px; 
-            display: flex; 
-            gap: 10px; 
-            justify-content: center; 
-            align-items: center; 
-            flex-wrap: wrap;
+            border: 1px solid #333; 
+            margin-bottom: 20px; 
         }
+
+        h2 { 
+            margin: 0 0 15px; font-size: 16px; text-align: center; 
+            background: #333; padding: 12px; border-radius: 6px; 
+            color: #fff; text-transform: uppercase; 
+        }
+
+        /* FILTER SECTION GRID */
+        .filter-section { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr auto auto; 
+            gap: 8px; 
+            align-items: end; 
+            background: rgba(0,0,0,0.3); 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 20px;
+        }
+
+        .filter-group { display: flex; flex-direction: column; }
+        .filter-group label { font-size: 11px; margin-bottom: 4px; color: #aaa; }
 
         input[type="date"] { 
-            padding: 8px 12px; 
-            border: 1px solid #cbd5e1; 
-            border-radius: 8px; 
-            font-family: inherit; 
+            background: #2d2d2d; border: 1px solid #444; 
+            color: #fff; padding: 10px; border-radius: 4px; font-family: inherit; 
         }
 
         .btn { 
-            padding: 9px 20px; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            border: none; 
-            font-size: 13px;
+            padding: 10px 15px; border-radius: 4px; 
+            font-weight: bold; cursor: pointer; border: none; font-size: 12px;
         }
-        .btn-tampilkan { background-color: #1e293b; color: white; }
-        .btn-excel { background-color: #22c55e; color: white; }
+        .btn-tampilkan { background: #3b4c64; color: white; }
+        .btn-excel { background: #166534; color: white; }
+        .btn:active { transform: scale(0.95); }
 
-        /* Tabel Slim, Center, & Freeze */
+        /* TABLE AREA - KONTRAST TINGGI */
         .table-container { 
-            width: 100%; 
-            overflow-x: auto; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 8px; 
+            width: 100%; overflow-x: auto; 
+            border-radius: 4px; background: #fff; 
+            border: 1px solid #444;
         }
-        table { border-collapse: separate; border-spacing: 0; width: 100%; }
+        
+        table { width: 100%; border-collapse: separate; border-spacing: 0; color: #000; }
         
         th { 
-            background: #1e293b; color: white; 
+            background: #f1f5f9; color: #1e293b; 
             padding: 10px 5px; font-size: 11px; 
-            border: 1px solid #334155; text-align: center;
-            position: sticky; top: 0; z-index: 10;
+            border: 1px solid #cbd5e1; position: sticky; top: 0; z-index: 10;
         }
         
         td { 
-            padding: 4px 8px; border: 1px solid #e2e8f0; 
-            font-size: 12px; text-align: center; 
-            white-space: nowrap; width: 1%; 
+            padding: 6px 8px; border: 1px solid #e2e8f0; 
+            font-size: 12px; text-align: center; white-space: nowrap; 
         }
 
-        /* Sticky Column Agen (Freeze) */
+        /* STICKY AGEN */
         .sticky-col { 
-            position: sticky; left: 0; 
-            background: white; z-index: 5; 
-            border-right: 2px solid #cbd5e1 !important; 
+            position: sticky; left: 0; background: #fff; z-index: 5; 
+            border-right: 2px solid #334155 !important; font-weight: bold;
         }
-        th.sticky-col { z-index: 11; background: #0f172a; }
-        tr:nth-child(even) td.sticky-col { background: #f8fafc; }
+        th.sticky-col { background: #e2e8f0; z-index: 11; }
 
-        /* Detail Click Styling */
+        /* TEKS BERWARNA */
         .link-detail { text-decoration: underline; cursor: pointer; font-weight: bold; }
         .text-kirim { color: #2563eb; }
         .text-retur { color: #dc2626; }
+        .lunas { background: #dcfce7; color: #166534; font-weight: bold; border-radius: 4px; padding: 2px 6px; }
+        .pending { background: #ffedd5; color: #9a3412; font-weight: bold; border-radius: 4px; padding: 2px 6px; }
 
-        /* Modal Pop-up Styling */
+        /* MODAL POP-UP DARK STYLE */
         .modal { 
             display: none; position: fixed; z-index: 100; 
             left: 0; top: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(3px);
         }
         .modal-content { 
-            background: white; margin: 5% auto; 
-            border-radius: 12px; width: 90%; max-width: 550px; 
-            overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2); 
+            background: #1e1e1e; margin: 10% auto; 
+            border-radius: 12px; width: 90%; max-width: 500px; 
+            border: 1px solid #444; overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5); 
         }
         .modal-header { 
-            background: #f8fafc; padding: 15px 20px; 
+            background: #2d2d2d; padding: 15px; 
             display: flex; justify-content: space-between; 
-            align-items: center; border-bottom: 1px solid #e2e8f0; 
+            align-items: center; border-bottom: 1px solid #444; 
         }
-        .modal-body { padding: 20px; max-height: 450px; overflow-y: auto; }
-        .close-btn { font-size: 24px; cursor: pointer; color: #64748b; font-weight: bold; }
+        .modal-body { padding: 15px; max-height: 400px; overflow-y: auto; color: #eee; }
+        .close-btn { font-size: 24px; cursor: pointer; color: #aaa; }
         
         .table-pop { width: 100%; border-collapse: collapse; }
-        .table-pop th { background: #f1f5f9; color: #334155; padding: 10px; border: 1px solid #e2e8f0; font-size: 13px; position: static; }
-        .table-pop td { padding: 8px; border: 1px solid #e2e8f0; font-size: 13px; text-align: center; }
-
-        .lunas { color: #16a34a; font-weight: bold; }
-        .pending { color: #ea580c; font-weight: bold; }
+        .table-pop th { background: #333; color: #fff; border: 1px solid #444; position: static; }
+        .table-pop td { border: 1px solid #444; color: #eee; background: #1e1e1e; }
     </style>
 </head>
 <body>
 
-<div class="main-card">
-    <div class="header-title-box">
-        <h2>Rekap Transaksi & Pengiriman SBR</h2>
-    </div>
+<div class="card">
+    <h2>REKAP TRANSAKSI TERPADU SBR</h2>
 
     <div class="filter-section">
-        <input type="date" id="tglMulai">
-        <span>s/d</span>
-        <input type="date" id="tglSelesai">
-        <button class="btn btn-tampilkan" onclick="muatLaporan()">TAMPILKAN DATA</button>
-        <button class="btn btn-excel" onclick="exportKeExcel()">DOWNLOAD EXCEL</button>
+        <div class="filter-group">
+            <label>DARI TANGGAL</label>
+            <input type="date" id="tglMulai">
+        </div>
+        <div class="filter-group">
+            <label>SAMPAI TANGGAL</label>
+            <input type="date" id="tglSelesai">
+        </div>
+        <button class="btn btn-tampilkan" onclick="muatLaporan()">TAMPILKAN</button>
+        <button class="btn btn-excel" onclick="exportKeExcel()">EXCEL</button>
     </div>
 
     <div class="table-container">
@@ -160,27 +145,27 @@
                     <th>NOTA</th>
                     <th>DRIVER 1</th>
                     <th>DRIVER 2</th>
-                    <th>KIRIM (Klik)</th>
-                    <th>RETUR (Klik)</th>
+                    <th>KIRIM (▼)</th>
+                    <th>RETUR (▼)</th>
                     <th>TAGIHAN</th>
                     <th>STATUS</th>
                 </tr>
             </thead>
             <tbody id="isiTabel">
-                <tr><td colspan="9" style="padding:40px; color:#94a3b8;">Silakan tentukan tanggal dan klik Tampilkan Data</td></tr>
+                <tr><td colspan="9" style="padding:40px; background:#fff; color:#999;">Tentukan tanggal lalu klik Tampilkan.</td></tr>
             </tbody>
         </table>
     </div>
 </div>
 
+<!-- Modal Pop-up Rincian -->
 <div id="modalDetail" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3 id="modalJudul" style="margin:0; font-size:16px; color:#1e293b;">Rincian Item</h3>
+            <h3 id="modalJudul" style="margin:0; font-size:15px;">RINCIAN ITEM</h3>
             <span class="close-btn" onclick="tutupModal()">&times;</span>
         </div>
-        <div class="modal-body" id="modalIsi">
-            </div>
+        <div class="modal-body" id="modalIsi"></div>
     </div>
 </div>
 
@@ -197,7 +182,7 @@
 
     async function muatLaporan() {
         const body = document.getElementById('isiTabel');
-        body.innerHTML = "<tr><td colspan='9' style='padding:20px;'>Memproses...</td></tr>";
+        body.innerHTML = "<tr><td colspan='9' style='padding:30px; background:#fff;'>Memproses data Supabase...</td></tr>";
 
         const { data, error } = await _sb.from('transaksi')
             .select('*')
@@ -206,7 +191,7 @@
             .order('tanggal', { ascending: false });
 
         if (error) { alert("Error: " + error.message); return; }
-        if (data.length === 0) { body.innerHTML = "<tr><td colspan='9' style='padding:20px;'>Tidak ada data transaksi.</td></tr>"; return; }
+        if (data.length === 0) { body.innerHTML = "<tr><td colspan='9' style='padding:30px; background:#fff;'>Data tidak ditemukan.</td></tr>"; return; }
 
         body.innerHTML = "";
         data.forEach(t => {
@@ -216,15 +201,15 @@
 
             body.innerHTML += `
                 <tr>
-                    <td class="sticky-col" style="text-align:left; font-weight:bold;">${t.nama_agen}</td>
+                    <td class="sticky-col" style="text-align:left;">${t.nama_agen}</td>
                     <td>${t.tanggal}</td>
-                    <td>${t.no_nota}</td>
+                    <td style="color:#666;">${t.no_nota}</td>
                     <td>${t.driver_1 || '-'}</td>
                     <td>${t.driver_2 || '-'}</td>
                     <td class="link-detail text-kirim" onclick="bukaPopUpDetail('${t.no_nota}', 'Kirim')">${(t.total_kirim || 0).toLocaleString()}</td>
                     <td class="link-detail text-retur" onclick="bukaPopUpDetail('${t.no_nota}', 'Retur')">${(t.total_retur || 0).toLocaleString()}</td>
-                    <td style="font-weight:bold; color:#2563eb;">${netto.toLocaleString()}</td>
-                    <td class="${sisa <= 0 ? 'lunas' : 'pending'}">${sisa <= 0 ? 'LUNAS' : 'PENDING'}</td>
+                    <td style="font-weight:bold; color:#000;">${netto.toLocaleString()}</td>
+                    <td><span class="${sisa <= 0 ? 'lunas' : 'pending'}">${sisa <= 0 ? 'LUNAS' : 'PENDING'}</span></td>
                 </tr>
             `;
         });
@@ -232,51 +217,32 @@
 
     async function bukaPopUpDetail(noNota, tipeKlik) {
         const modalIsi = document.getElementById('modalIsi');
-        document.getElementById('modalJudul').innerText = `Rincian ${tipeKlik} - Nota: ${noNota}`;
-        modalIsi.innerHTML = "<p style='text-align:center;'>Mencari rincian barang...</p>";
+        document.getElementById('modalJudul').innerText = `RINCIAN ${tipeKlik.toUpperCase()} - ${noNota}`;
+        modalIsi.innerHTML = "<p style='text-align:center;'>Mengambil data...</p>";
         document.getElementById('modalDetail').style.display = "block";
 
-        // Query berdasarkan tipe yang diklik (Kirim atau Retur)
         const { data, error } = await _sb.from('transaksi_detail')
-            .select('nama_barang, qty, satuan, harga_satuan')
+            .select('nama_barang, qty, satuan')
             .eq('no_nota', noNota)
             .eq('tipe', tipeKlik);
 
         if (error) { modalIsi.innerHTML = "Gagal: " + error.message; return; }
-        if (!data || data.length === 0) { modalIsi.innerHTML = `<p style='text-align:center;'>Data ${tipeKlik} tidak ditemukan.</p>`; return; }
+        if (!data || data.length === 0) { modalIsi.innerHTML = "<p style='text-align:center;'>Tidak ada rincian.</p>"; return; }
 
-        let tabelDetail = `
-            <table class="table-pop">
-                <thead>
-                    <tr>
-                        <th style="text-align:left;">Nama Barang</th>
-                        <th>Qty</th>
-                        <th>Satuan</th>
-                    </tr>
-                </thead>
-                <tbody>`;
-        
+        let html = `<table class="table-pop"><thead><tr><th style="text-align:left;">Barang</th><th>Qty</th><th>Satuan</th></tr></thead><tbody>`;
         data.forEach(item => {
-            tabelDetail += `
-                <tr>
-                    <td style="text-align:left;">${item.nama_barang}</td>
-                    <td style="font-weight:bold;">${item.qty.toLocaleString()}</td>
-                    <td>${item.satuan}</td>
-                </tr>`;
+            html += `<tr><td style="text-align:left;">${item.nama_barang}</td><td style="font-weight:bold;">${item.qty.toLocaleString()}</td><td>${item.satuan}</td></tr>`;
         });
-
-        tabelDetail += `</tbody></table>`;
-        modalIsi.innerHTML = tabelDetail;
+        html += `</tbody></table>`;
+        modalIsi.innerHTML = html;
     }
 
     function tutupModal() { document.getElementById('modalDetail').style.display = "none"; }
-    
-    // Klik di luar kotak modal untuk menutup
-    window.onclick = (event) => { if (event.target == document.getElementById('modalDetail')) tutupModal(); }
+    window.onclick = (e) => { if (e.target == document.getElementById('modalDetail')) tutupModal(); }
 
     function exportKeExcel() {
         const wb = XLSX.utils.table_to_book(document.getElementById("tabelLaporan"));
-        XLSX.writeFile(wb, `Rekap_SBR_Lengkap.xlsx`);
+        XLSX.writeFile(wb, `Rekap_SBR_${document.getElementById('tglMulai').value}.xlsx`);
     }
 </script>
 

@@ -7,69 +7,152 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Roboto Condensed', sans-serif; background: #f1f2f6; margin: 0; padding: 15px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #ddd; }
-        h3 { margin-top: 0; color: #1e272e; border-bottom: 2px solid #72a339; padding-bottom: 8px; }
+        body { 
+            font-family: 'Roboto Condensed', sans-serif; 
+            background: #121212; 
+            color: #e0e0e0; 
+            margin: 0; padding: 0; /* Padding dipindah ke container inner */
+            user-select: none;
+        }
+
+        /* CONTAINER UTAMA UNTUK FORM (FREEZE/STICKY) */
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #121212;
+            padding: 15px 15px 5px 15px;
+        }
         
-        .form-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
-        .form-group { flex: 1; min-width: 150px; }
-        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #666; }
-        select, input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .card { 
+            background: #1e1e1e; 
+            padding: 15px; border-radius: 8px; 
+            border: 1px solid #333; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        .header-section {
+            background: #2d2d2d;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            font-size: 13px;
+            letter-spacing: 1px;
+        }
         
-        .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
-        .btn-save { background: #5a822d; color: white; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        label { display: block; font-size: 10px; font-weight: bold; margin-bottom: 4px; color: #aaa; }
         
-        .search-box { margin-bottom: 15px; padding: 10px; border: 2px solid #72a339; border-radius: 8px; width: 100%; box-sizing: border-box; }
+        select, input { 
+            width: 100%; padding: 10px; border: 1px solid #444; 
+            border-radius: 6px; background: #2d2d2d; color: #fff; box-sizing: border-box; 
+            font-family: inherit; font-size: 14px;
+        }
         
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th { background: #1e272e; color: white; padding: 10px; text-align: left; font-size: 13px; position: sticky; top: 0; }
-        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
-        .btn-del { background: #ff7675; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; }
-        tr:nth-child(even) { background: #f9f9f9; }
+        .btn-save { 
+            background: #34495e; color: white; border: none; padding: 12px; 
+            border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; 
+            text-transform: uppercase; font-size: 13px;
+        }
+
+        /* BAGIAN TABEL (SCROLLABLE) */
+        .content-body {
+            padding: 0 15px 15px 15px;
+        }
+        
+        .search-box { 
+            margin: 10px 0; padding: 12px; border: 1px solid #444; 
+            border-radius: 6px; width: 100%; box-sizing: border-box; 
+            background: #2d2d2d; color: white; font-family: inherit;
+        }
+        
+        .table-container { 
+            width: 100%; overflow-x: auto; border-radius: 6px; 
+            border: 1px solid #333;
+        }
+
+        table { width: 100%; border-collapse: collapse; background: white; color: #000; }
+        
+        /* FREEZE HEADER TABEL */
+        thead th { 
+            position: sticky;
+            top: 0;
+            background: #e0e0e0; color: #000; 
+            z-index: 10;
+            padding: 12px 8px; font-size: 11px; text-transform: uppercase; 
+            border: 1px solid #ccc; text-align: center;
+        }
+        
+        td { padding: 12px 8px; border: 1px solid #eee; font-size: 13px; color: #000; }
+        tr:nth-child(even) { background: #f2f2f2; }
+        tr:nth-child(odd) { background: #ffffff; }
+        
+        .text-bold { font-weight: bold; }
+        .price-text { font-weight: bold; text-align: right; color: #000; }
+
+        /* MENU POPUP */
+        #contextMenu {
+            display: none; position: absolute; background: #2d2d2d; color: white;
+            border-radius: 8px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+            z-index: 1000; min-width: 160px; border: 1px solid #444;
+        }
+        .menu-item { padding: 15px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #444; text-align: center; font-weight: bold; }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-edit { color: #5fb8ff; }
+        .menu-delete { color: #ff7675; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h3>Input / Update Harga</h3>
-    <div class="form-row">
-        <div class="form-group">
-            <label>Agen</label>
-            <select id="selAgen"><option value="">Pilih Agen</option></select>
+<!-- AREA YANG DI-FREEZE (FORM INPUT) -->
+<div class="sticky-header">
+    <div class="card">
+        <div class="header-section">TAMBAH / UPDATE HARGA</div>
+        <input type="hidden" id="editId">
+        <div class="form-row">
+            <div class="form-group">
+                <label>NAMA AGEN</label>
+                <select id="selAgen"><option value="">Pilih Agen...</option></select>
+            </div>
+            <div class="form-group">
+                <label>NAMA BARANG</label>
+                <select id="selBarang"><option value="">Pilih Barang...</option></select>
+            </div>
         </div>
-        <div class="form-group">
-            <label>Barang</label>
-            <select id="selBarang"><option value="">Pilih Barang</option></select>
+        <div class="form-row">
+            <div class="form-group">
+                <label>SATUAN</label>
+                <select id="selSatuan">
+                    <option value="Pcs">Pcs</option>
+                    <option value="Pack">Pack</option>
+                    <option value="Ball">Ball</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>HARGA JUAL (RP)</label>
+                <input type="number" id="inpHarga" placeholder="0">
+            </div>
         </div>
-        <div class="form-group">
-            <label>Satuan</label>
-            <select id="selSatuan">
-                <option value="Pcs">Pcs</option>
-                <option value="Pack">Pack</option>
-                <option value="Ball">Ball</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Harga Jual (Rp)</label>
-            <input type="number" id="inpHarga" placeholder="0">
-        </div>
+        <button class="btn-save" id="btnSimpan" onclick="simpanHarga()">SIMPAN DATA HARGA</button>
     </div>
-    <button class="btn btn-save" onclick="simpanHarga()">SIMPAN HARGA</button>
 </div>
 
-<div class="card">
-    <h3>Daftar Harga (300+ Record)</h3>
-    <input type="text" id="cariData" class="search-box" placeholder="Cari Nama Agen atau Barang..." onkeyup="filterTabel()">
+<!-- AREA YANG BISA DI-SCROLL (DAFTAR DATA) -->
+<div class="content-body">
+    <input type="text" id="cariData" class="search-box" placeholder="Cari Agen atau Barang..." onkeyup="filterTabel()">
     <div class="table-container">
-        <table id="tabelHarga">
+        <table>
             <thead>
                 <tr>
-                    <th>Agen</th>
-                    <th>Barang</th>
-                    <th>Satuan</th>
-                    <th>Harga</th>
-                    <th>Opsi</th>
+                    <th width="30">NO</th>
+                    <th>NAMA AGEN</th>
+                    <th>BARANG</th>
+                    <th width="40">SAT</th>
+                    <th>HARGA JUAL</th>
                 </tr>
             </thead>
             <tbody id="bodyTabel"></tbody>
@@ -77,84 +160,120 @@
     </div>
 </div>
 
+<div id="contextMenu">
+    <div class="menu-item menu-edit" onclick="handleEdit()">📝 EDIT DATA</div>
+    <div class="menu-item menu-delete" onclick="handleDelete()">🗑️ HAPUS DATA</div>
+    <div class="menu-item" onclick="tutupMenu()">❌ BATAL</div>
+</div>
+
 <script>
     const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     const _sb = supabase.createClient(SB_URL, SB_KEY);
 
-    async function init() {
-        // Ambil Data Agen untuk Dropdown
-        const { data: agens } = await _sb.from('agen').select('nama_agen').order('nama_agen');
-        agens.forEach(a => document.getElementById('selAgen').innerHTML += `<option value="${a.nama_agen}">${a.nama_agen}</option>`);
+    let selectedData = null;
+    let timer;
 
-        // Ambil Data Barang untuk Dropdown
+    async function init() {
+        const { data: agens } = await _sb.from('agen').select('nama_agen').order('nama_agen');
+        agens?.forEach(a => document.getElementById('selAgen').innerHTML += `<option value="${a.nama_agen}">${a.nama_agen}</option>`);
+
         const { data: barangs } = await _sb.from('barang').select('nama_barang').order('nama_barang');
-        barangs.forEach(b => document.getElementById('selBarang').innerHTML += `<option value="${b.nama_barang}">${b.nama_barang}</option>`);
+        barangs?.forEach(b => document.getElementById('selBarang').innerHTML += `<option value="${b.nama_barang}">${b.nama_barang}</option>`);
 
         muatDataHarga();
     }
 
     async function muatDataHarga() {
-        const { data, error } = await _sb.from('harga').select('*').order('id', { ascending: false });
+        const { data } = await _sb.from('harga').select('*').order('nama_agen', { ascending: true });
         const tbody = document.getElementById('bodyTabel');
         tbody.innerHTML = "";
         
-        if (data) {
-            data.forEach(h => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${h.nama_agen}</td>
-                        <td>${h.nama_barang}</td>
-                        <td>${h.satuan}</td>
-                        <td style="font-weight:bold; color:#2e7d32">Rp ${h.harga_jual.toLocaleString('id-ID')}</td>
-                        <td><button class="btn-del" onclick="hapusHarga(${h.id})">Hapus</button></td>
-                    </tr>`;
-            });
+        data?.forEach((h, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td align="center">${index + 1}</td>
+                <td class="text-bold">${h.nama_agen}</td>
+                <td>${h.nama_barang}</td>
+                <td align="center">${h.satuan}</td>
+                <td class="price-text">${h.harga_jual.toLocaleString('id-ID')}</td>
+            `;
+
+            tr.ontouchstart = (e) => startPress(e, h);
+            tr.ontouchend = () => clearTimeout(timer);
+            tr.onmousedown = (e) => startPress(e, h);
+            tr.onmouseup = () => clearTimeout(timer);
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    function startPress(e, data) {
+        timer = setTimeout(() => {
+            selectedData = data;
+            showMenu(e);
+        }, 600);
+    }
+
+    function showMenu(e) {
+        const menu = document.getElementById('contextMenu');
+        menu.style.display = 'block';
+        const posX = (e.touches ? e.touches[0].pageX : e.pageX);
+        const posY = (e.touches ? e.touches[0].pageY : e.pageY);
+        menu.style.left = (posX - 80) + 'px';
+        menu.style.top = (posY - 20) + 'px';
+    }
+
+    function tutupMenu() { document.getElementById('contextMenu').style.display = 'none'; }
+
+    function handleEdit() {
+        document.getElementById('editId').value = selectedData.id;
+        document.getElementById('selAgen').value = selectedData.nama_agen;
+        document.getElementById('selBarang').value = selectedData.nama_barang;
+        document.getElementById('selSatuan').value = selectedData.satuan;
+        document.getElementById('inpHarga').value = selectedData.harga_jual;
+        document.getElementById('btnSimpan').innerText = "UPDATE DATA HARGA";
+        tutupMenu();
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    async function handleDelete() {
+        if(confirm(`Hapus harga ${selectedData.nama_barang}?`)) {
+            await _sb.from('harga').delete().eq('id', selectedData.id);
+            muatDataHarga();
         }
+        tutupMenu();
     }
 
     async function simpanHarga() {
-        const agen = document.getElementById('selAgen').value;
-        const brg = document.getElementById('selBarang').value;
-        const sat = document.getElementById('selSatuan').value;
-        const hrg = document.getElementById('inpHarga').value;
+        const id = document.getElementById('editId').value;
+        const payload = { 
+            nama_agen: document.getElementById('selAgen').value,
+            nama_barang: document.getElementById('selBarang').value,
+            satuan: document.getElementById('selSatuan').value,
+            harga_jual: document.getElementById('inpHarga').value
+        };
+        if(!payload.nama_agen || !payload.nama_barang || !payload.harga_jual) return alert("Input belum lengkap!");
 
-        if(!agen || !brg || !hrg) return alert("Lengkapi data dulu!");
+        if(id) payload.id = id;
 
-        const { error } = await _sb.from('harga').upsert({
-            nama_agen: agen,
-            nama_barang: brg,
-            satuan: sat,
-            harga_jual: hrg
-        }, { onConflict: 'nama_agen,nama_barang,satuan' });
-
-        if(error) alert("Gagal: " + error.message);
-        else {
-            alert("Harga berhasil disimpan!");
-            muatDataHarga();
-        }
-    }
-
-    async function hapusHarga(id) {
-        if(confirm("Hapus harga ini?")) {
-            await _sb.from('harga').delete().eq('id', id);
-            muatDataHarga();
-        }
+        await _sb.from('harga').upsert(payload, { onConflict: 'nama_agen,nama_barang,satuan' });
+        
+        document.getElementById('editId').value = "";
+        document.getElementById('inpHarga').value = "";
+        document.getElementById('btnSimpan').innerText = "SIMPAN DATA HARGA";
+        muatDataHarga();
     }
 
     function filterTabel() {
         const input = document.getElementById("cariData").value.toUpperCase();
-        const tr = document.getElementById("bodyTabel").getElementsByTagName("tr");
-        for (let i = 0; i < tr.length; i++) {
-            const tdAgen = tr[i].getElementsByTagName("td")[0];
-            const tdBrg = tr[i].getElementsByTagName("td")[1];
-            if (tdAgen || tdBrg) {
-                const txtValue = (tdAgen.textContent || tdAgen.innerText) + (tdBrg.textContent || tdBrg.innerText);
-                tr[i].style.display = txtValue.toUpperCase().indexOf(input) > -1 ? "" : "none";
-            }
-        }
+        const tr = document.querySelectorAll("#bodyTabel tr");
+        tr.forEach(row => {
+            row.style.display = row.innerText.toUpperCase().includes(input) ? "" : "none";
+        });
     }
 
+    window.onclick = (e) => { if(e.target.id !== 'contextMenu') tutupMenu(); }
     init();
 </script>
 </body>
