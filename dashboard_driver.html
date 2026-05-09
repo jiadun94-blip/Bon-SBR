@@ -89,13 +89,13 @@
             duaPekanLalu.setDate(duaPekanLalu.getDate() - 14);
             const isoDate = duaPekanLalu.toISOString();
 
-            // Ambil data transaksi 2 pekan terakhir untuk driver ini
-            const { data, error } = await _sb
-                .from('transaksi')
-                .select('*')
-                .or(`driver_1.eq.${userLogin},driver_2.eq.${userLogin}`)
-                .gte('created_at', isoDate)
-                .order('created_at', { ascending: false });
+// Ganti baris ini (Hapus filter .gte):
+const { data, error } = await _sb
+    .from('transaksi')
+    .select('*')
+    .or(`driver_1.eq.${userLogin},driver_2.eq.${userLogin}`)
+    .order('created_at', { ascending: false });
+
 
             const tbody = document.getElementById('bodyRiwayat');
             tbody.innerHTML = '';
