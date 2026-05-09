@@ -3,48 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SBRdigital | Dashboard Driver</title>
+    <title>SBR | Dashboard Driver</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #121212; --card: #1e1e1e; --accent: #72a339; --text: #e0e0e0; }
-        body { font-family: 'Roboto Condensed', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
+        body { font-family: 'Roboto Condensed', sans-serif; background-color: #121212; color: #eee; margin: 0; padding: 15px; padding-bottom: 50px; }
         
-        .welcome-section { text-align: center; padding: 25px 15px; background: var(--card); border-radius: 20px; border: 1px solid #333; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .welcome-section h1 { margin: 0; font-size: 22px; color: #fff; }
-        .welcome-section h1 span { color: var(--accent); }
-        .welcome-section p { color: #888; margin-top: 5px; font-size: 14px; }
+        /* HEADER */
+        .header { text-align: center; padding: 20px 10px; background: #1e1e1e; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
+        .header h1 { font-size: 20px; color: #72a339; margin: 0; text-transform: uppercase; }
+        .header p { font-size: 12px; color: #888; margin-top: 5px; }
 
+        /* MENU TOMBOL */
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
-        .menu-card { background: var(--card); padding: 18px; border-radius: 15px; border: 1px solid #444; text-align: center; text-decoration: none; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .menu-card:active { background: #2a2a2a; transform: translateY(2px); }
-        .menu-card b { font-size: 14px; color: var(--accent); text-transform: uppercase; margin-top: 8px; }
-        .icon-box { font-size: 24px; }
+        .menu-card { background: #1e1e1e; padding: 20px; border-radius: 15px; border: 1px solid #444; text-align: center; text-decoration: none; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.2s; }
+        .menu-card:active { background: #2a2a2a; transform: scale(0.95); }
+        .menu-card b { font-size: 13px; color: #72a339; text-transform: uppercase; margin-top: 8px; letter-spacing: 0.5px; }
+        .icon-box { font-size: 28px; }
 
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 5px; }
-        .section-title { font-size: 12px; color: var(--accent); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        /* TABEL RIWAYAT */
+        .section-title { font-size: 12px; color: #72a339; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; padding-left: 5px; display: block; }
+        .card-riwayat { background: #1e1e1e; border-radius: 15px; border: 1px solid #333; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        td { padding: 12px; border-bottom: 1px solid #2a2a2a; vertical-align: middle; }
         
-        .history-card { background: var(--card); border-radius: 15px; border: 1px solid #333; overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { background: #252525; padding: 12px 10px; text-align: left; color: #666; font-size: 10px; border-bottom: 1px solid #333; }
-        td { padding: 12px 10px; border-bottom: 1px solid #2a2a2a; vertical-align: top; }
+        .tgl-box { text-align: center; background: #2d2d2d; border-radius: 8px; padding: 6px; min-width: 45px; border: 1px solid #444; }
+        .tgl-hari { display: block; font-size: 9px; color: #aaa; text-transform: uppercase; font-weight: bold; }
+        .tgl-angka { display: block; font-size: 18px; font-weight: bold; color: #fff; line-height: 1.1; }
+
+        .info-agen { padding-left: 12px; }
+        .nama-agen { display: block; font-size: 15px; font-weight: bold; color: #72a339; text-transform: uppercase; }
+        .nama-partner { display: block; font-size: 11px; color: #fbc531; margin-top: 3px; font-style: italic; }
         
-        .txt-tgl { font-weight: bold; color: #fff; display: block; }
-        .txt-agen { color: var(--accent); font-weight: 700; font-size: 14px; text-transform: uppercase; display: block; }
-        .txt-partner { font-size: 11px; color: #fbc531; display: block; margin-top: 3px; }
-        .txt-nota { font-size: 11px; color: #666; }
+        .empty-state { text-align: center; padding: 40px; color: #666; font-size: 13px; }
     </style>
 </head>
 <body>
 
-<div class="welcome-section">
-    <h1>Halo, <span id="namaUser">...</span>!</h1>
-    <p>Driver SBR Putra Food</p>
+<div class="header">
+    <h1 id="welcomeNama">HALO, DRIVER!</h1>
+    <p>Selamat bekerja & utamakan keselamatan</p>
 </div>
 
-<div class="section-header">
-    <span class="section-title">Menu Cepat</span>
-</div>
+<span class="section-title">Menu Utama</span>
 <div class="menu-grid">
     <a href="bon.html" class="menu-card">
         <span class="icon-box">📝</span>
@@ -56,85 +57,82 @@
     </a>
 </div>
 
-<div class="section-header">
-    <span class="section-title">Riwayat 2 Pekan Terakhir</span>
-</div>
-<div class="history-card">
-    <table id="tabelRiwayat">
-        <thead>
-            <tr>
-                <th>WAKTU / NOTA</th>
-                <th>AGEN / PARTNER</th>
-            </tr>
-        </thead>
+<span class="section-title">Riwayat Kiriman Terakhir</span>
+<div class="card-riwayat">
+    <table>
         <tbody id="bodyRiwayat">
-            <tr><td colspan="2" style="text-align:center; padding:30px; color:#666;">Memuat data...</td></tr>
+            <!-- Data Otomatis Masuk Sini -->
         </tbody>
     </table>
 </div>
 
 <script>
-    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // Gunakan Key Bapak
-    const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // KONFIGURASI SUPABASE (Sesuai Report v5 Bapak)
+    const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const _sb = supabase.createClient(SB_URL, SB_KEY);
 
-    // Ambil nama dari login (Fallback ke profil Pak Hadiat sesuai instruksi)
-    const userLogin = localStorage.getItem("userNama") || "Hadiat";
-    document.getElementById('namaUser').innerText = userLogin;
+    // Ambil nama dari login
+    const userLogin = localStorage.getItem("userNama") || "Ikih";
+
+    window.onload = () => {
+        document.getElementById('welcomeNama').innerText = "HALO, " + userLogin.toUpperCase() + "!";
+        loadRiwayat();
+    };
 
     async function loadRiwayat() {
+        const tbody = document.getElementById('bodyRiwayat');
+        tbody.innerHTML = '<tr><td class="empty-state">Menarik data transaksi...</td></tr>';
+
         try {
-            // Hitung tanggal 14 hari yang lalu (2 pekan)
-            const duaPekanLalu = new Date();
-            duaPekanLalu.setDate(duaPekanLalu.getDate() - 14);
-            const isoDate = duaPekanLalu.toISOString();
+            // Logika ambil data sama dengan Report v5
+            const { data, error } = await _sb
+                .from('transaksi')
+                .select('tanggal, nama_agen, driver_1, driver_2, created_at')
+                .or(`driver_1.eq.${userLogin},driver_2.eq.${userLogin}`)
+                .order('tanggal', { ascending: false })
+                .order('created_at', { ascending: false })
+                .limit(20);
 
-// Ganti baris ini (Hapus filter .gte):
-const { data, error } = await _sb
-    .from('transaksi')
-    .select('*')
-    .or(`driver_1.eq.${userLogin},driver_2.eq.${userLogin}`)
-    .order('created_at', { ascending: false });
+            if (error) throw error;
 
-
-            const tbody = document.getElementById('bodyRiwayat');
             tbody.innerHTML = '';
 
             if (data && data.length > 0) {
                 data.forEach(item => {
-                    const tglObj = new Date(item.created_at);
-                    const tglStr = tglObj.toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short' });
-                    
-                    // Tentukan Partner (Jika saya driver 1, partnernya driver 2, dan sebaliknya)
-                    let partner = "-";
+                    const tglObj = new Date(item.tanggal);
+                    const hari = tglObj.toLocaleDateString('id-ID', { weekday: 'short' });
+                    const tgl = item.tanggal.split('-')[2];
+
+                    let partner = "";
                     if (item.driver_1 === userLogin) {
-                        partner = item.driver_2 || "Sendiri";
+                        partner = (item.driver_2 && item.driver_2 !== "EMPTY") ? item.driver_2 : "Sendiri";
                     } else {
                         partner = item.driver_1 || "Sendiri";
                     }
 
                     tbody.innerHTML += `
                         <tr>
-                            <td>
-                                <span class="txt-tgl">${tglStr}</span>
-                                <span class="txt-nota">${item.no_nota}</span>
+                            <td width="65">
+                                <div class="tgl-box">
+                                    <span class="tgl-hari">${hari}</span>
+                                    <span class="tgl-angka">${tgl}</span>
+                                </div>
                             </td>
-                            <td>
-                                <span class="txt-agen">${item.nama_agen}</span>
-                                <span class="txt-partner">Partner: ${partner}</span>
+                            <td class="info-agen">
+                                <span class="nama-agen">${item.nama_agen}</span>
+                                <span class="nama-partner">🤝 Partner: ${partner}</span>
                             </td>
                         </tr>
                     `;
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:40px; color:#666;">Tidak ada kiriman dalam 2 pekan ini.</td></tr>';
+                tbody.innerHTML = `<tr><td class="empty-state">Belum ada data untuk <b>${userLogin}</b>.</td></tr>`;
             }
-        } catch (e) {
-            console.error(e);
+        } catch (err) {
+            tbody.innerHTML = `<tr><td class="empty-state" style="color:red;">Error: ${err.message}</td></tr>`;
         }
     }
-
-    window.onload = loadRiwayat;
 </script>
 
 </body>
