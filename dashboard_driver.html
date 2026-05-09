@@ -15,16 +15,18 @@
         .card-form { background: var(--card); padding: 18px; border-radius: 15px; border: 1px solid #333; margin-bottom: 15px; }
         label { display: block; font-size: 10px; margin-bottom: 8px; color: #888; font-weight: bold; }
         select, input { width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #444; background: var(--input-bg); color: white; font-size: 16px; box-sizing: border-box; }
-        .nota-container { background: var(--input-bg); border: 1px solid #444; border-radius: 8px; padding: 10px; margin-bottom: 15px; max-height: 150px; overflow-y: auto; }
-        .nota-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #333; gap: 10px; }
-        .nota-item input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--accent); }
+        .nota-container { background: var(--input-bg); border: 1px solid #444; border-radius: 8px; padding: 5px; margin-bottom: 15px; max-height: 200px; overflow-y: auto; }
+        .nota-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid #333; gap: 12px; }
+        .nota-item:last-child { border-bottom: none; }
+        .nota-item input[type="checkbox"] { width: 24px; height: 24px; accent-color: var(--accent); flex-shrink: 0; }
+        .nota-info { flex: 1; line-height: 1.4; }
+        .nota-info b { font-size: 15px; color: #fff; }
+        .nota-info div { font-size: 12px; color: var(--accent); font-weight: bold; }
+        .nota-info small { font-size: 11px; color: #aaa; display: block; margin-top: 2px; }
         .readonly-auto { color: #fbc531 !important; font-weight: bold; }
         .btn-setor { width: 100%; padding: 18px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent) 0%, #2ecc71 100%); color: white; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; }
-        
-        /* Menu Navigasi Bawah */
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #333; padding: 10px; gap: 10px; z-index: 100; }
         .btn-nav { padding: 12px; border-radius: 8px; text-decoration: none; color: white; text-align: center; font-size: 12px; font-weight: bold; background: #2d2d2d; border: 1px solid #444; }
-        .btn-nav i { display: block; margin-bottom: 4px; }
     </style>
 </head>
 <body>
@@ -32,14 +34,14 @@
 <div style="text-align: center; font-size: 12px; color: #666; margin-bottom: 10px;">Halo, <b id="driverNama" style="color: var(--accent);">...</b></div>
 <div class="header"><h2>SBR<span>digital</span> DRIVER</h2></div>
 
-<div class="section-title">📦 DATA JALAN & NOTA</div>
+<div class="section-title">📦 PILIH NOTA & AGEN</div>
 <div class="card-form">
     <label>UNIT ARMADA</label>
     <select id="selMobil" onchange="cariNotaAktif()"><option value="">-- Pilih Armada --</option></select>
 
-    <label>CEK LIST NOTA YANG DIBAWA</label>
+    <label>DAFTAR NOTA (Ceklis yang dibawa)</label>
     <div id="notaList" class="nota-container">
-        <div style="color:#666; font-size:12px; text-align:center; padding:10px;">Pilih unit...</div>
+        <div style="color:#666; font-size:12px; text-align:center; padding:15px;">Pilih armada untuk melihat nota...</div>
     </div>
 
     <label>GABUNGAN AGEN & DRIVER</label>
@@ -49,7 +51,7 @@
     <input type="text" id="uang_cash_disp" class="readonly-auto" readonly>
     
     <label>ODOMETER TERAKHIR (KM)</label>
-    <input type="text" id="km_input" placeholder="Isi KM..." oninput="formatRibuan(this)" inputmode="numeric">
+    <input type="text" id="km_input" placeholder="Isi KM saat ini..." oninput="formatRibuan(this)" inputmode="numeric">
 </div>
 
 <div class="section-title">💸 PENGELUARAN</div>
@@ -64,7 +66,6 @@
     <button class="btn-setor" onclick="setorDataHariIni()">🚀 SIMPAN & KIRIM WA</button>
 </div>
 
-<!-- Navigasi Bawah -->
 <div class="bottom-nav">
     <a href="./bon.html" class="btn-nav">📝 BUAT BON</a>
     <a href="./riwayat.html" class="btn-nav">📋 RIWAYAT</a>
@@ -96,15 +97,25 @@
     async function cariNotaAktif() {
         const plat = document.getElementById('selMobil').value;
         if(!plat) return;
+        
+        // Ambil nota terbaru agar driver tidak salah pilih
         const { data } = await _sb.from('transaksi').select('*').eq('plat_nomor', plat).order('created_at', { ascending: false }).limit(5);
         dataNotaTerakhir = data;
         const container = document.getElementById('notaList');
         container.innerHTML = '';
+        
         data.forEach(n => {
+            // Memformat tanggal nota agar mudah dibaca driver
+            const tglNota = new Date(n.created_at).toLocaleDateString('id-ID', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
             const div = document.createElement('div');
             div.className = 'nota-item';
-            div.innerHTML = `<input type="checkbox" name="nota_pilih" value="${n.no_nota}" onchange="hitungOtomatis()">
-                             <div style="flex:1"><b>${n.no_nota}</b><br><small>${n.nama_agen} (Rp ${parseInt(n.bayar_cash).toLocaleString('id-ID')})</small></div>`;
+            div.innerHTML = `
+                <input type="checkbox" name="nota_pilih" value="${n.no_nota}" onchange="hitungOtomatis()">
+                <div class="nota-info">
+                    <div>${n.nama_agen}</div>
+                    <b>${n.no_nota}</b>
+                    <small>Dibuat: ${tglNota} | Rp ${parseInt(n.bayar_cash).toLocaleString('id-ID')}</small>
+                </div>`;
             container.appendChild(div);
         });
     }
@@ -112,15 +123,18 @@
     function hitungOtomatis() {
         const checked = Array.from(document.querySelectorAll('input[name="nota_pilih"]:checked'));
         let totalCash = 0; let agens = []; let drivers = new Set(); let notas = [];
+        
         checked.forEach(cb => {
             const item = dataNotaTerakhir.find(x => x.no_nota === cb.value);
             if(item) {
                 totalCash += parseInt(item.bayar_cash);
                 agens.push(item.nama_agen);
-                drivers.add(item.driver_1); if(item.driver_2) drivers.add(item.driver_2);
+                if(item.driver_1) drivers.add(item.driver_1);
+                if(item.driver_2) drivers.add(item.driver_2);
                 notas.push(item.no_nota);
             }
         });
+        
         document.getElementById('uang_cash_disp').value = totalCash.toLocaleString('id-ID');
         document.getElementById('info_jalan').value = checked.length > 0 ? `${agens.join(' & ')} | ${Array.from(drivers).join(' & ')}` : '';
         return { agen: agens.join(' & '), drv: Array.from(drivers).join(' & '), nota: notas.join(', '), rawCash: totalCash };
@@ -167,8 +181,7 @@
             pesan += "_Data tersimpan di SBRdigital._\n";
             pesan += "_Nota: " + calc.nota + "_";
 
-            const encodedPesan = encodeURIComponent(pesan);
-            window.open("https://wa.me/?text=" + encodedPesan, '_blank');
+            window.open("https://wa.me/?text=" + encodeURIComponent(pesan), '_blank');
             location.reload();
         } catch (e) { alert(e.message); }
     }
