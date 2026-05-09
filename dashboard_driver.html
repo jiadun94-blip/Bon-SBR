@@ -2,192 +2,140 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SBRdigital | Driver Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBRdigital | Dashboard Driver</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #121212; --card: #1e1e1e; --accent: #72a339; --text: #e0e0e0; --input-bg: #2d2d2d; }
-        body { font-family: 'Roboto Condensed', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; padding-bottom: 80px; }
-        .header { background: var(--card); padding: 20px; border-radius: 15px; margin-bottom: 15px; text-align: center; border: 1px solid #333; }
-        .header h2 span { color: var(--accent); }
-        .section-title { font-size: 11px; color: var(--accent); font-weight: bold; text-transform: uppercase; margin: 20px 0 10px 5px; letter-spacing: 1px; }
-        .card-form { background: var(--card); padding: 18px; border-radius: 15px; border: 1px solid #333; margin-bottom: 15px; }
-        label { display: block; font-size: 10px; margin-bottom: 8px; color: #888; font-weight: bold; }
-        select, input { width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #444; background: var(--input-bg); color: white; font-size: 16px; box-sizing: border-box; }
-        .nota-container { background: var(--input-bg); border: 1px solid #444; border-radius: 8px; padding: 5px; margin-bottom: 15px; max-height: 200px; overflow-y: auto; }
-        .nota-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid #333; gap: 12px; }
-        .nota-item:last-child { border-bottom: none; }
-        .nota-item input[type="checkbox"] { width: 24px; height: 24px; accent-color: var(--accent); flex-shrink: 0; }
-        .nota-info { flex: 1; line-height: 1.4; }
-        .nota-info b { font-size: 15px; color: #fff; }
-        .nota-info div { font-size: 12px; color: var(--accent); font-weight: bold; }
-        .nota-info small { font-size: 11px; color: #aaa; display: block; margin-top: 2px; }
-        .readonly-auto { color: #fbc531 !important; font-weight: bold; }
-        .btn-setor { width: 100%; padding: 18px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent) 0%, #2ecc71 100%); color: white; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #333; padding: 10px; gap: 10px; z-index: 100; }
-        .btn-nav { padding: 12px; border-radius: 8px; text-decoration: none; color: white; text-align: center; font-size: 12px; font-weight: bold; background: #2d2d2d; border: 1px solid #444; }
+        :root { --bg: #121212; --card: #1e1e1e; --accent: #72a339; --text: #e0e0e0; }
+        body { font-family: 'Roboto Condensed', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
+        
+        .welcome-section { text-align: center; padding: 25px 15px; background: var(--card); border-radius: 20px; border: 1px solid #333; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .welcome-section h1 { margin: 0; font-size: 22px; color: #fff; }
+        .welcome-section h1 span { color: var(--accent); }
+        .welcome-section p { color: #888; margin-top: 5px; font-size: 14px; }
+
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
+        .menu-card { background: var(--card); padding: 18px; border-radius: 15px; border: 1px solid #444; text-align: center; text-decoration: none; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .menu-card:active { background: #2a2a2a; transform: translateY(2px); }
+        .menu-card b { font-size: 14px; color: var(--accent); text-transform: uppercase; margin-top: 8px; }
+        .icon-box { font-size: 24px; }
+
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 5px; }
+        .section-title { font-size: 12px; color: var(--accent); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .history-card { background: var(--card); border-radius: 15px; border: 1px solid #333; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background: #252525; padding: 12px 10px; text-align: left; color: #666; font-size: 10px; border-bottom: 1px solid #333; }
+        td { padding: 12px 10px; border-bottom: 1px solid #2a2a2a; vertical-align: top; }
+        
+        .txt-tgl { font-weight: bold; color: #fff; display: block; }
+        .txt-agen { color: var(--accent); font-weight: 700; font-size: 14px; text-transform: uppercase; display: block; }
+        .txt-partner { font-size: 11px; color: #fbc531; display: block; margin-top: 3px; }
+        .txt-nota { font-size: 11px; color: #666; }
     </style>
 </head>
 <body>
 
-<div style="text-align: center; font-size: 12px; color: #666; margin-bottom: 10px;">Halo, <b id="driverNama" style="color: var(--accent);">...</b></div>
-<div class="header"><h2>SBR<span>digital</span> DRIVER</h2></div>
-
-<div class="section-title">📦 PILIH NOTA & AGEN</div>
-<div class="card-form">
-    <label>UNIT ARMADA</label>
-    <select id="selMobil" onchange="cariNotaAktif()"><option value="">-- Pilih Armada --</option></select>
-
-    <label>DAFTAR NOTA (Ceklis yang dibawa)</label>
-    <div id="notaList" class="nota-container">
-        <div style="color:#666; font-size:12px; text-align:center; padding:15px;">Pilih armada untuk melihat nota...</div>
-    </div>
-
-    <label>GABUNGAN AGEN & DRIVER</label>
-    <input type="text" id="info_jalan" class="readonly-auto" readonly>
-
-    <label>TOTAL CASH DITERIMA (Rp)</label>
-    <input type="text" id="uang_cash_disp" class="readonly-auto" readonly>
-    
-    <label>ODOMETER TERAKHIR (KM)</label>
-    <input type="text" id="km_input" placeholder="Isi KM saat ini..." oninput="formatRibuan(this)" inputmode="numeric">
+<div class="welcome-section">
+    <h1>Halo, <span id="namaUser">...</span>!</h1>
+    <p>Driver SBR Putra Food</p>
 </div>
 
-<div class="section-title">💸 PENGELUARAN</div>
-<div class="card-form">
-    <label>UANG JALAN</label>
-    <input type="text" id="exp_jalan" placeholder="0" oninput="formatRibuan(this)" inputmode="numeric">
-    <label>BENSIN/SOLAR</label>
-    <input type="text" id="exp_bbm" placeholder="0" oninput="formatRibuan(this)" inputmode="numeric">
-    <label>UANG BONGKAR</label>
-    <input type="text" id="exp_bongkar" placeholder="0" oninput="formatRibuan(this)" inputmode="numeric">
-
-    <button class="btn-setor" onclick="setorDataHariIni()">🚀 SIMPAN & KIRIM WA</button>
+<div class="section-header">
+    <span class="section-title">Menu Cepat</span>
+</div>
+<div class="menu-grid">
+    <a href="buat_bon.html" class="menu-card">
+        <span class="icon-box">📝</span>
+        <b>Buat Bon</b>
+    </a>
+    <a href="laporan_setoran.html" class="menu-card">
+        <span class="icon-box">🚀</span>
+        <b>Laporan</b>
+    </a>
 </div>
 
-<div class="bottom-nav">
-    <a href="./bon.html" class="btn-nav">📝 BUAT BON</a>
-    <a href="./riwayat.html" class="btn-nav">📋 RIWAYAT</a>
+<div class="section-header">
+    <span class="section-title">Riwayat 2 Pekan Terakhir</span>
+</div>
+<div class="history-card">
+    <table id="tabelRiwayat">
+        <thead>
+            <tr>
+                <th>WAKTU / NOTA</th>
+                <th>AGEN / PARTNER</th>
+            </tr>
+        </thead>
+        <tbody id="bodyRiwayat">
+            <tr><td colspan="2" style="text-align:center; padding:30px; color:#666;">Memuat data...</td></tr>
+        </tbody>
+    </table>
 </div>
 
 <script>
     const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // Gunakan Key Bapak
     const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let dataNotaTerakhir = [];
+    // Ambil nama dari login (Fallback ke profil Pak Hadiat sesuai instruksi)
+    const userLogin = localStorage.getItem("userNama") || "Hadiat";
+    document.getElementById('namaUser').innerText = userLogin;
 
-    function formatRibuan(elemen) {
-        let val = elemen.value.replace(/[^0-9]/g, "");
-        if (val === "") { elemen.value = ""; return; }
-        elemen.value = parseInt(val).toLocaleString('id-ID');
-    }
-
-    function getAngka(str) {
-        return parseInt(str.replace(/[^0-9]/g, "")) || 0;
-    }
-
-    async function loadArmada() {
-        const { data } = await _sb.from('monitoring_kendaraan').select('plat_nomor, nama_unit');
-        const sel = document.getElementById('selMobil');
-        data.forEach(v => sel.options.add(new Option(`${v.nama_unit} (${v.plat_nomor})`, v.plat_nomor)));
-    }
-
-    async function cariNotaAktif() {
-        const plat = document.getElementById('selMobil').value;
-        if(!plat) return;
-        
-        // Ambil nota terbaru agar driver tidak salah pilih
-        const { data } = await _sb.from('transaksi').select('*').eq('plat_nomor', plat).order('created_at', { ascending: false }).limit(5);
-        dataNotaTerakhir = data;
-        const container = document.getElementById('notaList');
-        container.innerHTML = '';
-        
-        data.forEach(n => {
-            // Memformat tanggal nota agar mudah dibaca driver
-            const tglNota = new Date(n.created_at).toLocaleDateString('id-ID', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
-            const div = document.createElement('div');
-            div.className = 'nota-item';
-            div.innerHTML = `
-                <input type="checkbox" name="nota_pilih" value="${n.no_nota}" onchange="hitungOtomatis()">
-                <div class="nota-info">
-                    <div>${n.nama_agen}</div>
-                    <b>${n.no_nota}</b>
-                    <small>Dibuat: ${tglNota} | Rp ${parseInt(n.bayar_cash).toLocaleString('id-ID')}</small>
-                </div>`;
-            container.appendChild(div);
-        });
-    }
-
-    function hitungOtomatis() {
-        const checked = Array.from(document.querySelectorAll('input[name="nota_pilih"]:checked'));
-        let totalCash = 0; let agens = []; let drivers = new Set(); let notas = [];
-        
-        checked.forEach(cb => {
-            const item = dataNotaTerakhir.find(x => x.no_nota === cb.value);
-            if(item) {
-                totalCash += parseInt(item.bayar_cash);
-                agens.push(item.nama_agen);
-                if(item.driver_1) drivers.add(item.driver_1);
-                if(item.driver_2) drivers.add(item.driver_2);
-                notas.push(item.no_nota);
-            }
-        });
-        
-        document.getElementById('uang_cash_disp').value = totalCash.toLocaleString('id-ID');
-        document.getElementById('info_jalan').value = checked.length > 0 ? `${agens.join(' & ')} | ${Array.from(drivers).join(' & ')}` : '';
-        return { agen: agens.join(' & '), drv: Array.from(drivers).join(' & '), nota: notas.join(', '), rawCash: totalCash };
-    }
-
-    async function setorDataHariIni() {
-        const plat = document.getElementById('selMobil').value;
-        const kmRaw = getAngka(document.getElementById('km_input').value);
-        const checked = Array.from(document.querySelectorAll('input[name="nota_pilih"]:checked'));
-
-        if(checked.length === 0 || kmRaw === 0) return alert("Pilih Nota & Isi Odometer!");
-
-        const calc = hitungOtomatis();
-        const uJalan = getAngka(document.getElementById('exp_jalan').value);
-        const uBBM = getAngka(document.getElementById('exp_bbm').value);
-        const uBongkar = getAngka(document.getElementById('exp_bongkar').value);
-        const totalExp = uJalan + uBBM + uBongkar;
-        const sisa = calc.rawCash - totalExp;
-
+    async function loadRiwayat() {
         try {
-            await _sb.from('rekap_laporan_driver').insert([{
-                nama_driver: calc.drv, plat_nomor: plat, nama_agen: calc.agen, no_nota: calc.nota,
-                uang_cash_diterima: calc.rawCash, km_input: kmRaw,
-                uang_jalan: uJalan, uang_bbm: uBBM, uang_bongkar: uBongkar
-            }]);
+            // Hitung tanggal 14 hari yang lalu (2 pekan)
+            const duaPekanLalu = new Date();
+            duaPekanLalu.setDate(duaPekanLalu.getDate() - 14);
+            const isoDate = duaPekanLalu.toISOString();
 
-            const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-            
-            let pesan = "*LAPORAN SETORAN DRIVER*\n";
-            pesan += "----------------------------\n";
-            pesan += "📅 *Tanggal:* " + tgl + "\n";
-            pesan += "🏢 *Agen:* " + calc.agen + "\n";
-            pesan += "👤 *Driver:* " + calc.drv + "\n";
-            pesan += "💰 *Nominal (Cash):* Rp " + calc.rawCash.toLocaleString('id-ID') + "\n";
-            pesan += "🚗 *Unit:* " + plat + "\n";
-            pesan += "📍 *Odo:* " + kmRaw.toLocaleString('id-ID') + " KM\n\n";
-            pesan += "*PENGELUARAN:*\n";
-            pesan += "▫️ Uang Jalan: Rp " + uJalan.toLocaleString('id-ID') + "\n";
-            pesan += "▫️ BBM/Solar: Rp " + uBBM.toLocaleString('id-ID') + "\n";
-            pesan += "▫️ Bongkar: Rp " + uBongkar.toLocaleString('id-ID') + "\n";
-            pesan += "----------------------------\n";
-            pesan += "📊 *TOTAL:* Rp " + totalExp.toLocaleString('id-ID') + "\n";
-            pesan += "💵 *SISA CASH:* Rp " + sisa.toLocaleString('id-ID') + "\n\n";
-            pesan += "_Data tersimpan di SBRdigital._\n";
-            pesan += "_Nota: " + calc.nota + "_";
+            // Ambil data transaksi 2 pekan terakhir untuk driver ini
+            const { data, error } = await _sb
+                .from('transaksi')
+                .select('*')
+                .or(`driver_1.eq.${userLogin},driver_2.eq.${userLogin}`)
+                .gte('created_at', isoDate)
+                .order('created_at', { ascending: false });
 
-            window.open("https://wa.me/?text=" + encodeURIComponent(pesan), '_blank');
-            location.reload();
-        } catch (e) { alert(e.message); }
+            const tbody = document.getElementById('bodyRiwayat');
+            tbody.innerHTML = '';
+
+            if (data && data.length > 0) {
+                data.forEach(item => {
+                    const tglObj = new Date(item.created_at);
+                    const tglStr = tglObj.toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short' });
+                    
+                    // Tentukan Partner (Jika saya driver 1, partnernya driver 2, dan sebaliknya)
+                    let partner = "-";
+                    if (item.driver_1 === userLogin) {
+                        partner = item.driver_2 || "Sendiri";
+                    } else {
+                        partner = item.driver_1 || "Sendiri";
+                    }
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>
+                                <span class="txt-tgl">${tglStr}</span>
+                                <span class="txt-nota">${item.no_nota}</span>
+                            </td>
+                            <td>
+                                <span class="txt-agen">${item.nama_agen}</span>
+                                <span class="txt-partner">Partner: ${partner}</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:40px; color:#666;">Tidak ada kiriman dalam 2 pekan ini.</td></tr>';
+            }
+        } catch (e) {
+            console.error(e);
+        }
     }
 
-    window.onload = loadArmada;
-    document.getElementById('driverNama').innerText = localStorage.getItem("userNama") || "Hadiat";
+    window.onload = loadRiwayat;
 </script>
+
 </body>
 </html>
