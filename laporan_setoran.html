@@ -16,7 +16,6 @@
         label { display: block; font-size: 11px; margin-bottom: 8px; color: #888; font-weight: bold; }
         select, input { width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #444; background: var(--input-bg); color: white; font-size: 16px; box-sizing: border-box; }
         
-        /* DAFTAR NOTA */
         .nota-container { background: var(--input-bg); border: 1px solid #444; border-radius: 8px; padding: 5px; margin-bottom: 15px; max-height: 350px; overflow-y: auto; }
         .nota-item { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #444; gap: 15px; }
         .nota-item:last-child { border-bottom: none; }
@@ -30,8 +29,6 @@
         .readonly-auto { color: #fbc531 !important; font-weight: bold; }
         select:disabled { opacity: 0.5; background: #1a1a1a; cursor: not-allowed; border-color: #333; }
         .btn-setor { width: 100%; padding: 20px; border-radius: 12px; border: none; background: linear-gradient(135deg, var(--accent) 0%, #2ecc71 100%); color: white; font-weight: 900; font-size: 18px; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 15px rgba(114, 163, 57, 0.4); }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #333; padding: 12px; gap: 12px; z-index: 100; }
-        .btn-nav { padding: 16px; border-radius: 10px; text-decoration: none; color: white; text-align: center; font-size: 14px; font-weight: bold; background: #2d2d2d; border: 1px solid #444; }
     </style>
 </head>
 <body>
@@ -76,7 +73,6 @@
 
     <button class="btn-setor" onclick="setorDataHariIni()">🚀 SIMPAN & KIRIM WA</button>
 </div>
->
 
 <script>
     const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
@@ -155,7 +151,6 @@
             }
         });
 
-        // LOGIKA FLEXIBEL
         if (checked.length > 1) {
             selSumber.disabled = false;
             labelSumber.innerText = "BIAYA DIAMBIL DARI KAS (PILIH SALAH SATU):";
@@ -178,9 +173,8 @@
 
         if(checked.length === 0 || kmRaw === 0) return alert("Pilih Nota & Isi Odometer!");
         
-        // Sumber biaya otomatis ambil yang pertama jika cuma satu agen
-        const sumber = document.getElementById('sumberBiaya').value;
-        if(checked.length > 1 && !sumber) return alert("Karena ada 2 nota atau lebih, pilih agen mana yang uangnya dipakai!");
+        const sumber = document.getElementById('sumberBiaya').value || (calc.detail.length > 0 ? calc.detail[0].agen : "");
+        if(checked.length > 1 && !document.getElementById('sumberBiaya').value) return alert("Pilih agen mana yang uangnya dipakai!");
 
         const uJalan = getAngka(document.getElementById('exp_jalan').value);
         const uBBM = getAngka(document.getElementById('exp_bbm').value);
@@ -192,6 +186,7 @@
         const sisaBersih = calc.rawTotal - totalExp;
 
         try {
+            // 1. Simpan ke rekap laporan
             await _sb.from('rekap_laporan_driver').insert([{
                 nama_driver: calc.drv, plat_nomor: plat, 
                 nama_agen: calc.detail.map(d => d.agen).join(', '), 
@@ -201,6 +196,11 @@
                 ket_lainnya: ketLain, nominal_lainnya: nomLain,
                 sumber_biaya_dari: sumber
             }]);
+
+            // 2. SINKRONISASI: Update KM di monitoring kendaraan
+            await _sb.from('monitoring_kendaraan')
+                .update({ km_saat_ini: kmRaw })
+                .eq('plat_nomor', plat);
 
             const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
             
@@ -235,7 +235,7 @@
     }
 
     window.onload = loadArmada;
-    document.getElementById('driverNama').innerText = localStorage.getItem("userNama") || "Hadiat";
+    document.getElementById('driverNama').innerText = localStorage.getItem("userNama") || "Driver";
 </script>
 </body>
 </html>
