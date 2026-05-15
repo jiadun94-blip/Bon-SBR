@@ -145,20 +145,20 @@
                     <th>NOTA</th>
                     <th>DRIVER 1</th>
                     <th>DRIVER 2</th>
+                    <th>PLAT NOMOR</th>
                     <th>KIRIM (▼)</th>
                     <th>RETUR (▼)</th>
-                    <th>TAGIHAN</th>
+                    <th>SISA AKHIR</th>
                     <th>STATUS</th>
                 </tr>
             </thead>
             <tbody id="isiTabel">
-                <tr><td colspan="9" style="padding:40px; background:#fff; color:#999;">Tentukan tanggal lalu klik Tampilkan.</td></tr>
+                <tr><td colspan="10" style="padding:40px; background:#fff; color:#999;">Tentukan tanggal lalu klik Tampilkan.</td></tr>
             </tbody>
         </table>
     </div>
 </div>
 
-<!-- Modal Pop-up Rincian -->
 <div id="modalDetail" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -182,34 +182,34 @@
 
     async function muatLaporan() {
         const body = document.getElementById('isiTabel');
-        body.innerHTML = "<tr><td colspan='9' style='padding:30px; background:#fff;'>Memproses data Supabase...</td></tr>";
+        body.innerHTML = "<tr><td colspan='10' style='padding:30px; background:#fff;'>Memproses data Supabase...</td></tr>";
 
         const { data, error } = await _sb.from('transaksi')
             .select('*')
             .gte('tanggal', document.getElementById('tglMulai').value)
             .lte('tanggal', document.getElementById('tglSelesai').value)
-            .order('tanggal', { ascending: false });
+            .order('created_at', { ascending: false });
 
         if (error) { alert("Error: " + error.message); return; }
-        if (data.length === 0) { body.innerHTML = "<tr><td colspan='9' style='padding:30px; background:#fff;'>Data tidak ditemukan.</td></tr>"; return; }
+        if (!data || data.length === 0) { body.innerHTML = "<tr><td colspan='10' style='padding:30px; background:#fff;'>Data tidak ditemukan untuk rentang tanggal ini.</td></tr>"; return; }
 
         body.innerHTML = "";
         data.forEach(t => {
-            const netto = (t.total_kirim || 0) - (t.total_retur || 0);
-            const bayar = (t.bayar_cash || 0) + (t.bayar_transfer || 0);
-            const sisa = netto - bayar;
+            // Mengambil langsung nilai dari kolom sisa_akhir database Anda
+            const sisaAkhir = t.sisa_akhir || 0; 
 
             body.innerHTML += `
                 <tr>
-                    <td class="sticky-col" style="text-align:left;">${t.nama_agen}</td>
-                    <td>${t.tanggal}</td>
-                    <td style="color:#666;">${t.no_nota}</td>
+                    <td class="sticky-col" style="text-align:left;">${t.nama_agen || '-'}</td>
+                    <td>${t.tanggal || '-'}</td>
+                    <td style="color:#666; font-weight:bold;">${t.no_nota || '-'}</td>
                     <td>${t.driver_1 || '-'}</td>
                     <td>${t.driver_2 || '-'}</td>
+                    <td>${t.plat_nomor || '-'}</td>
                     <td class="link-detail text-kirim" onclick="bukaPopUpDetail('${t.no_nota}', 'Kirim')">${(t.total_kirim || 0).toLocaleString()}</td>
                     <td class="link-detail text-retur" onclick="bukaPopUpDetail('${t.no_nota}', 'Retur')">${(t.total_retur || 0).toLocaleString()}</td>
-                    <td style="font-weight:bold; color:#000;">${netto.toLocaleString()}</td>
-                    <td><span class="${sisa <= 0 ? 'lunas' : 'pending'}">${sisa <= 0 ? 'LUNAS' : 'PENDING'}</span></td>
+                    <td style="font-weight:bold; color:#000;">${sisaAkhir.toLocaleString()}</td>
+                    <td><span class="${sisaAkhir <= 0 ? 'lunas' : 'pending'}">${sisaAkhir <= 0 ? 'LUNAS' : 'PENDING'}</span></td>
                 </tr>
             `;
         });
@@ -227,11 +227,11 @@
             .eq('tipe', tipeKlik);
 
         if (error) { modalIsi.innerHTML = "Gagal: " + error.message; return; }
-        if (!data || data.length === 0) { modalIsi.innerHTML = "<p style='text-align:center;'>Tidak ada rincian.</p>"; return; }
+        if (!data || data.length === 0) { modalIsi.innerHTML = "<p style='text-align:center;'>Tidak ada rincian data item untuk tipe ini.</p>"; return; }
 
         let html = `<table class="table-pop"><thead><tr><th style="text-align:left;">Barang</th><th>Qty</th><th>Satuan</th></tr></thead><tbody>`;
         data.forEach(item => {
-            html += `<tr><td style="text-align:left;">${item.nama_barang}</td><td style="font-weight:bold;">${item.qty.toLocaleString()}</td><td>${item.satuan}</td></tr>`;
+            html += `<tr><td style="text-align:left;">${item.nama_barang || '-'}</td><td style="font-weight:bold;">${(item.qty || 0).toLocaleString()}</td><td>${item.satuan || ''}</td></tr>`;
         });
         html += `</tbody></table>`;
         modalIsi.innerHTML = html;
