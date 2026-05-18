@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SBR Putra Food - Input Nota</title>
+    <title>SBR Putra Food - Input Nota (Trial Mode)</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -54,7 +54,6 @@
         .action-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .btn-reprint { padding: 15px; background: #e67e22; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #b35d15; text-transform: uppercase; }
         .btn-reprint:disabled { background: #cbd5e0; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
-        .btn-mobil { padding: 15px; background: #718096; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #4a5568; text-transform: uppercase; }
         .btn-clear { padding: 15px; background: #718096; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #4a5568; text-transform: uppercase; }
     </style>
 </head>
@@ -68,7 +67,7 @@
 
     <div class="bt-panel">
         <button id="btnConnect" onclick="connectBT()">🔗 HUBUNGKAN PRINTER</button>
-        <small id="statusBT">Status: Terputus (Mode Trial/Tanpa Printer Aktif)</small>
+        <small id="statusBT">Status: Terputus</small>
     </div>
 
     <div id="notifBon">⚠️ AGEN INI PUNYA BON LAMA!</div>
@@ -110,7 +109,7 @@
         <div><label style="font-size:14px; font-weight:900;">TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
     </div>
 
-    <button class="btn-save" id="btnSimpan" onclick="simpanDanPrint()">SIMPAN & PRINT (OPSIONAL)</button>
+    <button class="btn-save" id="btnSimpan" onclick="simpanDanPrint()">SIMPAN & PRINT</button>
 
     <div class="action-group">
         <button class="btn-reprint" id="btnReprint" onclick="reprintLast()" disabled>🔄 REPRINT</button>
@@ -137,7 +136,7 @@
     function logout() { localStorage.clear(); window.location.href = "index.html"; }
 
     const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmftcXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let database = { harga: {}, barang: [] };
@@ -149,7 +148,9 @@
 
     async function init() {
         try {
-            const { data: agen } = await clientSupabase.from('agen').select('*');
+            const { data: agen, error: errorAgen } = await clientSupabase.from('agen').select('*');
+            if (errorAgen) throw new Error("Gagal muat AGEN: " + errorAgen.message);
+            
             if(agen) {
                 agen.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen));
                 const selAgen = document.getElementById('pilihAgen');
@@ -161,7 +162,9 @@
                 });
             }
 
-            const { data: harga } = await clientSupabase.from('harga').select('*');
+            const { data: harga, error: errorHarga } = await clientSupabase.from('harga').select('*');
+            if (errorHarga) throw new Error("Gagal muat HARGA: " + errorHarga.message);
+            
             if(harga) {
                 harga.forEach(h => {
                     if(!database.harga[h.nama_agen]) database.harga[h.nama_agen] = {};
@@ -169,10 +172,14 @@
                 });
             }
 
-            const { data: karyawan } = await clientSupabase.from('karyawan').select('*').eq('aktif', true);
+            const { data: karyawan, error: errorKaryawan } = await clientSupabase.from('karyawan').select('*').eq('aktif', true);
+            if (errorKaryawan) throw new Error("Gagal muat DRIVER: " + errorKaryawan.message);
+            
             const d1 = document.getElementById('driver1');
             const d2 = document.getElementById('driver2');
             if(karyawan) {
+                d1.innerHTML = '<option value="">-- DRIVER 1 --</option>';
+                d2.innerHTML = '<option value="">-- DRIVER 2 (Ops) --</option>';
                 karyawan.forEach(k => {
                     d1.options.add(new Option(k.nama_karyawan, k.nama_karyawan));
                     d2.options.add(new Option(k.nama_karyawan, k.nama_karyawan));
@@ -180,12 +187,20 @@
             }
             d1.value = userAktif;
 
-            const { data: mobil } = await clientSupabase.from('kendaraan').select('*');
+            const { data: mobil, error: errorMobil } = await clientSupabase.from('kendaraan').select('*');
+            if (errorMobil) throw new Error("Gagal muat MOBIL: " + errorMobil.message);
+            
             const selMobil = document.getElementById('pilihMobil');
-            if(mobil) mobil.forEach(m => selMobil.options.add(new Option(m.plat_nomor, m.plat_nomor)));
+            if(mobil) {
+                selMobil.innerHTML = '<option value="">-- MOBIL --</option>';
+                mobil.forEach(m => selMobil.options.add(new Option(m.plat_nomor, m.plat_nomor)));
+            }
 
             resetForm();
-        } catch(e) { console.error("Init Error:", e); }
+        } catch(e) { 
+            alert("🚨 KONEKSI DATABASE ERROR:\n" + e.message); 
+            console.error("Init Error:", e); 
+        }
     }
 
     function resetForm() {
@@ -205,7 +220,7 @@
         resetForm();
         const btn = document.getElementById('btnSimpan');
         btn.disabled = false;
-        btn.innerText = "SIMPAN & PRINT (OPSIONAL)";
+        btn.innerText = "SIMPAN & PRINT";
         
         const btnRep = document.getElementById('btnReprint');
         btnRep.disabled = true;
@@ -314,7 +329,7 @@
     }
 
     async function printToBT(text) {
-        if (!btCharacteristic) return; // Mode Trial: Jika kosong, abaikan pencetakan langsung lanjut tanpa error
+        if (!btCharacteristic) throw "Printer belum terhubung!";
         const data = new TextEncoder().encode(text);
         for (let i = 0; i < data.length; i += 20) {
             await btCharacteristic.writeValue(data.slice(i, i + 20));
@@ -334,10 +349,11 @@
     async function simpanDanPrint() {
         const ag = document.getElementById('pilihAgen').value;
         if(!ag) return alert("Pilih Agen!");
+        
         if(itemsKirim.length === 0 && itemsRetur.length === 0) return alert("Pilih barang dikirim atau retur terlebih dahulu!");
 
         const btn = document.getElementById('btnSimpan');
-        btn.innerText = "SEDANG MEMPROSES..."; btn.disabled = true;
+        btn.innerText = "MENYIMPAN DATA..."; btn.disabled = true;
 
         const noNota = document.getElementById('noNota').value;
         const tglInput = document.getElementById('tglNota').value;
@@ -393,14 +409,7 @@
         p += `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`;
 
         try {
-            // KIRIM DATA KE PRINTER (Hanya berjalan jika printer terhubung, jika tidak terhubung baris ini otomatis terlewati dengan mulus)
-            if (btCharacteristic) {
-                await printToBT(p);
-                lastPrintText = p; 
-                document.getElementById('btnReprint').disabled = false;
-            }
-
-            // AMANKAN DATA KE DATABASE SUPABASE (Selalu Dieksekusi Terlepas Printer Ada/Tidak)
+            // 1. SIMPAN DATA INDUK TRANSAKSI
             await clientSupabase.from('transaksi').insert([{
                 no_nota: noNota, nama_agen: ag, tanggal: tglInput,
                 driver_1: drv1, driver_2: drv2, plat_nomor: mobil, 
@@ -408,24 +417,37 @@
                 bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
             }]);
 
+            // 2. SIMPAN DETAIL TRANSAKSI (KIRIM & RETUR)
             const details = [
                 ...itemsKirim.map(i => ({ no_nota: noNota, nama_barang: i.barang, qty: i.qty, satuan: i.satuan, tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
                 ...itemsRetur.map(i => ({ no_nota: noNota, nama_barang: i.barang, qty: i.qty, satuan: i.satuan, tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
             ];
             await clientSupabase.from('transaksi_detail').insert(details);
+            
+            // 3. UPDATE SALDO BON AGEN
             await clientSupabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
 
-            btn.innerText = "SUKSES DISIMPAN";
-            
+            // 4. COBA PROSES CETAK (JIKA PRINTER TERHUBUNG)
             if (btCharacteristic) {
-                alert("✅ Sukses: Nota Berhasil Dicetak & Disimpan ke Database!");
+                btn.innerText = "MENCETAK NOTA...";
+                try {
+                    await printToBT(p);
+                    lastPrintText = p; 
+                    document.getElementById('btnReprint').disabled = false;
+                } catch(errPrint) {
+                    alert("⚠️ Data BERHASIL disimpan ke database, tetapi GAGAL mencetak otomatis karena: " + errPrint);
+                }
             } else {
-                alert("✅ Sukses: Data Berhasil Masuk Database!\n(Printer dilewati karena tidak terhubung)");
+                lastPrintText = p; // Simpan teks struk di memori, siap di-reprint nanti kalau printer sudah connect
+                document.getElementById('btnReprint').disabled = false;
+                alert("ℹ️ Data BERHASIL disimpan ke Database!\n(Nota tidak dicetak otomatis karena printer belum terhubung)");
             }
 
+            btn.innerText = "SUKSES DISIMPAN";
+
         } catch (e) {
-            alert("❌ PROSES GAGAL: " + (e.message || e) + "\nGagal menyimpan data ke database. Periksa kembali jaringan internet Anda.");
-            btn.innerText = "SIMPAN & PRINT (OPSIONAL)"; btn.disabled = false;
+            alert("❌ DATABASE ERROR: " + (e.message || e) + "\n\nGagal menyimpan data ke database. Silakan periksa koneksi internet Anda.");
+            btn.innerText = "SIMPAN & PRINT"; btn.disabled = false;
         }
     }
 
