@@ -51,7 +51,6 @@
         .btn-save { width: 100%; padding: 20px; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; color: white; background: #27ae60; margin-top: 20px; font-size: 21px; text-transform: uppercase; box-shadow: 0 5px 0 #1e8449; }
         .btn-save:disabled { background: #a0aec0; box-shadow: none; cursor: not-allowed; }
         
-        /* PANEL BAWAH UTAMA */
         .action-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .btn-reprint { padding: 15px; background: #e67e22; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #b35d15; text-transform: uppercase; }
         .btn-reprint:disabled { background: #cbd5e0; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
@@ -137,7 +136,7 @@
     function logout() { localStorage.clear(); window.location.href = "index.html"; }
 
     const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmFTcXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let database = { harga: {}, barang: [] };
@@ -207,7 +206,6 @@
         btn.disabled = false;
         btn.innerText = "SIMPAN & PRINT";
         
-        // Matikan kembali tombol reprint untuk nota baru sebelum dicetak
         const btnRep = document.getElementById('btnReprint');
         btnRep.disabled = true;
         lastPrintText = "";
@@ -268,6 +266,7 @@
         document.getElementById('modalInput').style.display = "block";
     }
 
+    // Perbaikan fungsi render untuk tombol edit sesuai ledger
     function render() {
         const draw = (data, id, mode) => {
             const tb = document.getElementById(id).querySelector('tbody'); tb.innerHTML = '';
@@ -358,7 +357,6 @@
         const tagihanBersih = tk - tr + bl;
         const sisa = tagihanBersih - cash - trf;
 
-        // STRUK PRINT
         const lebar = 48; 
         const buatBaris = (l, r) => { 
             let space = lebar - l.length - String(r).length; 
@@ -396,14 +394,11 @@
         p += `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`;
 
         try {
-            // LANGKAH 1: PERINTAH CETAK KE PRINTER DULU
             await printToBT(p);
             lastPrintText = p; 
 
-            // Aktifkan tombol reprint utama karena data cetak sukses keluar printer
             document.getElementById('btnReprint').disabled = false;
 
-            // LANGKAH 2: JIKA BERHASIL MENCETAK, KIRIM DATA KE SUPABASE
             await clientSupabase.from('transaksi').insert([{
                 no_nota: noNota, nama_agen: ag, tanggal: tglInput,
                 driver_1: drv1, driver_2: drv2, plat_nomor: mobil, 
