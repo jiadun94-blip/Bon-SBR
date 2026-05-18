@@ -79,7 +79,11 @@
         <table id="tabelRetur"><thead><tr><th>BARANG</th><th>QTY</th><th>TOTAL</th><th>#</th></tr></thead><tbody></tbody></table>
         <div class="sub-display"><span>SUBTOTAL:</span><span id="subRetur">Rp 0</span></div>
 
-
+        <div class="section-label">💵 PEMBAYARAN :</div>
+        <div class="pay-row">
+            <div><label style="font-size:14px; font-weight:900;">CASH</label><input type="text" id="inputCash" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
+            <div><label style="font-size:14px; font-weight:900;">TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
+        </div>
         <div class="section-label">📄 BON LAMA :</div>
         <div style="background:#fffaf0; padding:10px; border-radius:10px; border:2px solid #ed8936;">
             <input type="text" id="inputBonLama" class="input-manual" style="background:transparent; border:none; height:auto;" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
@@ -92,7 +96,6 @@
         <div class="sum-row"><span>Bon Lama:</span><span id="txtBon">Rp 0</span></div>
         <div class="sum-row grand-total"><span>SISA AKHIR:</span><span id="txtGrand">Rp 0</span></div>
     </div>
-    
     <button class="btn-save" id="btnSimpan" onclick="simpanDanPrint()">SIMPAN & PRINT</button>
 </div>
 
