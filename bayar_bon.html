@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SBR Putra Food - Pembayaran Bon</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; font-size: 17px; }
+        .container { background: white; padding: 20px; border-radius: 15px; max-width: 500px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #edf2f7; padding-bottom: 10px; }
+        header h2 { margin: 0; color: #1a202c; font-size: 22px; text-transform: uppercase; font-weight: 900; }
+        header p { margin: 5px 0 0; font-size: 14px; color: #718096; font-weight: 700; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: 900; margin-bottom: 8px; font-size: 16px; text-transform: uppercase; }
+        .form-group select, .form-group input { width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 10px; font-size: 18px; box-sizing: border-box; outline: none; font-weight: 700; color: #000; }
+        .form-group select { background: #fff; }
+        
+        .display-box { background: #edf2f7; padding: 15px; border-radius: 10px; border: 2px dashed #cbd5e0; margin-bottom: 20px; }
+        .display-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 16px; font-weight: 700; }
+        .display-row.highlight { font-size: 20px; font-weight: 900; color: #e53e3e; border-top: 1px solid #cbd5e0; padding-top: 8px; margin-top: 8px; }
+        .display-row.sisa-baru { font-size: 20px; font-weight: 900; color: #27ae60; border-top: 1px solid #cbd5e0; padding-top: 8px; margin-top: 8px; }
+
+        .pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .input-manual { width: 100%; padding: 12px; border: 2px solid #4a5568; border-radius: 8px; font-weight: 900; text-align: right; box-sizing: border-box; font-size: 22px; background: #fff; }
+        
+        .btn-submit { width: 100%; padding: 18px; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; color: white; background: #2b6cb0; margin-top: 10px; font-size: 18px; text-transform: uppercase; box-shadow: 0 5px 0 #2b4c7e; }
+        .btn-submit:disabled { background: #a0aec0; box-shadow: none; cursor: not-allowed; }
+        .btn-back { display: block; text-align: center; margin-top: 15px; color: #718096; font-weight: 700; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h2>SBR PUTRA FOOD</h2>
+        <p>INPUT PEMBAYARAN / PELUNASAN BON</p>
+    </header>
+
+    <div class="form-group">
+        <label>Nama Agen</label>
+        <select id="pilihAgen" onchange="loadDataAgen()">
+            <option value="">-- PILIH AGEN --</option>
+        </select>
+    </div>
+
+    <div class="display-box">
+        <div class="display-row">
+            <span>Bon Saat Ini:</span>
+            <span id="txtBonLama">Rp 0</span>
+        </div>
+        <div class="display-row highlight">
+            <span>Total Tagihan:</span>
+            <span id="txtTotalTagihan">Rp 0</span>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Metode Pembayaran</label>
+        <div class="pay-grid">
+            <div>
+                <label style="font-size:12px; font-weight:900; color:#4a5568;">CASH</label>
+                <input type="text" id="inputCash" class="input-manual" value="0" oninput="formatRupiah(this); hitungSisa()" onfocus="clearZero(this)">
+            </div>
+            <div>
+                <label style="font-size:12px; font-weight:900; color:#4a5568;">TRANSFER (TRF)</label>
+                <input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungSisa()" onfocus="clearZero(this)">
+            </div>
+        </div>
+    </div>
+
+    <div class="display-box" style="background: #f0fff4; border-color: #c6f6d5;">
+        <div class="display-row sisa-baru">
+            <span>Sisa Bon Akhir:</span>
+            <span id="txtSisaAkhir">Rp 0</span>
+        </div>
+    </div>
+
+    <button class="btn-submit" id="btnSimpan" onclick="simpanPembayaran()">Simpan Pembayaran</button>
+    <a href="bon.html" class="btn-back">← Kembali ke Input Nota</a>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let listAgen = {};
+
+    function clearZero(el) { if(el.value === "0" || el.value === 0) el.value = ""; }
+    function formatRupiah(el) { let v = el.value.replace(/[^0-9]/g, ''); el.value = v === "" ? "0" : Number(v).toLocaleString('id-ID'); }
+    function getAngka(id) { return parseFloat(document.getElementById(id).value.replace(/[^0-9]/g, '')) || 0; }
+
+    // Ambil daftar agen saat halaman dibuka
+    async function initHalaman() {
+        try {
+            const { data: agen, error } = await clientSupabase.from('agen').select('*');
+            if (error) throw error;
+
+            if (agen) {
+                agen.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen));
+                const selAgen = document.getElementById('pilihAgen');
+                selAgen.innerHTML = '<option value="">-- PILIH AGEN --</option>';
+                
+                agen.forEach(a => {
+                    selAgen.options.add(new Option(a.nama_agen, a.nama_agen));
+                    listAgen[a.nama_agen] = a.saldo_bon || 0;
+                });
+            }
+        } catch (e) {
+            alert("Gagal mengambil data agen: " + e.message);
+        }
+    }
+
+    // Ketika Agen dipilih
+    function loadDataAgen() {
+        const ag = document.getElementById('pilihAgen').value;
+        const bon = listAgen[ag] || 0;
+
+        document.getElementById('txtBonLama').innerText = "Rp " + bon.toLocaleString('id-ID');
+        document.getElementById('txtTotalTagihan').innerText = "Rp " + bon.toLocaleString('id-ID');
+        
+        document.getElementById('inputCash').value = "0";
+        document.getElementById('inputTrf').value = "0";
+        
+        hitungSisa();
+    }
+
+    // Kalkulasi live sisa bon akhir
+    function hitungSisa() {
+        const ag = document.getElementById('pilihAgen').value;
+        const bonLama = listAgen[ag] || 0;
+        const cash = getAngka('inputCash');
+        const trf = getAngka('inputTrf');
+
+        const sisaAkhir = bonLama - cash - trf;
+        document.getElementById('txtSisaAkhir').innerText = "Rp " + sisaAkhir.toLocaleString('id-ID');
+    }
+
+    // Proses Simpan ke Database
+    async function simpanPembayaran() {
+        const ag = document.getElementById('pilihAgen').value;
+        if (!ag) return alert("Silakan pilih agen terlebih dahulu!");
+
+        const cash = getAngka('inputCash');
+        const trf = getAngka('inputTrf');
+        if (cash === 0 && trf === 0) return alert("Masukkan nominal pembayaran Cash atau Transfer!");
+
+        const btn = document.getElementById('btnSimpan');
+        btn.innerText = "PROSES MENYIMPAN...";
+        btn.disabled = true;
+
+        const bonLama = listAgen[ag] || 0;
+        const sisaAkhir = bonLama - cash - trf;
+        
+        // Generate nomor nota khusus pelunasan (contoh: BYR-xxxxxx)
+        const noNotaBayar = "BYR-" + Date.now().toString().slice(-6);
+        const tglHariIni = new Date().toISOString().split('T')[0];
+
+        try {
+            // 1. Catat pembayaran sebagai baris baru di tabel transaksi
+            const { error: errorTx } = await clientSupabase.from('transaksi').insert([{
+                no_nota: noNotaBayar,
+                nama_agen: ag,
+                tanggal: tglHariIni,
+                driver_1: "ADMIN", // Ditandai diinput oleh admin
+                driver_2: "",
+                plat_nomor: "KAS ADMIN",
+                total_kirim: 0,   // 0 karena tidak ada kirim barang
+                total_retur: 0,   // 0 karena tidak ada retur barang
+                bon_lama: bonLama,
+                bayar_cash: cash,
+                bayar_transfer: trf,
+                sisa_akhir: sisaAkhir
+            }]);
+
+            if (errorTx) throw errorTx;
+
+            // 2. Update saldo_bon terbaru langsung di tabel agen
+            const { error: errorAgen } = await clientSupabase.from('agen')
+                .update({ saldo_bon: sisaAkhir })
+                .eq('nama_agen', ag);
+
+            if (errorAgen) throw errorAgen;
+
+            alert("✅ Pembayaran Berhasil Disimpan!\nSaldo bon agen " + ag + " telah diperbarui.");
+            
+            // Perbarui data lokal & reset form
+            listAgen[ag] = sisaAkhir;
+            loadDataAgen();
+
+        } catch (e) {
+            alert("❌ Gagal menyimpan pembayaran: " + e.message);
+        } finally {
+            btn.innerText = "Simpan Pembayaran";
+            btn.disabled = false;
+        }
+    }
+
+    window.onload = initHalaman;
+</script>
+</body>
+</html>
