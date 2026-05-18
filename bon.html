@@ -54,6 +54,7 @@
         .action-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .btn-reprint { padding: 15px; background: #e67e22; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #b35d15; text-transform: uppercase; }
         .btn-reprint:disabled { background: #cbd5e0; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
+        .btn-mobil { padding: 15px; background: #718096; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #4a5568; text-transform: uppercase; }
         .btn-clear { padding: 15px; background: #718096; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #4a5568; text-transform: uppercase; }
     </style>
 </head>
@@ -67,7 +68,7 @@
 
     <div class="bt-panel">
         <button id="btnConnect" onclick="connectBT()">🔗 HUBUNGKAN PRINTER</button>
-        <small id="statusBT">Status: Terputus</small>
+        <small id="statusBT">Status: Terputus (Mode Trial/Tanpa Printer Aktif)</small>
     </div>
 
     <div id="notifBon">⚠️ AGEN INI PUNYA BON LAMA!</div>
@@ -109,7 +110,7 @@
         <div><label style="font-size:14px; font-weight:900;">TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
     </div>
 
-    <button class="btn-save" id="btnSimpan" onclick="simpanDanPrint()">SIMPAN & PRINT</button>
+    <button class="btn-save" id="btnSimpan" onclick="simpanDanPrint()">SIMPAN & PRINT (OPSIONAL)</button>
 
     <div class="action-group">
         <button class="btn-reprint" id="btnReprint" onclick="reprintLast()" disabled>🔄 REPRINT</button>
@@ -136,7 +137,7 @@
     function logout() { localStorage.clear(); window.location.href = "index.html"; }
 
     const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmftcXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let database = { harga: {}, barang: [] };
@@ -204,7 +205,7 @@
         resetForm();
         const btn = document.getElementById('btnSimpan');
         btn.disabled = false;
-        btn.innerText = "SIMPAN & PRINT";
+        btn.innerText = "SIMPAN & PRINT (OPSIONAL)";
         
         const btnRep = document.getElementById('btnReprint');
         btnRep.disabled = true;
@@ -266,7 +267,6 @@
         document.getElementById('modalInput').style.display = "block";
     }
 
-    // Perbaikan fungsi render untuk tombol edit sesuai ledger
     function render() {
         const draw = (data, id, mode) => {
             const tb = document.getElementById(id).querySelector('tbody'); tb.innerHTML = '';
@@ -314,7 +314,7 @@
     }
 
     async function printToBT(text) {
-        if (!btCharacteristic) throw "Printer belum terhubung!";
+        if (!btCharacteristic) return; // Mode Trial: Jika kosong, abaikan pencetakan langsung lanjut tanpa error
         const data = new TextEncoder().encode(text);
         for (let i = 0; i < data.length; i += 20) {
             await btCharacteristic.writeValue(data.slice(i, i + 20));
@@ -334,11 +334,10 @@
     async function simpanDanPrint() {
         const ag = document.getElementById('pilihAgen').value;
         if(!ag) return alert("Pilih Agen!");
-        if(!btCharacteristic) return alert("❌ Gagal: Hubungkan printer Bluetooth terlebih dahulu sebelum menyimpan data!");
         if(itemsKirim.length === 0 && itemsRetur.length === 0) return alert("Pilih barang dikirim atau retur terlebih dahulu!");
 
         const btn = document.getElementById('btnSimpan');
-        btn.innerText = "MENCETAK & MENYIMPAN..."; btn.disabled = true;
+        btn.innerText = "SEDANG MEMPROSES..."; btn.disabled = true;
 
         const noNota = document.getElementById('noNota').value;
         const tglInput = document.getElementById('tglNota').value;
@@ -394,11 +393,14 @@
         p += `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`;
 
         try {
-            await printToBT(p);
-            lastPrintText = p; 
+            // KIRIM DATA KE PRINTER (Hanya berjalan jika printer terhubung, jika tidak terhubung baris ini otomatis terlewati dengan mulus)
+            if (btCharacteristic) {
+                await printToBT(p);
+                lastPrintText = p; 
+                document.getElementById('btnReprint').disabled = false;
+            }
 
-            document.getElementById('btnReprint').disabled = false;
-
+            // AMANKAN DATA KE DATABASE SUPABASE (Selalu Dieksekusi Terlepas Printer Ada/Tidak)
             await clientSupabase.from('transaksi').insert([{
                 no_nota: noNota, nama_agen: ag, tanggal: tglInput,
                 driver_1: drv1, driver_2: drv2, plat_nomor: mobil, 
@@ -414,11 +416,16 @@
             await clientSupabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
 
             btn.innerText = "SUKSES DISIMPAN";
-            alert("✅ Nota Sukses Dicetak & Disimpan ke Database!");
+            
+            if (btCharacteristic) {
+                alert("✅ Sukses: Nota Berhasil Dicetak & Disimpan ke Database!");
+            } else {
+                alert("✅ Sukses: Data Berhasil Masuk Database!\n(Printer dilewati karena tidak terhubung)");
+            }
 
         } catch (e) {
-            alert("❌ PROSES GAGAL: " + (e.message || e) + "\n\nData TIDAK disimpan ke database karena printer bermasalah atau koneksi terputus.");
-            btn.innerText = "SIMPAN & PRINT"; btn.disabled = false;
+            alert("❌ PROSES GAGAL: " + (e.message || e) + "\nGagal menyimpan data ke database. Periksa kembali jaringan internet Anda.");
+            btn.innerText = "SIMPAN & PRINT (OPSIONAL)"; btn.disabled = false;
         }
     }
 
