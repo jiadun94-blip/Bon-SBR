@@ -6,7 +6,7 @@
     <title>SBR | Rekap Terpadu v5</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Courier+New:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
         /* TEMA CHARCOAL BASE - KHAS PAK HADIAT */
@@ -88,6 +88,7 @@
 
         /* TEKS BERWARNA */
         .link-detail { text-decoration: underline; cursor: pointer; font-weight: bold; }
+        .nota-link { color: #2563eb; text-decoration: underline; cursor: pointer; font-weight: bold; }
         .text-kirim { color: #2563eb; }
         .text-retur { color: #dc2626; }
         .lunas { background: #dcfce7; color: #166534; font-weight: bold; border-radius: 4px; padding: 2px 6px; }
@@ -100,8 +101,8 @@
             background: rgba(0,0,0,0.8); backdrop-filter: blur(3px);
         }
         .modal-content { 
-            background: #1e1e1e; margin: 10% auto; 
-            border-radius: 12px; width: 90%; max-width: 500px; 
+            background: #1e1e1e; margin: 5% auto; 
+            border-radius: 12px; width: 90%; max-width: 480px; 
             border: 1px solid #444; overflow: hidden;
             box-shadow: 0 20px 40px rgba(0,0,0,0.5); 
         }
@@ -110,12 +111,31 @@
             display: flex; justify-content: space-between; 
             align-items: center; border-bottom: 1px solid #444; 
         }
-        .modal-body { padding: 15px; max-height: 400px; overflow-y: auto; color: #eee; }
+        .modal-body { padding: 15px; max-height: 420px; overflow-y: auto; color: #eee; }
         .close-btn { font-size: 24px; cursor: pointer; color: #aaa; }
         
         .table-pop { width: 100%; border-collapse: collapse; }
         .table-pop th { background: #333; color: #fff; border: 1px solid #444; position: static; }
         .table-pop td { border: 1px solid #444; color: #eee; background: #1e1e1e; }
+
+        /* TAMPILAN MENYERUPAI STRUK KERTAS THERMAL */
+        .struk-box { 
+            background: #fff; 
+            border: 1px solid #cbd5e1; 
+            padding: 15px; 
+            border-radius: 6px; 
+            font-family: 'Courier New', Courier, monospace; 
+            color: #000; 
+            font-size: 13px; 
+            line-height: 1.4;
+        }
+        .struk-center { text-align: center; }
+        .struk-bold { font-weight: bold; }
+        .struk-title { font-size: 16px; font-weight: bold; margin: 0; font-family: 'Roboto Condensed', sans-serif; }
+        .struk-separator { border-top: 1px dashed #000; margin: 6px 0; }
+        .struk-double-separator { border-top: 2px double #000; margin: 6px 0; }
+        .struk-row { display: flex; justify-content: space-between; }
+        .struk-item-detail { padding-left: 8px; }
     </style>
 </head>
 <body>
@@ -162,7 +182,7 @@
 <div id="modalDetail" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3 id="modalJudul" style="margin:0; font-size:15px;">RINCIAN ITEM</h3>
+            <h3 id="modalJudul" style="margin:0; font-size:15px;">RINCIAN DATA</h3>
             <span class="close-btn" onclick="tutupModal()">&times;</span>
         </div>
         <div class="modal-body" id="modalIsi"></div>
@@ -182,7 +202,7 @@
 
     async function muatLaporan() {
         const body = document.getElementById('isiTabel');
-        body.innerHTML = "<tr><td colspan='10' style='padding:30px; background:#fff;'>Memproses data Supabase...</td></tr>";
+        body.innerHTML = "<tr><td colspan='10' style='padding:30px; background:#fff; color:#000;'>Memproses data Supabase...</td></tr>";
 
         const { data, error } = await _sb.from('transaksi')
             .select('*')
@@ -191,18 +211,20 @@
             .order('created_at', { ascending: false });
 
         if (error) { alert("Error: " + error.message); return; }
-        if (!data || data.length === 0) { body.innerHTML = "<tr><td colspan='10' style='padding:30px; background:#fff;'>Data tidak ditemukan untuk rentang tanggal ini.</td></tr>"; return; }
+        if (!data || data.length === 0) { body.innerHTML = "<tr><td colspan='10' style='padding:30px; background:#fff; color:#000;'>Data tidak ditemukan untuk rentang tanggal ini.</td></tr>"; return; }
 
         body.innerHTML = "";
         data.forEach(t => {
-            // Mengambil langsung nilai dari kolom sisa_akhir database Anda
             const sisaAkhir = t.sisa_akhir || 0; 
+
+            const [y, m, d] = t.tanggal.split('-');
+            const tglIndo = `${d}-${m}-${y}`;
 
             body.innerHTML += `
                 <tr>
                     <td class="sticky-col" style="text-align:left;">${t.nama_agen || '-'}</td>
-                    <td>${t.tanggal || '-'}</td>
-                    <td style="color:#666; font-weight:bold;">${t.no_nota || '-'}</td>
+                    <td>${tglIndo}</td>
+                    <td><span class="nota-link" onclick="bukaStrukNota('${t.no_nota}')">${t.no_nota || '-'}</span></td>
                     <td>${t.driver_1 || '-'}</td>
                     <td>${t.driver_2 || '-'}</td>
                     <td>${t.plat_nomor || '-'}</td>
@@ -235,6 +257,81 @@
         });
         html += `</tbody></table>`;
         modalIsi.innerHTML = html;
+    }
+
+    async function bukaStrukNota(noNota) {
+        const modalIsi = document.getElementById('modalIsi');
+        document.getElementById('modalJudul').innerText = `STRUK DETAIL NOTA`;
+        modalIsi.innerHTML = "<p style='text-align:center;'>Membuka struk belanja...</p>";
+        document.getElementById('modalDetail').style.display = "block";
+
+        try {
+            // Perbaikan ada di baris select('*') ini, Pak!
+            const { data: trx, error: errTrx } = await _sb.from('transaksi').select('*').eq('no_nota', noNota).single();
+            if (errTrx) throw errTrx;
+
+            const { data: detail, error: errDet } = await _sb.from('transaksi_detail').select('*').eq('no_nota', noNota);
+            if (errDet) throw errDet;
+
+            const [y, m, d] = trx.tanggal.split('-');
+            const drvGabung = trx.driver_2 ? `${trx.driver_1} / ${trx.driver_2}` : trx.driver_1;
+
+            let s = `<div class="struk-box">
+                        <div class="struk-center">
+                            <span class="struk-title">SBR PUTRA FOOD</span><br>
+                            Lembang, Bandung Barat<br>
+                        </div>
+                        <div class="struk-separator"></div>
+                        <div class="struk-row"><span>NO: ${trx.no_nota}</span><span>TGL: ${d}-${m}-${y}</span></div>
+                        <div class="struk-center struk-bold" style="font-size:14px; margin: 4px 0;">${trx.nama_agen.toUpperCase()}</div>
+                        <div>DRV: ${drvGabung} [ ${trx.plat_nomor || '-'} ]</div>
+                        <div class="struk-separator"></div>`;
+
+            const itemsKirim = detail.filter(i => i.tipe === 'Kirim');
+            const itemsRetur = detail.filter(i => i.tipe === 'Retur');
+
+            itemsKirim.forEach(i => {
+                s += `<div>${i.nama_barang}</div>`;
+                s += `<div class="struk-row struk-item-detail">
+                        <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}</span>
+                        <span>${(i.subtotal || 0).toLocaleString('id-ID')}</span>
+                      </div>`;
+            });
+            s += `<div class="struk-separator"></div>`;
+            s += `<div class="struk-row"><span>TOTAL KIRIM:</span><span>Rp ${(trx.total_kirim || 0).toLocaleString('id-ID')}</span></div>`;
+
+            if(itemsRetur.length > 0) {
+                s += `<br><div class="struk-bold">BARANG RETUR:</div>`;
+                itemsRetur.forEach(i => {
+                    s += `<div>[RETUR] ${i.nama_barang}</div>`;
+                    s += `<div class="struk-row struk-item-detail">
+                            <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}</span>
+                            <span>-${(i.subtotal || 0).toLocaleString('id-ID')}</span>
+                          </div>`;
+                });
+                s += `<div class="struk-separator"></div>`;
+                s += `<div class="struk-row"><span>TOTAL RETUR:</span><span>Rp ${(trx.total_retur || 0).toLocaleString('id-ID')}</span></div>`;
+            }
+
+            const tagihanBersih = (trx.total_kirim || 0) - (trx.total_retur || 0) + (trx.bon_lama || 0);
+            
+            s += `<br><div class="struk-row"><span>BON LAMA:</span><span>Rp ${(trx.bon_lama || 0).toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-double-separator"></div>`;
+            s += `<div class="struk-row struk-bold"><span>TOTAL TAGIHAN:</span><span>Rp ${tagihanBersih.toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-separator"></div>`;
+            s += `<div class="struk-row"><span>Bayar CASH:</span><span>Rp ${(trx.bayar_cash || 0).toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-row"><span>Bayar TRF:</span><span>Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-separator"></div>`;
+            s += `<div class="struk-row struk-bold" style="font-size:14px; color:#dc2626;"><span>SISA BON:</span><span>Rp ${(trx.sisa_akhir || 0).toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-separator"></div>`;
+            s += `<div class="struk-center struk-bold" style="margin-top:10px; text-align:center;">SBR PUTRA FOOD SYSTEM</div>`;
+            s += `</div>`;
+
+            modalIsi.innerHTML = s;
+
+        } catch (e) {
+            modalIsi.innerHTML = `<p style='color:red; text-align:center;'>Gagal memuat struk: ${e.message}</p>`;
+        }
     }
 
     function tutupModal() { document.getElementById('modalDetail').style.display = "none"; }
