@@ -41,7 +41,7 @@
         .form-group select, .form-group input { width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 19px; font-weight: 700; }
         
         .sub-display { background: #f8fafc; padding: 10px; font-size: 17px; font-weight: 900; text-align: right; border: 2px solid #cbd5e0; border-top: none; display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #e2e8f0; padding: 12px; border-radius: 10px; }
+        .pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #e2e8f0; padding: 12px; border-radius: 10px; margin-top: 10px; }
         .input-manual { width: 100%; padding: 12px; border: 2px solid #4a5568; border-radius: 8px; font-weight: 900; text-align: right; box-sizing: border-box; font-size: 22px; background: #fff; }
         
         .summary-box { background: #1a202c; padding: 18px; border-radius: 12px; margin-top: 15px; color: white; }
@@ -49,9 +49,13 @@
         .grand-total { border-top: 2px dashed #4a5568; margin-top: 12px; padding-top: 12px; font-weight: 900; color: #fc8181; font-size: 22px; }
         
         .btn-save { width: 100%; padding: 20px; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; color: white; background: #27ae60; margin-top: 20px; font-size: 21px; text-transform: uppercase; box-shadow: 0 5px 0 #1e8449; }
-        .after-save-panel { display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .btn-reprint { padding: 15px; background: #805ad5; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #553c9a; }
-        .btn-clear { padding: 15px; background: #718096; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #4a5568; }
+        .btn-save:disabled { background: #a0aec0; box-shadow: none; cursor: not-allowed; }
+        
+        /* PANEL BAWAH UTAMA */
+        .action-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn-reprint { padding: 15px; background: #e67e22; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #b35d15; text-transform: uppercase; }
+        .btn-reprint:disabled { background: #cbd5e0; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
+        .btn-clear { padding: 15px; background: #718096; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #4a5568; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -86,12 +90,6 @@
         <div class="section-label"><span>🔄 RETUR :</span><button class="btn-action" style="background:#e67e22" onclick="openModal('Retur')">+ ITEM</button></div>
         <table id="tabelRetur"><thead><tr><th>BARANG</th><th>QTY</th><th>TOTAL</th><th>#</th></tr></thead><tbody></tbody></table>
         <div class="sub-display"><span>SUBTOTAL:</span><span id="subRetur">Rp 0</span></div>
-
-        <div class="section-label">💵 PEMBAYARAN :</div>
-        <div class="pay-row">
-            <div><label style="font-size:14px; font-weight:900;">CASH</label><input type="text" id="inputCash" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
-            <div><label style="font-size:14px; font-weight:900;">TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
-        </div>
         
         <div class="section-label">📄 BON LAMA :</div>
         <div style="background:#fffaf0; padding:10px; border-radius:10px; border:2px solid #ed8936;">
@@ -106,15 +104,20 @@
         <div class="sum-row grand-total"><span>SISA AKHIR:</span><span id="txtGrand">Rp 0</span></div>
     </div>
 
+    <div class="section-label">💵 PEMBAYARAN :</div>
+    <div class="pay-row">
+        <div><label style="font-size:14px; font-weight:900;">CASH</label><input type="text" id="inputCash" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
+        <div><label style="font-size:14px; font-weight:900;">TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
+    </div>
+
     <button class="btn-save" id="btnSimpan" onclick="simpanDanPrint()">SIMPAN & PRINT</button>
 
-    <div id="afterSavePanel" class="after-save-panel">
-        <button class="btn-reprint" onclick="reprintLast()">🔄 REPRINT</button>
+    <div class="action-group">
+        <button class="btn-reprint" id="btnReprint" onclick="reprintLast()" disabled>🔄 REPRINT</button>
         <button class="btn-clear" onclick="resetFormForNewNota()">➕ NOTA BARU</button>
     </div>
 </div>
 
-<!-- Modal -->
 <div id="modalInput" class="modal">
     <div class="modal-content">
         <h3>Tambah Item</h3>
@@ -134,7 +137,7 @@
     function logout() { localStorage.clear(); window.location.href = "index.html"; }
 
     const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmFTcXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let database = { harga: {}, barang: [] };
@@ -198,13 +201,15 @@
         itemsKirim = []; itemsRetur = []; render(); hitungTotal();
     }
 
-    // FUNGSI KHUSUS UNTUK NOTA BARU (Tanpa Refresh Bluetooth)
     function resetFormForNewNota() {
         resetForm();
-        document.getElementById('afterSavePanel').style.display = 'none';
-        document.getElementById('btnSimpan').style.display = 'block';
-        document.getElementById('btnSimpan').disabled = false;
-        document.getElementById('btnSimpan').innerText = "SIMPAN & PRINT";
+        const btn = document.getElementById('btnSimpan');
+        btn.disabled = false;
+        btn.innerText = "SIMPAN & PRINT";
+        
+        // Matikan kembali tombol reprint untuk nota baru sebelum dicetak
+        const btnRep = document.getElementById('btnReprint');
+        btnRep.disabled = true;
         lastPrintText = "";
     }
 
@@ -310,7 +315,7 @@
     }
 
     async function printToBT(text) {
-        if (!btCharacteristic) return;
+        if (!btCharacteristic) throw "Printer belum terhubung!";
         const data = new TextEncoder().encode(text);
         for (let i = 0; i < data.length; i += 20) {
             await btCharacteristic.writeValue(data.slice(i, i + 20));
@@ -319,35 +324,86 @@
     }
 
     async function reprintLast() {
-        if(!lastPrintText) return alert("Simpan nota dulu!");
+        if(!lastPrintText) return alert("Belum ada data cetak terakhir!");
         if(!btCharacteristic) return alert("Printer belum terhubung!");
-        await printToBT(lastPrintText);
+        try {
+            await printToBT(lastPrintText);
+            alert("✅ Berhasil Reprint Nota!");
+        } catch(e) { alert("Reprint Gagal: " + e); }
     }
 
     async function simpanDanPrint() {
         const ag = document.getElementById('pilihAgen').value;
         if(!ag) return alert("Pilih Agen!");
+        if(!btCharacteristic) return alert("❌ Gagal: Hubungkan printer Bluetooth terlebih dahulu sebelum menyimpan data!");
+        if(itemsKirim.length === 0 && itemsRetur.length === 0) return alert("Pilih barang dikirim atau retur terlebih dahulu!");
+
         const btn = document.getElementById('btnSimpan');
-        btn.innerText = "MENYIMPAN..."; btn.disabled = true;
+        btn.innerText = "MENCETAK & MENYIMPAN..."; btn.disabled = true;
+
+        const noNota = document.getElementById('noNota').value;
+        const tglInput = document.getElementById('tglNota').value;
+        const [y, m, d] = tglInput.split('-');
+        const tglIndo = `${d}-${m}-${y}`;
+        const drv1 = document.getElementById('driver1').value;
+        const drv2 = document.getElementById('driver2').value;
+        const drvGabung = drv2 ? `${drv1} / ${drv2}` : drv1;
+        const mobil = document.getElementById('pilihMobil').value;
+        
+        const tk = itemsKirim.reduce((a, b) => a + b.total, 0);
+        const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
+        const bl = getAngka('inputBonLama');
+        const cash = getAngka('inputCash');
+        const trf = getAngka('inputTrf');
+        const tagihanBersih = tk - tr + bl;
+        const sisa = tagihanBersih - cash - trf;
+
+        // STRUK PRINT
+        const lebar = 48; 
+        const buatBaris = (l, r) => { 
+            let space = lebar - l.length - String(r).length; 
+            return l + " ".repeat(Math.max(1, space)) + r + "\n"; 
+        };
+
+        let p = `\x1B\x40\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10SBR PUTRA FOOD\n`;
+        p += `\x1B\x21\x00\x1B\x45\x00Lembang, Bandung Barat\n------------------------------------------------\n`;
+        p += `\x1B\x61\x00` + buatBaris(`NO: ${noNota}`, `TGL: ${tglIndo}`);
+        p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10${ag.toUpperCase()}\n`;
+        p += `\x1B\x21\x00\x1B\x45\x00DRV: ${drvGabung} [ ${mobil} ]\n------------------------------------------------\n\x1B\x61\x00`;
+        
+        itemsKirim.forEach(i => { 
+            p += `${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, i.total.toLocaleString()); 
+        });
+        p += `------------------------------------------------\n` + buatBaris(`TOTAL KIRIM:`, `Rp ${tk.toLocaleString()}`);
+
+        if(itemsRetur.length > 0) {
+            p += `\n\x1B\x45\x01BARANG RETUR:\x1B\x45\x00\n`;
+            itemsRetur.forEach(i => { 
+                p += `[RETUR] ${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, `-${i.total.toLocaleString()}`); 
+            });
+            p += `------------------------------------------------\n` + buatBaris(`TOTAL RETUR:`, `Rp ${tr.toLocaleString()}`);
+        }
+
+        p += `\n` + buatBaris(`BON LAMA:`, `Rp ${bl.toLocaleString()}`);
+        p += `================================================\n`;
+        p += `\x1B\x45\x01` + buatBaris(`TOTAL TAGIHAN:`, `Rp ${tagihanBersih.toLocaleString()}`) + `\x1B\x45\x00`;
+        p += `------------------------------------------------\n`;
+        p += buatBaris(`Bayar CASH:`, `Rp ${cash.toLocaleString()}`);
+        p += buatBaris(`Bayar TRF:`, `Rp ${trf.toLocaleString()}`);
+        p += `------------------------------------------------\n`;
+        p += `\x1B\x45\x01\x1B\x21\x10` + buatBaris(`SISA BON:`, `Rp ${sisa.toLocaleString()}`) + `\x1B\x45\x00\x1B\x21\x00\n\n`;
+        p += `\x1B\x61\x01` + `\n\n\n` + `( ............................ )\n` + `------------------------------------------------\n`;
+        p += `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`;
 
         try {
-            const noNota = document.getElementById('noNota').value;
-            const tglInput = document.getElementById('tglNota').value;
-            const [y, m, d] = tglInput.split('-');
-            const tglIndo = `${d}-${m}-${y}`;
-            const drv1 = document.getElementById('driver1').value;
-            const drv2 = document.getElementById('driver2').value;
-            const drvGabung = drv2 ? `${drv1} / ${drv2}` : drv1;
-            const mobil = document.getElementById('pilihMobil').value;
-            
-            const tk = itemsKirim.reduce((a, b) => a + b.total, 0);
-            const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
-            const bl = getAngka('inputBonLama');
-            const cash = getAngka('inputCash');
-            const trf = getAngka('inputTrf');
-            const tagihanBersih = tk - tr + bl;
-            const sisa = tagihanBersih - cash - trf;
+            // LANGKAH 1: PERINTAH CETAK KE PRINTER DULU
+            await printToBT(p);
+            lastPrintText = p; 
 
+            // Aktifkan tombol reprint utama karena data cetak sukses keluar printer
+            document.getElementById('btnReprint').disabled = false;
+
+            // LANGKAH 2: JIKA BERHASIL MENCETAK, KIRIM DATA KE SUPABASE
             await clientSupabase.from('transaksi').insert([{
                 no_nota: noNota, nama_agen: ag, tanggal: tglInput,
                 driver_1: drv1, driver_2: drv2, plat_nomor: mobil, 
@@ -362,52 +418,11 @@
             await clientSupabase.from('transaksi_detail').insert(details);
             await clientSupabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
 
-            // STRUK PRINT
-            const lebar = 48; 
-            const buatBaris = (l, r) => { 
-                let space = lebar - l.length - String(r).length; 
-                return l + " ".repeat(Math.max(1, space)) + r + "\n"; 
-            };
-
-            let p = `\x1B\x40\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10SBR PUTRA FOOD\n`;
-            p += `\x1B\x21\x00\x1B\x45\x00Lembang, Bandung Barat\n------------------------------------------------\n`;
-            p += `\x1B\x61\x00` + buatBaris(`NO: ${noNota}`, `TGL: ${tglIndo}`);
-            p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10${ag.toUpperCase()}\n`;
-            p += `\x1B\x21\x00\x1B\x45\x00DRV: ${drvGabung} [ ${mobil} ]\n------------------------------------------------\n\x1B\x61\x00`;
-            
-            itemsKirim.forEach(i => { 
-                p += `${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, i.total.toLocaleString()); 
-            });
-            p += `------------------------------------------------\n` + buatBaris(`TOTAL KIRIM:`, `Rp ${tk.toLocaleString()}`);
-
-            if(itemsRetur.length > 0) {
-                p += `\n\x1B\x45\x01BARANG RETUR:\x1B\x45\x00\n`;
-                itemsRetur.forEach(i => { 
-                    p += `[RETUR] ${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, `-${i.total.toLocaleString()}`); 
-                });
-                p += `------------------------------------------------\n` + buatBaris(`TOTAL RETUR:`, `Rp ${tr.toLocaleString()}`);
-            }
-
-            p += `\n` + buatBaris(`BON LAMA:`, `Rp ${bl.toLocaleString()}`);
-            p += `================================================\n`;
-            p += `\x1B\x45\x01` + buatBaris(`TOTAL TAGIHAN:`, `Rp ${tagihanBersih.toLocaleString()}`) + `\x1B\x45\x00`;
-            p += `------------------------------------------------\n`;
-            p += buatBaris(`Bayar CASH:`, `Rp ${cash.toLocaleString()}`);
-            p += buatBaris(`Bayar TRF:`, `Rp ${trf.toLocaleString()}`);
-            p += `------------------------------------------------\n`;
-            p += `\x1B\x45\x01\x1B\x21\x10` + buatBaris(`SISA BON:`, `Rp ${sisa.toLocaleString()}`) + `\x1B\x45\x00\x1B\x21\x00\n\n`;
-            p += `\x1B\x61\x01` + `\n\n\n` + `( ............................ )\n` + `------------------------------------------------\n`;
-            p += `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`;
-            
-            lastPrintText = p;
-            if(btCharacteristic) await printToBT(p);
-
-            // Tampilkan Panel Pasca Simpan
-            document.getElementById('afterSavePanel').style.display = 'grid';
-            btn.style.display = 'none';
+            btn.innerText = "SUKSES DISIMPAN";
+            alert("✅ Nota Sukses Dicetak & Disimpan ke Database!");
 
         } catch (e) {
-            alert("Error: " + e.message);
+            alert("❌ PROSES GAGAL: " + (e.message || e) + "\n\nData TIDAK disimpan ke database karena printer bermasalah atau koneksi terputus.");
             btn.innerText = "SIMPAN & PRINT"; btn.disabled = false;
         }
     }
