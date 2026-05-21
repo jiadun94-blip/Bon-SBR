@@ -223,17 +223,25 @@
             const cocokArmada = armadaData?.find(a => a.plat_nomor === r.plat_nomor);
             const hanyaNamaUnit = cocokArmada ? cocokArmada.nama_unit : (r.plat_nomor || '-');
 
-            // FILTER: Kas biaya bersumber rincian dari nama_agen yang terdaftar di baris tersebut
-            const sumberKasAgen = r.nama_agen && r.nama_agen !== '-' ? r.nama_agen : 'Uang Jalan Driver';
+            const sumberKasAgen = r.sumber_agen && r.sumber_agen !== '-' ? r.sumber_agen : 'Uang Jalan Driver';
+
+            // KONDISIONAL: Membentuk teks nama pengeluaran lain-lain gabungan teks & angka
+            let teksLainLainFix = "";
+            if (r.ket_lain_lain && r.ket_lain_lain !== "-") {
+                teksLainLainFix = `${r.ket_lain_lain}: Rp ${nominalLain.toLocaleString('id-ID')}`;
+            } else {
+                teksLainLainFix = `Rp ${nominalLain.toLocaleString('id-ID')}`;
+            }
 
             return {
                 ...r,
                 cash_kotor_riil: totalCashNota,
                 total_biaya_riil: totalBiaya,
-                sisa_bersih_riil: sisaBersih,
+                sisa_inter_bersih: sisaBersih,
                 driver_lengkap: namaDriverGabung,
                 nama_unit_saja: hanyaNamaUnit,
-                sumber_kas_fix: sumberKasAgen
+                sumber_kas_fix: sumberKasAgen,
+                output_lain_lain: teksLainLainFix
             };
         });
 
@@ -249,12 +257,12 @@
                     <td class="text-bold" style="color: #475569;">${r.nama_unit_saja}</td>
                     <td class="txt-kiri">${r.nama_agen || '-'}<br><span class="sub-txt">Nota: ${r.no_nota || '-'}</span></td>
                     <td style="color: #166534; font-weight:bold;">Rp ${(r.cash_kotor_riil).toLocaleString('id-ID')}</td>
-                    <td>${(r.uang_jalan || 0).toLocaleString('id-ID')}</td>
-                    <td>${(r.uang_bbm || 0).toLocaleString('id-ID')}</td>
-                    <td>${(r.uang_bongkar || 0).toLocaleString('id-ID')}</td>
-                    <td>${(r.lain_lain || 0).toLocaleString('id-ID')}<br><span class="sub-txt">Ket: ${r.ket_lain_lain || '-'}</span></td>
+                    <td>Rp ${(r.uang_jalan || 0).toLocaleString('id-ID')}</td>
+                    <td>Rp ${(r.uang_bbm || 0).toLocaleString('id-ID')}</td>
+                    <td>Rp ${(r.uang_bongkar || 0).toLocaleString('id-ID')}</td>
+                    <td style="font-weight: 500; color: #334155;">${r.output_lain_lain}</td>
                     <td style="color: #b45309; font-weight:bold; font-size:11px;">${r.sumber_kas_fix}</td>
-                    <td style="background: #fef08a; font-weight:bold; color: #000;">${r.sisa_bersih_riil.toLocaleString('id-ID')}</td>
+                    <td style="background: #fef08a; font-weight:bold; color: #000;">Rp ${r.sisa_inter_bersih.toLocaleString('id-ID')}</td>
                 </tr>
             `;
         });
