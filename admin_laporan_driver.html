@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBR | Admin Laporan Driver</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* TEMA CHARCOAL BASE SBR DIGITAL */
+        body { 
+            font-family: 'Roboto Condensed', sans-serif; 
+            background-color: #121212; 
+            color: #eee; 
+            margin: 0; padding: 10px;
+        }
+
+        .card { 
+            background: #1e1e1e; 
+            border-radius: 8px; 
+            padding: 15px; 
+            border: 1px solid #333; 
+            margin-bottom: 20px; 
+        }
+
+        h2 { 
+            margin: 0 0 15px; font-size: 16px; text-align: center; 
+            background: #333; padding: 12px; border-radius: 6px; 
+            color: #fff; text-transform: uppercase; 
+        }
+
+        /* FILTER AREA CONTROL */
+        .filter-section { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr auto auto; 
+            gap: 8px; 
+            align-items: end; 
+            background: rgba(0,0,0,0.3); 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 20px;
+        }
+
+        .filter-group { display: flex; flex-direction: column; }
+        .filter-group label { font-size: 11px; margin-bottom: 4px; color: #aaa; }
+
+        input[type="date"] { 
+            background: #2d2d2d; border: 1px solid #444; 
+            color: #fff; padding: 10px; border-radius: 4px; font-family: inherit; 
+        }
+
+        .btn { 
+            padding: 10px 15px; border-radius: 4px; 
+            font-weight: bold; cursor: pointer; border: none; font-size: 12px;
+        }
+        .btn-tampilkan { background: #3b4c64; color: white; }
+        .btn-excel { background: #166534; color: white; }
+        .btn:active { transform: scale(0.95); }
+
+        /* RINGKASAN KOTAK INFORMASI UANG */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .summary-box {
+            background: #252525;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            text-align: center;
+        }
+        .summary-box p { margin: 0; font-size: 11px; color: #aaa; text-transform: uppercase; }
+        .summary-box h3 { margin: 5px 0 0; font-size: 16px; font-weight: bold; }
+
+        /* TABLE KONTRAST HIGH - KHAS SBR ADMIN */
+        .table-container { 
+            width: 100%; overflow-x: auto; 
+            border-radius: 4px; background: #fff; 
+            border: 1px solid #444;
+        }
+        
+        table { width: 100%; border-collapse: separate; border-spacing: 0; color: #000; }
+        
+        th { 
+            background: #f1f5f9; color: #1e293b; 
+            padding: 10px 5px; font-size: 11px; 
+            border: 1px solid #cbd5e1; position: sticky; top: 0; z-index: 10;
+        }
+        
+        td { 
+            padding: 8px; border: 1px solid #e2e8f0; 
+            font-size: 12px; text-align: center; white-space: nowrap; 
+        }
+
+        .txt-kiri { text-align: left; }
+        .sub-txt { font-size: 10px; color: #666; display: block; }
+        .text-bold { font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>MONITORING LAPORAN HARIAN DRIVER</h2>
+
+    <div class="summary-grid">
+        <div class="summary-box">
+            <p>Total Cash Kotor</p>
+            <h3 id="totKotor" style="color: #2ecc71;">Rp 0</h3>
+        </div>
+        <div class="summary-box">
+            <p>Total Operasional</p>
+            <h3 id="totBiaya" style="color: #e74c3c;">Rp 0</h3>
+        </div>
+        <div class="summary-box">
+            <p>Total Sisa Bersih</p>
+            <h3 id="totBersih" style="color: #fbc531;">Rp 0</h3>
+        </div>
+    </div>
+
+    <div class="filter-section">
+        <div class="filter-group">
+            <label>DARI TANGGAL</label>
+            <input type="date" id="tglMulai">
+        </div>
+        <div class="filter-group">
+            <label>SAMPAI TANGGAL</label>
+            <input type="date" id="tglSelesai">
+        </div>
+        <button class="btn btn-tampilkan" onclick="muatLaporanDriver()">TAMPILKAN</button>
+        <button class="btn btn-excel" onclick="exportExcelDriver()">EXPORT EXCEL</button>
+    </div>
+
+    <div class="table-container">
+        <table id="tabelAdminDriver">
+            <thead>
+                <tr>
+                    <th>JAM/TGL</th>
+                    <th>DRIVER</th>
+                    <th>UNIT KENDARAAN</th>
+                    <th>AGEN / NO NOTA</th>
+                    <th>CASH KOTOR (RP)</th>
+                    <th>UANG JALAN (RP)</th>
+                    <th>BBM (RP)</th>
+                    <th>BONGKAR (RP)</th>
+                    <th>LAIN-LAIN (RP)</th>
+                    <th>KAS BIAYA DARI</th>
+                    <th>SISA BERSIH (RP)</th>
+                </tr>
+            </thead>
+            <tbody id="isiTabelDriver">
+                <tr><td colspan="11" style="padding:40px; background:#fff; color:#999;">Tentukan rentang tanggal lalu klik Tampilkan.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const _sb = supabase.createClient(SB_URL, SB_KEY);
+
+    window.onload = () => {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('tglMulai').value = today;
+        document.getElementById('tglSelesai').value = today;
+    };
+
+    async function muatLaporanDriver() {
+        const tbody = document.getElementById('isiTabelDriver');
+        tbody.innerHTML = "<tr><td colspan='11' style='padding:30px; background:#fff; color:#000;'>Menarik data setoran driver...</td></tr>";
+
+        const tglAwal = document.getElementById('tglMulai').value;
+        const tglAkhir = document.getElementById('tglSelesai').value;
+
+        // 1. Tarik data utama laporan driver
+        const { data: laporanData, error: errLaporan } = await _sb.from('rekap_laporan_driver')
+            .select('*')
+            .gte('created_at', `${tglAwal}T00:00:00`)
+            .lte('created_at', `${tglAkhir}T23:59:59`)
+            .order('created_at', { ascending: false });
+
+        if (errLaporan) { alert("Gagal memuat: " + errLaporan.message); return; }
+        
+        if (!laporanData || laporanData.length === 0) { 
+            tbody.innerHTML = "<tr><td colspan='11' style='padding:30px; background:#fff; color:#000;'>Tidak ada setoran driver di tanggal ini.</td></tr>";
+            hitungSummary([]);
+            return; 
+        }
+
+        // 2. Tarik data transaksi & database armada kendaraan untuk mapping nama
+        const { data: transaksiData } = await _sb.from('transaksi').select('no_nota, bayar_cash');
+        const { data: armadaData } = await _sb.from('monitoring_kendaraan').select('plat_nomor, nama_unit');
+
+        tbody.innerHTML = "";
+        
+        const laporanSelesai = laporanData.map(r => {
+            let totalCashNota = 0;
+            if (r.no_nota) {
+                const listNota = r.no_nota.split(',').map(s => s.trim());
+                listNota.forEach(notaSingle => {
+                    const matchTx = transaksiData?.find(t => t.no_nota === notaSingle);
+                    if (matchTx) {
+                        totalCashNota += parseInt(matchTx.bayar_cash || 0);
+                    }
+                });
+            }
+            
+            const nominalLain = r.lain_lain || 0; 
+            const totalBiaya = (r.uang_jalan || 0) + (r.uang_bbm || 0) + (r.uang_bongkar || 0) + nominalLain;
+            const sisaBersih = totalCashNota - totalBiaya;
+
+            // Gabung nama Driver 1 & Driver 2
+            let namaDriverGabung = r.nama_driver || '-';
+            if (r.driver_2 && r.driver_2 !== '-') {
+                namaDriverGabung += ` / ${r.driver_2}`;
+            }
+
+            // FILTER: Hanya menampilkan nama_unit (Tanpa Plat Nomor)
+            const cocokArmada = armadaData?.find(a => a.plat_nomor === r.plat_nomor);
+            const hanyaNamaUnit = cocokArmada ? cocokArmada.nama_unit : (r.plat_nomor || '-');
+
+            // FILTER: Kas biaya bersumber rincian dari nama_agen yang terdaftar di baris tersebut
+            const sumberKasAgen = r.nama_agen && r.nama_agen !== '-' ? r.nama_agen : 'Uang Jalan Driver';
+
+            return {
+                ...r,
+                cash_kotor_riil: totalCashNota,
+                total_biaya_riil: totalBiaya,
+                sisa_bersih_riil: sisaBersih,
+                driver_lengkap: namaDriverGabung,
+                nama_unit_saja: hanyaNamaUnit,
+                sumber_kas_fix: sumberKasAgen
+            };
+        });
+
+        laporanSelesai.forEach(r => {
+            const dObj = new Date(r.created_at);
+            const tglIndo = dObj.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const jamIndo = dObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+            tbody.innerHTML += `
+                <tr>
+                    <td style="background: #f8fafc;">${tglIndo}<br><span class="sub-txt">${jamIndo} WIB</span></td>
+                    <td class="text-bold txt-kiri">${r.driver_lengkap}</td>
+                    <td class="text-bold" style="color: #475569;">${r.nama_unit_saja}</td>
+                    <td class="txt-kiri">${r.nama_agen || '-'}<br><span class="sub-txt">Nota: ${r.no_nota || '-'}</span></td>
+                    <td style="color: #166534; font-weight:bold;">Rp ${(r.cash_kotor_riil).toLocaleString('id-ID')}</td>
+                    <td>${(r.uang_jalan || 0).toLocaleString('id-ID')}</td>
+                    <td>${(r.uang_bbm || 0).toLocaleString('id-ID')}</td>
+                    <td>${(r.uang_bongkar || 0).toLocaleString('id-ID')}</td>
+                    <td>${(r.lain_lain || 0).toLocaleString('id-ID')}<br><span class="sub-txt">Ket: ${r.ket_lain_lain || '-'}</span></td>
+                    <td style="color: #b45309; font-weight:bold; font-size:11px;">${r.sumber_kas_fix}</td>
+                    <td style="background: #fef08a; font-weight:bold; color: #000;">${r.sisa_bersih_riil.toLocaleString('id-ID')}</td>
+                </tr>
+            `;
+        });
+
+        hitungSummary(laporanSelesai);
+    }
+
+    function hitungSummary(data) {
+        let kotor = 0; let biaya = 0; let bersih = 0;
+        
+        if(data && data.length > 0) {
+            data.forEach(r => {
+                kotor += r.cash_kotor_riil;
+                biaya += r.total_biaya_riil;
+            });
+            bersih = kotor - biaya;
+        }
+
+        document.getElementById('totKotor').innerText = "Rp " + kotor.toLocaleString('id-ID');
+        document.getElementById('totBiaya').innerText = "Rp " + biaya.toLocaleString('id-ID');
+        document.getElementById('totBersih').innerText = "Rp " + bersih.toLocaleString('id-ID');
+    }
+
+    function exportExcelDriver() {
+        const tglFile = document.getElementById('tglMulai').value;
+        const wb = XLSX.utils.table_to_book(document.getElementById("tabelAdminDriver"));
+        XLSX.writeFile(wb, `Laporan_Setoran_Driver_${tglFile}.xlsx`);
+    }
+</script>
+
+</body>
+</html>
