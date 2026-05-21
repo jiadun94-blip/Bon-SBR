@@ -1,20 +1,217 @@
-    async function setorDataHariIni() {
-        // 1. Ambil data kalkulasi terbaru
-        const calc = hitungOtomatis(); 
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SBRdigital | Form Laporan Setoran</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #121212; --card: #1e1e1e; --accent: #72a339; --text: #e0e0e0; --input-bg: #2d2d2d; }
+        body { font-family: 'Roboto Condensed', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; padding-bottom: 100px; }
+        .header { background: var(--card); padding: 20px; border-radius: 15px; margin-bottom: 15px; text-align: center; border: 1px solid #333; }
+        .header h2 span { color: var(--accent); }
+        .section-title { font-size: 12px; color: var(--accent); font-weight: bold; text-transform: uppercase; margin: 20px 0 10px 5px; letter-spacing: 1px; }
+        .card-form { background: var(--card); padding: 18px; border-radius: 15px; border: 1px solid #333; margin-bottom: 15px; }
+        label { display: block; font-size: 11px; margin-bottom: 8px; color: #888; font-weight: bold; }
+        select, input { width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #444; background: var(--input-bg); color: white; font-size: 16px; box-sizing: border-box; }
         
-        // 2. Ambil semua input
+        .nota-container { background: var(--input-bg); border: 1px solid #444; border-radius: 8px; padding: 5px; margin-bottom: 15px; max-height: 350px; overflow-y: auto; }
+        .nota-item { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #444; gap: 15px; }
+        .nota-item:last-child { border-bottom: none; }
+        .nota-item input[type="checkbox"] { width: 35px; height: 35px; accent-color: var(--accent); flex-shrink: 0; }
+        .nota-info { flex: 1; }
+        .txt-tgl { font-size: 18px; color: #bbb; display: block; margin-bottom: 4px; border-bottom: 1px dashed #444; padding-bottom: 2px; }
+        .baris-bawah { display: flex; justify-content: space-between; gap: 10px; }
+        .txt-agen { font-size: 18px; color: var(--accent); font-weight: 700; text-transform: uppercase; }
+        .txt-nota { font-size: 18px; color: #fff; font-weight: 700; }
+        
+        .readonly-auto { color: #fbc531 !important; font-weight: bold; }
+        .btn-setor { width: 100%; padding: 20px; border-radius: 12px; border: none; background: linear-gradient(135deg, var(--accent) 0%, #2ecc71 100%); color: white; font-weight: 900; font-size: 18px; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 15px rgba(114, 163, 57, 0.4); }
+        .select-sumber { border: 1px solid #fbc531 !important; color: #fbc531 !important; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div style="text-align: center; font-size: 12px; color: #666; margin-bottom: 10px;">Halo, Admin/Driver SBR</div>
+<div class="header"><h2>SBR<span>digital</span> LAPORAN SETORAN</h2></div>
+
+<div class="section-title">📦 PILIH ARMADA & NOTA</div>
+<div class="card-form">
+    <label>UNIT ARMADA</label>
+    <select id="selMobil" onchange="cariNotaAktif()"><option value="">-- Pilih Armada --</option></select>
+
+    <label>DAFTAR NOTA TERKINI</label>
+    <div id="notaList" class="nota-container">
+        <div style="color:#666; font-size:14px; text-align:center; padding:30px;">Pilih armada...</div>
+    </div>
+
+    <label>TOTAL SELURUH CASH (Rp)</label>
+    <input type="text" id="uang_cash_disp" class="readonly-auto" placeholder="0" readonly>
+    
+    <label>ODOMETER TERAKHIR (KM)</label>
+    <input type="text" id="km_input" placeholder="Isi angka KM..." oninput="formatRibuan(this)" inputmode="numeric">
+</div>
+
+<div class="section-title">💸 RINCIAN PENGELUARAN JALAN</div>
+<div class="card-form">
+    <label style="color: #fbc531;">PENGELUARAN DIAMBIL DARI DANA AGEN MANA?</label>
+    <select id="sumber_agen" class="select-sumber">
+        <option value="">-- Pilih Nota Dahulu Di Atas --</option>
+    </select>
+
+    <label>UANG JALAN (Rp)</label>
+    <input type="text" id="exp_jalan" placeholder="0" oninput="formatRibuan(this)" inputmode="numeric">
+    
+    <label>BENSIN/SOLAR (Rp)</label>
+    <input type="text" id="exp_bbm" placeholder="0" oninput="formatRibuan(this)" inputmode="numeric">
+    
+    <label>UANG BONGKAR (Rp)</label>
+    <input type="text" id="exp_bongkar" placeholder="0" oninput="formatRibuan(this)" inputmode="numeric">
+    
+    <label style="color: #fbc531;">PENGELUARAN LAINNYA (KETERANGAN & NOMINAL)</label>
+    <input type="text" id="exp_lain_ket" placeholder="Ket: misal Parkir / Tol / Tambal Ban">
+    <input type="text" id="exp_lain_nom" placeholder="0" oninput="formatRibuan(this)" inputmode="numeric">
+
+    <button class="btn-setor" onclick="setorDataHariIni()">🚀 SIMPAN & KIRIM WA</button>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let dataNotaTerakhir = [];
+
+    function formatRibuan(elemen) {
+        let val = elemen.value.replace(/[^0-9]/g, "");
+        if (val === "") { elemen.value = ""; return; }
+        elemen.value = parseInt(val).toLocaleString('id-ID');
+    }
+
+    function getAngka(str) {
+        if(!str) return 0;
+        let murni = str.replace(/[^0-9]/g, "");
+        return parseInt(murni) || 0;
+    }
+
+    async function loadArmada() {
+        try {
+            const { data, error } = await _sb.from('monitoring_kendaraan').select('plat_nomor, nama_unit');
+            if(error) return alert("Gagal load armada: " + error.message);
+            const sel = document.getElementById('selMobil');
+            sel.innerHTML = '<option value="">-- Pilih Armada --</option>';
+            data.forEach(v => {
+                let opt = document.createElement('option');
+                opt.value = v.plat_nomor;
+                opt.text = v.nama_unit;
+                sel.appendChild(opt);
+            });
+        } catch(err) { alert("Error load armada: " + err.message); }
+    }
+
+    async function cariNotaAktif() {
+        const plat = document.getElementById('selMobil').value;
+        if(!plat) return;
+        try {
+            const { data, error } = await _sb.from('transaksi').select('*').eq('plat_nomor', plat).order('created_at', { ascending: false }).limit(3);
+            if(error) return alert("Gagal cari nota: " + error.message);
+            dataNotaTerakhir = data;
+            const container = document.getElementById('notaList');
+            container.innerHTML = '';
+            
+            if(data.length === 0) {
+                container.innerHTML = '<div style="color:#666; font-size:14px; text-align:center; padding:30px;">Tidak ada nota aktif untuk armada ini.</div>';
+                document.getElementById('uang_cash_disp').value = "0";
+                updateDropdownSumberAgen([]);
+                return;
+            }
+
+            data.forEach(n => {
+                const tglNota = new Date(n.created_at).toLocaleDateString('id-ID', { weekday: 'short', day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+                const div = document.createElement('div');
+                div.className = 'nota-item';
+                div.innerHTML = `
+                    <input type="checkbox" name="nota_pilih" value="${n.no_nota}" onchange="hitungOtomatis()">
+                    <div class="nota-info">
+                        <span class="txt-tgl">${tglNota}</span>
+                        <div class="baris-bawah">
+                            <span class="txt-agen">${n.nama_agen || '-'}</span>
+                            <span class="txt-nota">${n.no_nota}</span>
+                        </div>
+                    </div>`;
+                container.appendChild(div);
+            });
+            
+            document.getElementById('uang_cash_disp').value = "0";
+            updateDropdownSumberAgen([]);
+        } catch(err) { alert("Error cari nota: " + err.message); }
+    }
+
+    function updateDropdownSumberAgen(detailBundel) {
+        const selSumber = document.getElementById('sumber_agen');
+        selSumber.innerHTML = '';
+        
+        if (detailBundel.length === 0) {
+            selSumber.innerHTML = '<option value="">-- Pilih Nota Dahulu Di Atas --</option>';
+            return;
+        }
+
+        detailBundel.forEach(b => {
+            let opt = document.createElement('option');
+            opt.value = b.agen;              
+            opt.text = `${b.agen} [${b.nota}]`; 
+            selSumber.appendChild(opt);
+        });
+    }
+
+    function hitungOtomatis() {
+        const checked = Array.from(document.querySelectorAll('input[name="nota_pilih"]:checked'));
+        let totalCash = 0; let detailBundel = []; 
+        let driver1_Set = new Set(); let driver2_Set = new Set();
+        
+        checked.forEach(cb => {
+            const item = dataNotaTerakhir.find(x => x.no_nota === cb.value);
+            if(item) {
+                totalCash += parseInt(item.bayar_cash || 0);
+                detailBundel.push({ agen: item.nama_agen || "Tanpa Agen", nota: item.no_nota, cash: item.bayar_cash });
+                
+                let d1 = item.nama_driver || item.driver_1 || item.driver || "";
+                let d2 = item.driver_2 || "";
+                
+                if(d1) driver1_Set.add(d1);
+                if(d2) driver2_Set.add(d2);
+            }
+        });
+
+        document.getElementById('uang_cash_disp').value = totalCash.toLocaleString('id-ID');
+        
+        let fixD1 = Array.from(driver1_Set).join(', ');
+        let fixD2 = Array.from(driver2_Set).join(', ');
+
+        updateDropdownSumberAgen(detailBundel);
+
+        return { 
+            detail: detailBundel, 
+            drv1: fixD1.trim() !== "" ? fixD1 : "Driver SBR", 
+            drv2: fixD2.trim() !== "" ? fixD2 : "-",
+            rawTotal: totalCash 
+        };
+    }
+
+    async function setorDataHariIni() {
         const plat = document.getElementById('selMobil').value;
         const kmRaw = getAngka(document.getElementById('km_input').value);
         const checked = Array.from(document.querySelectorAll('input[name="nota_pilih"]:checked'));
         const pilihanAgen = document.getElementById('sumber_agen').value;
         
-        // 3. Validasi
         if(!plat) return alert("Pengecekan Gagal: Unit Armada belum dipilih!");
         if(checked.length === 0) return alert("Pengecekan Gagal: Anda belum memilih Nota harian!");
-        if(!pilihanAgen) return alert("Pengecekan Gagal: Silakan pilih Agen sumber dana!");
-        if(kmRaw === 0) return alert("Pengecekan Gagal: Angka Odometer KM kosong!");
+        if(!pilihanAgen) return alert("Pengecekan Gagal: Silakan pilih Agen sebagai sumber dana pengeluaran!");
+        if(kmRaw === 0) return alert("Pengecekan Gagal: Angka Odometer KM kosong atau tidak valid!");
 
-        // 4. Kalkulasi Biaya
+        const calc = hitungOtomatis();
+
         const uJalan = getAngka(document.getElementById('exp_jalan').value);
         const uBBM = getAngka(document.getElementById('exp_bbm').value);
         const uBongkar = getAngka(document.getElementById('exp_bongkar').value);
@@ -28,7 +225,6 @@
         const stringNamaAgen = calc.detail.map(d => d.agen).join(', ');
 
         try {
-            // Simpan ke database
             const { error: errorInsert } = await _sb.from('rekap_laporan_driver').insert([{
                 no_nota: stringNoNota,
                 nama_agen: stringNamaAgen,
@@ -44,12 +240,15 @@
                 sumber_agen: pilihanAgen 
             }]);
 
-            if (errorInsert) throw errorInsert;
+            if (errorInsert) {
+                alert("❌ SUPABASE MENOLAK DATA!\n\nKode: " + errorInsert.code + "\nPesan: " + errorInsert.message);
+                return;
+            }
 
-            // Update KM
-            await _sb.from('monitoring_kendaraan').update({ km_saat_ini: kmRaw }).eq('plat_nomor', plat);
+            await _sb.from('monitoring_kendaraan')
+                .update({ km_saat_ini: kmRaw })
+                .eq('plat_nomor', plat);
 
-            // 5. FORMAT PESAN WA (Sesuai keinginan Bapak yang komplit)
             const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
             let pesan = "*LAPORAN SETORAN DRIVER*\n";
             pesan += "----------------------------\n";
@@ -79,9 +278,16 @@
 
             window.open("https://wa.me/?text=" + encodeURIComponent(pesan), '_blank');
             
-            setTimeout(() => { location.reload(); }, 1500);
+            setTimeout(function() {
+                location.reload();
+            }, 1500);
 
         } catch (e) { 
-            alert("⚠️ Error: " + e.message); 
+            alert("⚠️ SISTEM SCRIPT ERROR MENDADAK!\n\nAlasan: " + e.message); 
         }
     }
+
+    window.onload = loadArmada;
+</script>
+</body>
+</html>
