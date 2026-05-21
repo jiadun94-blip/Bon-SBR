@@ -164,9 +164,9 @@
 </div>
 
 <script>
-    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
-    const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const _sb = supabase.createClient(SB_URL, SB_KEY);
 
     let listArmada = [];
     let activePlat = "";
@@ -185,38 +185,62 @@
     }
 
     async function init() {
-        const { data: dataMobil } = await clientSupabase.from('monitoring_kendaraan').select('*').order('nama_unit');
-        const { data: dataRekap } = await clientSupabase.from('rekap_laporan_driver').select('plat_nomor, created_at').order('created_at', { ascending: false });
-
-        listArmada = (dataMobil || []).map(v => {
-            const matchLaporanDriver = dataRekap?.find(r => r.plat_nomor === v.plat_nomor);
+        try {
+            const { data: dataMobil, error: errMobil } = await _sb.from('monitoring_kendaraan').select('*').order('nama_unit');
+            if (errMobil) throw errMobil;
             
-            // Logika komparasi: Tentukan mana yang paling baru di-input antara Supabase manual (Admin) vs Rekap Laporan (Driver)
-            let waktuFix = v.updated_at;
-            let tipeUpdate = "Up Admin: ";
+            const listMobil = dataMobil || [];
 
-            if (matchLaporanDriver) {
-                const tglDriver = new Date(matchLaporanDriver.created_at);
-                const tglAdmin = new Date(v.updated_at);
-                
-                // Jika driver laporan lebih baru dari update terakhir admin, pakai kepemilikan driver
-                if (tglDriver > tglAdmin) {
-                    waktuFix = matchLaporanDriver.created_at;
-                    tipeUpdate = "Lapor Driver: ";
+            const promises = listMobil.map(async (v) => {
+                // UPDATE UTAMA: Mengambil kolom created_at, no_nota, dan nama_agen secara bersamaan
+                const { data: laporanTerakhir } = await _sb
+                    .from('rekap_laporan_driver')
+                    .select('created_at, no_nota, nama_agen')
+                    .eq('plat_nomor', v.plat_nomor)
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+
+                const matchLaporan = (laporanTerakhir && laporanTerakhir.length > 0) ? laporanTerakhir[0] : null;
+
+                let waktuFix = v.updated_at;
+                let tipeUpdate = "Up Admin: ";
+                let teksCatatan = ""; 
+
+                if (matchLaporan) {
+                    const tglDriver = new Date(matchLaporan.created_at);
+                    const tglAdmin = new Date(v.updated_at);
+                    
+                    if (!v.updated_at || tglDriver > tglAdmin) {
+                        waktuFix = matchLaporan.created_at;
+                        tipeUpdate = "Lapor Driver: ";
+                        // Menyusun teks catatan agar informatif (Nama Agen dan Bundel No Nota)
+                        teksCatatan = `${matchLaporan.nama_agen || '-'} [${matchLaporan.no_nota || '-'}]`;
+                    } else {
+                        teksCatatan = "Update via Panel Admin";
+                    }
+                } else {
+                    if (!v.updated_at) {
+                        waktuFix = null;
+                        tipeUpdate = "";
+                    }
+                    teksCatatan = "Belum ada catatan";
                 }
-            } else if (!v.updated_at) {
-                waktuFix = null;
-                tipeUpdate = "";
-            }
 
-            return {
-                ...v,
-                waktu_terakhir_final: waktuFix,
-                label_tipe: tipeUpdate
-            };
-        });
+                return {
+                    ...v,
+                    waktu_terakhir_final: waktuFix,
+                    label_tipe: tipeUpdate,
+                    catatan_log: teksCatatan 
+                };
+            });
 
-        renderDashboard();
+            listArmada = await Promise.all(promises);
+            renderDashboard();
+            
+        } catch (err) {
+            console.error("Gagal memuat data:", err);
+            document.getElementById('dashboard').innerHTML = `<div style="text-align:center; padding:20px; color:var(--danger); font-weight:bold;">Ganti data gagal dimuat: ${err.message}</div>`;
+        }
     }
 
     function renderDashboard() {
@@ -224,6 +248,11 @@
         const sel = document.getElementById('selMobilQuick');
         dash.innerHTML = "";
         sel.innerHTML = '<option value="">-- PILIH MOBIL --</option>';
+
+        if (listArmada.length === 0) {
+            dash.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">Tidak ada data armada kendaraan.</div>';
+            return;
+        }
 
         listArmada.forEach(v => {
             sel.options.add(new Option(`${v.nama_unit} (${v.plat_nomor})`, v.plat_nomor));
@@ -233,6 +262,7 @@
             const isCritical = sisaOli < 500 || (sisaKIR !== '-' && sisaKIR < 14) || (sisaPajak !== '-' && sisaPajak < 14);
 
             const infoWaktuUpdate = formatWaktuIndo(v.waktu_terakhir_final, v.label_tipe);
+            const detailCatatan = v.catatan_log; 
 
             dash.innerHTML += `
                 <div class="unit-card ${isCritical?'critical':''}" onclick="openDetail('${v.plat_nomor}')">
@@ -244,6 +274,7 @@
                         <div class="stat-box">
                             <span class="stat-label">ODO KM</span>
                             <span class="stat-val" style="color:var(--accent)">${(v.km_saat_ini||0).toLocaleString()}</span>
+                            <span class="stat-date" style="color: #fff; font-weight: bold; margin-top: 4px;">${detailCatatan}</span>
                             <span class="stat-date">${infoWaktuUpdate}</span>
                         </div>
                     </div>
@@ -311,7 +342,7 @@
         const plat = document.getElementById('selMobilQuick').value;
         const km = parseInt(document.getElementById('valKMQuick').value);
         if(!plat || !km) return alert("Pilih unit & input KM!");
-        const { error } = await clientSupabase.from('monitoring_kendaraan').update({ km_saat_ini: km }).eq('plat_nomor', plat);
+        const { error } = await _sb.from('monitoring_kendaraan').update({ km_saat_ini: km }).eq('plat_nomor', plat);
         if(!error) location.reload();
     }
 
@@ -320,7 +351,7 @@
         const val = document.getElementById('m_val').value;
         if(!val) return alert("Input nilai!");
         const upd = {}; upd[kol] = kol.includes('tgl') ? val : parseInt(val);
-        const { error } = await clientSupabase.from('monitoring_kendaraan').update(upd).eq('plat_nomor', activePlat);
+        const { error } = await _sb.from('monitoring_kendaraan').update(upd).eq('plat_nomor', activePlat);
         if(!error) location.reload();
     }
 
