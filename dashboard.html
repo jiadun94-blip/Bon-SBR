@@ -11,68 +11,44 @@
         .header { background: #1e272e; color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .header h2 span { color: #72a339; }
         
-        /* Menggunakan grid 2 kolom tetap */
         .grid-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .btn-menu { 
             background: white; padding: 20px 10px; border-radius: 15px; text-align: center; 
             text-decoration: none; color: #333; font-weight: bold; border: 1px solid #ddd;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: all 0.2s;
         }
         .btn-menu:active { transform: scale(0.95); background: #f9f9f9; }
         .icon { font-size: 32px; margin-bottom: 8px; }
+        
+        /* Tambahan style khusus untuk halaman baru */
+        .btn-highlight { border-color: #72a339; background: #f4f9ee; }
         
         .btn-logout { width: 100%; margin-top: 25px; padding: 15px; background: #d63031; color: white; border: none; border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: bold; font-size: 16px; }
     </style>
 </head>
 <body>
 
-<div class="welcome">Selamat datang kembali, <b id="adminNama">Admin</b> (SBR Putra Food)</div>
+<div class="welcome">Selamat datang, <b id="adminNama">Admin</b> (SBR Putra Food)</div>
 
 <div class="header">
     <h2 style="margin:0; letter-spacing: 2px;">SBR<span>digital</span> ADMIN</h2>
 </div>
 
 <div class="grid-menu">
-    <a href="./bon.html" class="btn-menu">
-        <span class="icon">📝</span> BUAT BON
-    </a>
-    
-    <a href="./bayar_bon.html" class="btn-menu" style="border-color: #2b6cb0; background: #f7fafc;">
-        <span class="icon">💳</span> TERIMA BON
-    </a>
-    
-    <a href="./rekap_transaksi.html" class="btn-menu">
-        <span class="icon">📊</span> REKAP DATA
-    </a>
-    
-    <a href="./master_harga.html" class="btn-menu">
-        <span class="icon">💰</span> HARGA AGEN
-    </a>
-    
-    <a href="./monitoring_kendaraan.html" class="btn-menu">
-        <span class="icon">🔧</span> MONITORING
-    </a>
-
-    <a href="./admin_laporan_driver.html" class="btn-menu" style="border-color: #72a339; background: #f4f9ee;">
-        <span class="icon">💵</span> LAPORAN DRIVER
-    </a>
-    
-    <a href="./agen.html" class="btn-menu">
-        <span class="icon">👥</span> DATA AGEN
-    </a>
-    
-    <a href="./kendaraan.html" class="btn-menu">
-        <span class="icon">🚛</span> DATA UNIT
-    </a>
-    
-    <a href="./daftar.html" class="btn-menu">
-        <span class="icon">⚙️</span> KELOLA AKUN
-    </a>
-    
-    <a href="./riwayat.html" class="btn-menu">
-        <span class="icon">📋</span> SEMUA KIRIM
-    </a>
+    <a href="bon.html" class="btn-menu"><span class="icon">📝</span> BUAT BON</a>
+    <a href="bayar_bon.html" class="btn-menu"><span class="icon">💳</span> TERIMA BON</a>
+    <a href="rekap_transaksi.html" class="btn-menu"><span class="icon">📊</span> REKAP DATA</a>
+    <a href="master_harga.html" class="btn-menu"><span class="icon">💰</span> HARGA AGEN</a>
+    <a href="monitoring_kendaraan.html" class="btn-menu"><span class="icon">🔧</span> MONITORING</a>
+    <a href="admin_laporan_driver.html" class="btn-menu"><span class="icon">💵</span> LAPORAN DRIVER</a>
+    <a href="agen.html" class="btn-menu"><span class="icon">👥</span> DATA AGEN</a>
+    <a href="kendaraan.html" class="btn-menu"><span class="icon">🚛</span> DATA UNIT</a>
+    <a href="barang.html" class="btn-menu"><span class="icon">📦</span> INPUT BARANG</a>
+    <a href="daftar.html" class="btn-menu"><span class="icon">⚙️</span> KELOLA AKUN</a>
+    <a href="riwayat.html" class="btn-menu"><span class="icon">📋</span> SEMUA KIRIM</a>
 </div>
+
 
 <button class="btn-logout" onclick="logout()">LOGOUT / KELUAR</button>
 
