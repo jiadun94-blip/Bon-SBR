@@ -252,28 +252,28 @@
             const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
             let pesan = "*LAPORAN SETORAN DRIVER*\n";
             pesan += "----------------------------\n";
-            pesan += "📅 *Tgl:* " + tgl + "\n";
-            pesan += "👤 *Driver 1:* " + calc.drv1 + "\n";
-            pesan += "👥 *Driver 2:* " + calc.drv2 + "\n";
-            pesan += "🚗 *Unit:* " + plat + "\n";
-            pesan += "📍 *Odo:* " + kmRaw.toLocaleString('id-ID') + " KM\n\n";
+            pesan += "- *Tgl:* " + tgl + "\n";
+            pesan += "- *Driver 1:* " + calc.drv1 + "\n";
+            pesan += "- *Driver 2:* " + calc.drv2 + "\n";
+            pesan += "- *Unit:* " + plat + "\n";
+            pesan += "- *Odo:* " + kmRaw.toLocaleString('id-ID') + " KM\n\n";
             
             pesan += "*RINCIAN BUNDEL CASH:*\n";
             calc.detail.forEach(b => {
                 pesan += "- " + b.agen + " (" + b.nota + "): *Rp " + parseInt(b.cash).toLocaleString('id-ID') + "*\n";
             });
-            pesan += "💰 *Total Kotor:* Rp " + calc.rawTotal.toLocaleString('id-ID') + "\n\n";
+            pesan += "- *Total Kotor:* Rp " + calc.rawTotal.toLocaleString('id-ID') + "\n\n";
 
             pesan += "*PENGELUARAN JALAN:*\n";
-            pesan += "💳 *Beban Kas:* " + pilihanAgen + "\n"; 
+            pesan += "- *Beban Kas:* " + pilihanAgen + "\n"; 
             pesan += "- Uang Jalan: Rp " + uJalan.toLocaleString('id-ID') + "\n";
             pesan += "- BBM/Solar: Rp " + uBBM.toLocaleString('id-ID') + "\n";
             pesan += "- Bongkar: Rp " + uBongkar.toLocaleString('id-ID') + "\n";
             pesan += "- Lain-lain (" + ketLain + "): Rp " + nomLain.toLocaleString('id-ID') + "\n";
             
             pesan += "----------------------------\n";
-            pesan += "📊 *Total Biaya:* Rp " + totalExp.toLocaleString('id-ID') + "\n";
-            pesan += "💵 *SISA SETOR:* Rp " + sisaBersih.toLocaleString('id-ID') + "\n\n";
+            pesan += "- *Total Biaya:* Rp " + totalExp.toLocaleString('id-ID') + "\n";
+            pesan += "- *SISA SETOR:* Rp " + sisaBersih.toLocaleString('id-ID') + "\n\n";
             pesan += "_Data sukses mengunci ke Supabase SBR_";
 
             window.open("https://wa.me/?text=" + encodeURIComponent(pesan), '_blank');
