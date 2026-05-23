@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SBR | Report Mingguan v5</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
         /* TEMA CHARCOAL BASE */
@@ -29,10 +30,10 @@
             color: #fff; text-transform: uppercase; 
         }
 
-        /* FILTER SECTION - LEBIH LEGA UNTUK TABLET */
+        /* FILTER SECTION - GRID SEJAJAR */
         .filter-section { 
             display: grid; 
-            grid-template-columns: 1fr 1fr auto; 
+            grid-template-columns: 1fr 1fr auto auto; 
             gap: 10px; 
             align-items: end; 
             margin-bottom: 15px; 
@@ -54,6 +55,9 @@
             font-weight: bold; font-size: 13px; 
         }
         button:active { transform: scale(0.98); background: #2c3e50; }
+        
+        .btn-pdf { background: #b91c1c; color: white; }
+        .btn-pdf:active { background: #991b1b; }
 
         /* TABLE AREA - TETAP PUTIH AGAR KONTRAST */
         .table-container { 
@@ -70,7 +74,7 @@
         
         /* FREEZE HEADER & KOLOM */
         thead tr th { position: sticky; top: 0; z-index: 20; background: #f0f0f0; }
-        thead tr:nth-child(2) th { top: 25px; } /* Sesuaikan tinggi baris pertama */
+        thead tr:nth-child(2) th { top: 25px; } 
         
         .sticky-col-1 { position: sticky; left: 0; z-index: 25; background: #fff; border-right: 1px solid #333; }
         .sticky-col-2 { position: sticky; left: 32px; z-index: 25; background: #fff; border-right: 2px solid #333; }
@@ -86,14 +90,21 @@
             border-radius: 3px; border: 1px solid rgba(0,0,0,0.1);
             box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
+
+        .pdf-mode { background: #fff !important; color: #000 !important; padding: 20px !important; }
+        .pdf-mode h2 { background: #000 !important; color: #fff !important; }
+        .pdf-mode .table-container { max-height: none !important; overflow: visible !important; border: none !important; }
+        .pdf-mode table { width: 100% !important; border: 1px solid #000 !important; }
+        .pdf-mode th, .pdf-mode td { font-size: 9px !important; padding: 3px 2px !important; border: 1px solid #000 !important; white-space: normal !important; }
+        .pdf-mode .sticky-col-1, .pdf-mode .sticky-col-2 { position: static !important; }
     </style>
 </head>
 <body>
 
-<div class="card">
+<div class="card" id="areaReport">
     <h2>REPORT MINGGUAN AGEN vs DRIVER</h2>
     
-    <div class="filter-section">
+    <div class="filter-section" data-html2canvas-ignore="true">
         <div class="filter-group">
             <label>TANGGAL MULAI</label>
             <input type="date" id="tglAwal" onchange="updateTglAkhir()">
@@ -103,6 +114,7 @@
             <input type="date" id="tglAkhirDisplay" readonly>
         </div>
         <button onclick="muatReport()">TAMPILKAN</button>
+        <button class="btn-pdf" onclick="exportKePDF()">EXPORT PDF</button>
     </div>
 
     <div class="table-container">
@@ -111,11 +123,9 @@
                 <tr id="headerDriver">
                     <th class="sticky-col-1">TGL</th>
                     <th class="sticky-col-2">SHIFT</th>
-                    <!-- Nama driver akan masuk sini lewat JS -->
                 </tr>
                 <tr id="subHeaderJumlah">
                     <th colspan="2" class="sticky-col-1">TOTAL KIRIM</th>
-                    <!-- Total per driver akan masuk sini lewat JS -->
                 </tr>
             </thead>
             <tbody id="bodyReport">
@@ -171,7 +181,7 @@
         const tglAwal = document.getElementById('tglAwal').value;
         const tglAkhir = document.getElementById('tglAkhirDisplay').value;
         const body = document.getElementById('bodyReport');
-        body.innerHTML = "<tr><td colspan='15' style='padding:40px;'>Sedang menarik data transaksi...</td></tr>";
+        body.innerHTML = "<tr><td colspan='15' style='padding:40px; color:#000;'>Sedang menarik data transaksi...</td></tr>";
 
         const { data, error } = await _sb.from('transaksi')
             .select('tanggal, nama_agen, driver_1, driver_2, created_at')
@@ -218,6 +228,29 @@
             });
         }
         listDriver.forEach(dv => document.getElementById(`total-${dv}`).innerText = counts[dv]);
+    }
+
+    // CARA EXPORT PDF BARU YANG AMAN TANPA MERUSAK TAMPILAN DAN SCRIPT LAINNYA
+    function exportKePDF() {
+        const elemen = document.getElementById('areaReport');
+        const tglAwal = document.getElementById('tglAwal').value || 'Report';
+        
+        // Pasang penyesuaian gaya khusus cetak sesaat sebelum html2pdf menjepret layar
+        elemen.classList.add('pdf-mode');
+
+        const opsi = {
+            margin:       [10, 10, 10, 10],
+            filename:     `Report_Mingguan_SBR_${tglAwal}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2.2, useCORS: true, backgroundColor: '#ffffff' },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        };
+
+        // Mulai jepret data dan buat file pdf
+        html2pdf().set(opsi).from(elemen).save().then(() => {
+            // Setelah file terunduh, langsung hapus class penyesuaian agar tablet kembali ke tema charcoal bawaan
+            elemen.classList.remove('pdf-mode');
+        });
     }
 </script>
 </body>
