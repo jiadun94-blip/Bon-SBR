@@ -13,12 +13,13 @@
         .card { background: #1e1e1e; border-radius: 8px; padding: 15px; border: 1px solid #333; margin-bottom: 20px; }
         h2 { margin: 0 0 15px; font-size: 16px; text-align: center; background: #333; padding: 12px; border-radius: 6px; color: #fff; text-transform: uppercase; }
         
-        .filter-section { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 8px; align-items: end; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .filter-section { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: end; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         .filter-group { display: flex; flex-direction: column; }
         .filter-group label { font-size: 11px; margin-bottom: 4px; color: #aaa; }
-        input[type="date"] { background: #2d2d2d; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 4px; font-family: inherit; }
+        input[type="date"] { background: #2d2d2d; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 4px; font-family: inherit; width: 100%; box-sizing: border-box; }
         
-        .btn { padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; border: none; font-size: 12px; }
+        .btn-group { grid-column: span 2; display: flex; gap: 8px; margin-top: 5px; }
+        .btn { padding: 10px 5px; border-radius: 4px; font-weight: bold; cursor: pointer; border: none; font-size: 11px; flex: 1; }
         .btn-tampilkan { background: #3b4c64; color: white; }
         .btn-excel { background: #166534; color: white; }
         .btn:active { transform: scale(0.95); }
@@ -72,8 +73,10 @@
             <label>SAMPAI TANGGAL</label>
             <input type="date" id="tglSelesai">
         </div>
-        <button class="btn btn-tampilkan" onclick="muatLaporan()">TAMPILKAN</button>
-        <button class="btn btn-excel" onclick="exportKeExcelDenganDetail()">EXCEL + DETAIL KOMPLIT</button>
+        <div class="btn-group">
+            <button class="btn btn-tampilkan" onclick="muatLaporan()">TAMPILKAN</button>
+            <button class="btn btn-excel" onclick="exportKeExcelDenganDetail()">EXCEL + DETAIL KOMPLIT</button>
+        </div>
     </div>
 
     <div class="table-container">
@@ -257,7 +260,6 @@
     function tutupModal() { document.getElementById('modalDetail').style.display = "none"; }
     window.onclick = (e) => { if (e.target == document.getElementById('modalDetail')) tutupModal(); }
 
-    // --- FUNGSI EXPORT EXCEL DENGAN DETAIL KOMPLIT (V6.1) ---
     async function exportKeExcelDenganDetail() {
         if (dataCacheTransaksi.length === 0) {
             alert("Silahkan klik 'TAMPILKAN' data terlebih dahulu sebelum export!");
@@ -277,7 +279,6 @@
 
         let matriksExcel = [];
         
-        // HEADER UTAMA (Ditambah kolom Cash, Transfer, Bon Lama)
         matriksExcel.push([
             "AGEN / NAMA BARANG", "TANGGAL", "NO NOTA", "DRIVER 1", "DRIVER 2", 
             "PLAT NOMOR", "KIRIM (RP)", "RETUR (RP)", "BON LAMA (RP)", "CASH (RP)", "TRANSFER (RP)", "SISA AKHIR (RP)", "STATUS"
@@ -288,7 +289,6 @@
             const tglIndo = `${d}-${m}-${y}`;
             const statusNota = (t.sisa_akhir || 0) <= 0 ? "LUNAS" : "PENDING";
 
-            // Baris Utama Transaksi - Sekarang Komplit Keuangannya
             matriksExcel.push([
                 t.nama_agen,
                 tglIndo,
@@ -330,7 +330,6 @@
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Detail Keuangan");
 
-        // Atur lebar kolom agar tidak berdempetan (13 Kolom)
         const lebarKolom = [
             { wch: 25 }, { wch: 12 }, { wch: 18 }, { wch: 12 }, { wch: 12 }, 
             { wch: 15 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, 
