@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBRdigital | History Agen</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Roboto Condensed', sans-serif; background: #f1f2f6; padding: 10px; color: #333; }
+        .table-container { overflow-x: auto; background: white; padding: 8px; border-radius: 10px; border: 1px solid #ddd; }
+        table { border-collapse: collapse; width: 100%; font-size: 11px; white-space: nowrap; }
+        th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
+        th { background: #1e272e; color: white; font-weight: normal; font-size: 11px; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        h3 { font-size: 14px; color: #555; margin: 10px 0; }
+        a { font-size: 12px; text-decoration: none; color: #72a339; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div style="padding-bottom:10px;"><a href="dashboard.html">« Kembali ke Menu Utama</a></div>
+<h3>HISTORY TRANSAKSI</h3>
+
+<div class="table-container">
+    <table id="tabelHistory">
+        <thead><tr id="headerRow"><th>HARI</th></tr></thead>
+        <tbody id="bodyRow"></tbody>
+    </table>
+</div>
+
+<script>
+    const _sb = supabase.createClient("https://yxcxvkairftqzmptkorr.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs");
+
+    async function loadHistory() {
+        const { data: listTransaksi, error } = await _sb.from('transaksi').select('created_at, nama_agen');
+        
+        if (error) return alert("Gagal ambil data: " + error.message);
+
+        let agenUnik = new Set();
+        let dataMap = {}; 
+
+        listTransaksi.forEach(t => {
+            let dateObj = new Date(t.created_at);
+            let hari = dateObj.toLocaleDateString('id-ID', { weekday: 'long' });
+            let tglLengkap = dateObj.toLocaleDateString('id-ID'); 
+            let agen = t.nama_agen || "Tanpa Agen";
+            
+            agenUnik.add(agen);
+            if(!dataMap[tglLengkap]) {
+                dataMap[tglLengkap] = { hari: hari, timestamp: dateObj.getTime(), data: {} };
+            }
+            dataMap[tglLengkap].data[agen] = tglLengkap;
+        });
+
+        let listAgen = Array.from(agenUnik).sort();
+
+        // 1. Buat Header
+        const headerRow = document.getElementById('headerRow');
+        listAgen.forEach(a => headerRow.innerHTML += `<th>${a}</th>`);
+
+        // 2. Buat Baris (Urutkan dari Terlama ke Terbaru)
+        const bodyRow = document.getElementById('bodyRow');
+        let sortedDates = Object.keys(dataMap).sort((a, b) => dataMap[a].timestamp - dataMap[b].timestamp);
+
+        sortedDates.forEach(tgl => {
+            let row = `<tr><td>${dataMap[tgl].hari}</td>`;
+            listAgen.forEach(a => {
+                row += `<td>${dataMap[tgl].data[a] || "-"}</td>`;
+            });
+            row += `</tr>`;
+            bodyRow.innerHTML += row;
+        });
+    }
+
+    window.onload = loadHistory;
+</script>
+</body>
+</html>
