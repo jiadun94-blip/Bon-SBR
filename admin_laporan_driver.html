@@ -10,92 +10,48 @@
     
     <style>
         /* TEMA CHARCOAL BASE SBR DIGITAL */
-        body { 
-            font-family: 'Roboto Condensed', sans-serif; 
-            background-color: #121212; 
-            color: #eee; 
-            margin: 0; padding: 10px;
-        }
+        body { font-family: 'Roboto Condensed', sans-serif; background-color: #121212; color: #eee; margin: 0; padding: 10px; }
+        .card { background: #1e1e1e; border-radius: 8px; padding: 15px; border: 1px solid #333; margin-bottom: 20px; }
+        h2 { margin: 0 0 15px; font-size: 16px; text-align: center; background: #333; padding: 12px; border-radius: 6px; color: #fff; text-transform: uppercase; }
 
-        .card { 
-            background: #1e1e1e; 
-            border-radius: 8px; 
-            padding: 15px; 
-            border: 1px solid #333; 
-            margin-bottom: 20px; 
-        }
-
-        h2 { 
-            margin: 0 0 15px; font-size: 16px; text-align: center; 
-            background: #333; padding: 12px; border-radius: 6px; 
-            color: #fff; text-transform: uppercase; 
-        }
-
-        /* FILTER AREA CONTROL */
+        /* FILTER AREA CONTROL - Disesuaikan untuk posisi tombol di bawah */
         .filter-section { 
             display: grid; 
-            grid-template-columns: 1fr 1fr auto auto; 
-            gap: 8px; 
-            align-items: end; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px; 
             background: rgba(0,0,0,0.3); 
             padding: 15px; 
             border-radius: 8px; 
             margin-bottom: 20px;
         }
 
+        .btn-container {
+            grid-column: span 2;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
         .filter-group { display: flex; flex-direction: column; }
         .filter-group label { font-size: 11px; margin-bottom: 4px; color: #aaa; }
+        input[type="date"] { background: #2d2d2d; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 4px; font-family: inherit; width: 100%; box-sizing: border-box; }
 
-        input[type="date"] { 
-            background: #2d2d2d; border: 1px solid #444; 
-            color: #fff; padding: 10px; border-radius: 4px; font-family: inherit; 
-        }
-
-        .btn { 
-            padding: 10px 15px; border-radius: 4px; 
-            font-weight: bold; cursor: pointer; border: none; font-size: 12px;
-        }
+        .btn { padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; border: none; font-size: 12px; width: 100%; }
         .btn-tampilkan { background: #3b4c64; color: white; }
         .btn-excel { background: #166534; color: white; }
         .btn:active { transform: scale(0.95); }
 
         /* RINGKASAN KOTAK INFORMASI UANG */
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .summary-box {
-            background: #252525;
-            padding: 12px;
-            border-radius: 6px;
-            border: 1px solid #444;
-            text-align: center;
-        }
+        .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        .summary-box { background: #252525; padding: 12px; border-radius: 6px; border: 1px solid #444; text-align: center; }
         .summary-box p { margin: 0; font-size: 11px; color: #aaa; text-transform: uppercase; }
         .summary-box h3 { margin: 5px 0 0; font-size: 16px; font-weight: bold; }
 
         /* TABLE KONTRAST HIGH - KHAS SBR ADMIN */
-        .table-container { 
-            width: 100%; overflow-x: auto; 
-            border-radius: 4px; background: #fff; 
-            border: 1px solid #444;
-        }
-        
+        .table-container { width: 100%; overflow-x: auto; border-radius: 4px; background: #fff; border: 1px solid #444; }
         table { width: 100%; border-collapse: separate; border-spacing: 0; color: #000; }
-        
-        th { 
-            background: #f1f5f9; color: #1e293b; 
-            padding: 10px 5px; font-size: 11px; 
-            border: 1px solid #cbd5e1; position: sticky; top: 0; z-index: 10;
-        }
-        
-        td { 
-            padding: 8px; border: 1px solid #e2e8f0; 
-            font-size: 12px; text-align: center; white-space: nowrap; 
-        }
-
+        th { background: #f1f5f9; color: #1e293b; padding: 10px 5px; font-size: 11px; border: 1px solid #cbd5e1; position: sticky; top: 0; z-index: 10; }
+        td { padding: 8px; border: 1px solid #e2e8f0; font-size: 12px; text-align: center; white-space: nowrap; }
         .txt-kiri { text-align: left; }
         .sub-txt { font-size: 10px; color: #666; display: block; }
         .text-bold { font-weight: bold; }
@@ -130,8 +86,10 @@
             <label>SAMPAI TANGGAL</label>
             <input type="date" id="tglSelesai">
         </div>
-        <button class="btn btn-tampilkan" onclick="muatLaporanDriver()">TAMPILKAN</button>
-        <button class="btn btn-excel" onclick="exportExcelDriver()">EXPORT EXCEL</button>
+        <div class="btn-container">
+            <button class="btn btn-tampilkan" onclick="muatLaporanDriver()">TAMPILKAN</button>
+            <button class="btn btn-excel" onclick="exportExcelDriver()">EXPORT EXCEL</button>
+        </div>
     </div>
 
     <div class="table-container">
@@ -176,7 +134,6 @@
         const tglAwal = document.getElementById('tglMulai').value;
         const tglAkhir = document.getElementById('tglSelesai').value;
 
-        // 1. Tarik data utama laporan driver
         const { data: laporanData, error: errLaporan } = await _sb.from('rekap_laporan_driver')
             .select('*')
             .gte('created_at', `${tglAwal}T00:00:00`)
@@ -191,7 +148,6 @@
             return; 
         }
 
-        // 2. Tarik data transaksi & database armada kendaraan untuk mapping nama
         const { data: transaksiData } = await _sb.from('transaksi').select('no_nota, bayar_cash');
         const { data: armadaData } = await _sb.from('monitoring_kendaraan').select('plat_nomor, nama_unit');
 
@@ -213,19 +169,16 @@
             const totalBiaya = (r.uang_jalan || 0) + (r.uang_bbm || 0) + (r.uang_bongkar || 0) + nominalLain;
             const sisaBersih = totalCashNota - totalBiaya;
 
-            // Gabung nama Driver 1 & Driver 2
             let namaDriverGabung = r.nama_driver || '-';
             if (r.driver_2 && r.driver_2 !== '-') {
                 namaDriverGabung += ` / ${r.driver_2}`;
             }
 
-            // FILTER: Hanya menampilkan nama_unit (Tanpa Plat Nomor)
             const cocokArmada = armadaData?.find(a => a.plat_nomor === r.plat_nomor);
             const hanyaNamaUnit = cocokArmada ? cocokArmada.nama_unit : (r.plat_nomor || '-');
 
             const sumberKasAgen = r.sumber_agen && r.sumber_agen !== '-' ? r.sumber_agen : 'Uang Jalan Driver';
 
-            // KONDISIONAL: Membentuk teks nama pengeluaran lain-lain gabungan teks & angka
             let teksLainLainFix = "";
             if (r.ket_lain_lain && r.ket_lain_lain !== "-") {
                 teksLainLainFix = `${r.ket_lain_lain}: Rp ${nominalLain.toLocaleString('id-ID')}`;
@@ -292,6 +245,5 @@
         XLSX.writeFile(wb, `Laporan_Setoran_Driver_${tglFile}.xlsx`);
     }
 </script>
-
 </body>
 </html>
