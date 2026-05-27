@@ -270,9 +270,8 @@
             s += `<div class="struk-row struk-bold" style="font-size:14px; color:#dc2626;"><span>SISA BON:</span><span>Rp ${(trx.sisa_akhir || 0).toLocaleString('id-ID')}</span></div>`;
             s += `<div class="struk-separator"></div>`;
             s += `<div class="struk-center struk-bold" style="margin-top:10px; text-align:center;">SBR PUTRA FOOD SYSTEM</div>`;
-            s += `</div>`;
-
-            // Menampilkan riwayat dengan keterangan
+            
+                        // Menampilkan riwayat dengan keterangan
 if (riwayatBayar && riwayatBayar.length > 0) {
                 s += `<br><div class="struk-bold">RIWAYAT CICILAN:</div>`;
                 riwayatBayar.forEach(p => {
@@ -288,6 +287,9 @@ if (riwayatBayar && riwayatBayar.length > 0) {
                           </div>${ket}`;
                 });
             }
+            s += `</div>`;
+
+
             
             modalIsi.innerHTML = s;
         } catch (e) {
