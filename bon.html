@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SBR Putra Food - Input Nota (Trial Mode)</title>
+    <title>SBR Putra Food - Input Nota</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -90,15 +90,25 @@
         <table id="tabelRetur"><thead><tr><th>BARANG</th><th>QTY</th><th>TOTAL</th><th>#</th></tr></thead><tbody></tbody></table>
         <div class="sub-display"><span>SUBTOTAL:</span><span id="subRetur">Rp 0</span></div>
         
-        <div class="section-label">📄 BON LAMA :</div>
-        <div style="background:#fffaf0; padding:10px; border-radius:10px; border:2px solid #ed8936;">
-            <input type="text" id="inputBonLama" class="input-manual" style="background:transparent; border:none; height:auto;" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
+        <div id="boxBonLama" style="display:none;">
+            <div class="section-label">📄 BON LAMA :</div>
+            <div style="background:#fffaf0; padding:10px; border-radius:10px; border:2px solid #ed8936;">
+                <input type="text" id="inputBonLama" class="input-manual" style="background:transparent; border:none; height:auto;" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
+            </div>
+        </div>
+
+        <div id="boxOngkir" style="display:none;">
+            <div class="section-label">🚚 ONGKIR :</div>
+            <div style="background:#f0f7ff; padding:10px; border-radius:10px; border:2px solid #3182ce;">
+                <input type="text" id="inputOngkir" class="input-manual" style="background:transparent; border:none; height:auto;" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
+            </div>
         </div>
     </div>
 
     <div class="summary-box">
         <div class="sum-row"><span>Kirim:</span><span id="txtKirim">Rp 0</span></div>
         <div class="sum-row"><span>Retur:</span><span id="txtRetur">Rp 0</span></div>
+        <div class="sum-row" id="rowTxtOngkir" style="display:none;"><span>Ongkir:</span><span id="txtOngkir">Rp 0</span></div>
         <div class="sum-row"><span>Bon Lama:</span><span id="txtBon">Rp 0</span></div>
         <div class="sum-row grand-total"><span>SISA AKHIR:</span><span id="txtGrand">Rp 0</span></div>
     </div>
@@ -212,6 +222,7 @@
         document.getElementById('inputCash').value = "0";
         document.getElementById('inputTrf').value = "0";
         document.getElementById('inputBonLama').value = "0";
+        document.getElementById('inputOngkir').value = "0";
         document.getElementById('notifBon').style.display = "none";
         itemsKirim = []; itemsRetur = []; render(); hitungTotal();
     }
@@ -230,6 +241,15 @@
     function updateBon() {
         const ag = document.getElementById('pilihAgen').value;
         const saldoBon = database.harga[ag]?.bon || 0;
+        
+        // --- NAMA AGEN YANG DIKENAKAN ONGKIR ---
+        const agenPakeOngkir = ["Jawa Timur", "Wido Ke Jawa"]; 
+        const isOngkir = agenPakeOngkir.includes(ag);
+
+        document.getElementById('boxBonLama').style.display = saldoBon > 0 ? "block" : "none";
+        document.getElementById('boxOngkir').style.display = isOngkir ? "block" : "none";
+        document.getElementById('rowTxtOngkir').style.display = isOngkir ? "flex" : "none";
+
         document.getElementById('inputBonLama').value = saldoBon.toLocaleString('id-ID');
         document.getElementById('notifBon').style.display = saldoBon > 0 ? "block" : "none";
         hitungTotal();
@@ -302,13 +322,17 @@
         const tk = itemsKirim.reduce((a, b) => a + b.total, 0); 
         const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
         const bl = getAngka('inputBonLama'); 
+        const ongkir = getAngka('inputOngkir');
         const cs = getAngka('inputCash'); 
         const tf = getAngka('inputTrf');
-        const sisa = (tk - tr + bl - cs - tf);
+        
+        const sisa = (tk - tr - ongkir + bl - cs - tf);
+        
         document.getElementById('subKirim').innerText = "Rp " + tk.toLocaleString('id-ID');
         document.getElementById('subRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
         document.getElementById('txtKirim').innerText = "Rp " + tk.toLocaleString('id-ID');
         document.getElementById('txtRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
+        document.getElementById('txtOngkir').innerText = "Rp " + ongkir.toLocaleString('id-ID');
         document.getElementById('txtBon').innerText = "Rp " + bl.toLocaleString('id-ID');
         document.getElementById('txtGrand').innerText = "Rp " + sisa.toLocaleString('id-ID');
     }
@@ -349,8 +373,7 @@
     async function simpanDanPrint() {
         const ag = document.getElementById('pilihAgen').value;
         if(!ag) return alert("Pilih Agen!");
-        
-        if(itemsKirim.length === 0 && itemsRetur.length === 0) return alert("Pilih barang dikirim atau retur terlebih dahulu!");
+        if(itemsKirim.length === 0 && itemsRetur.length === 0) return alert("Pilih barang dikirim atau retur!");
 
         const btn = document.getElementById('btnSimpan');
         btn.innerText = "MENYIMPAN DATA..."; btn.disabled = true;
@@ -367,9 +390,10 @@
         const tk = itemsKirim.reduce((a, b) => a + b.total, 0);
         const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
         const bl = getAngka('inputBonLama');
+        const ongkir = getAngka('inputOngkir');
         const cash = getAngka('inputCash');
         const trf = getAngka('inputTrf');
-        const tagihanBersih = tk - tr + bl;
+        const tagihanBersih = tk - tr - ongkir + bl;
         const sisa = tagihanBersih - cash - trf;
 
         const lebar = 48; 
@@ -384,20 +408,17 @@
         p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10${ag.toUpperCase()}\n`;
         p += `\x1B\x21\x00\x1B\x45\x00DRV: ${drvGabung} [ ${mobil} ]\n------------------------------------------------\n\x1B\x61\x00`;
         
-        itemsKirim.forEach(i => { 
-            p += `${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, i.total.toLocaleString()); 
-        });
+        itemsKirim.forEach(i => { p += `${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, i.total.toLocaleString()); });
         p += `------------------------------------------------\n` + buatBaris(`TOTAL KIRIM:`, `Rp ${tk.toLocaleString()}`);
 
         if(itemsRetur.length > 0) {
             p += `\n\x1B\x45\x01BARANG RETUR:\x1B\x45\x00\n`;
-            itemsRetur.forEach(i => { 
-                p += `[RETUR] ${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, `-${i.total.toLocaleString()}`); 
-            });
+            itemsRetur.forEach(i => { p += `[RETUR] ${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, `-${i.total.toLocaleString()}`); });
             p += `------------------------------------------------\n` + buatBaris(`TOTAL RETUR:`, `Rp ${tr.toLocaleString()}`);
         }
 
-        p += `\n` + buatBaris(`BON LAMA:`, `Rp ${bl.toLocaleString()}`);
+        if(ongkir > 0) p += buatBaris(`ONGKIR:`, `-Rp ${ongkir.toLocaleString()}`);
+        p += buatBaris(`BON LAMA:`, `Rp ${bl.toLocaleString()}`);
         p += `================================================\n`;
         p += `\x1B\x45\x01` + buatBaris(`TOTAL TAGIHAN:`, `Rp ${tagihanBersih.toLocaleString()}`) + `\x1B\x45\x00`;
         p += `------------------------------------------------\n`;
@@ -406,47 +427,37 @@
         p += `------------------------------------------------\n`;
         p += `\x1B\x45\x01\x1B\x21\x10` + buatBaris(`SISA BON:`, `Rp ${sisa.toLocaleString()}`) + `\x1B\x45\x00\x1B\x21\x00\n\n`;
         p += `\x1B\x61\x01` + `\n\n\n` + `( ............................ )\n` + `------------------------------------------------\n`;
-        p += `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`;
+        p += `\x1B\x45\x01TERIMA KAHIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`;
 
         try {
-            // 1. SIMPAN DATA INDUK TRANSAKSI
             await clientSupabase.from('transaksi').insert([{
                 no_nota: noNota, nama_agen: ag, tanggal: tglInput,
                 driver_1: drv1, driver_2: drv2, plat_nomor: mobil, 
                 total_kirim: tk, total_retur: tr, bon_lama: bl, 
+                ongkir: ongkir, 
                 bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
             }]);
 
-            // 2. SIMPAN DETAIL TRANSAKSI (KIRIM & RETUR)
             const details = [
                 ...itemsKirim.map(i => ({ no_nota: noNota, nama_barang: i.barang, qty: i.qty, satuan: i.satuan, tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
                 ...itemsRetur.map(i => ({ no_nota: noNota, nama_barang: i.barang, qty: i.qty, satuan: i.satuan, tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
             ];
             await clientSupabase.from('transaksi_detail').insert(details);
-            
-            // 3. UPDATE SALDO BON AGEN
             await clientSupabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
 
-            // 4. COBA PROSES CETAK (JIKA PRINTER TERHUBUNG)
             if (btCharacteristic) {
                 btn.innerText = "MENCETAK NOTA...";
-                try {
-                    await printToBT(p);
-                    lastPrintText = p; 
-                    document.getElementById('btnReprint').disabled = false;
-                } catch(errPrint) {
-                    alert("⚠️ Data BERHASIL disimpan ke database, tetapi GAGAL mencetak otomatis karena: " + errPrint);
-                }
-            } else {
-                lastPrintText = p; // Simpan teks struk di memori, siap di-reprint nanti kalau printer sudah connect
+                await printToBT(p);
+                lastPrintText = p; 
                 document.getElementById('btnReprint').disabled = false;
-                alert("ℹ️ Data BERHASIL disimpan ke Database!\n(Nota tidak dicetak otomatis karena printer belum terhubung)");
+            } else {
+                lastPrintText = p;
+                document.getElementById('btnReprint').disabled = false;
+                alert("ℹ️ Data BERHASIL disimpan ke Database!");
             }
-
             btn.innerText = "SUKSES DISIMPAN";
-
         } catch (e) {
-            alert("❌ DATABASE ERROR: " + (e.message || e) + "\n\nGagal menyimpan data ke database. Silakan periksa koneksi internet Anda.");
+            alert("❌ DATABASE ERROR: " + (e.message || e));
             btn.innerText = "SIMPAN & PRINT"; btn.disabled = false;
         }
     }
