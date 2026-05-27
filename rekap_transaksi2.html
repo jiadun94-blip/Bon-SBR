@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBR | Rekap Terpadu v6.1</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Courier+New:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Roboto Condensed', sans-serif; background-color: #121212; color: #eee; margin: 0; padding: 10px; }
+        .card { background: #1e1e1e; border-radius: 8px; padding: 15px; border: 1px solid #333; margin-bottom: 20px; }
+        h2 { margin: 0 0 15px; font-size: 16px; text-align: center; background: #333; padding: 12px; border-radius: 6px; color: #fff; text-transform: uppercase; }
+        .filter-section { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: end; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .filter-group { display: flex; flex-direction: column; }
+        .filter-group label { font-size: 11px; margin-bottom: 4px; color: #aaa; }
+        input[type="date"] { background: #2d2d2d; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 4px; font-family: inherit; width: 100%; box-sizing: border-box; }
+        .btn-group { grid-column: span 2; display: flex; gap: 8px; margin-top: 5px; }
+        .btn { padding: 10px 5px; border-radius: 4px; font-weight: bold; cursor: pointer; border: none; font-size: 11px; flex: 1; }
+        .btn-tampilkan { background: #3b4c64; color: white; }
+        .btn-excel { background: #166534; color: white; }
+        .table-container { width: 100%; overflow-x: auto; border-radius: 4px; background: #fff; border: 1px solid #444; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; color: #000; }
+        th { background: #f1f5f9; color: #1e293b; padding: 10px 5px; font-size: 11px; border: 1px solid #cbd5e1; position: sticky; top: 0; z-index: 10; }
+        td { padding: 6px 8px; border: 1px solid #e2e8f0; font-size: 12px; text-align: center; white-space: nowrap; }
+        .sticky-col { position: sticky; left: 0; background: #fff; border-right: 2px solid #334155 !important; font-weight: bold; }
+        .nota-link { color: #2563eb; text-decoration: underline; cursor: pointer; font-weight: bold; }
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(3px); }
+        .modal-content { background: #1e1e1e; margin: 2% auto; border-radius: 12px; width: 90%; max-width: 480px; border: 1px solid #444; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .modal-header { background: #2d2d2d; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; }
+        .modal-body { padding: 15px; max-height: 75vh; overflow-y: auto; color: #eee; }
+        .close-btn { font-size: 24px; cursor: pointer; color: #aaa; }
+        .struk-box { background: #fff; border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; font-family: 'Courier New', Courier, monospace; color: #000; font-size: 13px; line-height: 1.4; }
+        .struk-center { text-align: center; }
+        .struk-bold { font-weight: bold; }
+        .struk-title { font-size: 16px; font-weight: bold; margin: 0; }
+        .struk-separator { border-top: 1px dashed #000; margin: 6px 0; }
+        .struk-double-separator { border-top: 2px double #000; margin: 6px 0; }
+        .struk-row { display: flex; justify-content: space-between; }
+        .struk-item-detail { padding-left: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>REKAP TRANSAKSI TERPADU SBR</h2>
+    <div class="filter-section">
+        <div class="filter-group">
+            <label>DARI TANGGAL</label>
+            <input type="date" id="tglMulai">
+        </div>
+        <div class="filter-group">
+            <label>SAMPAI TANGGAL</label>
+            <input type="date" id="tglSelesai">
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-tampilkan" onclick="muatLaporan()">TAMPILKAN</button>
+            <button class="btn btn-excel" onclick="exportKeExcelDenganDetail()">EXCEL + DETAIL KOMPLIT</button>
+        </div>
+    </div>
+    <div class="table-container">
+        <table id="tabelLaporan">
+            <thead>
+                <tr>
+                    <th class="sticky-col">AGEN</th>
+                    <th>TGL</th>
+                    <th>NOTA</th>
+                    <th>KIRIM</th>
+                    <th>RETUR</th>
+                    <th>SISA AKHIR</th>
+                    <th>STATUS</th>
+                </tr>
+            </thead>
+            <tbody id="isiTabel"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="modalDetail" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalJudul" style="margin:0; font-size:15px;">RINCIAN DATA</h3>
+            <span class="close-btn" onclick="tutupModal()">&times;</span>
+        </div>
+        <div class="modal-body" id="modalIsi"></div>
+    </div>
+</div>
+
+<script>
+    const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const _sb = supabase.createClient(SB_URL, SB_KEY);
+
+    async function muatLaporan() {
+        const { data, error } = await _sb.from('transaksi_dp')
+            .select('*')
+            .gte('tanggal', document.getElementById('tglMulai').value)
+            .lte('tanggal', document.getElementById('tglSelesai').value)
+            .order('created_at', { ascending: false });
+
+        if (error) { alert("Error: " + error.message); return; }
+        const body = document.getElementById('isiTabel');
+        body.innerHTML = "";
+        data.forEach(t => {
+            body.innerHTML += `
+                <tr>
+                    <td class="sticky-col" style="text-align:left;">${t.nama_agen}</td>
+                    <td>${t.tanggal}</td>
+                    <td><span class="nota-link" onclick="bukaStrukNota('${t.no_nota}')">${t.no_nota}</span></td>
+                    <td>${(t.total_kirim || 0).toLocaleString()}</td>
+                    <td>${(t.total_retur || 0).toLocaleString()}</td>
+                    <td>${(t.sisa_akhir || 0).toLocaleString()}</td>
+                    <td>${(t.sisa_akhir || 0) <= 0 ? 'LUNAS' : 'PENDING'}</td>
+                </tr>
+            `;
+        });
+    }
+
+    async function bukaStrukNota(noNota) {
+        const modalIsi = document.getElementById('modalIsi');
+        document.getElementById('modalJudul').innerText = `STRUK DETAIL: ${noNota}`;
+        modalIsi.innerHTML = "Memuat...";
+        document.getElementById('modalDetail').style.display = "block";
+
+        const { data: trx } = await _sb.from('transaksi_dp').select('*').eq('no_nota', noNota).single();
+        const { data: detail } = await _sb.from('transaksi_detaildp').select('*').eq('no_nota', noNota);
+
+        let s = `<div class="struk-box">
+                    <div class="struk-center"><span class="struk-title">SBR PUTRA FOOD</span></div>
+                    <div class="struk-separator"></div>
+                    <div><b>AGEN: ${trx.nama_agen}</b></div>
+                    <div class="struk-separator"></div>`;
+
+        detail.filter(i => i.tipe === 'Kirim').forEach(i => {
+            s += `<div>${i.nama_barang}</div>`;
+            if (i.keterangan) s += `<div style="font-size:11px; color:#555; padding-left:10px;">&nbsp;(${i.keterangan})</div>`;
+            s += `<div class="struk-row"><span>&nbsp;${i.qty} ${i.satuan} x ${i.harga_satuan.toLocaleString()}</span><span>${i.subtotal.toLocaleString()}</span></div>`;
+        });
+
+        if(detail.filter(i => i.tipe === 'Retur').length > 0) {
+            s += `<div class="struk-separator"></div><div class="struk-bold">RETUR:</div>`;
+            detail.filter(i => i.tipe === 'Retur').forEach(i => {
+                s += `<div>[R] ${i.nama_barang}</div>`;
+                if (i.keterangan) s += `<div style="font-size:11px; color:#555; padding-left:10px;">&nbsp;(${i.keterangan})</div>`;
+                s += `<div class="struk-row"><span>&nbsp;${i.qty} ${i.satuan} x ${i.harga_satuan.toLocaleString()}</span><span>-${i.subtotal.toLocaleString()}</span></div>`;
+            });
+        }
+
+        s += `<div class="struk-double-separator"></div>
+              <div class="struk-row struk-bold"><span>SISA BON:</span><span>Rp ${(trx.sisa_akhir || 0).toLocaleString()}</span></div>
+              </div>`;
+        modalIsi.innerHTML = s;
+    }
+
+    function tutupModal() { document.getElementById('modalDetail').style.display = "none"; }
+    window.onload = () => {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('tglMulai').value = today;
+        document.getElementById('tglSelesai').value = today;
+    };
+</script>
+</body>
+</html>
