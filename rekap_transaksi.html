@@ -197,6 +197,11 @@
             const { data: detail, error: errDet } = await _sb.from('transaksi_detail').select('*').eq('no_nota', noNota);
             if (errDet) throw errDet;
 
+            // Menambahkan 'keterangan' ke dalam select
+            const { data: riwayatBayar, error: errBayar } = await _sb.from('pembayaran_bon')
+                .select('tanggal, bayar_cash, bayar_transfer, keterangan')
+                .eq('no_nota_referensi', noNota);
+
             const [y, m, d] = trx.tanggal.split('-');
             const drvGabung = trx.driver_2 ? `${trx.driver_1} / ${trx.driver_2}` : trx.driver_1;
 
@@ -237,6 +242,23 @@
                 s += `<div class="struk-row"><span>TOTAL RETUR:</span><span>Rp ${(trx.total_retur || 0).toLocaleString('id-ID')}</span></div>`;
             }
 
+            // Menampilkan riwayat dengan keterangan
+if (riwayatBayar && riwayatBayar.length > 0) {
+                s += `<br><div class="struk-bold">RIWAYAT CICILAN:</div>`;
+                riwayatBayar.forEach(p => {
+                    // Tampilkan baris untuk setiap pembayaran
+                    let detailBayar = "";
+                    if ((p.bayar_cash || 0) > 0) detailBayar += `CASH: Rp ${p.bayar_cash.toLocaleString('id-ID')} `;
+                    if ((p.bayar_transfer || 0) > 0) detailBayar += `TRF: Rp ${p.bayar_transfer.toLocaleString('id-ID')}`;
+                    
+                    let ket = p.keterangan ? `<div style="font-size:11px; color:#555;">&nbsp;&nbsp;(${p.keterangan})</div>` : '';
+                    s += `<div class="struk-row">
+                            <span>&nbsp;&nbsp;${p.tanggal}</span>
+                            <span>${detailBayar}</span>
+                          </div>${ket}`;
+                });
+            }
+            
             const tagihanBersih = (trx.total_kirim || 0) - (trx.total_retur || 0) + (trx.bon_lama || 0);
             
             s += `<br><div class="struk-row"><span>BON LAMA:</span><span>Rp ${(trx.bon_lama || 0).toLocaleString('id-ID')}</span></div>`;
