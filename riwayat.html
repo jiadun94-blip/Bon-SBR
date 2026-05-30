@@ -17,12 +17,16 @@
         a { font-size: 12px; text-decoration: none; color: #72a339; font-weight: bold; }
         .row-day-title { font-weight: bold; text-align: left; background: #edf2f7; color: #1e293b; }
         .badge-agen { display: block; font-weight: bold; color: #166534; font-size: 11px; }
+        
+        /* Style Tambahan untuk Baris Total Mingguan */
+        .row-total-weekly { background: #1a202c !important; color: #fff !important; font-weight: bold; }
+        .row-total-weekly td { border: 1px solid #4a5568; padding: 8px 6px; font-size: 12px; }
     </style>
 </head>
 <body>
 
 <div style="padding-bottom:10px;"><a href="dashboard.html">« Kembali ke Menu Utama</a></div>
-<h3>HISTORY TRANSAKSI TIM DRIVER</h3>
+<h3>HISTORY TRANSAKSI TIM DRIVER (SPLIT MINGGUAN)</h3>
 
 <div class="table-container">
     <table id="tabelHistory">
@@ -41,7 +45,6 @@
     const _sb = supabase.createClient("https://yxcxvkairftqzmptkorr.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs");
 
     async function loadHistory() {
-        // Menarik data tanggal, agen, driver_1, dan driver_2
         const { data: listTransaksi, error } = await _sb.from('transaksi').select('tanggal, nama_agen, driver_1, driver_2');
         
         if (error) return alert("Gagal ambil data: " + error.message);
@@ -49,31 +52,30 @@
         let driverUnik = new Set();
         let dataMap = {}; 
 
-        // 1. Kumpulkan semua nama driver yang pernah melakukan transaksi & petakan datanya
+        // 1. Olah data transaksi masuk ke map
         listTransaksi.forEach(t => {
             if (!t.tanggal) return;
 
-            let tglKey = t.tanggal; // Format YYYY-MM-DD dari database
+            let tglKey = t.tanggal; 
             let dateObj = new Date(tglKey);
-            let hari = dateObj.toLocaleDateString('id-ID', { weekday: 'long' });
-            let tglIndo = tglKey.split('-').reverse().join('/'); // Ubah jadi DD/MM/YYYY
-            let labelHariTanggal = `${hari}, ${tglIndo}`;
+            let hariNo = dateObj.getDay(); // 0 = Minggu, 1 = Senin, dst.
+            let hariNama = dateObj.toLocaleDateString('id-ID', { weekday: 'long' });
+            let tglIndo = tglKey.split('-').reverse().join('/'); 
+            let labelHariTanggal = `${hariNama}, ${tglIndo}`;
             let agen = t.nama_agen || "Tanpa Agen";
 
-            // Tambahkan driver ke daftar unik jika ada datanya
             if (t.driver_1) driverUnik.add(t.driver_1);
             if (t.driver_2) driverUnik.add(t.driver_2);
 
-            // Inisialisasi map tanggal jika belum ada
             if (!dataMap[tglKey]) {
                 dataMap[tglKey] = { 
                     label: labelHariTanggal, 
                     timestamp: dateObj.getTime(), 
+                    hariKe: hariNo, // Disimpan untuk deteksi hari Minggu
                     drivers: {} 
                 };
             }
 
-            // Fungsi pembantu untuk memasukkan agen ke driver terkait tanpa duplikat di hari yang sama
             const masukkanDataDriver = (namaDriver) => {
                 if (namaDriver) {
                     if (!dataMap[tglKey].drivers[namaDriver]) {
@@ -89,18 +91,17 @@
             masukkanDataDriver(t.driver_2);
         });
 
-        // Urutkan daftar driver berdasarkan abjad A-Z
         let listDriverSorted = Array.from(driverUnik).sort();
 
-        // 2. Buat Elemen Header Kolom Berdasarkan Nama Driver
+        // 2. Render Header Driver
         const headerRow = document.getElementById('headerRow');
         listDriverSorted.forEach(dv => {
             headerRow.innerHTML += `<th style="background: #166534; color: white;">${dv.toUpperCase()}</th>`;
         });
 
-        // 3. Susun Baris Data (Urutkan Tanggal dari Terlama ke Terbaru)
+        // 3. Render Baris Data + Hitung Totalan Mingguan (Senin s/d Minggu)
         const bodyRow = document.getElementById('bodyRow');
-        bodyRow.innerHTML = ""; // Bersihkan text loading
+        bodyRow.innerHTML = ""; 
 
         let sortedDates = Object.keys(dataMap).sort((a, b) => dataMap[a].timestamp - dataMap[b].timestamp);
 
@@ -109,18 +110,36 @@
             return;
         }
 
-        sortedDates.forEach(tglKey => {
+        // Object penampung hitungan total per driver dalam 1 minggu berjalan
+        let akumulasiMingguan = {};
+        const resetAkumulasi = () => {
+            listDriverSorted.forEach(dv => akumulasiMingguan[dv] = 0);
+        };
+        resetAkumulasi();
+
+        // Fungsi untuk menyisipkan baris total ke HTML
+        const cetakBarisTotal = (keteranganMinggu) => {
+            let totalRowHtml = `<tr class="row-total-weekly"><td style="text-align:left;">📊 TOTAL ${keteranganMinggu}</td>`;
+            listDriverSorted.forEach(dv => {
+                totalRowHtml += `<td>${akumulasiMingguan[dv]} Agen</td>`;
+            });
+            totalRowHtml += `</tr>`;
+            bodyRow.innerHTML += totalRowHtml;
+        };
+
+        sortedDates.forEach((tglKey, index) => {
             let barisHari = dataMap[tglKey];
             let rowHtml = `<tr><td class="row-day-title">${barisHari.label}</td>`;
             
-            // Periksa daftar tujuan kirim (agen) untuk masing-masing driver pada hari ini
             listDriverSorted.forEach(dv => {
                 let listAgen = barisHari.drivers[dv];
                 
                 if (listAgen && listAgen.length > 0) {
-                    // Gabungkan nama agen ke bawah dengan tag <span class="badge-agen">
                     let listAgenHtml = listAgen.map(ag => `<span class="badge-agen">${ag}</span>`).join('');
                     rowHtml += `<td style="background: #f0fdf4; vertical-align: middle; padding: 4px 6px;">${listAgenHtml}</td>`;
+                    
+                    // Tambahkan jumlah agen yang dikirim hari ini ke dalam hitungan mingguan driver
+                    akumulasiMingguan[dv] += listAgen.length;
                 } else {
                     rowHtml += `<td style="color: #ccc; vertical-align: middle;">-</td>`;
                 }
@@ -128,6 +147,17 @@
             
             rowHtml += `</tr>`;
             bodyRow.innerHTML += rowHtml;
+
+            // DETEKSI SPLIT MINGGUAN: 
+            // Jika hari ini adalah MINGGU (0), atau ini adalah DATA TERAKHIR dalam array, cetak totalan.
+            if (barisHari.hariKe === 0 || index === sortedDates.length - 1) {
+                // Ambil rentang tanggal untuk keterangan (opsional, agar tahu ini minggu kapan)
+                let tglFormat = tglKey.split('-').reverse().slice(0,2).join('/');
+                cetakBarisTotal(`MINGGU INI (s/d ${tglFormat})`);
+                
+                // Reset hitungan ke 0 untuk memasuki minggu berikutnya (dimulai hari Senin lagi)
+                resetAkumulasi();
+            }
         });
     }
 
