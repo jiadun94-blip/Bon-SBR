@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SBR Putra Food - Matriks Rencana Kirim</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #121214; }
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #fff; font-size: 16px; }
+        .container { background: #1e1e24; padding: 12px; border-radius: 15px; max-width: 900px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+        header { margin-bottom: 15px; border-bottom: 3px solid #3182ce; padding-bottom: 8px; }
+        header h2 { margin: 0; color: #fff; font-size: 22px; text-transform: uppercase; font-weight: 900; }
+        .subtitle { font-size: 12px; color: #a0aec0; font-weight: bold; }
+
+        .global-filter { background: #2d3748; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-weight: 900; }
+        .global-filter input { padding: 10px; border-radius: 6px; border: 2px solid #4a5568; font-size: 16px; font-weight: 700; width: 200px; background: #1a202c; color: white; }
+
+        .selector-box { display: flex; gap: 8px; background: #2d3748; padding: 10px; border-radius: 10px; margin-bottom: 15px; align-items: center; }
+        .selector-box select { flex: 1; padding: 10px; font-size: 16px; font-weight: 700; border: 2px solid #4a5568; border-radius: 8px; background: #1a202c; color: white; }
+
+        .section-label { font-size: 15px; font-weight: 900; padding: 8px; background: #2b6cb0; color: white; border-radius: 6px; margin: 20px 0 8px; text-transform: uppercase; }
+        .section-label.database { background: #27ae60; }
+
+        /* CARD INPUT FORM UTAMA (ATAS) */
+        .card-jadwal-agen { background: #2d3748; border: 2px solid #4a5568; border-radius: 12px; padding: 12px; margin-bottom: 15px; }
+        .card-header-agen { display: flex; justify-content: space-between; align-items: center; background: #1a202c; padding: 10px; border-radius: 8px; border-bottom: 2px solid #4a5568; margin-bottom: 10px; }
+        .card-title { font-size: 16px; font-weight: 900; color: #63b3ed; }
+        .status-badge { font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: 900; text-transform: uppercase; }
+        .status-draft { background: #feebc8; color: #c05621; }
+        .status-list { background: #e2e8f0; color: #1a202c; }
+
+        /* GRID FORM LOGISTIK */
+        .logistik-grid { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 8px; margin-bottom: 12px; background: #1a202c; padding: 10px; border-radius: 8px; border: 1px solid #3182ce; }
+        .logistik-grid select { width: 100%; padding: 8px 4px; font-size: 14px; font-weight: 700; border: 2px solid #4a5568; border-radius: 6px; background: #2d3748; color: white; }
+        .logistik-grid label { font-size: 11px; font-weight: 900; color: #cbd5e0; display: block; margin-bottom: 3px; text-transform: uppercase; }
+
+        /* TABLE FORM BARANG */
+        table { width: 100%; border-collapse: collapse; margin: 5px 0; }
+        th { font-size: 12px; text-align: left; padding: 6px; background: #1a202c; border-bottom: 2px solid #4a5568; font-weight: 900; color: #cbd5e0; }
+        td { padding: 6px; border-bottom: 1px solid #4a5568; font-size: 15px; font-weight: 700; }
+        .input-qty { width: 65px; padding: 5px; border: 2px solid #4a5568; border-radius: 6px; text-align: center; font-weight: 700; font-size: 14px; background: #1a202c; color: white; }
+        
+        /* CARD COMPACT RINGKAS (STYLE SEPERTI AREA BAWAH) */
+        .compact-list-card { background: #2d3748; padding: 12px; border-radius: 10px; margin-top: 10px; font-size: 14px; border: 2px solid #4a5568; box-shadow: 0 3px 6px rgba(0,0,0,0.2); }
+        .compact-detail-box { font-size: 13px; color: #cbd5e0; background: #1a202c; padding: 8px; border-radius: 6px; margin-top: 6px; border: 1px solid #4a5568; }
+        .compact-action-bar { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; border-top: 1px dashed #4a5568; padding-top: 10px; }
+
+        /* BUTTONS ACTIONS STYLE */
+        .btn-action { padding: 10px 16px; border: none; border-radius: 8px; font-weight: 900; cursor: pointer; font-size: 13px; text-transform: uppercase; }
+        .btn-add { background: #3182ce; color: white; font-size: 14px; }
+        .btn-del-item { background: #742a2a; color: #feb2b2; border: 1px solid #9b2c2c; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-weight: 900; font-size: 12px; }
+        
+        .btn-comp-edit { background: #dd6b20; color: white; padding: 6px 14px; border: none; border-radius: 6px; font-weight: 900; font-size: 12px; cursor: pointer; text-transform: uppercase; }
+        .btn-comp-del { background: #e53e3e; color: white; padding: 6px 14px; border: none; border-radius: 6px; font-weight: 900; font-size: 12px; cursor: pointer; text-transform: uppercase; }
+        .btn-primary-blue { background: #3182ce; color: white; width: 100%; border: none; font-weight: 900; text-transform: uppercase; border-radius: 8px; cursor: pointer; }
+        .btn-save-all { background: #27ae60; color: white; width: 100%; padding: 14px; font-size: 16px; border-radius: 10px; font-weight: 900; text-transform: uppercase; margin-top: 15px; border: none; cursor: pointer; box-shadow: 0 4px 0 #1e8449; }
+
+        /* HISTORY LOG PERMANEN */
+        .history-card { background: #1a202c; padding: 10px; border-radius: 10px; margin-top: 8px; font-size: 14px; border: 2px solid #2d3748; }
+        .badge-shift { padding: 2px 6px; border-radius: 4px; color: white; font-size: 11px; font-weight: 900; text-transform: uppercase; }
+        .SUBUH { background: #e67e22; } .SIANG { background: #3498db; } .MALAM { background: #9b59b6; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h2>SBR PUTRA FOOD</h2>
+        <div class="subtitle">MATRIKS PLANNING & PENYUSUNAN JADWAL KIRIM AGEN</div>
+    </header>
+
+    <div class="global-filter">
+        <label style="margin-right: 10px;">📅 TANGGAL OPERASIONAL KIRIM :</label>
+        <input type="date" id="tglKirimGlobal" onchange="muatRiwayatJadwalSelesai()">
+    </div>
+
+    <div class="selector-box">
+        <select id="dropdownPilihAgen"></select>
+        <button type="button" class="btn-action btn-add" onclick="tambahAgenKeDraftAwal()">+ PILIH AGEN</button>
+    </div>
+
+    <div id="containerDraftAwal"></div>
+
+    <div class="section-label">📋 LIST KIRIM (SUNTING / SIAP FIX MALAM)</div>
+    <div id="containerListKirim">
+        <div style="text-align:center; color:#a0aec0; font-style:italic; padding:20px; background:#2d3748; border:2px dashed #4a5568; border-radius:12px;">
+            Belum ada agen yang dimasukkan ke list kirim sementara.
+        </div>
+    </div>
+
+    <button type="button" class="btn-save-all" id="btnSimpanMassal" onclick="simpanSemuaListKeDatabase()">🔒 FIX & KIRIM SEMUA JADWAL AGEN</button>
+
+    <div class="section-label database">✅ JADWAL KIRIM BERHASIL DI-FIX (DATABASE TERKINI)</div>
+    <div id="logJadwalTerkini"></div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let masterDaftarBarangAgen = {}; 
+    let masterKaryawan = [];
+    let masterKendaraan = [];
+    
+    let objDraftAwal = null;       
+    let listKirimSementara = [];   
+
+    async function initAplikasi() {
+        try {
+            document.getElementById('tglKirimGlobal').valueAsDate = new Date();
+
+            const { data: agen } = await clientSupabase.from('agen').select('*').order('nama_agen', { ascending: true });
+            const dropdownAgen = document.getElementById('dropdownPilihAgen');
+            if(agen) {
+                dropdownAgen.innerHTML = '<option value="">-- Pilih Agen Untuk Dijadwalkan --</option>';
+                agen.forEach(a => dropdownAgen.options.add(new Option(a.nama_agen, a.nama_agen)));
+            }
+
+            const { data: harga } = await clientSupabase.from('harga').select('*');
+            if(harga) {
+                harga.forEach(h => {
+                    if(!masterDaftarBarangAgen[h.nama_agen]) masterDaftarBarangAgen[h.nama_agen] = [];
+                    if(!masterDaftarBarangAgen[h.nama_agen].includes(h.nama_barang)) masterDaftarBarangAgen[h.nama_agen].push(h.nama_barang);
+                });
+            }
+
+            const { data: karyawan } = await clientSupabase.from('karyawan').select('*').eq('aktif', true);
+            if(karyawan) masterKaryawan = karyawan.map(k => k.nama_karyawan).sort();
+
+            const { data: mobil } = await clientSupabase.from('kendaraan').select('*');
+            if(mobil) masterKendaraan = mobil.map(m => m.plat_nomor);
+
+            muatRiwayatJadwalSelesai();
+            renderDraftAwal();
+            renderListKirimCompact();
+        } catch(e) { console.error(e); }
+    }
+
+    // --- LOGIKA TAHAP 1: FORM INPUT DRAFT UTAMA ---
+    function tambahAgenKeDraftAwal() {
+        const ag = document.getElementById('dropdownPilihAgen').value;
+        if(!ag) return alert("Silakan pilih nama Agen terlebih dahulu!");
+
+        if(listKirimSementara.some(item => item.nama_agen === ag)) {
+            return alert("Agen ini sudah berada di List Kirim sementara!");
+        }
+
+        let listBarangMaster = masterDaftarBarangAgen[ag] || [];
+        objDraftAwal = {
+            nama_agen: ag,
+            plat_nomor: "",
+            shift: "SUBUH",
+            driver_1: "",
+            driver_2: "",
+            is_editing: false,
+            barang: listBarangMaster.map(b => ({ nama_barang: b, qty_order: 0, qty_real: 0 }))
+        };
+
+        renderDraftAwal();
+    }
+
+    function masukkanKeListKirimTengah() {
+        if(!objDraftAwal) return;
+        
+        if(!objDraftAwal.plat_nomor) return alert("Harap pilih Armada Mobil terlebih dahulu!");
+        if(!objDraftAwal.driver_1 || !objDraftAwal.driver_2) return alert("Harap lengkapi Driver Couple!");
+
+        listKirimSementara.push(JSON.parse(JSON.stringify(objDraftAwal)));
+        objDraftAwal = null; 
+        
+        renderDraftAwal();
+        renderListKirimCompact();
+    }
+
+    function ubahLogistikDraft(properti, nilai) {
+        if(objDraftAwal) objDraftAwal[properti] = nilai;
+    }
+
+    function ubahQtyDraft(idxB, kolom, nilai) {
+        if(objDraftAwal) objDraftAwal.barang[idxB][kolom] = parseInt(nilai) || 0;
+    }
+
+    function hapusItemBarangDraft(idxB) {
+        if(objDraftAwal) {
+            objDraftAwal.barang.splice(idxB, 1);
+            renderDraftAwal();
+        }
+    }
+
+    // --- LOGIKA TAHAP 2: EDIT & HAPUS DI LIST SEMENTARA (KARTU COMPACT) ---
+    function tarikKembaliUntukEdit(index) {
+        // Ambil dari list ringkas, oper balik ke form besar di atas
+        objDraftAwal = JSON.parse(JSON.stringify(listKirimSementara[index]));
+        objDraftAwal.is_editing = true;
+        
+        listKirimSementara.splice(index, 1); 
+        
+        renderDraftAwal();
+        renderListKirimCompact();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function hapusDariListSementara(index) {
+        if(confirm(`Hapus agen ${listKirimSementara[index].nama_agen.toUpperCase()} dari list kirim sementara?`)) {
+            listKirimSementara.splice(index, 1);
+            renderListKirimCompact();
+        }
+    }
+
+    // --- RENDERING MANAGEMENT ---
+    function renderDraftAwal() {
+        const container = document.getElementById('containerDraftAwal');
+        if(!objDraftAwal) {
+            container.innerHTML = '';
+            return;
+        }
+
+        let optMobil = `<option value="">-- Pilih Mobil --</option>`;
+        masterKendaraan.forEach(m => {
+            optMobil += `<option value="${m}" ${objDraftAwal.plat_nomor === m ? "selected" : ""}>${m}</option>`;
+        });
+
+        let optDriver1 = `<option value="">-- Driver 1 --</option>`;
+        let optDriver2 = `<option value="">-- Driver 2 --</option>`;
+        masterKaryawan.forEach(k => {
+            optDriver1 += `<option value="${k}" ${objDraftAwal.driver_1 === k ? "selected" : ""}>${k}</option>`;
+            optDriver2 += `<option value="${k}" ${objDraftAwal.driver_2 === k ? "selected" : ""}>${k}</option>`;
+        });
+
+        let barisBarang = '';
+        objDraftAwal.barang.forEach((b, idx) => {
+            barisBarang += `
+                <tr>
+                    <td style="text-align:center;"><button type="button" class="btn-del-item" onclick="hapusItemBarangDraft(${idx})">X</button></td>
+                    <td><strong>${b.nama_barang}</strong></td>
+                    <td><input type="number" class="input-qty" value="${b.qty_order}" onchange="ubahQtyDraft(${idx}, 'qty_order', this.value)" onfocus="if(this.value=='0')this.value=''"></td>
+                    <td><input type="number" class="input-qty" value="${b.qty_real}" onchange="ubahQtyDraft(${idx}, 'qty_real', this.value)" onfocus="if(this.value=='0')this.value=''"></td>
+                </tr>
+            `;
+        });
+
+        container.innerHTML = `
+            <div class="card-jadwal-agen" style="border-color: #3182ce; background: #1a202c;">
+                <div class="card-header-agen">
+                    <span class="card-title">🏢 FORM SETUP JADWAL: <span style="color:#63b3ed;">${objDraftAwal.nama_agen.toUpperCase()}</span></span>
+                    <span class="status-badge status-draft">${objDraftAwal.is_editing ? '🔄 RE-EDIT DATA' : '📝 ENTRY BARU'}</span>
+                </div>
+                <div class="logistik-grid">
+                    <div>
+                        <label>Armada Mobil</label>
+                        <select onchange="ubahLogistikDraft('plat_nomor', this.value)">${optMobil}</select>
+                    </div>
+                    <div>
+                        <label>Waktu Kirim / Shift</label>
+                        <select onchange="ubahLogistikDraft('shift', this.value)">
+                            <option value="SUBUH" ${objDraftAwal.shift === "SUBUH" ? "selected" : ""}>SUBUH</option>
+                            <option value="SIANG" ${objDraftAwal.shift === "SIANG" ? "selected" : ""}>SIANG</option>
+                            <option value="MALAM" ${objDraftAwal.shift === "MALAM" ? "selected" : ""}>MALAM</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Driver Couple</label>
+                        <div style="display:flex; gap:3px;">
+                            <select onchange="ubahLogistikDraft('driver_1', this.value)">${optDriver1}</select>
+                            <select onchange="ubahLogistikDraft('driver_2', this.value)">${optDriver2}</select>
+                        </div>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr><th style="width:40px; text-align:center;">HAPUS</th><th>NAMA ITEM</th><th>EST. ORDER</th><th>PEMENUHAN</th></tr>
+                    </thead>
+                    <tbody>${barisBarang}</tbody>
+                </table>
+                <button type="button" class="btn-primary-blue" style="margin-top:12px; padding:12px;" onclick="masukkanKeListKirimTengah()">➡️ MASUK LIST KIRIM (ANTREAN SEMENTARA)</button>
+            </div>
+        `;
+    }
+
+    // --- RENDER COMPACT LIST (MIRIP KLONINGAN LAYOUT ARMIND DI SCREENSHOT) ---
+    function renderListKirimCompact() {
+        const container = document.getElementById('containerListKirim');
+        if(listKirimSementara.length === 0) {
+            container.innerHTML = `
+                <div style="text-align:center; color:#a0aec0; font-style:italic; padding:20px; background:#2d3748; border:2px dashed #4a5568; border-radius:12px;">
+                    Belum ada agen yang dimasukkan ke list kirim sementara.
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = '';
+        listKirimSementara.forEach((item, index) => {
+            const card = document.createElement('div');
+            card.className = 'compact-list-card';
+
+            let stringMuatan = '';
+            item.barang.forEach(b => {
+                if(b.qty_order > 0 || b.qty_real > 0) {
+                    stringMuatan += `<br>• ${b.nama_barang} (Order: ${b.qty_order} | Real: <strong style="color:#27ae60;">${b.qty_real}</strong>)`;
+                }
+            });
+            if(!stringMuatan) stringMuatan = '<br>• <span style="color:#e53e3e; font-style:italic;">Tidak ada muatan barang</span>';
+
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; font-weight:900;">
+                    <span>🏢 LIST PLAN: <strong style="color:#63b3ed;">${item.nama_agen.toUpperCase()}</strong></span>
+                    <span class="badge-shift ${item.shift}">${item.shift}</span>
+                </div>
+                <div style="margin-top:5px; line-height: 1.5;">
+                    Armada: <strong>${item.plat_nomor}</strong> — Driver: <strong>${item.driver_1} / ${item.driver_2}</strong>
+                    <div class="compact-detail-box">
+                        <strong>Detail Rencana Muatan:</strong>${stringMuatan}
+                    </div>
+                </div>
+                
+                <div class="compact-action-bar">
+                    <button type="button" class="btn-comp-edit" onclick="tarikKembaliUntukEdit(${index})">✏️ EDIT</button>
+                    <button type="button" class="btn-comp-del" onclick="hapusDariListSementara(${index})">❌ HAPUS</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    // --- TAHAP 3: SIMPAN MASSAL DATA YANG SIAP KE DATABASE ---
+    async function simpanSemuaListKeDatabase() {
+        if(listKirimSementara.length === 0) return alert("List Kirim kosong! Tekan 'Masuk List Kirim' di atas terlebih dahulu.");
+        
+        const tglOperasional = document.getElementById('tglKirimGlobal').value;
+        if(!tglOperasional) return alert("Tentukan Tanggal Operasional!");
+
+        const btn = document.getElementById('btnSimpanMassal');
+        btn.disabled = true; btn.innerText = "SEDANG MEMPROSES FIX DATA...";
+
+        try {
+            for(let data of listKirimSementara) {
+                const coupleDriver = `${data.driver_1} / ${data.driver_2}`;
+
+                const { data: resJadwal, error: errMaster } = await clientSupabase
+                    .from('jadwal_kirim')
+                    .insert([{
+                        tanggal_kirim: tglOperasional,
+                        shift: data.shift,
+                        nama_agen: data.nama_agen,
+                        plat_nomor: data.plat_nomor,
+                        driver: coupleDriver
+                    }])
+                    .select();
+
+                if(errMaster) throw errMaster;
+                const idJadwal = resJadwal[0].id_jadwal;
+
+                let detailInserts = [];
+                data.barang.forEach(b => {
+                    if(b.qty_order > 0 || b.qty_real > 0) {
+                        detailInserts.push({
+                            id_jadwal: idJadwal,
+                            nama_barang: b.nama_barang,
+                            qty_order: b.qty_order,
+                            qty_real: b.qty_real
+                        });
+                    }
+                });
+
+                if(detailInserts.length > 0) {
+                    const { error: errDetail } = await clientSupabase.from('jadwal_kirim_detail').insert(detailInserts);
+                    if(errDetail) throw errDetail;
+                }
+            }
+
+            alert("✅ FIX BERHASIL: Semua jadwal di Antrean List Kirim telah aman masuk ke database!");
+            listKirimSementara = []; 
+            renderListKirimCompact();
+            muatRiwayatJadwalSelesai();
+
+        } catch(e) {
+            alert("❌ Gagal Kirim: " + e.message);
+        } finally {
+            btn.disabled = false; btn.innerText = "🔒 FIX & KIRIM SEMUA JADWAL AGEN";
+        }
+    }
+
+    async function muatRiwayatJadwalSelesai() {
+        const containerLog = document.getElementById('logJadwalTerkini');
+        const tglTerpilih = document.getElementById('tglKirimGlobal').value;
+        containerLog.innerHTML = `<span style="font-size:14px; color:#cbd5e0;">Memuat data...</span>`;
+
+        try {
+            const { data: listJadwal, error } = await clientSupabase
+                .from('jadwal_kirim')
+                .select(`id_jadwal, tanggal_kirim, shift, nama_agen, plat_nomor, driver, jadwal_kirim_detail(nama_barang, qty_order, qty_real)`)
+                .eq('tanggal_kirim', tglTerpilih)
+                .order('id_jadwal', { ascending: false });
+
+            if(error) throw error;
+            if(!listJadwal || listJadwal.length === 0) {
+                containerLog.innerHTML = `<span style="font-size:14px; color:#a0aec0; font-style:italic;">Belum ada data fix di database untuk tanggal ini.</span>`;
+                return;
+            }
+
+            containerLog.innerHTML = '';
+            listJadwal.forEach(j => {
+                const div = document.createElement('div');
+                div.className = 'history-card';
+                let textProduk = '';
+                if(j.jadwal_kirim_detail) {
+                    j.jadwal_kirim_detail.forEach(det => {
+                        textProduk += `<br>• ${det.nama_barang} (Order: ${det.qty_order} | Real: <strong>${det.qty_real}</strong>)`;
+                    });
+                }
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; font-weight:900;">
+                        <span>📅 TANGGAL: ${j.tanggal_kirim}</span>
+                        <span class="badge-shift ${j.shift}">${j.shift}</span>
+                    </div>
+                    <div style="margin-top:5px;">
+                        Tujuan Agen: <strong style="color:#27ae60;">${j.nama_agen.toUpperCase()}</strong><br>
+                        Armada: <strong>${j.plat_nomor}</strong> — Driver: <strong>${j.driver}</strong>
+                        <div class="compact-detail-box" style="background:#2d3748;">
+                            <strong>Detail Muatan:</strong>${textProduk}
+                        </div>
+                    </div>
+                `;
+                containerLog.appendChild(div);
+            });
+        } catch(e) { console.error(e); }
+    }
+
+    window.onload = initAplikasi;
+</script>
+</body>
+</html>
