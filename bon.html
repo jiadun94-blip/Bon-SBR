@@ -78,7 +78,7 @@
         <select id="pilihAgen" onchange="updateBon()"><option value="">-- AGEN --</option></select>
         <select id="driver1" disabled style="background:#edf2f7; color:#4a5568;"><option value="">-- DRIVER 1 --</option></select>
         <select id="pilihMobil"><option value="">-- MOBIL --</option></select>
-        <select id="driver2"><option value="">-- DRIVER 2 (Ops) --</option></select>
+        <select id="driver2"><option value="">-- DRIVER 2 --</option></select>
     </div>
 
     <div>
@@ -189,7 +189,7 @@
             const d2 = document.getElementById('driver2');
             if(karyawan) {
                 d1.innerHTML = '<option value="">-- DRIVER 1 --</option>';
-                d2.innerHTML = '<option value="">-- DRIVER 2 (Ops) --</option>';
+                d2.innerHTML = '<option value="">-- DRIVER 2 --</option>';
                 karyawan.forEach(k => {
                     d1.options.add(new Option(k.nama_karyawan, k.nama_karyawan));
                     d2.options.add(new Option(k.nama_karyawan, k.nama_karyawan));
@@ -376,12 +376,22 @@
         const ag = document.getElementById('pilihAgen').value;
         const drv1 = document.getElementById('driver1').value;
         const mobil = document.getElementById('pilihMobil').value;
+        const drv2 = document.getElementById('driver2').value;
         
+        const cash = getAngka('inputCash');
+        const trf = getAngka('inputTrf');
+
         if (!ag) errorList.push("- Agen belum dipilih");
         if (!drv1) errorList.push("- Driver 1 belum ditentukan/kosong");
         if (!mobil) errorList.push("- Mobil/Plat Nomor belum dipilih");
+        if (!drv2) errorList.push("- Driver 2 belum dipilih");
         if (itemsKirim.length === 0 && itemsRetur.length === 0) {
             errorList.push("- Belum ada item (Kirim atau Retur) yang dimasukkan");
+        }
+        
+        // Validasi Pembayaran: Jika keduanya kosong / bernilai 0
+        if (cash === 0 && trf === 0) {
+            errorList.push("- Pembayaran belum diisi (Nilai CASH dan TRANSFER tidak boleh keduanya Rp 0)");
         }
 
         if (errorList.length > 0) {
@@ -397,15 +407,12 @@
         const tglInput = document.getElementById('tglNota').value;
         const [y, m, d] = tglInput.split('-');
         const tglIndo = `${d}-${m}-${y}`;
-        const drv2 = document.getElementById('driver2').value;
         const drvGabung = drv2 ? `${drv1} / ${drv2}` : drv1;
         
         const tk = itemsKirim.reduce((a, b) => a + b.total, 0);
         const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
         const bl = getAngka('inputBonLama');
         const ongkir = getAngka('inputOngkir');
-        const cash = getAngka('inputCash');
-        const trf = getAngka('inputTrf');
         const tagihanBersih = tk - tr - ongkir + bl;
         const sisa = tagihanBersih - cash - trf;
 
