@@ -33,8 +33,8 @@
         .status-draft { background: #feebc8; color: #c05621; }
 
         /* GRID FORM LOGISTIK */
-        .logistik-grid { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 8px; margin-bottom: 12px; background: #1a202c; padding: 10px; border-radius: 8px; border: 1px solid #3182ce; }
-        .logistik-grid select { width: 100%; padding: 8px 4px; font-size: 14px; font-weight: 700; border: 2px solid #4a5568; border-radius: 6px; background: #2d3748; color: white; }
+        .logistik-grid { display: grid; grid-template-columns: 1.1fr 1fr 1fr 1.3fr; gap: 8px; margin-bottom: 12px; background: #1a202c; padding: 10px; border-radius: 8px; border: 1px solid #3182ce; }
+        .logistik-grid select, .logistik-grid input[type="date"] { width: 100%; padding: 8px 4px; font-size: 14px; font-weight: 700; border: 2px solid #4a5568; border-radius: 6px; background: #2d3748; color: white; box-sizing: border-box; }
         .logistik-grid label { font-size: 11px; font-weight: 900; color: #cbd5e0; display: block; margin-bottom: 3px; text-transform: uppercase; }
 
         /* TABLE FORM BARANG */
@@ -43,31 +43,26 @@
         td { padding: 6px; border-bottom: 1px solid #4a5568; font-size: 15px; font-weight: 700; }
         .input-qty { width: 65px; padding: 5px; border: 2px solid #4a5568; border-radius: 6px; text-align: center; font-weight: 700; font-size: 14px; background: #1a202c; color: white; }
         
-        /* ------------------------------------------------------------- */
-        /* LAYOUTING KIRI - KANAN ULTRA COMPACT (SINKRONISASI HORIZONTAL)*/
-        /* ------------------------------------------------------------- */
+        /* LAYOUTING COMPACT CARD LIST */
         .compact-list-card, .history-card { 
             background: #2d3748; padding: 12px; border-radius: 10px; margin-top: 8px; font-size: 14px; border: 2px solid #4a5568;
             display: flex; gap: 15px; align-items: stretch; min-height: 110px;
         }
         .history-card { background: #1a202c; border-color: #2d3748; }
 
-        /* Sisi Kiri: Logistik Info */
         .card-left-logistik { 
-            flex: 1; display: flex; flex-direction: column; justify-content: space-between; min-width: 250px;
+            flex: 1; display: flex; flex-direction: column; justify-content: space-between; min-width: 270px;
         }
         .logistik-line { font-size: 14px; margin-bottom: 4px; line-height: 1.4; }
 
-        /* BARIS BAWAH: BADGE SHIFT & TOMBOL SEJAJAR HORIZONTAL */
         .action-shift-container { 
             display: flex; 
             align-items: center; 
-            gap: 10px; 
+            gap: 8px; 
             margin-top: auto; 
             padding-top: 8px;
         }
 
-        /* Sisi Kanan: Detail Muatan Order */
         .card-right-muatan { 
             flex: 1.5; background: #121214; padding: 10px; border-radius: 8px; border: 1px solid #4a5568;
             display: flex; flex-direction: column; min-width: 0;
@@ -89,6 +84,7 @@
 
         .badge-shift { padding: 4px 8px; border-radius: 5px; color: white; font-size: 12px; font-weight: 900; text-transform: uppercase; display: inline-block; line-height: 1; }
         .SUBUH { background: #e67e22; } .SIANG { background: #3498db; } .MALAM { background: #9b59b6; }
+        .badge-tgl { background: #4a5568; padding: 4px 8px; border-radius: 5px; color: #cbd5e0; font-size: 12px; font-weight: 700; display: inline-block; line-height: 1; }
     </style>
 </head>
 <body>
@@ -100,19 +96,19 @@
     </header>
 
     <div class="global-filter">
-        <label style="margin-right: 10px;">📅 TANGGAL OPERASIONAL KIRIM :</label>
+        <label style="margin-right: 10px;">📅 TANGGAL OPERASIONAL JALAN :</label>
         <input type="date" id="tglKirimGlobal" onchange="muatRiwayatJadwalSelesai()">
     </div>
 
     <div class="selector-box">
-        <select id="dropdownPilihAgen"></select>
+        <select id="dropdownPilihAgen">
+            <option value="">-- Sedang memuat daftar agen... --</option>
+        </select>
         <button type="button" class="btn-action btn-add" onclick="tambahAgenKeDraftAwal()">+ PILIH AGEN</button>
     </div>
 
-    <!-- TAHAP 1: INPUT FORM UTAMA -->
     <div id="containerDraftAwal"></div>
 
-    <!-- TAHAP 2: LIST KIRIM SEMENTARA -->
     <div class="section-label">📋 LIST KIRIM (SUNTING / SIAP FIX MALAM)</div>
     <div id="containerListKirim">
         <div style="text-align:center; color:#a0aec0; font-style:italic; padding:20px; background:#2d3748; border:2px dashed #4a5568; border-radius:12px;">
@@ -120,10 +116,8 @@
         </div>
     </div>
 
-    <!-- TOMBOL EKSEKUSI MASSAL -->
     <button type="button" class="btn-save-all" id="btnSimpanMassal" onclick="simpanSemuaListKeDatabase()">🔒 FIX & KIRIM SEMUA JADWAL AGEN</button>
 
-    <!-- TAHAP 3: HISTORY PENGIRIMAN READ-ONLY -->
     <div class="section-label database">📜 HISTORY PENGIRIMAN (SUDAH FIX)</div>
     <div id="logJadwalTerkini"></div>
 </div>
@@ -131,6 +125,8 @@
 <script>
     const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    
+    // Perbaikan inisialisasi client Supabase v2 yang benar untuk browser global
     const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let masterDaftarBarangAgen = {}; 
@@ -141,34 +137,58 @@
     let listKirimSementara = [];   
 
     async function initAplikasi() {
+        document.getElementById('tglKirimGlobal').valueAsDate = new Date();
+        const dropdownAgen = document.getElementById('dropdownPilihAgen');
+
+        // 1. Ambil Data Agen
         try {
-            document.getElementById('tglKirimGlobal').valueAsDate = new Date();
-
-            const { data: agen } = await clientSupabase.from('agen').select('*').order('nama_agen', { ascending: true });
-            const dropdownAgen = document.getElementById('dropdownPilihAgen');
-            if(agen) {
+            const { data: agen, error: errAgen } = await clientSupabase.from('agen').select('*').order('nama_agen', { ascending: true });
+            if (errAgen) throw errAgen;
+            
+            if (agen && agen.length > 0) {
                 dropdownAgen.innerHTML = '<option value="">-- Pilih Agen Untuk Dijadwalkan --</option>';
-                agen.forEach(a => dropdownAgen.options.add(new Option(a.nama_agen, a.nama_agen)));
+                agen.forEach(a => {
+                    if(a.nama_agen) dropdownAgen.options.add(new Option(a.nama_agen, a.nama_agen));
+                });
+            } else {
+                dropdownAgen.innerHTML = '<option value="">❌ Tidak ada data agen di database</option>';
             }
+        } catch(e) {
+            console.error("Gagal memuat tabel agen:", e);
+            dropdownAgen.innerHTML = '<option value="">❌ Gagal memuat agen dari Supabase</option>';
+        }
 
-            const { data: harga } = await clientSupabase.from('harga').select('*');
-            if(harga) {
+        // 2. Ambil Data Harga & Mapping Barang
+        try {
+            const { data: harga, error: errHarga } = await clientSupabase.from('harga').select('*');
+            if (errHarga) throw errHarga;
+            if (harga) {
                 harga.forEach(h => {
-                    if(!masterDaftarBarangAgen[h.nama_agen]) masterDaftarBarangAgen[h.nama_agen] = [];
-                    if(!masterDaftarBarangAgen[h.nama_agen].includes(h.nama_barang)) masterDaftarBarangAgen[h.nama_agen].push(h.nama_barang);
+                    if (h.nama_agen && h.nama_barang) {
+                        if (!masterDaftarBarangAgen[h.nama_agen]) masterDaftarBarangAgen[h.nama_agen] = [];
+                        if (!masterDaftarBarangAgen[h.nama_agen].includes(h.nama_barang)) {
+                            masterDaftarBarangAgen[h.nama_agen].push(h.nama_barang);
+                        }
+                    }
                 });
             }
+        } catch(e) { console.error("Gagal memuat tabel harga:", e); }
 
+        // 3. Ambil Data Karyawan
+        try {
             const { data: karyawan } = await clientSupabase.from('karyawan').select('*').eq('aktif', true);
-            if(karyawan) masterKaryawan = karyawan.map(k => k.nama_karyawan).sort();
+            if (karyawan) masterKaryawan = karyawan.map(k => k.nama_karyawan).filter(Boolean).sort();
+        } catch(e) { console.error("Gagal memuat tabel karyawan:", e); }
 
+        // 4. Ambil Data Kendaraan
+        try {
             const { data: mobil } = await clientSupabase.from('kendaraan').select('*');
-            if(mobil) masterKendaraan = mobil.map(m => m.plat_nomor);
+            if (mobil) masterKendaraan = mobil.map(m => m.plat_nomor).filter(Boolean);
+        } catch(e) { console.error("Gagal memuat tabel kendaraan:", e); }
 
-            renderDraftAwal();
-            renderListKirimCompact();
-            muatRiwayatJadwalSelesai();
-        } catch(e) { console.error(e); }
+        renderDraftAwal();
+        renderListKirimCompact();
+        muatRiwayatJadwalSelesai();
     }
 
     // --- LOGIKA FORM INPUT UTAMA ---
@@ -180,9 +200,12 @@
             return alert("Agen ini sudah berada di List Kirim sementara!");
         }
 
+        const tglDefault = document.getElementById('tglKirimGlobal').value;
         let listBarangMaster = masterDaftarBarangAgen[ag] || [];
+
         objDraftAwal = {
             nama_agen: ag,
+            tanggal_berangkat: tglDefault, 
             plat_nomor: "",
             shift: "SUBUH",
             driver_1: "",
@@ -196,8 +219,10 @@
 
     function masukkanKeListKirimTengah() {
         if(!objDraftAwal) return;
+        if(!objDraftAwal.tanggal_berangkat) return alert("Harap tentukan Tanggal Berangkat armada!");
         if(!objDraftAwal.plat_nomor) return alert("Harap pilih Armada Mobil terlebih dahulu!");
         if(!objDraftAwal.driver_1 || !objDraftAwal.driver_2) return alert("Harap lengkapi Driver Couple!");
+        if(objDraftAwal.driver_1 === objDraftAwal.driver_2) return alert("Driver 1 dan Driver 2 tidak boleh orang yang sama!");
 
         listKirimSementara.push(JSON.parse(JSON.stringify(objDraftAwal)));
         objDraftAwal = null; 
@@ -206,7 +231,18 @@
         renderListKirimCompact();
     }
 
-    function ubahLogistikDraft(properti, nilai) { if(objDraftAwal) objDraftAwal[properti] = nilai; }
+    function ubahLogistikDraft(properti, nilai) { 
+        if(objDraftAwal) { 
+            objDraftAwal[properti] = nilai; 
+            if(properti === 'shift') {
+                objDraftAwal.plat_nomor = "";
+                objDraftAwal.driver_1 = "";
+                objDraftAwal.driver_2 = "";
+                renderDraftAwal(); 
+            }
+        } 
+    }
+    
     function ubahQtyDraft(idxB, kolom, nilai) { if(objDraftAwal) objDraftAwal.barang[idxB][kolom] = parseInt(nilai) || 0; }
     function hapusItemBarangDraft(idxB) { if(objDraftAwal) { objDraftAwal.barang.splice(idxB, 1); renderDraftAwal(); } }
 
@@ -223,22 +259,42 @@
         if(confirm(`Hapus agen ${listKirimSementara[index].nama_agen.toUpperCase()} dari list kirim sementara?`)) {
             listKirimSementara.splice(index, 1);
             renderListKirimCompact();
+            if(objDraftAwal) renderDraftAwal();
         }
     }
 
-    // --- RENDERING TAHAP 1 FORM UTAMA ---
     function renderDraftAwal() {
         const container = document.getElementById('containerDraftAwal');
         if(!objDraftAwal) { container.innerHTML = ''; return; }
 
-        let optMobil = `<option value="">-- Pilih Mobil --</option>`;
-        masterKendaraan.forEach(m => { optMobil += `<option value="${m}" ${objDraftAwal.plat_nomor === m ? "selected" : ""}>${m}</option>`; });
+        const shiftAktif = objDraftAwal.shift;
+        let armadaTerpakai = [];
+        let driverTerpakai = [];
+
+        listKirimSementara.forEach(item => {
+            if(item.shift === shiftAktif) {
+                if(item.plat_nomor) armadaTerpakai.push(item.plat_nomor);
+                if(item.driver_1) driverTerpakai.push(item.driver_1);
+                if(item.driver_2) driverTerpakai.push(item.driver_2);
+            }
+        });
+
+        let optMobil = `<option value="">-- Mobil --</option>`;
+        masterKendaraan.forEach(m => {
+            if(!armadaTerpakai.includes(m) || objDraftAwal.plat_nomor === m) {
+                optMobil += `<option value="${m}" ${objDraftAwal.plat_nomor === m ? "selected" : ""}>${m}</option>`;
+            }
+        });
 
         let optDriver1 = `<option value="">-- Driver 1 --</option>`;
         let optDriver2 = `<option value="">-- Driver 2 --</option>`;
         masterKaryawan.forEach(k => {
-            optDriver1 += `<option value="${k}" ${objDraftAwal.driver_1 === k ? "selected" : ""}>${k}</option>`;
-            optDriver2 += `<option value="${k}" ${objDraftAwal.driver_2 === k ? "selected" : ""}>${k}</option>`;
+            if(!driverTerpakai.includes(k) || objDraftAwal.driver_1 === k) {
+                optDriver1 += `<option value="${k}" ${objDraftAwal.driver_1 === k ? "selected" : ""}>${k}</option>`;
+            }
+            if(!driverTerpakai.includes(k) || objDraftAwal.driver_2 === k) {
+                optDriver2 += `<option value="${k}" ${objDraftAwal.driver_2 === k ? "selected" : ""}>${k}</option>`;
+            }
         });
 
         let barisBarang = '';
@@ -260,9 +316,13 @@
                     <span class="status-badge status-draft">${objDraftAwal.is_editing ? '🔄 RE-EDIT DATA' : '📝 ENTRY BARU'}</span>
                 </div>
                 <div class="logistik-grid">
+                    <div>
+                        <label>Tgl Berangkat</label>
+                        <input type="date" value="${objDraftAwal.tanggal_berangkat}" onchange="ubahLogistikDraft('tanggal_berangkat', this.value)">
+                    </div>
                     <div><label>Armada Mobil</label><select onchange="ubahLogistikDraft('plat_nomor', this.value)">${optMobil}</select></div>
                     <div>
-                        <label>Waktu Kirim / Shift</label>
+                        <label>Shift Kirim</label>
                         <select onchange="ubahLogistikDraft('shift', this.value)">
                             <option value="SUBUH" ${objDraftAwal.shift === "SUBUH" ? "selected" : ""}>SUBUH</option>
                             <option value="SIANG" ${objDraftAwal.shift === "SIANG" ? "selected" : ""}>SIANG</option>
@@ -286,7 +346,6 @@
         `;
     }
 
-    // --- TAHAP 2: RENDER LIST KIRIM SEMENTARA (SINKRON HORIZONTAL) ---
     function renderListKirimCompact() {
         const container = document.getElementById('containerListKirim');
         if(listKirimSementara.length === 0) {
@@ -313,7 +372,6 @@
             });
             if(!itemsHTML) itemsHTML = '<div style="color:#e53e3e; font-style:italic;">• Tidak ada muatan</div>';
 
-            // PERUBAHAN DISINI: BADGE SHIFT, EDIT, DAN HAPUS SEJAJAR HORIZONTAL DALAM SATU BARIS CONTAINER
             card.innerHTML = `
                 <div class="card-left-logistik">
                     <div>
@@ -322,6 +380,7 @@
                         <div class="logistik-line">👤 Sopir: <strong>${item.driver_1} / ${item.driver_2}</strong></div>
                     </div>
                     <div class="action-shift-container">
+                        <span class="badge-tgl">📅 ${item.tanggal_berangkat}</span>
                         <span class="badge-shift ${item.shift}">${item.shift}</span>
                         <button type="button" class="btn-comp-edit" onclick="tarikKembaliUntukEdit(${index})">✏️ EDIT</button>
                         <button type="button" class="btn-comp-del" onclick="hapusDariListSementara(${index})">❌ HAPUS</button>
@@ -336,12 +395,8 @@
         });
     }
 
-    // --- TAHAP 3: SAVE MASSAL DATA YANG SIAP KE DATABASE ---
     async function simpanSemuaListKeDatabase() {
         if(listKirimSementara.length === 0) return alert("List Kirim kosong! Tekan 'Masuk List Kirim' di atas terlebih dahulu.");
-        
-        const tglOperasional = document.getElementById('tglKirimGlobal').value;
-        if(!tglOperasional) return alert("Tentukan Tanggal Operasional!");
 
         const btn = document.getElementById('btnSimpanMassal');
         btn.disabled = true; btn.innerText = "SEDANG MEMPROSES FIX DATA...";
@@ -353,7 +408,7 @@
                 const { data: resJadwal, error: errMaster } = await clientSupabase
                     .from('jadwal_kirim')
                     .insert([{
-                        tanggal_kirim: tglOperasional,
+                        tanggal_kirim: data.tanggal_berangkat, 
                         shift: data.shift,
                         nama_agen: data.nama_agen,
                         plat_nomor: data.plat_nomor,
@@ -394,7 +449,6 @@
         }
     }
 
-    // --- LOG HISTORY PENGIRIMAN (JUGA DISINKRONISASI HORIZONTAL SHIFT NYA) ---
     async function muatRiwayatJadwalSelesai() {
         const containerLog = document.getElementById('logJadwalTerkini');
         const tglTerpilih = document.getElementById('tglKirimGlobal').value;
@@ -409,7 +463,7 @@
 
             if(error) throw error;
             if(!listJadwal || listJadwal.length === 0) {
-                containerLog.innerHTML = `<span style="font-size:14px; color:#a0aec0; font-style:italic;">Belum ada history pengiriman terkonfirmasi untuk tanggal ini.</span>`;
+                containerLog.innerHTML = `<span style="font-size:14px; color:#a0aec0; font-style:italic;">Belum ada history pengiriman terkonfirmasi untuk tanggal operasional ini.</span>`;
                 return;
             }
 
@@ -436,8 +490,8 @@
                             <div class="logistik-line">👤 Sopir: <strong>${j.driver}</strong></div>
                         </div>
                         <div class="action-shift-container">
+                            <span class="badge-tgl">📅 ${j.tanggal_kirim}</span>
                             <span class="badge-shift ${j.shift}">${j.shift}</span>
-                            <span style="font-size:12px; color:#cbd5e0; font-weight:bold;">📅 ${j.tanggal_kirim}</span>
                         </div>
                     </div>
                     <div class="card-right-muatan" style="background: #2d3748;">
@@ -450,6 +504,7 @@
         } catch(e) { console.error(e); }
     }
 
+    // Jalankan inisialisasi aplikasi secara aman
     window.onload = initAplikasi;
 </script>
 </body>
