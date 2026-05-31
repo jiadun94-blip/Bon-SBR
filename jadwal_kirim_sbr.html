@@ -11,7 +11,7 @@
     <style>
         :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #121214; }
         body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #fff; font-size: 16px; }
-        .container { background: #1e1e24; padding: 12px; border-radius: 15px; max-width: 900px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+        .container { background: #1e1e24; padding: 12px; border-radius: 15px; max-width: 950px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
         header { margin-bottom: 15px; border-bottom: 3px solid #3182ce; padding-bottom: 8px; }
         header h2 { margin: 0; color: #fff; font-size: 22px; text-transform: uppercase; font-weight: 900; }
         .subtitle { font-size: 12px; color: #a0aec0; font-weight: bold; }
@@ -23,7 +23,7 @@
         .selector-box select { flex: 1; padding: 10px; font-size: 16px; font-weight: 700; border: 2px solid #4a5568; border-radius: 8px; background: #1a202c; color: white; }
 
         .section-label { font-size: 15px; font-weight: 900; padding: 8px; background: #2b6cb0; color: white; border-radius: 6px; margin: 20px 0 8px; text-transform: uppercase; }
-        .section-label.database { background: #27ae60; }
+        .section-label.database { background: #d35400; }
 
         /* CARD INPUT FORM UTAMA (ATAS) */
         .card-jadwal-agen { background: #2d3748; border: 2px solid #4a5568; border-radius: 12px; padding: 12px; margin-bottom: 15px; }
@@ -31,7 +31,6 @@
         .card-title { font-size: 16px; font-weight: 900; color: #63b3ed; }
         .status-badge { font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: 900; text-transform: uppercase; }
         .status-draft { background: #feebc8; color: #c05621; }
-        .status-list { background: #e2e8f0; color: #1a202c; }
 
         /* GRID FORM LOGISTIK */
         .logistik-grid { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 8px; margin-bottom: 12px; background: #1a202c; padding: 10px; border-radius: 8px; border: 1px solid #3182ce; }
@@ -44,24 +43,51 @@
         td { padding: 6px; border-bottom: 1px solid #4a5568; font-size: 15px; font-weight: 700; }
         .input-qty { width: 65px; padding: 5px; border: 2px solid #4a5568; border-radius: 6px; text-align: center; font-weight: 700; font-size: 14px; background: #1a202c; color: white; }
         
-        /* CARD COMPACT RINGKAS (STYLE SEPERTI AREA BAWAH) */
-        .compact-list-card { background: #2d3748; padding: 12px; border-radius: 10px; margin-top: 10px; font-size: 14px; border: 2px solid #4a5568; box-shadow: 0 3px 6px rgba(0,0,0,0.2); }
-        .compact-detail-box { font-size: 13px; color: #cbd5e0; background: #1a202c; padding: 8px; border-radius: 6px; margin-top: 6px; border: 1px solid #4a5568; }
-        .compact-action-bar { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; border-top: 1px dashed #4a5568; padding-top: 10px; }
+        /* ------------------------------------------------------------- */
+        /* LAYOUTING KIRI - KANAN ULTRA COMPACT (SINKRONISASI HORIZONTAL)*/
+        /* ------------------------------------------------------------- */
+        .compact-list-card, .history-card { 
+            background: #2d3748; padding: 12px; border-radius: 10px; margin-top: 8px; font-size: 14px; border: 2px solid #4a5568;
+            display: flex; gap: 15px; align-items: stretch; min-height: 110px;
+        }
+        .history-card { background: #1a202c; border-color: #2d3748; }
 
-        /* BUTTONS ACTIONS STYLE */
+        /* Sisi Kiri: Logistik Info */
+        .card-left-logistik { 
+            flex: 1; display: flex; flex-direction: column; justify-content: space-between; min-width: 250px;
+        }
+        .logistik-line { font-size: 14px; margin-bottom: 4px; line-height: 1.4; }
+
+        /* BARIS BAWAH: BADGE SHIFT & TOMBOL SEJAJAR HORIZONTAL */
+        .action-shift-container { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            margin-top: auto; 
+            padding-top: 8px;
+        }
+
+        /* Sisi Kanan: Detail Muatan Order */
+        .card-right-muatan { 
+            flex: 1.5; background: #121214; padding: 10px; border-radius: 8px; border: 1px solid #4a5568;
+            display: flex; flex-direction: column; min-width: 0;
+        }
+        .muatan-grid-system {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 4px 10px; margin-top: 5px;
+        }
+        .muatan-item-text { font-size: 13px; color: #cbd5e0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* BUTTONS STYLING */
         .btn-action { padding: 10px 16px; border: none; border-radius: 8px; font-weight: 900; cursor: pointer; font-size: 13px; text-transform: uppercase; }
         .btn-add { background: #3182ce; color: white; font-size: 14px; }
         .btn-del-item { background: #742a2a; color: #feb2b2; border: 1px solid #9b2c2c; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-weight: 900; font-size: 12px; }
         
-        .btn-comp-edit { background: #dd6b20; color: white; padding: 6px 14px; border: none; border-radius: 6px; font-weight: 900; font-size: 12px; cursor: pointer; text-transform: uppercase; }
-        .btn-comp-del { background: #e53e3e; color: white; padding: 6px 14px; border: none; border-radius: 6px; font-weight: 900; font-size: 12px; cursor: pointer; text-transform: uppercase; }
+        .btn-comp-edit { background: #dd6b20; color: white; padding: 6px 14px; border: none; border-radius: 6px; font-weight: 900; font-size: 12px; cursor: pointer; text-transform: uppercase; box-shadow: 0 2px 0 #b35415; display: inline-flex; align-items: center; }
+        .btn-comp-del { background: #e53e3e; color: white; padding: 6px 14px; border: none; border-radius: 6px; font-weight: 900; font-size: 12px; cursor: pointer; text-transform: uppercase; box-shadow: 0 2px 0 #b83232; display: inline-flex; align-items: center; }
         .btn-primary-blue { background: #3182ce; color: white; width: 100%; border: none; font-weight: 900; text-transform: uppercase; border-radius: 8px; cursor: pointer; }
         .btn-save-all { background: #27ae60; color: white; width: 100%; padding: 14px; font-size: 16px; border-radius: 10px; font-weight: 900; text-transform: uppercase; margin-top: 15px; border: none; cursor: pointer; box-shadow: 0 4px 0 #1e8449; }
 
-        /* HISTORY LOG PERMANEN */
-        .history-card { background: #1a202c; padding: 10px; border-radius: 10px; margin-top: 8px; font-size: 14px; border: 2px solid #2d3748; }
-        .badge-shift { padding: 2px 6px; border-radius: 4px; color: white; font-size: 11px; font-weight: 900; text-transform: uppercase; }
+        .badge-shift { padding: 4px 8px; border-radius: 5px; color: white; font-size: 12px; font-weight: 900; text-transform: uppercase; display: inline-block; line-height: 1; }
         .SUBUH { background: #e67e22; } .SIANG { background: #3498db; } .MALAM { background: #9b59b6; }
     </style>
 </head>
@@ -83,8 +109,10 @@
         <button type="button" class="btn-action btn-add" onclick="tambahAgenKeDraftAwal()">+ PILIH AGEN</button>
     </div>
 
+    <!-- TAHAP 1: INPUT FORM UTAMA -->
     <div id="containerDraftAwal"></div>
 
+    <!-- TAHAP 2: LIST KIRIM SEMENTARA -->
     <div class="section-label">📋 LIST KIRIM (SUNTING / SIAP FIX MALAM)</div>
     <div id="containerListKirim">
         <div style="text-align:center; color:#a0aec0; font-style:italic; padding:20px; background:#2d3748; border:2px dashed #4a5568; border-radius:12px;">
@@ -92,9 +120,11 @@
         </div>
     </div>
 
+    <!-- TOMBOL EKSEKUSI MASSAL -->
     <button type="button" class="btn-save-all" id="btnSimpanMassal" onclick="simpanSemuaListKeDatabase()">🔒 FIX & KIRIM SEMUA JADWAL AGEN</button>
 
-    <div class="section-label database">✅ JADWAL KIRIM BERHASIL DI-FIX (DATABASE TERKINI)</div>
+    <!-- TAHAP 3: HISTORY PENGIRIMAN READ-ONLY -->
+    <div class="section-label database">📜 HISTORY PENGIRIMAN (SUDAH FIX)</div>
     <div id="logJadwalTerkini"></div>
 </div>
 
@@ -135,13 +165,13 @@
             const { data: mobil } = await clientSupabase.from('kendaraan').select('*');
             if(mobil) masterKendaraan = mobil.map(m => m.plat_nomor);
 
-            muatRiwayatJadwalSelesai();
             renderDraftAwal();
             renderListKirimCompact();
+            muatRiwayatJadwalSelesai();
         } catch(e) { console.error(e); }
     }
 
-    // --- LOGIKA TAHAP 1: FORM INPUT DRAFT UTAMA ---
+    // --- LOGIKA FORM INPUT UTAMA ---
     function tambahAgenKeDraftAwal() {
         const ag = document.getElementById('dropdownPilihAgen').value;
         if(!ag) return alert("Silakan pilih nama Agen terlebih dahulu!");
@@ -166,7 +196,6 @@
 
     function masukkanKeListKirimTengah() {
         if(!objDraftAwal) return;
-        
         if(!objDraftAwal.plat_nomor) return alert("Harap pilih Armada Mobil terlebih dahulu!");
         if(!objDraftAwal.driver_1 || !objDraftAwal.driver_2) return alert("Harap lengkapi Driver Couple!");
 
@@ -177,29 +206,14 @@
         renderListKirimCompact();
     }
 
-    function ubahLogistikDraft(properti, nilai) {
-        if(objDraftAwal) objDraftAwal[properti] = nilai;
-    }
+    function ubahLogistikDraft(properti, nilai) { if(objDraftAwal) objDraftAwal[properti] = nilai; }
+    function ubahQtyDraft(idxB, kolom, nilai) { if(objDraftAwal) objDraftAwal.barang[idxB][kolom] = parseInt(nilai) || 0; }
+    function hapusItemBarangDraft(idxB) { if(objDraftAwal) { objDraftAwal.barang.splice(idxB, 1); renderDraftAwal(); } }
 
-    function ubahQtyDraft(idxB, kolom, nilai) {
-        if(objDraftAwal) objDraftAwal.barang[idxB][kolom] = parseInt(nilai) || 0;
-    }
-
-    function hapusItemBarangDraft(idxB) {
-        if(objDraftAwal) {
-            objDraftAwal.barang.splice(idxB, 1);
-            renderDraftAwal();
-        }
-    }
-
-    // --- LOGIKA TAHAP 2: EDIT & HAPUS DI LIST SEMENTARA (KARTU COMPACT) ---
     function tarikKembaliUntukEdit(index) {
-        // Ambil dari list ringkas, oper balik ke form besar di atas
         objDraftAwal = JSON.parse(JSON.stringify(listKirimSementara[index]));
         objDraftAwal.is_editing = true;
-        
         listKirimSementara.splice(index, 1); 
-        
         renderDraftAwal();
         renderListKirimCompact();
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -212,18 +226,13 @@
         }
     }
 
-    // --- RENDERING MANAGEMENT ---
+    // --- RENDERING TAHAP 1 FORM UTAMA ---
     function renderDraftAwal() {
         const container = document.getElementById('containerDraftAwal');
-        if(!objDraftAwal) {
-            container.innerHTML = '';
-            return;
-        }
+        if(!objDraftAwal) { container.innerHTML = ''; return; }
 
         let optMobil = `<option value="">-- Pilih Mobil --</option>`;
-        masterKendaraan.forEach(m => {
-            optMobil += `<option value="${m}" ${objDraftAwal.plat_nomor === m ? "selected" : ""}>${m}</option>`;
-        });
+        masterKendaraan.forEach(m => { optMobil += `<option value="${m}" ${objDraftAwal.plat_nomor === m ? "selected" : ""}>${m}</option>`; });
 
         let optDriver1 = `<option value="">-- Driver 1 --</option>`;
         let optDriver2 = `<option value="">-- Driver 2 --</option>`;
@@ -251,10 +260,7 @@
                     <span class="status-badge status-draft">${objDraftAwal.is_editing ? '🔄 RE-EDIT DATA' : '📝 ENTRY BARU'}</span>
                 </div>
                 <div class="logistik-grid">
-                    <div>
-                        <label>Armada Mobil</label>
-                        <select onchange="ubahLogistikDraft('plat_nomor', this.value)">${optMobil}</select>
-                    </div>
+                    <div><label>Armada Mobil</label><select onchange="ubahLogistikDraft('plat_nomor', this.value)">${optMobil}</select></div>
                     <div>
                         <label>Waktu Kirim / Shift</label>
                         <select onchange="ubahLogistikDraft('shift', this.value)">
@@ -272,9 +278,7 @@
                     </div>
                 </div>
                 <table>
-                    <thead>
-                        <tr><th style="width:40px; text-align:center;">HAPUS</th><th>NAMA ITEM</th><th>EST. ORDER</th><th>PEMENUHAN</th></tr>
-                    </thead>
+                    <thead><tr><th style="width:40px; text-align:center;">HAPUS</th><th>NAMA ITEM</th><th>EST. ORDER</th><th>PEMENUHAN</th></tr></thead>
                     <tbody>${barisBarang}</tbody>
                 </table>
                 <button type="button" class="btn-primary-blue" style="margin-top:12px; padding:12px;" onclick="masukkanKeListKirimTengah()">➡️ MASUK LIST KIRIM (ANTREAN SEMENTARA)</button>
@@ -282,7 +286,7 @@
         `;
     }
 
-    // --- RENDER COMPACT LIST (MIRIP KLONINGAN LAYOUT ARMIND DI SCREENSHOT) ---
+    // --- TAHAP 2: RENDER LIST KIRIM SEMENTARA (SINKRON HORIZONTAL) ---
     function renderListKirimCompact() {
         const container = document.getElementById('containerListKirim');
         if(listKirimSementara.length === 0) {
@@ -298,36 +302,41 @@
             const card = document.createElement('div');
             card.className = 'compact-list-card';
 
-            let stringMuatan = '';
+            let itemsHTML = '';
             item.barang.forEach(b => {
                 if(b.qty_order > 0 || b.qty_real > 0) {
-                    stringMuatan += `<br>• ${b.nama_barang} (Order: ${b.qty_order} | Real: <strong style="color:#27ae60;">${b.qty_real}</strong>)`;
+                    itemsHTML += `
+                        <div class="muatan-item-text">
+                            • ${b.nama_barang} (Ord: ${b.qty_order} | <span style="color:#27ae60; font-weight:bold;">Rl: ${b.qty_real}</span>)
+                        </div>`;
                 }
             });
-            if(!stringMuatan) stringMuatan = '<br>• <span style="color:#e53e3e; font-style:italic;">Tidak ada muatan barang</span>';
+            if(!itemsHTML) itemsHTML = '<div style="color:#e53e3e; font-style:italic;">• Tidak ada muatan</div>';
 
+            // PERUBAHAN DISINI: BADGE SHIFT, EDIT, DAN HAPUS SEJAJAR HORIZONTAL DALAM SATU BARIS CONTAINER
             card.innerHTML = `
-                <div style="display:flex; justify-content:space-between; font-weight:900;">
-                    <span>🏢 LIST PLAN: <strong style="color:#63b3ed;">${item.nama_agen.toUpperCase()}</strong></span>
-                    <span class="badge-shift ${item.shift}">${item.shift}</span>
-                </div>
-                <div style="margin-top:5px; line-height: 1.5;">
-                    Armada: <strong>${item.plat_nomor}</strong> — Driver: <strong>${item.driver_1} / ${item.driver_2}</strong>
-                    <div class="compact-detail-box">
-                        <strong>Detail Rencana Muatan:</strong>${stringMuatan}
+                <div class="card-left-logistik">
+                    <div>
+                        <div class="logistik-line">🏢 Agen: <strong style="color:#63b3ed; font-size:16px;">${item.nama_agen.toUpperCase()}</strong></div>
+                        <div class="logistik-line">🚚 Mobil: <strong>${item.plat_nomor}</strong></div>
+                        <div class="logistik-line">👤 Sopir: <strong>${item.driver_1} / ${item.driver_2}</strong></div>
+                    </div>
+                    <div class="action-shift-container">
+                        <span class="badge-shift ${item.shift}">${item.shift}</span>
+                        <button type="button" class="btn-comp-edit" onclick="tarikKembaliUntukEdit(${index})">✏️ EDIT</button>
+                        <button type="button" class="btn-comp-del" onclick="hapusDariListSementara(${index})">❌ HAPUS</button>
                     </div>
                 </div>
-                
-                <div class="compact-action-bar">
-                    <button type="button" class="btn-comp-edit" onclick="tarikKembaliUntukEdit(${index})">✏️ EDIT</button>
-                    <button type="button" class="btn-comp-del" onclick="hapusDariListSementara(${index})">❌ HAPUS</button>
+                <div class="card-right-muatan">
+                    <div style="font-weight:bold; font-size:11px; color:#a0aec0; text-transform:uppercase; border-bottom:1px solid #2d3748; padding-bottom:2px;">Rencana Muatan Barang:</div>
+                    <div class="muatan-grid-system">${itemsHTML}</div>
                 </div>
             `;
             container.appendChild(card);
         });
     }
 
-    // --- TAHAP 3: SIMPAN MASSAL DATA YANG SIAP KE DATABASE ---
+    // --- TAHAP 3: SAVE MASSAL DATA YANG SIAP KE DATABASE ---
     async function simpanSemuaListKeDatabase() {
         if(listKirimSementara.length === 0) return alert("List Kirim kosong! Tekan 'Masuk List Kirim' di atas terlebih dahulu.");
         
@@ -385,6 +394,7 @@
         }
     }
 
+    // --- LOG HISTORY PENGIRIMAN (JUGA DISINKRONISASI HORIZONTAL SHIFT NYA) ---
     async function muatRiwayatJadwalSelesai() {
         const containerLog = document.getElementById('logJadwalTerkini');
         const tglTerpilih = document.getElementById('tglKirimGlobal').value;
@@ -399,7 +409,7 @@
 
             if(error) throw error;
             if(!listJadwal || listJadwal.length === 0) {
-                containerLog.innerHTML = `<span style="font-size:14px; color:#a0aec0; font-style:italic;">Belum ada data fix di database untuk tanggal ini.</span>`;
+                containerLog.innerHTML = `<span style="font-size:14px; color:#a0aec0; font-style:italic;">Belum ada history pengiriman terkonfirmasi untuk tanggal ini.</span>`;
                 return;
             }
 
@@ -407,23 +417,32 @@
             listJadwal.forEach(j => {
                 const div = document.createElement('div');
                 div.className = 'history-card';
-                let textProduk = '';
+                
+                let itemsHTML = '';
                 if(j.jadwal_kirim_detail) {
                     j.jadwal_kirim_detail.forEach(det => {
-                        textProduk += `<br>• ${det.nama_barang} (Order: ${det.qty_order} | Real: <strong>${det.qty_real}</strong>)`;
+                        itemsHTML += `
+                            <div class="muatan-item-text">
+                                • ${det.nama_barang} (Ord: ${det.qty_order} | <strong>Rl: ${det.qty_real}</strong>)
+                            </div>`;
                     });
                 }
+
                 div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; font-weight:900;">
-                        <span>📅 TANGGAL: ${j.tanggal_kirim}</span>
-                        <span class="badge-shift ${j.shift}">${j.shift}</span>
-                    </div>
-                    <div style="margin-top:5px;">
-                        Tujuan Agen: <strong style="color:#27ae60;">${j.nama_agen.toUpperCase()}</strong><br>
-                        Armada: <strong>${j.plat_nomor}</strong> — Driver: <strong>${j.driver}</strong>
-                        <div class="compact-detail-box" style="background:#2d3748;">
-                            <strong>Detail Muatan:</strong>${textProduk}
+                    <div class="card-left-logistik">
+                        <div>
+                            <div class="logistik-line">🏢 Agen: <strong style="color:#27ae60; font-size:16px;">${j.nama_agen.toUpperCase()}</strong></div>
+                            <div class="logistik-line">🚚 Mobil: <strong>${j.plat_nomor}</strong></div>
+                            <div class="logistik-line">👤 Sopir: <strong>${j.driver}</strong></div>
                         </div>
+                        <div class="action-shift-container">
+                            <span class="badge-shift ${j.shift}">${j.shift}</span>
+                            <span style="font-size:12px; color:#cbd5e0; font-weight:bold;">📅 ${j.tanggal_kirim}</span>
+                        </div>
+                    </div>
+                    <div class="card-right-muatan" style="background: #2d3748;">
+                        <div style="font-weight:bold; font-size:11px; color:#cbd5e0; text-transform:uppercase; border-bottom:1px solid #4a5568; padding-bottom:2px;">Muatan Terkirim:</div>
+                        <div class="muatan-grid-system">${itemsHTML}</div>
                     </div>
                 `;
                 containerLog.appendChild(div);
