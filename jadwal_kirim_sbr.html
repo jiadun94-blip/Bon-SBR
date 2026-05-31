@@ -126,7 +126,6 @@
     const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     
-    // Perbaikan inisialisasi client Supabase v2 yang benar untuk browser global
     const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let masterDaftarBarangAgen = {}; 
@@ -139,6 +138,17 @@
     async function initAplikasi() {
         document.getElementById('tglKirimGlobal').valueAsDate = new Date();
         const dropdownAgen = document.getElementById('dropdownPilihAgen');
+
+        // Ambil data Cadangan Antrean Sementara dari LocalStorage (jika ada)
+        const simpananLokal = localStorage.getItem('sbr_list_kirim_sementara');
+        if(simpananLokal) {
+            try { listKirimSementara = JSON.parse(simpananLokal); } catch(e) { listKirimSementara = []; }
+        }
+
+        const draftLokal = localStorage.getItem('sbr_obj_draft_awal');
+        if(draftLokal) {
+            try { objDraftAwal = JSON.parse(draftLokal); } catch(e) { objDraftAwal = null; }
+        }
 
         // 1. Ambil Data Agen
         try {
@@ -191,6 +201,12 @@
         muatRiwayatJadwalSelesai();
     }
 
+    // Fungsi bantu untuk simpan cadangan otomatis ke LocalStorage browser
+    function simpanKePenyimpananLokal() {
+        localStorage.setItem('sbr_list_kirim_sementara', JSON.stringify(listKirimSementara));
+        localStorage.setItem('sbr_obj_draft_awal', JSON.stringify(objDraftAwal));
+    }
+
     // --- LOGIKA FORM INPUT UTAMA ---
     function tambahAgenKeDraftAwal() {
         const ag = document.getElementById('dropdownPilihAgen').value;
@@ -214,6 +230,7 @@
             barang: listBarangMaster.map(b => ({ nama_barang: b, qty_order: 0, qty_real: 0 }))
         };
 
+        simpanKePenyimpananLokal();
         renderDraftAwal();
     }
 
@@ -227,6 +244,7 @@
         listKirimSementara.push(JSON.parse(JSON.stringify(objDraftAwal)));
         objDraftAwal = null; 
         
+        simpanKePenyimpananLokal();
         renderDraftAwal();
         renderListKirimCompact();
     }
@@ -238,18 +256,32 @@
                 objDraftAwal.plat_nomor = "";
                 objDraftAwal.driver_1 = "";
                 objDraftAwal.driver_2 = "";
-                renderDraftAwal(); 
             }
+            simpanKePenyimpananLokal();
+            if(properti === 'shift') renderDraftAwal(); 
         } 
     }
     
-    function ubahQtyDraft(idxB, kolom, nilai) { if(objDraftAwal) objDraftAwal.barang[idxB][kolom] = parseInt(nilai) || 0; }
-    function hapusItemBarangDraft(idxB) { if(objDraftAwal) { objDraftAwal.barang.splice(idxB, 1); renderDraftAwal(); } }
+    function ubahQtyDraft(idxB, kolom, nilai) { 
+        if(objDraftAwal) {
+            objDraftAwal.barang[idxB][kolom] = parseInt(nilai) || 0; 
+            simpanKePenyimpananLokal();
+        }
+    }
+
+    function hapusItemBarangDraft(idxB) { 
+        if(objDraftAwal) { 
+            objDraftAwal.barang.splice(idxB, 1); 
+            simpanKePenyimpananLokal();
+            renderDraftAwal(); 
+        } 
+    }
 
     function tarikKembaliUntukEdit(index) {
         objDraftAwal = JSON.parse(JSON.stringify(listKirimSementara[index]));
         objDraftAwal.is_editing = true;
         listKirimSementara.splice(index, 1); 
+        simpanKePenyimpananLokal();
         renderDraftAwal();
         renderListKirimCompact();
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -258,6 +290,7 @@
     function hapusDariListSementara(index) {
         if(confirm(`Hapus agen ${listKirimSementara[index].nama_agen.toUpperCase()} dari list kirim sementara?`)) {
             listKirimSementara.splice(index, 1);
+            simpanKePenyimpananLokal();
             renderListKirimCompact();
             if(objDraftAwal) renderDraftAwal();
         }
@@ -438,7 +471,15 @@
             }
 
             alert("✅ FIX BERHASIL: Semua jadwal di Antrean List Kirim telah aman masuk ke database!");
+            
+            // Bersihkan antrean lokal karena data sudah resmi masuk Supabase
             listKirimSementara = []; 
+            objDraftAwal = null;
+            localStorage.removeItem('sbr_list_kirim_temp');
+            localStorage.removeItem('sbr_list_kirim_sementara');
+            localStorage.removeItem('sbr_obj_draft_awal');
+            
+            renderDraftAwal();
             renderListKirimCompact();
             muatRiwayatJadwalSelesai();
 
@@ -504,7 +545,6 @@
         } catch(e) { console.error(e); }
     }
 
-    // Jalankan inisialisasi aplikasi secara aman
     window.onload = initAplikasi;
 </script>
 </body>
