@@ -16,86 +16,104 @@
         header h2 { margin: 0; color: #fff; font-size: 22px; text-transform: uppercase; font-weight: 900; }
         .subtitle { font-size: 12px; color: #a0aec0; font-weight: bold; }
 
-        .global-filter { background: #2d3748; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-weight: 900; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
-        .global-filter input { padding: 10px; border-radius: 6px; border: 2px solid #4a5568; font-size: 16px; font-weight: 700; width: 180px; background: #1a202c; color: white; }
+        /* BARU: LAYOUT ATAS DIPASANG BERSEBELAHAN KANAN KIRI */
+        .top-control-wrapper {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: stretch;
+        }
+        
+        /* Panel Kontrol Input Kiri */
+        .left-control-panel {
+            flex: 45;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #1a202c;
+            padding: 12px;
+            border-radius: 12px;
+            border: 2px solid #2d3748;
+            justify-content: center;
+        }
+        .control-group { display: flex; flex-direction: column; gap: 4px; }
+        .control-group label { font-size: 11px; font-weight: 900; color: #cbd5e0; text-transform: uppercase; }
+        .control-group input[type="date"] { padding: 10px; border-radius: 6px; border: 2px solid #4a5568; font-size: 16px; font-weight: 700; background: #2d3748; color: white; width: 100%; box-sizing: border-box; }
+        
+        .selector-row { display: flex; gap: 8px; width: 100%; align-items: center; }
+        .selector-row select { flex: 1; padding: 10px; font-size: 15px; font-weight: 700; border: 2px solid #4a5568; border-radius: 8px; background: #2d3748; color: white; }
 
-        .selector-box { display: flex; gap: 8px; background: #2d3748; padding: 10px; border-radius: 10px; margin-bottom: 15px; align-items: center; }
-        .selector-box select { flex: 1; padding: 10px; font-size: 16px; font-weight: 700; border: 2px solid #4a5568; border-radius: 8px; background: #1a202c; color: white; }
+        /* Panel Ringkasan Total Kanan */
+        .right-summary-panel {
+            flex: 55;
+            background: #2d3748;
+            border: 2px solid #3182ce;
+            border-radius: 12px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+        .summary-header {
+            font-size: 12px;
+            font-weight: 900;
+            color: #63b3ed;
+            text-transform: uppercase;
+            border-bottom: 2px solid #4a5568;
+            padding-bottom: 5px;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
 
-        .section-label { font-size: 15px; font-weight: 900; padding: 8px; background: #2b6cb0; color: white; border-radius: 6px; margin: 20px 0 8px; text-transform: uppercase; }
+        .section-label { font-size: 15px; font-weight: 900; padding: 8px; background: #2b6cb0; color: white; border-radius: 6px; margin: 15px 0 8px; text-transform: uppercase; }
         .section-label.database { background: #d35400; }
 
-        /* CARD INPUT FORM UTAMA (ATAS) */
+        /* CARD INPUT FORM UTAMA */
         .card-jadwal-agen { background: #2d3748; border: 2px solid #4a5568; border-radius: 12px; padding: 12px; margin-bottom: 15px; }
         .card-header-agen { display: flex; justify-content: space-between; align-items: center; background: #1a202c; padding: 10px; border-radius: 8px; border-bottom: 2px solid #4a5568; margin-bottom: 10px; }
         .card-title { font-size: 16px; font-weight: 900; color: #63b3ed; }
         .status-badge { font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: 900; text-transform: uppercase; }
         .status-draft { background: #feebc8; color: #c05621; }
 
-        /* TABLE FORM BARANG INPUT UTAMA */
+        /* TABLE UTAMA & GLOBAL RINGKASAN */
         table.table-input { width: 100%; border-collapse: collapse; margin: 5px 0; }
         table.table-input th { font-size: 12px; text-align: left; padding: 6px; background: #1a202c; border-bottom: 2px solid #4a5568; font-weight: 900; color: #cbd5e0; }
         table.table-input td { padding: 6px; border-bottom: 1px solid #4a5568; font-size: 15px; font-weight: 700; }
         .input-qty { width: 65px; padding: 5px; border: 2px solid #4a5568; border-radius: 6px; text-align: center; font-weight: 700; font-size: 14px; background: #1a202c; color: white; }
         
-        /* LAYOUTING UTAMA KANAN-KIRI */
+        /* LAYOUTING UTAMA KANAN-KIRI LIST ANTREAN */
         .compact-list-card, .history-card { 
             background: #2d3748; padding: 12px; border-radius: 10px; margin-top: 10px; font-size: 14px; border: 2px solid #4a5568;
             display: flex; flex-direction: column; gap: 8px;
         }
         .history-card { background: #1a202c; border-color: #2d3748; }
-
         .card-top-info { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 6px; }
         
-        /* PROPORSIONAL LAYOUT */
         .card-main-content { display: flex; gap: 12px; align-items: stretch; }
         .card-left-inputs { flex: 65; min-width: 0; }
         .card-right-muatan { flex: 35; background: #121214; padding: 8px; border-radius: 8px; border: 1px solid #4a5568; min-width: 0; display: flex; flex-direction: column; }
 
         /* GRID LOGISTIK */
-        .logistik-grid { 
-            display: grid; 
-            grid-template-rows: auto auto; 
-            gap: 10px; 
-            background: #1a202c; 
-            padding: 10px; 
-            border-radius: 8px; 
-            border: 1px solid #3182ce; 
-        }
-        .grid-row { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 10px; 
-        }
-        .logistik-grid select, .logistik-grid input[type="date"] { 
-            width: 100%; 
-            padding: 8px 6px; 
-            font-size: 13px; 
-            font-weight: 700; 
-            border: 2px solid #4a5568; 
-            border-radius: 6px; 
-            background: #2d3748; 
-            color: white; 
-            box-sizing: border-box; 
-        }
+        .logistik-grid { display: grid; grid-template-rows: auto auto; gap: 10px; background: #1a202c; padding: 10px; border-radius: 8px; border: 1px solid #3182ce; }
+        .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .logistik-grid select, .logistik-grid input[type="date"] { width: 100%; padding: 8px 6px; font-size: 13px; font-weight: 700; border: 2px solid #4a5568; border-radius: 6px; background: #2d3748; color: white; box-sizing: border-box; }
         .logistik-grid label { font-size: 11px; font-weight: 900; color: #cbd5e0; display: block; margin-bottom: 4px; text-transform: uppercase; }
 
-        /* TABEL RINGKAS UNTUK RENCANA MUATAN BARANG */
-        .table-muatan { width: 100%; border-collapse: collapse; margin-top: 4px; }
-        .table-muatan th { background: #1a202c; color: #a0aec0; font-size: 11px; font-weight: 900; padding: 6px 5px; border-bottom: 1px solid #4a5568; text-transform: uppercase; }
-        .table-muatan td { padding: 6px 5px; border-bottom: 1px solid #2d3748; font-size: 12px; color: #cbd5e0; font-weight: 700; }
-        .table-muatan td.num-col { text-align: center; width: 50px; font-size: 13px; }
+        /* TABEL RINGKAS */
+        .table-muatan { width: 100%; border-collapse: collapse; }
+        .table-muatan th { background: #1a202c; color: #a0aec0; font-size: 11px; font-weight: 900; padding: 5px; border-bottom: 1px solid #4a5568; text-transform: uppercase; }
+        .table-muatan td { padding: 5px; border-bottom: 1px solid #2d3748; font-size: 12px; color: #cbd5e0; font-weight: 700; }
+        .table-muatan td.num-col { text-align: center; width: 60px; font-size: 13px; }
 
         /* BUTTONS STYLING */
         .btn-action { padding: 10px 16px; border: none; border-radius: 8px; font-weight: 900; cursor: pointer; font-size: 13px; text-transform: uppercase; }
-        .btn-add { background: #3182ce; color: white; font-size: 14px; }
+        .btn-add { background: #3182ce; color: white; font-size: 14px; white-space: nowrap; }
         .btn-del-item { background: #742a2a; color: #feb2b2; border: 1px solid #9b2c2c; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-weight: 900; font-size: 12px; }
         
         .btn-comp-edit { background: #dd6b20; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-weight: 900; font-size: 11px; cursor: pointer; text-transform: uppercase; box-shadow: 0 2px 0 #b35415; display: inline-flex; align-items: center; }
         .btn-comp-del { background: #e53e3e; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-weight: 900; font-size: 11px; cursor: pointer; text-transform: uppercase; box-shadow: 0 2px 0 #b83232; display: inline-flex; align-items: center; }
         .btn-primary-blue { background: #3182ce; color: white; width: 100%; border: none; font-weight: 900; text-transform: uppercase; border-radius: 8px; cursor: pointer; }
         
-        /* STYLING BARU UNTUK TOMBOL SIMPAN PER CARD */
         .btn-card-save { background: #27ae60; color: white; width: 100%; padding: 10px; font-size: 14px; border-radius: 8px; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer; box-shadow: 0 3px 0 #1e8449; margin-top: 8px; }
         .btn-card-save:disabled { background: #718096; box-shadow: none; cursor: not-allowed; }
 
@@ -113,18 +131,53 @@
         <div class="subtitle">MATRIKS PLANNING & PENYUSUNAN JADWAL KIRIM AGEN</div>
     </header>
 
-    <div class="global-filter">
-        <div>
-            <label style="margin-right: 10px; display:block; font-size:12px; color:#cbd5e0; margin-bottom:4px;">📅 TANGGAL OPERASIONAL JALAN :</label>
-            <input type="date" id="tglKirimGlobal" onchange="sinkronisasiTanggalGlobal()">
+    <!-- CONTAINER ATAS BARU: KIRI INPUT, KANAN TABEL RINGKASAN TOTAL -->
+    <div class="top-control-wrapper">
+        
+        <!-- SISI KIRI: INPUT KONTROL -->
+        <div class="left-control-panel">
+            <div class="control-group">
+                <label>📅 Tanggal Operasional Jalan :</label>
+                <input type="date" id="tglKirimGlobal" onchange="sinkronisasiTanggalGlobal()">
+            </div>
+            
+            <div class="control-group" style="margin-top: 5px;">
+                <label>🏢 Pilih Agen Untuk Dijadwalkan :</label>
+                <div class="selector-row">
+                    <select id="dropdownPilihAgen">
+                        <option value="">-- Sedang memuat daftar agen... --</option>
+                    </select>
+                    <button type="button" class="btn-action btn-add" onclick="tambahAgenKeDraftAwal()">+ PILIH AGEN</button>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <div class="selector-box">
-        <select id="dropdownPilihAgen">
-            <option value="">-- Sedang memuat daftar agen... --</option>
-        </select>
-        <button type="button" class="btn-action btn-add" onclick="tambahAgenKeDraftAwal()">+ PILIH AGEN</button>
+        <!-- SISI KANAN: TABEL REKAPITULASI TOTAL GLOBAL ANTRIAN -->
+        <div class="right-summary-panel">
+            <div class="summary-header">
+                <span>📊 TOTAL KEBUTUHAN BARANG (LIST ANTREAN)</span>
+                <span id="textJumlahAgenAntrean" style="color:#fff;">0 Agen Terdaftar</span>
+            </div>
+            <div style="flex: 1; overflow-y: auto; max-height: 125px;">
+                <table class="table-muatan" id="tableGlobalSummary">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left;">Nama Item Barang</th>
+                            <th style="width: 80px; text-align: center;">Total Order</th>
+                            <th style="width: 80px; text-align: center;">Total Pemen.</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyGlobalSummary">
+                        <tr>
+                            <td colspan="3" style="text-align: center; color: #a0aec0; font-style: italic; padding-top: 20px;">
+                                List antrean kosong.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 
     <div id="containerDraftAwal"></div>
@@ -204,7 +257,7 @@
             if (karyawan) masterKaryawan = karyawan.map(k => k.nama_karyawan).filter(Boolean).sort();
         } catch(e) { console.error(e); }
 
-        // 4. Ambil Data Kendaraan Bersih
+        // 4. Ambil Data Kendaraan Clean
         try {
             const { data: mobil } = await clientSupabase.from('kendaraan').select('*');
             if (mobil) {
@@ -219,6 +272,7 @@
 
         renderDraftAwal();
         renderListKirimCompact();
+        hitungTotalKebutuhanGlobal();
         muatRiwayatJadwalSelesai();
     }
 
@@ -272,6 +326,7 @@
         simpanKePenyimpananLokal();
         renderDraftAwal();
         renderListKirimCompact();
+        hitungTotalKebutuhanGlobal();
     }
 
     function ubahQtyDraft(idxB, kolom, nilai) { 
@@ -301,6 +356,7 @@
         simpanKePenyimpananLokal();
         renderDraftAwal();
         renderListKirimCompact();
+        hitungTotalKebutuhanGlobal();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -309,7 +365,64 @@
             listKirimSementara.splice(index, 1);
             simpanKePenyimpananLokal();
             renderListKirimCompact();
+            hitungTotalKebutuhanGlobal();
         }
+    }
+
+    // FUNGSI BARU: MENGHITUNG DAN MENAMPILKAN TOTAL AKUMULASI BARANG DI PANEL ATAS KANAN
+    function hitungTotalKebutuhanGlobal() {
+        const bodySummary = document.getElementById('bodyGlobalSummary');
+        const textJumlahAgen = document.getElementById('textJumlahAgenAntrean');
+        
+        textJumlahAgen.innerText = `${listKirimSementara.length} Agen Terdaftar`;
+
+        if(listKirimSementara.length === 0) {
+            bodySummary.innerHTML = `
+                <tr>
+                    <td colspan="3" style="text-align: center; color: #a0aec0; font-style: italic; padding-top: 20px;">
+                        List antrean kosong.
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        let rekapBarang = {}; // Format: { "Nama Barang": { order: X, real: Y } }
+
+        listKirimSementara.forEach(agen => {
+            agen.barang.forEach(b => {
+                if(b.qty_order > 0 || b.qty_real > 0) {
+                    if(!rekapBarang[b.nama_barang]) {
+                        rekapBarang[b.nama_barang] = { order: 0, real: 0 };
+                    }
+                    rekapBarang[b.nama_barang].order += b.qty_order;
+                    rekapBarang[b.nama_barang].real += b.qty_real;
+                }
+            });
+        });
+
+        let namaKunciBarang = Object.keys(rekapBarang).sort();
+        if(namaKunciBarang.length === 0) {
+            bodySummary.innerHTML = `
+                <tr>
+                    <td colspan="3" style="text-align: center; color: #e53e3e; font-style: italic; padding-top: 20px;">
+                        Belum ada kuantiti barang diinput di antrean.
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        let htmlRows = '';
+        namaKunciBarang.forEach(namaBarang => {
+            let dataTot = rekapBarang[namaBarang];
+            htmlRows += `
+                <tr>
+                    <td style="color:#fff;">• <strong>${namaBarang}</strong></td>
+                    <td style="text-align:center; color:#63b3ed; font-size:14px;">${dataTot.order}</td>
+                    <td style="text-align:center; color:#27ae60; font-size:14px; font-weight:bold;">${dataTot.real}</td>
+                </tr>`;
+        });
+
+        bodySummary.innerHTML = htmlRows;
     }
 
     function renderDraftAwal() {
@@ -402,8 +515,8 @@
                     <div style="display:flex; gap:6px; align-items:center;">
                         <span class="badge-tgl">📅 ${item.tanggal_berangkat}</span>
                         <span class="badge-shift ${item.shift}">${item.shift}</span>
-                        <button type="button" class="btn-comp-edit" onclick="tarikKembaliUntukEdit(${index})">✏️ EDIT </button>
-                        <button type="button" class="btn-comp-del" onclick="hapusDariListSementara(${index})">❌ HAPUS <button>
+                        <button type="button" class="btn-comp-edit" onclick="tarikKembaliUntukEdit(${index})">✏️ EDIT BARANG</button>
+                        <button type="button" class="btn-comp-del" onclick="hapusDariListSementara(${index})">❌ HAPUS AGEN</button>
                     </div>
                 </div>
                 
@@ -509,14 +622,12 @@
         renderListKirimCompact();
     }
 
-    // FUNGSI BARU: Simpan data per satu Card Agen pilihan
     async function simpanSatuAgenKeDatabase(index) {
         let data = listKirimSementara[index];
         if(!data) return;
 
         let namaAg = data.nama_agen.toUpperCase();
 
-        // Validasi Kelengkapan Data Sebelum Kirim
         if(!data.tanggal_berangkat) return alert(`[Validasi Gagal] Tanggal berangkat untuk Agen ${namaAg} kosong!`);
         if(!data.plat_nomor) return alert(`[Validasi Gagal] Armada Mobil untuk Agen ${namaAg} belum dipilih!`);
         if(!data.driver_1 || !data.driver_2) return alert(`[Validasi Gagal] Driver Couple untuk Agen ${namaAg} belum lengkap!`);
@@ -531,7 +642,6 @@
         try {
             const coupleDriver = `${data.driver_1} / ${data.driver_2}`;
 
-            // 1. Insert ke tabel Master (jadwal_kirim)
             const { data: resJadwal, error: errMaster } = await clientSupabase
                 .from('jadwal_kirim')
                 .insert([{
@@ -546,7 +656,6 @@
             if(errMaster) throw errMaster;
             const idJadwal = resJadwal[0].id_jadwal;
 
-            // 2. Siapkan data detail barang
             let detailInserts = [];
             data.barang.forEach(b => {
                 if(b.qty_order > 0 || b.qty_real > 0) {
@@ -559,7 +668,6 @@
                 }
             });
 
-            // 3. Insert ke tabel Detail jika ada barangnya
             if(detailInserts.length > 0) {
                 const { error: errDetail } = await clientSupabase.from('jadwal_kirim_detail').insert(detailInserts);
                 if(errDetail) throw errDetail;
@@ -567,12 +675,12 @@
 
             alert(`✅ FIX BERHASIL: Jadwal untuk agen ${namaAg} aman masuk ke database!`);
             
-            // Hapus hanya agen ini dari list sementara
             listKirimSementara.splice(index, 1);
             simpanKePenyimpananLokal();
             
             renderDraftAwal();
             renderListKirimCompact();
+            hitungTotalKebutuhanGlobal();
             muatRiwayatJadwalSelesai();
 
         } catch(e) {
