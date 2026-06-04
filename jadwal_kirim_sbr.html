@@ -140,7 +140,6 @@
 </div>
 
 <script>
-    // Memperbaiki kembali string Key Supabase asli yang terputus / ter-typo sebelumnya
     const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     
@@ -167,29 +166,29 @@
             try { objDraftAwal = JSON.parse(draftLokal); } catch(e) { objDraftAwal = null; }
         }
 
-        // 1. Ambil Data Agen
+        // 1. Ambil Data Agen (Amankan dengan try-catch terisolasi)
         try {
             const { data: agen, error: errAgen } = await clientSupabase.from('agen').select('*').order('nama_agen', { ascending: true });
-            if (errAgen) throw errAgen;
-            
-            if (agen && agen.length > 0) {
+            if (errAgen) {
+                console.error("Error dari database agen:", errAgen.message);
+                dropdownAgen.innerHTML = '<option value="">❌ Gagal memuat agen dari database</option>';
+            } else if (agen && agen.length > 0) {
                 dropdownAgen.innerHTML = '<option value="">-- Pilih Agen Untuk Dijadwalkan --</option>';
                 agen.forEach(a => {
                     if(a.nama_agen) dropdownAgen.options.add(new Option(a.nama_agen, a.nama_agen));
                 });
             } else {
-                dropdownAgen.innerHTML = '<option value="">❌ Tidak ada data agen di database</option>';
+                dropdownAgen.innerHTML = '<option value="">❌ Tidak ada data agen ditemukan</option>';
             }
         } catch(e) {
-            console.error("Gagal memuat tabel agen:", e);
-            dropdownAgen.innerHTML = '<option value="">❌ Gagal memuat agen dari Supabase</option>';
+            console.error("Gagal total memuat tabel agen:", e);
+            dropdownAgen.innerHTML = '<option value="">❌ Koneksi terputus / Error memuat agen</option>';
         }
 
         // 2. Ambil Data Harga & Mapping Barang
         try {
             const { data: harga, error: errHarga } = await clientSupabase.from('harga').select('*');
-            if (errHarga) throw errHarga;
-            if (harga) {
+            if (!errHarga && harga) {
                 harga.forEach(h => {
                     if (h.nama_agen && h.nama_barang) {
                         if (!masterDaftarBarangAgen[h.nama_agen]) masterDaftarBarangAgen[h.nama_agen] = [];
@@ -467,6 +466,9 @@
     async function simpanSemuaListKeDatabase() {
         if(listKirimSementara.length === 0) return alert("List Kirim kosong! Silakan masukkan agen ke list antrean terlebih dahulu.");
 
+        let hitungMobil = {};
+        let hitungDriver = {};
+
         for(let i = 0; i < listKirimSementara.length; i++) {
             let data = listKirimSementara[i];
             let namaAg = data.nama_agen.toUpperCase();
@@ -475,6 +477,24 @@
             if(!data.plat_nomor) return alert(`[Validasi Gagal] Armada Mobil untuk Agen ${namaAg} belum dipilih!`);
             if(!data.driver_1 || !data.driver_2) return alert(`[Validasi Gagal] Driver Couple untuk Agen ${namaAg} belum lengkap!`);
             if(data.driver_1 === data.driver_2) return alert(`[Validasi Gagal] Driver 1 dan Driver 2 untuk Agen ${namaAg} tidak boleh orang yang sama!`);
+
+            let keyMobil = `${data.tanggal_berangkat}_${data.shift}_${data.plat_nomor}`;
+            hitungMobil[keyMobil] = (hitungMobil[keyMobil] || 0) + 1;
+
+            let keyD1 = `${data.tanggal_berangkat}_${data.shift}_${data.driver_1}`;
+            let keyD2 = `${data.tanggal_berangkat}_${data.shift}_${data.driver_2}`;
+            hitungDriver[keyD1] = (hitungDriver[keyD1] || 0) + 1;
+            hitungDriver[keyD2] = (hitungDriver[keyD2] || 0) + 1;
+
+            if(hitungMobil[keyMobil] > 2) {
+                return alert(`[Validasi Gagal] Mobil ${data.plat_nomor} digunakan lebih dari 2 kali pada tanggal dan shift yang sama!`);
+            }
+            if(hitungDriver[keyD1] > 2) {
+                return alert(`[Validasi Gagal] Driver ${data.driver_1} ditugaskan lebih dari 2 agen pada tanggal dan shift yang sama!`);
+            }
+            if(hitungDriver[keyD2] > 2) {
+                return alert(`[Validasi Gagal] Driver ${data.driver_2} ditugaskan lebih dari 2 agen pada tanggal dan shift yang sama!`);
+            }
         }
 
         const btn = document.getElementById('btnSimpanMassal');
