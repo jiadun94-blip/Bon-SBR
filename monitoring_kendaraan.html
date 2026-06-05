@@ -73,13 +73,25 @@
         
         .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .card-top strong { font-size: 18px; color: white; }
-        .plat-tag { background: #333; color: var(--blue); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .plat-tag { background: #333; color: var(--blue); padding: 4px 8px; border-radius: 4px; font-size: 13px; font-weight: bold; }
 
+        /* Menggunakan tata letak grid 2 kolom seimbang agar posisi kotak simetris */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .stat-box { background: #252525; padding: 10px; border-radius: 8px; border: 1px solid #333; }
-        .stat-label { font-size: 9px; color: #888; display: block; text-transform: uppercase; margin-bottom: 3px; }
-        .stat-val { font-size: 13px; font-weight: bold; }
-        .stat-date { font-size: 9px; color: #aaa; display: block; margin-top: 2px; font-style: italic; }
+        .stat-box { background: #252525; padding: 12px 10px; border-radius: 8px; border: 1px solid #333; }
+        
+        /* Box Log Informasi diletakkan penuh di paling bawah agar tidak memotong space angka */
+        .stat-box.full-width { grid-column: span 2; }
+        
+        .stat-label { font-size: 10px; color: #aaa; display: block; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px; }
+        
+        /* Ukuran font angka utama disamakan dengan nama armada (18px) */
+        .stat-val { font-size: 18px; font-weight: bold; color: white; }
+        
+        /* Font khusus Sisa Oli dibuat sedikit lebih besar (20px) agar sangat mencolok */
+        .stat-val.oli-val { font-size: 20px; }
+        
+        /* Font keterangan log driver dan waktu update disamakan ukurannya (18px) */
+        .stat-date-large { font-size: 18px; font-weight: bold; display: block; margin-top: 6px; word-break: break-all; }
         
         #modalDetail { 
             display: none; position: fixed; top: 0; left: 0; 
@@ -192,7 +204,6 @@
             const listMobil = dataMobil || [];
 
             const promises = listMobil.map(async (v) => {
-                // UPDATE UTAMA: Mengambil kolom created_at, no_nota, dan nama_agen secara bersamaan
                 const { data: laporanTerakhir } = await _sb
                     .from('rekap_laporan_driver')
                     .select('created_at, no_nota, nama_agen')
@@ -213,7 +224,6 @@
                     if (!v.updated_at || tglDriver > tglAdmin) {
                         waktuFix = matchLaporan.created_at;
                         tipeUpdate = "Lapor Driver: ";
-                        // Menyusun teks catatan agar informatif (Nama Agen dan Bundel No Nota)
                         teksCatatan = `${matchLaporan.nama_agen || '-'} [${matchLaporan.no_nota || '-'}]`;
                     } else {
                         teksCatatan = "Update via Panel Admin";
@@ -268,14 +278,16 @@
                 <div class="unit-card ${isCritical?'critical':''}" onclick="openDetail('${v.plat_nomor}')">
                     <div class="card-top"><strong>${v.nama_unit}</strong><span class="plat-tag">${v.plat_nomor}</span></div>
                     <div class="stats-grid">
-                        <div class="stat-box"><span class="stat-label">SISA OLI</span><span class="stat-val ${sisaOli<500?'status-red':''}">${sisaOli.toLocaleString()} KM</span></div>
                         <div class="stat-box"><span class="stat-label">SISA KIR</span><span class="stat-val ${sisaKIR<14?'status-red':''}">${sisaKIR} Hr</span></div>
                         <div class="stat-box"><span class="stat-label">SISA PAJAK</span><span class="stat-val ${sisaPajak<14?'status-red':''}">${sisaPajak} Hr</span></div>
-                        <div class="stat-box">
-                            <span class="stat-label">ODO KM</span>
-                            <span class="stat-val" style="color:var(--accent)">${(v.km_saat_ini||0).toLocaleString()}</span>
-                            <span class="stat-date" style="color: #fff; font-weight: bold; margin-top: 4px;">${detailCatatan}</span>
-                            <span class="stat-date">${infoWaktuUpdate}</span>
+                        
+                        <div class="stat-box"><span class="stat-label">SISA OLI</span><span class="stat-val oli-val ${sisaOli<500?'status-red':''}">${sisaOli.toLocaleString()} KM</span></div>
+                        <div class="stat-box"><span class="stat-label">ODO KM</span><span class="stat-val" style="color:var(--accent)">${(v.km_saat_ini||0).toLocaleString()} KM</span></div>
+                        
+                        <div class="stat-box full-width">
+                            <span class="stat-label">INFORMASI LAPORAN TERAKHIR</span>
+                            <span class="stat-date-large" style="color: #fff;">📝 ${detailCatatan}</span>
+                            <span class="stat-date-large" style="color: #3498db;">🕒 ${infoWaktuUpdate}</span>
                         </div>
                     </div>
                 </div>`;
