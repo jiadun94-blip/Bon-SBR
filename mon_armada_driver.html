@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SBRdigital | Fleet Monitoring Driver</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --bg-dark: #121212; 
+            --card-dark: #1e1e1e;
+            --accent: #72a339;
+            --danger: #ff7675;
+            --blue: #3498db;
+            --text: #e0e0e0;
+        }
+
+        body { 
+            font-family: 'Roboto Condensed', sans-serif; 
+            margin: 0; padding: 0; 
+            background: var(--bg-dark); 
+            color: var(--text); 
+        }
+
+        .container { max-width: 500px; margin: auto; }
+
+        .sticky-top-panel {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--bg-dark);
+            padding: 15px 15px 5px 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+        
+        .header-main { text-align: center; margin-bottom: 5px; }
+        .header-main h2 { margin: 0; color: var(--accent); font-size: 20px; letter-spacing: 1px; }
+        
+        .scroll-content { padding: 15px; }
+
+        .unit-card { 
+            background: var(--card-dark); border-radius: 12px; 
+            padding: 15px; margin-bottom: 15px; 
+            border: 1px solid #333; border-left: 5px solid #444;
+            /* Cursor pointer dihapus karena tidak bisa diklik lagi */
+        }
+        .unit-card.critical { border-left-color: var(--danger); background: #2a1a1a; }
+        
+        .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .card-top strong { font-size: 18px; color: white; }
+        .plat-tag { background: #333; color: var(--blue); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .stat-box { background: #252525; padding: 10px; border-radius: 8px; border: 1px solid #333; }
+        .stat-label { font-size: 9px; color: #888; display: block; text-transform: uppercase; margin-bottom: 3px; }
+        .stat-val { font-size: 13px; font-weight: bold; }
+        .stat-date { font-size: 9px; color: #aaa; display: block; margin-top: 2px; font-style: italic; }
+        .status-red { color: var(--danger); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="sticky-top-panel">
+        <div class="header-main">
+            <h2>SBR FLEET MONITORING (DRIVER)</h2>
+        </div>
+        <div style="font-size: 11px; color: #888; font-weight: bold; margin-top: 10px; text-align: center; letter-spacing: 0.5px;">
+            DAFTAR STATUS & KONDISI UNIT ARMADA
+        </div>
+    </div>
+
+    <div id="dashboard" class="scroll-content">
+        <div style="text-align:center; padding:20px; color:#666;">Memuat data armada...</div>
+    </div>
+</div>
+
+<script>
+    // Mempertahankan API Key asli Anda yang aktif & valid
+    const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const _sb = supabase.createClient(SB_URL, SB_KEY);
+
+    let listArmada = [];
+
+    function formatWaktuIndo(isoString, prefiks = "") {
+        if (!isoString) return "Belum ada catatan";
+        const dObj = new Date(isoString);
+        const tgl = dObj.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const jam = dObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        return `${prefiks}${tgl} (${jam} WIB)`;
+    }
+
+    async function init() {
+        try {
+            const { data: dataMobil, error: errMobil } = await _sb.from('monitoring_kendaraan').select('*').order('nama_unit');
+            if (errMobil) throw errMobil;
+            
+            const listMobil = dataMobil || [];
+
+            const promises = listMobil.map(async (v) => {
+                const { data: laporanTerakhir } = await _sb
+                    .from('rekap_laporan_driver')
+                    .select('created_at, no_nota, nama_agen')
+                    .eq('plat_nomor', v.plat_nomor)
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+
+                const matchLaporan = (laporanTerakhir && laporanTerakhir.length > 0) ? laporanTerakhir[0] : null;
+
+                let waktuFix = v.updated_at;
+                let tipeUpdate = "Up Admin: ";
+                let teksCatatan = ""; 
+
+                if (matchLaporan) {
+                    const tglDriver = new Date(matchLaporan.created_at);
+                    const tglAdmin = new Date(v.updated_at);
+                    
+                    if (!v.updated_at || tglDriver > tglAdmin) {
+                        waktuFix = matchLaporan.created_at;
+                        tipeUpdate = "Lapor Driver: ";
+                        teksCatatan = `${matchLaporan.nama_agen || '-'} [${matchLaporan.no_nota || '-'}]`;
+                    } else {
+                        teksCatatan = "Update via Panel Admin";
+                    }
+                } else {
+                    if (!v.updated_at) {
+                        waktuFix = null;
+                        tipeUpdate = "";
+                    }
+                    teksCatatan = "Belum ada catatan";
+                }
+
+                return {
+                    ...v,
+                    waktu_terakhir_final: waktuFix,
+                    label_tipe: tipeUpdate,
+                    catatan_log: teksCatatan 
+                };
+            });
+
+            listArmada = await Promise.all(promises);
+            renderDashboard();
+            
+        } catch (err) {
+            console.error("Gagal memuat data:", err);
+            document.getElementById('dashboard').innerHTML = `<div style="text-align:center; padding:20px; color:var(--danger); font-weight:bold;">Data gagal dimuat: ${err.message}</div>`;
+        }
+    }
+
+    function renderDashboard() {
+        const dash = document.getElementById('dashboard');
+        dash.innerHTML = "";
+
+        if (listArmada.length === 0) {
+            dash.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">Tidak ada data armada kendaraan.</div>';
+            return;
+        }
+
+        listArmada.forEach(v => {
+            const sisaOli = (v.km_terakhir_oli + 5000) - v.km_saat_ini;
+            const sisaKIR = v.tgl_kir_expired ? Math.ceil((new Date(v.tgl_kir_expired) - new Date()) / 86400000) : '-';
+            const sisaPajak = v.tgl_pajak_expired ? Math.ceil((new Date(v.tgl_pajak_expired) - new Date()) / 86400000) : '-';
+            const isCritical = sisaOli < 500 || (sisaKIR !== '-' && sisaKIR < 14) || (sisaPajak !== '-' && sisaPajak < 14);
+
+            const infoWaktuUpdate = formatWaktuIndo(v.waktu_terakhir_final, v.label_tipe);
+            const detailCatatan = v.catatan_log; 
+
+            // Fungsi onclick="openDetail()" pada card dihapus agar tidak memicu pembukaan modal detail
+            dash.innerHTML += `
+                <div class="unit-card ${isCritical?'critical':''}">
+                    <div class="card-top"><strong>${v.nama_unit}</strong><span class="plat-tag">${v.plat_nomor}</span></div>
+                    <div class="stats-grid">
+                        <div class="stat-box"><span class="stat-label">SISA OLI</span><span class="stat-val ${sisaOli<500?'status-red':''}">${sisaOli.toLocaleString()} KM</span></div>
+                        <div class="stat-box"><span class="stat-label">SISA KIR</span><span class="stat-val ${sisaKIR<14?'status-red':''}">${sisaKIR} Hr</span></div>
+                        <div class="stat-box"><span class="stat-label">SISA PAJAK</span><span class="stat-val ${sisaPajak<14?'status-red':''}">${sisaPajak} Hr</span></div>
+                        <div class="stat-box">
+                            <span class="stat-label">ODO KM</span>
+                            <span class="stat-val" style="color:var(--accent)">${(v.km_saat_ini||0).toLocaleString()}</span>
+                            <span class="stat-date" style="color: #fff; font-weight: bold; margin-top: 4px;">${detailCatatan}</span>
+                            <span class="stat-date">${infoWaktuUpdate}</span>
+                        </div>
+                    </div>
+                </div>`;
+        });
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
