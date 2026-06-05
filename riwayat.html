@@ -21,8 +21,8 @@
         }
         
         /* Menggunakan 'separate' agar garis border th tetap stabil saat di-freeze */
-        table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 11px; white-space: nowrap; background: white; }
-        th, td { border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 6px; text-align: center; }
+        table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 14px; white-space: nowrap; background: white; }
+        th, td { border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 10px 8px; text-align: center; }
         th:first-child, td:first-child { border-left: 1px solid #ddd; }
         
         /* --- FITUR FREEZE HEADER --- */
@@ -34,29 +34,32 @@
         th { 
             background: #1e272e; 
             color: white; 
-            font-weight: normal; 
-            font-size: 11px; 
+            font-weight: bold; 
+            font-size: 15px; /* Menggedekan teks header utama */
             border-top: 1px solid #ddd;
+            letter-spacing: 0.5px;
         }
         
         tr:nth-child(even) { background: #f9f9f9; }
-        h3 { font-size: 14px; color: #555; margin: 10px 0; }
-        a { font-size: 12px; text-decoration: none; color: #72a339; font-weight: bold; }
-        .row-day-title { font-weight: bold; text-align: left; background: #edf2f7; color: #1e293b; }
+        h3 { font-size: 18px; color: #222; margin: 12px 0; font-weight: bold; }
+        a { font-size: 15px; text-decoration: none; color: #72a339; font-weight: bold; }
         
-        /* Base badge untuk nama agen */
+        /* Ukuran font Hari/Tanggal dibuat lebih besar dan tebal */
+        .row-day-title { font-size: 14px; font-weight: bold; text-align: left; background: #edf2f7; color: #1e293b; }
+        
+        /* --- UKURAN BADGE AGEN DIPERBESAR & DITEBALKAN --- */
         .badge-agen { 
             display: block; 
             font-weight: bold; 
-            font-size: 11px; 
-            padding: 2px 4px;
+            font-size: 15px; /* Dongkrak font nama agen agar jelas di HP */
+            padding: 4px 6px;
             border-radius: 4px;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
         
         /* Style Tambahan untuk Baris Total Mingguan */
         .row-total-weekly { background: #1a202c !important; color: #fff !important; font-weight: bold; }
-        .row-total-weekly td { border: 1px solid #4a5568; padding: 8px 6px; font-size: 12px; }
+        .row-total-weekly td { border: 1px solid #4a5568; padding: 10px 8px; font-size: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -72,7 +75,7 @@
             </tr>
         </thead>
         <tbody id="bodyRow">
-            <tr><td colspan="1" style="padding:20px; color:#666;">Sedang memuat history...</td></tr>
+            <tr><td colspan="1" style="padding:20px; color:#666; font-size:14px;">Sedang memuat history...</td></tr>
         </tbody>
     </table>
 </div>
@@ -88,8 +91,8 @@
             hash = str.charCodeAt(i) + ((hash << 5) - hash);
         }
         const hue = Math.abs(hash % 360);
-        const saturation = 75; // kontras warna cerah
-        const lightness = 35;  // dibuat agak gelap supaya teksnya jelas terbaca di layar putih
+        const saturation = 85; // Menaikkan saturasi sedikit agar warna makin kontras di font besar
+        const lightness = 30;  // Dibuat agak gelap sedikit agar makin solid terbaca
         return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
     }
 
@@ -142,10 +145,10 @@
 
         let listDriverSorted = Array.from(driverUnik).sort();
 
-        // 2. Render Header Driver (dengan CSS Sticky)
+        // 2. Render Header Driver (dengan CSS Sticky & Font Besar)
         const headerRow = document.getElementById('headerRow');
         listDriverSorted.forEach(dv => {
-            headerRow.innerHTML += `<th style="background: #166534; color: white; position: sticky; top: 0;">${dv.toUpperCase()}</th>`;
+            headerRow.innerHTML += `<th style="background: #166534; color: white; position: sticky; top: 0; font-size: 15px; font-weight: bold;">${dv.toUpperCase()}</th>`;
         });
 
         // 3. Render Baris Data + Hitung Totalan Mingguan
@@ -155,7 +158,7 @@
         let sortedDates = Object.keys(dataMap).sort((a, b) => dataMap[a].timestamp - dataMap[b].timestamp);
 
         if (sortedDates.length === 0) {
-            bodyRow.innerHTML = `<tr><td colspan="${listDriverSorted.length + 1}" style="padding:20px; color:#666;">Belum ada data history transaksi.</td></tr>`;
+            bodyRow.innerHTML = `<tr><td colspan="${listDriverSorted.length + 1}" style="padding:20px; color:#666; font-size:14px;">Belum ada data history transaksi.</td></tr>`;
             return;
         }
 
@@ -187,10 +190,10 @@
                         return `<span class="badge-agen" style="color: ${warnaTeks};">${ag}</span>`;
                     }).join('');
                     
-                    rowHtml += `<td style="background: #f0fdf4; vertical-align: middle; padding: 4px 6px;">${listAgenHtml}</td>`;
+                    rowHtml += `<td style="background: #f0fdf4; vertical-align: middle; padding: 6px 8px;">${listAgenHtml}</td>`;
                     akumulasiMingguan[dv] += listAgen.length;
                 } else {
-                    rowHtml += `<td style="color: #ccc; vertical-align: middle;">-</td>`;
+                    rowHtml += `<td style="color: #bbb; vertical-align: middle; font-size: 14px; font-weight: bold;">-</td>`;
                 }
             });
             
