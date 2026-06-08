@@ -100,8 +100,10 @@
         .label-sisi-kiri { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: bold; cursor: pointer; }
         .label-sisi-kiri input[type="checkbox"] { width: 18px; height: 18px; accent-color: #27ae60; cursor: pointer; }
 
-        /* INFO TRACKING HISTORY TERAKHIR DI TABUNGAN */
-        .info-track-kirim { font-size: 10.5px; color: #a0aec0; margin-top: 3px; padding-left: 28px; font-style: italic; display: block; line-height: 1.3; }
+        /* INFO TRACKING HISTORY TERAKHIR DI TABUNGAN & LIST ANTREAN */
+        .info-track-kirim { font-size: 10.5px; color: #a0aec0; margin-top: 3px; font-style: italic; display: block; line-height: 1.3; }
+        .info-track-antrean { padding-left: 0px; }
+        .info-track-tabungan { padding-left: 28px; }
     </style>
 </head>
 <body>
@@ -262,7 +264,6 @@
             }
         } catch(e) { console.error(e); }
 
-        // AMBIL DATA TRANSAKSI TERAKHIR DARI DATABASE
         await muatCacheRiwayatTerakhirSemuaAgen();
 
         renderListKirimCompact();
@@ -274,7 +275,7 @@
         try {
             const { data: rwt, error } = await clientSupabase
                 .from('transaksi') 
-                .select('nama_agen, tanggal, driver_1, driver_2, plat_nomor')
+                .select('nama_agen, tanggal, driver_1, driver_2')
                 .order('tanggal', { ascending: false });
             
             if(!error && rwt) {
@@ -294,8 +295,7 @@
 
                             cacheRiwayatTerakhirAgen[agKey] = {
                                 tanggal: log.tanggal,
-                                driver: gabungDriver,
-                                plat: log.plat_nomor || ""
+                                driver: gabungDriver
                             };
                         }
                     }
@@ -429,11 +429,11 @@
 
             const agKey = item.nama_agen.toLowerCase().trim();
             const rwtTerakhir = cacheRiwayatTerakhirAgen[agKey];
-            let infoRiwayatKirimHTML = `<span class="info-track-kirim" style="color: #ecc94b;">⏳ Belum ada riwayat transaksi di sistem</span>`;
+            let infoRiwayatKirimHTML = `<span class="info-track-kirim info-track-tabungan" style="color: #ecc94b;">⏳ Belum ada riwayat transaksi di sistem</span>`;
             
             if(rwtTerakhir) {
                 infoRiwayatKirimHTML = `
-                    <span class="info-track-kirim">
+                    <span class="info-track-kirim info-track-tabungan">
                         ⏮️ Trx Terakhir: <b>${rwtTerakhir.tanggal}</b> <br> 
                         👤 Driver: ${rwtTerakhir.driver}
                     </span>
@@ -562,7 +562,7 @@
         `).join('');
     }
 
-    /* DI SINI DIUBAH AGAR BADGE BIRU DI SAMPING NAMA AGEN MENAMPILKAN TRANSAKSI TERAKHIR */
+    /* FORMAT LIST ANTREAN DIGANTI MENGGUNAKAN TEKS BIASA DI BAWAH NAMA AGEN (PERSIS SEPERTI DI POPUP) */
     function renderListKirimCompact() {
         const container = document.getElementById('containerListKirim');
         if(listKirimSementara.length === 0) {
@@ -599,23 +599,26 @@
             
             if(!tableRowsHTML) tableRowsHTML = `<tr><td colspan="3" style="color:#e53e3e; font-style:italic; text-align:center; padding:10px;">• Belum ada muatan diinput</td></tr>`;
 
-            // AMBIL DATA TRANSAKSI TERAKHIR DARI CACHE UNTUK BADGE GANTIIN ANGGARA
+            // Mengambil history kirim dari tabel transaksi
             const agKey = item.nama_agen.toLowerCase().trim();
             const rwtTerakhir = cacheRiwayatTerakhirAgen[agKey];
             
-            let teksBadgeKirim = "⏳ Belum ada riwayat";
+            let infoRiwayatKirimHTML = `<span class="info-track-kirim info-track-antrean" style="color: #ecc94b;">⏳ Belum ada riwayat transaksi di sistem</span>`;
             if(rwtTerakhir) {
-                // Format ringkas agar muat di dalam badge: Tgl - Driver
-                teksBadgeKirim = `⏮️ ${rwtTerakhir.tanggal} (${rwtTerakhir.driver})`;
+                infoRiwayatKirimHTML = `
+                    <span class="info-track-kirim info-track-antrean">
+                        ⏮️ Trx Terakhir: <b>${rwtTerakhir.tanggal}</b> | 👤 Driver: ${rwtTerakhir.driver}
+                    </span>
+                `;
             }
 
-            const infoArmada = `<span class="badge-armada">🚚 ${teksBadgeKirim}</span>`;
-
             card.innerHTML = `
-                <div class="card-top-info">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        🏢 Agen: <strong style="color:#63b3ed; font-size:16px;">${item.nama_agen.toUpperCase()}</strong>
-                        ${infoArmada}
+                <div class="card-top-info" style="align-items: start;">
+                    <div style="display:flex; flex-direction:column; gap:2px;">
+                        <div>
+                            🏢 Agen: <strong style="color:#63b3ed; font-size:16px;">${item.nama_agen.toUpperCase()}</strong>
+                        </div>
+                        ${infoRiwayatKirimHTML}
                     </div>
                     <div style="display:flex; gap:6px; align-items:center;">
                         <span class="badge-tgl">📅 ${item.tanggal_berangkat}</span>
