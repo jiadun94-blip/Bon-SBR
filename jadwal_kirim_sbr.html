@@ -16,17 +16,20 @@
         header h2 { margin: 0; color: #fff; font-size: 22px; text-transform: uppercase; font-weight: 900; }
         .subtitle { font-size: 12px; color: #a0aec0; font-weight: bold; }
 
-        /* BARU: LAYOUT ATAS DIPASANG BERSEBELAHAN KANAN KIRI */
+        /* KUNCI LAYOUT ATAS 50:50 */
         .top-control-wrapper {
             display: flex;
             gap: 15px;
             margin-bottom: 15px;
             align-items: stretch;
+            width: 100%;
         }
         
-        /* Panel Kontrol Input Kiri */
+        /* Panel Kontrol Input Kiri (Pas 50%) */
         .left-control-panel {
-            flex: 45;
+            flex: 1; 
+            width: calc(50% - 7.5px);
+            min-width: 0; 
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -35,23 +38,50 @@
             border-radius: 12px;
             border: 2px solid #2d3748;
             justify-content: center;
+            box-sizing: border-box;
         }
         .control-group { display: flex; flex-direction: column; gap: 4px; }
         .control-group label { font-size: 11px; font-weight: 900; color: #cbd5e0; text-transform: uppercase; }
-        .control-group input[type="date"] { padding: 10px; border-radius: 6px; border: 2px solid #4a5568; font-size: 16px; font-weight: 700; background: #2d3748; color: white; width: 100%; box-sizing: border-box; }
         
-        .selector-row { display: flex; gap: 8px; width: 100%; align-items: center; }
-        .selector-row select { flex: 1; padding: 10px; font-size: 15px; font-weight: 700; border: 2px solid #4a5568; border-radius: 8px; background: #2d3748; color: white; }
+        .control-group input[type="date"] { 
+            padding: 8px; 
+            border-radius: 6px; 
+            border: 2px solid #4a5568; 
+            font-size: 13px; 
+            font-weight: 700; 
+            background: #2d3748; 
+            color: white; 
+            width: 100%; 
+            box-sizing: border-box; 
+        }
+        
+        .selector-row { display: flex; gap: 6px; width: 100%; align-items: center; }
+        
+        .selector-row select { 
+            flex: 1; 
+            padding: 8px; 
+            font-size: 12px; 
+            font-weight: 700; 
+            border: 2px solid #4a5568; 
+            border-radius: 8px; 
+            background: #2d3748; 
+            color: white; 
+            min-width: 0; 
+            text-overflow: ellipsis; 
+        }
 
-        /* Panel Ringkasan Total Kanan */
+        /* Panel Ringkasan Total Kanan (Pas 50%) */
         .right-summary-panel {
-            flex: 55;
+            flex: 1; 
+            width: calc(50% - 7.5px);
+            min-width: 0;
             background: #2d3748;
             border: 2px solid #3182ce;
             border-radius: 12px;
             padding: 10px;
             display: flex;
             flex-direction: column;
+            box-sizing: border-box;
         }
         .summary-header {
             font-size: 12px;
@@ -90,8 +120,8 @@
         .card-top-info { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 6px; }
         
         .card-main-content { display: flex; gap: 12px; align-items: stretch; }
-        .card-left-inputs { flex: 65; min-width: 0; }
-        .card-right-muatan { flex: 35; background: #121214; padding: 8px; border-radius: 8px; border: 1px solid #4a5568; min-width: 0; display: flex; flex-direction: column; }
+        .card-left-inputs { flex: 60; min-width: 0; }
+        .card-right-muatan { flex: 40; background: #121214; padding: 1px; border-radius: 8px; border: 1px solid #4a5568; min-width: 0; display: flex; flex-direction: column; }
 
         /* GRID LOGISTIK */
         .logistik-grid { display: grid; grid-template-rows: auto auto; gap: 10px; background: #1a202c; padding: 10px; border-radius: 8px; border: 1px solid #3182ce; }
@@ -106,13 +136,13 @@
         .table-muatan td.num-col { text-align: center; width: 60px; font-size: 13px; }
 
         /* BUTTONS STYLING */
-        .btn-action { padding: 10px 16px; border: none; border-radius: 8px; font-weight: 900; cursor: pointer; font-size: 13px; text-transform: uppercase; }
-        .btn-add { background: #3182ce; color: white; font-size: 14px; white-space: nowrap; }
+        .btn-action { border: none; border-radius: 8px; font-weight: 900; cursor: pointer; text-transform: uppercase; }
+        .btn-add { background: #3182ce; color: white; font-size: 11px; padding: 8px 10px; white-space: nowrap; }
         .btn-del-item { background: #742a2a; color: #feb2b2; border: 1px solid #9b2c2c; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-weight: 900; font-size: 12px; }
         
         .btn-comp-edit { background: #dd6b20; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-weight: 900; font-size: 11px; cursor: pointer; text-transform: uppercase; box-shadow: 0 2px 0 #b35415; display: inline-flex; align-items: center; }
         .btn-comp-del { background: #e53e3e; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-weight: 900; font-size: 11px; cursor: pointer; text-transform: uppercase; box-shadow: 0 2px 0 #b83232; display: inline-flex; align-items: center; }
-        .btn-primary-blue { background: #3182ce; color: white; width: 100%; border: none; font-weight: 900; text-transform: uppercase; border-radius: 8px; cursor: pointer; }
+        .btn-primary-blue { background: #3182ce; color: white; width: 100%; border: none; font-weight: 900; text-transform: uppercase; border-radius: 8px; cursor: pointer; padding: 12px; }
         
         .btn-card-save { background: #27ae60; color: white; width: 100%; padding: 10px; font-size: 14px; border-radius: 8px; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer; box-shadow: 0 3px 0 #1e8449; margin-top: 8px; }
         .btn-card-save:disabled { background: #718096; box-shadow: none; cursor: not-allowed; }
@@ -131,10 +161,8 @@
         <div class="subtitle">MATRIKS PLANNING & PENYUSUNAN JADWAL KIRIM AGEN</div>
     </header>
 
-    <!-- CONTAINER ATAS BARU: KIRI INPUT, KANAN TABEL RINGKASAN TOTAL -->
     <div class="top-control-wrapper">
         
-        <!-- SISI KIRI: INPUT KONTROL -->
         <div class="left-control-panel">
             <div class="control-group">
                 <label>📅 Tanggal Operasional Jalan :</label>
@@ -152,7 +180,6 @@
             </div>
         </div>
 
-        <!-- SISI KANAN: TABEL REKAPITULASI TOTAL GLOBAL ANTRIAN -->
         <div class="right-summary-panel">
             <div class="summary-header">
                 <span>📊 TOTAL KEBUTUHAN BARANG (LIST ANTREAN)</span>
@@ -257,14 +284,15 @@
             if (karyawan) masterKaryawan = karyawan.map(k => k.nama_karyawan).filter(Boolean).sort();
         } catch(e) { console.error(e); }
 
-        // 4. Ambil Data Kendaraan Clean
+        // 4. Ambil Data Kendaraan Clean (Disesuaikan dengan kolom tipe_mobil)
         try {
             const { data: mobil } = await clientSupabase.from('kendaraan').select('*');
             if (mobil) {
                 masterKendaraan = mobil.map(m => {
                     return {
                         plat: (m.plat_nomor || "").trim(),
-                        nama_unit: (m.nama_unit || m.jenis_kendaraan || "").trim()
+                        // Mengambil dari kolom tipe_mobil sesuai database Anda
+                        nama_unit: (m.tipe_mobil || "").trim() 
                     };
                 });
             }
@@ -369,7 +397,6 @@
         }
     }
 
-    // FUNGSI BARU: MENGHITUNG DAN MENAMPILKAN TOTAL AKUMULASI BARANG DI PANEL ATAS KANAN
     function hitungTotalKebutuhanGlobal() {
         const bodySummary = document.getElementById('bodyGlobalSummary');
         const textJumlahAgen = document.getElementById('textJumlahAgenAntrean');
@@ -386,7 +413,7 @@
             return;
         }
 
-        let rekapBarang = {}; // Format: { "Nama Barang": { order: X, real: Y } }
+        let rekapBarang = {}; 
 
         listKirimSementara.forEach(agen => {
             agen.barang.forEach(b => {
@@ -474,7 +501,8 @@
             let optMobil = `<option value="">-- Pilih Mobil --</option>`;
             if (masterKendaraan && masterKendaraan.length > 0) {
                 masterKendaraan.forEach(m => {
-                    let teksTampil = m.plat ? `${m.plat} ( ${m.nama_unit} )` : m.nama_unit;
+                    // PERUBAHAN TAMPILAN DROPDOWN (HANYA MURNI NAMA UNIT)
+                    let teksTampil = m.nama_unit ? m.nama_unit : m.plat; 
                     optMobil += `<option value="${m.plat}" ${item.plat_nomor === m.plat ? "selected" : ""}>${teksTampil}</option>`;
                 });
             }
@@ -502,8 +530,9 @@
                 tableRowsHTML = `<tr><td colspan="3" style="color:#e53e3e; font-style:italic; text-align:center; padding:10px;">• Belum ada muatan diinput</td></tr>`;
             }
 
+            // PERUBAHAN TAMPILAN BADGE (HANYA MURNI NAMA UNIT)
             let kendaraanTerpilih = masterKendaraan.find(m => m.plat === item.plat_nomor);
-            let namaUnitTampil = kendaraanTerpilih ? `${kendaraanTerpilih.plat} ( ${kendaraanTerpilih.nama_unit} )` : "Belum Set Truk";
+            let namaUnitTampil = kendaraanTerpilih ? (kendaraanTerpilih.nama_unit ? kendaraanTerpilih.nama_unit : kendaraanTerpilih.plat) : "Belum Set Truk";
             const infoArmada = item.plat_nomor ? `<span class="badge-armada">🚚 ${namaUnitTampil}</span>` : `<span class="badge-armada" style="background:#742a2a; border-color:#9b2c2c;">🚚 Belum Set Truk</span>`;
 
             card.innerHTML = `
@@ -515,8 +544,8 @@
                     <div style="display:flex; gap:6px; align-items:center;">
                         <span class="badge-tgl">📅 ${item.tanggal_berangkat}</span>
                         <span class="badge-shift ${item.shift}">${item.shift}</span>
-                        <button type="button" class="btn-comp-edit" onclick="tarikKembaliUntukEdit(${index})">✏️ EDIT BARANG</button>
-                        <button type="button" class="btn-comp-del" onclick="hapusDariListSementara(${index})">❌ HAPUS AGEN</button>
+                        <button type="button" class="btn-comp-edit" onclick="tarikKembaliUntukEdit(${index})">✏️ EDIT</button>
+                        <button type="button" class="btn-comp-del" onclick="hapusDariListSementara(${index})">❌ HAPUS </button>
                     </div>
                 </div>
                 
@@ -529,7 +558,7 @@
                                     <input type="date" value="${item.tanggal_berangkat}" onchange="ubahLogistikDiList(${index}, 'tanggal_berangkat', this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'tanggal_berangkat');">
                                 </div>
                                 <div>
-                                    <label>Shift</label>
+                                    <label>Dikirim</label>
                                     <select onchange="ubahLogistikDiList(${index}, 'shift', this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'shift');">
                                         <option value="SUBUH" ${item.shift === "SUBUH" ? "selected" : ""}>SUBUH</option>
                                         <option value="SIANG" ${item.shift === "SIANG" ? "selected" : ""}>SIANG</option>
@@ -539,11 +568,11 @@
                             </div>
                             <div class="grid-row">
                                 <div>
-                                    <label>Armada Mobil (Nama Unit)</label>
+                                    <label>Armada</label>
                                     <select onchange="ubahLogistikDiList(${index}, 'plat_nomor', this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'plat_nomor');">${optMobil}</select>
                                 </div>
                                 <div>
-                                    <label>Driver Couple (Maks 2x Panggil)</label>
+                                    <label>Driver Couple</label>
                                     <div style="display:flex; gap:4px;">
                                         <select onchange="ubahLogistikDiList(${index}, 'driver_1', this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'driver_1');">${optDriver1}</select>
                                         <select onchange="ubahLogistikDiList(${index}, 'driver_2', this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'driver_2');">${optDriver2}</select>
@@ -595,7 +624,8 @@
 
             if (hitungMobil[keyMobil] > 2) {
                 let mobilObj = masterKendaraan.find(m => m.plat === data.plat_nomor);
-                let namaMobilPeringatan = mobilObj ? `${mobilObj.plat} (${mobilObj.nama_unit})` : data.plat_nomor;
+                // PERUBAHAN TAMPILAN ALERT (HANYA MURNI NAMA UNIT)
+                let namaMobilPeringatan = mobilObj ? (mobilObj.nama_unit ? mobilObj.nama_unit : mobilObj.plat) : data.plat_nomor;
                 alert(`[BATAS ARMADA TERLAMPAUI]\n\nMobil "${namaMobilPeringatan}" sudah terpilih 2 kali pada Shift ${data.shift} tanggal ${data.tanggal_berangkat}.\nTidak boleh dipilih lagi!`);
                 resetNilaiKomponenLogistik(namaAgen, tipeProperti);
                 return false;
@@ -727,8 +757,9 @@
                     });
                 }
 
+                // PERUBAHAN TAMPILAN HISTORY (HANYA MURNI NAMA UNIT)
                 let unitHistori = masterKendaraan.find(m => m.plat === j.plat_nomor);
-                let namaUnitHistori = unitHistori ? `${unitHistori.plat} ( ${unitHistori.nama_unit} )` : j.plat_nomor;
+                let namaUnitHistori = unitHistori ? (unitHistori.nama_unit ? unitHistori.nama_unit : unitHistori.plat) : j.plat_nomor;
 
                 div.innerHTML = `
                     <div class="card-top-info">
