@@ -99,6 +99,9 @@
         .item-tabungan-ceklis { display: flex; justify-content: space-between; align-items: center; background: #1a202c; padding: 8px 10px; border-radius: 6px; border: 1px solid #4a5568; margin-bottom: 6px; }
         .label-sisi-kiri { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: bold; cursor: pointer; }
         .label-sisi-kiri input[type="checkbox"] { width: 18px; height: 18px; accent-color: #27ae60; cursor: pointer; }
+
+        /* INFO TRACKING HISTORY TERAKHIR DI TABUNGAN */
+        .info-track-kirim { font-size: 10.5px; color: #a0aec0; margin-top: 3px; padding-left: 28px; font-style: italic; display: block; line-height: 1.3; }
     </style>
 </head>
 <body>
@@ -209,6 +212,7 @@
     let bankTabunganOrder = [];
     let objOrderAktif = null; 
     let masterCacheAgenDB = []; 
+    let cacheRiwayatTerakhirAgen = {}; // Menyimpan data pengiriman terakhir per agen
 
     async function initAplikasi() {
         document.getElementById('tglKirimGlobal').valueAsDate = new Date();
@@ -258,9 +262,37 @@
             }
         } catch(e) { console.error(e); }
 
+        // Load data tracking riwayat pengiriman terakhir dari Supabase
+        await muatCacheRiwayatTerakhirSemuaAgen();
+
         renderListKirimCompact();
         hitungTotalKebutuhanGlobal();
         muatRiwayatJadwalSelesai();
+    }
+
+    // Fungsi mengambil log pengiriman paling akhir dari masing-masing agen
+    async function muatCacheRiwayatTerakhirSemuaAgen() {
+        try {
+            const { data: rwt, error } = await clientSupabase
+                .from('jadwal_kirim')
+                .select('nama_agen, tanggal_kirim, shift, driver')
+                .order('tanggal_kirim', { ascending: false })
+                .order('id_jadwal', { ascending: false });
+            
+            if(!error && rwt) {
+                cacheRiwayatTerakhirAgen = {};
+                rwt.forEach(log => {
+                    const agKey = log.nama_agen.toLowerCase().trim();
+                    if (!cacheRiwayatTerakhirAgen[agKey]) {
+                        cacheRiwayatTerakhirAgen[agKey] = {
+                            tanggal: log.tanggal_kirim,
+                            shift: log.shift,
+                            driver: log.driver
+                        };
+                    }
+                });
+            }
+        } catch(e) { console.error("Gagal memuat cache riwayat kirim:", e); }
     }
 
     function simpanKePenyimpananLokal() {
@@ -362,7 +394,6 @@
         renderDaftarTabunganKanan();
     }
 
-    /* FUNGSI YANG DIROMBAK UNTUK MENAMPILKAN DETAIL ORDER (TANPA PEMENUHAN) DI LIST TABUNGAN */
     function renderDaftarTabunganKanan() {
         const container = document.getElementById('containerTabunganOrderCeklis');
         document.getElementById('textTotalTabungan').innerText = `${bankTabunganOrder.length} Order Terbuka`;
@@ -387,16 +418,33 @@
             
             if(!detailItemsHTML) detailItemsHTML = `<tr><td style="color:#e53e3e; font-style:italic; font-size:11px;">Belum ada kuantiti diinput</td></tr>`;
 
+            // Mengambil info riwayat terakhir untuk agen dari variabel cache global
+            const agKey = item.nama_agen.toLowerCase().trim();
+            const rwtTerakhir = cacheRiwayatTerakhirAgen[agKey];
+            let infoRiwayatKirimHTML = `<span class="info-track-kirim" style="color: #ecc94b;">⏳ Belum pernah dikirim (Data Baru)</span>`;
+            
+            if(rwtTerakhir) {
+                infoRiwayatKirimHTML = `
+                    <span class="info-track-kirim">
+                        ⏮️ Terakhir: <b>${rwtTerakhir.tanggal}</b> (${rwtTerakhir.shift}) <br> 
+                        👤 Driver: ${rwtTerakhir.driver || '-'}
+                    </span>
+                `;
+            }
+
             return `
-                <div class="item-tabungan-ceklis" style="flex-direction:column; align-items:stretch; gap:8px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <label class="label-sisi-kiri">
-                            <input type="checkbox" class="chk-kirim-massal" value="${item.nama_agen}">
-                            <span>🏢 ${item.nama_agen.toUpperCase()}</span>
-                        </label>
+                <div class="item-tabungan-ceklis" style="flex-direction:column; align-items:stretch; gap:4px;">
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
+                        <div style="display:flex; flex-direction:column;">
+                            <label class="label-sisi-kiri">
+                                <input type="checkbox" class="chk-kirim-massal" value="${item.nama_agen}">
+                                <span>🏢 ${item.nama_agen.toUpperCase()}</span>
+                            </label>
+                            ${infoRiwayatKirimHTML}
+                        </div>
                         <button type="button" class="btn-del-item" style="padding:2px 6px; font-size:11px;" onclick="hapusTabunganOrderSaja(${idx})">BATAL</button>
                     </div>
-                    <div style="background:#121214; padding:6px 10px; border-radius:6px; border:1px solid #2d3748; font-size:11px;">
+                    <div style="background:#121214; padding:6px 10px; border-radius:6px; border:1px solid #2d3748; font-size:11px; margin-top:4px;">
                         <table style="width:100%; border-collapse:collapse;">
                             ${detailItemsHTML}
                         </table>
@@ -690,6 +738,14 @@
             }
 
             alert(`✅ FIX BERHASIL: Jadwal untuk agen ${namaAg} aman masuk ke database!`);
+            
+            // Perbarui cache internal riwayat terakhir agen ini agar sinkron secara real-time
+            cacheRiwayatTerakhirAgen[data.nama_agen.toLowerCase().trim()] = {
+                tanggal: data.tanggal_berangkat,
+                shift: data.shift,
+                driver: coupleDriver
+            };
+
             listKirimSementara.splice(index, 1);
             simpanKePenyimpananLokal();
             
