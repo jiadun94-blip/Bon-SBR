@@ -16,106 +16,35 @@
         header h2 { margin: 0; color: #fff; font-size: 22px; text-transform: uppercase; font-weight: 900; }
         .subtitle { font-size: 12px; color: #a0aec0; font-weight: bold; }
 
-        /* KUNCI LAYOUT ATAS 50:50 */
-        .top-control-wrapper {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-            align-items: stretch;
-            width: 100%;
-        }
+        /* LAYOUT ATAS 50:50 */
+        .top-control-wrapper { display: flex; gap: 15px; margin-bottom: 15px; align-items: stretch; width: 100%; }
         
-        /* Panel Kontrol Input Kiri (Pas 50%) */
         .left-control-panel {
-            flex: 1; 
-            width: calc(50% - 7.5px);
-            min-width: 0; 
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            background: #1a202c;
-            padding: 12px;
-            border-radius: 12px;
-            border: 2px solid #2d3748;
-            justify-content: center;
-            box-sizing: border-box;
+            flex: 1; width: calc(50% - 7.5px); min-width: 0; display: flex; flex-direction: column; gap: 10px;
+            background: #1a202c; padding: 12px; border-radius: 12px; border: 2px solid #2d3748; box-sizing: border-box; justify-content: center;
         }
         .control-group { display: flex; flex-direction: column; gap: 4px; }
         .control-group label { font-size: 11px; font-weight: 900; color: #cbd5e0; text-transform: uppercase; }
-        
-        .control-group input[type="date"] { 
-            padding: 8px; 
-            border-radius: 6px; 
-            border: 2px solid #4a5568; 
-            font-size: 13px; 
-            font-weight: 700; 
-            background: #2d3748; 
-            color: white; 
-            width: 100%; 
-            box-sizing: border-box; 
-        }
-        
-        .selector-row { display: flex; gap: 6px; width: 100%; align-items: center; }
-        
-        .selector-row select { 
-            flex: 1; 
-            padding: 8px; 
-            font-size: 12px; 
-            font-weight: 700; 
-            border: 2px solid #4a5568; 
-            border-radius: 8px; 
-            background: #2d3748; 
-            color: white; 
-            min-width: 0; 
-            text-overflow: ellipsis; 
-        }
+        .control-group input[type="date"] { padding: 8px; border-radius: 6px; border: 2px solid #4a5568; font-size: 13px; font-weight: 700; background: #2d3748; color: white; width: 100%; box-sizing: border-box; }
 
-        /* Panel Ringkasan Total Kanan (Pas 50%) */
         .right-summary-panel {
-            flex: 1; 
-            width: calc(50% - 7.5px);
-            min-width: 0;
-            background: #2d3748;
-            border: 2px solid #3182ce;
-            border-radius: 12px;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
+            flex: 1; width: calc(50% - 7.5px); min-width: 0; background: #2d3748; border: 2px solid #3182ce;
+            border-radius: 12px; padding: 10px; display: flex; flex-direction: column; box-sizing: border-box;
         }
-        .summary-header {
-            font-size: 12px;
-            font-weight: 900;
-            color: #63b3ed;
-            text-transform: uppercase;
-            border-bottom: 2px solid #4a5568;
-            padding-bottom: 5px;
-            margin-bottom: 6px;
-            display: flex;
-            justify-content: space-between;
-        }
+        .summary-header { font-size: 12px; font-weight: 900; color: #63b3ed; text-transform: uppercase; border-bottom: 2px solid #4a5568; padding-bottom: 5px; margin-bottom: 6px; display: flex; justify-content: space-between; }
 
         .section-label { font-size: 15px; font-weight: 900; padding: 8px; background: #2b6cb0; color: white; border-radius: 6px; margin: 15px 0 8px; text-transform: uppercase; }
         .section-label.database { background: #d35400; }
 
-        /* CARD INPUT FORM UTAMA */
-        .card-jadwal-agen { background: #2d3748; border: 2px solid #4a5568; border-radius: 12px; padding: 12px; margin-bottom: 15px; }
-        .card-header-agen { display: flex; justify-content: space-between; align-items: center; background: #1a202c; padding: 10px; border-radius: 8px; border-bottom: 2px solid #4a5568; margin-bottom: 10px; }
-        .card-title { font-size: 16px; font-weight: 900; color: #63b3ed; }
-        .status-badge { font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: 900; text-transform: uppercase; }
-        .status-draft { background: #feebc8; color: #c05621; }
-
-        /* TABLE UTAMA & GLOBAL RINGKASAN */
+        /* TABLE INPUT DI POPUP */
         table.table-input { width: 100%; border-collapse: collapse; margin: 5px 0; }
-        table.table-input th { font-size: 12px; text-align: left; padding: 6px; background: #1a202c; border-bottom: 2px solid #4a5568; font-weight: 900; color: #cbd5e0; }
-        table.table-input td { padding: 6px; border-bottom: 1px solid #4a5568; font-size: 15px; font-weight: 700; }
+        table.table-input th { font-size: 11px; text-align: left; padding: 6px; background: #1a202c; border-bottom: 2px solid #4a5568; font-weight: 900; color: #cbd5e0; text-transform: uppercase; }
+        table.table-input td { padding: 6px; border-bottom: 1px solid #4a5568; font-size: 14px; font-weight: 700; }
         .input-qty { width: 65px; padding: 5px; border: 2px solid #4a5568; border-radius: 6px; text-align: center; font-weight: 700; font-size: 14px; background: #1a202c; color: white; }
-        
-        /* LAYOUTING UTAMA KANAN-KIRI LIST ANTREAN */
-        .compact-list-card, .history-card { 
-            background: #2d3748; padding: 12px; border-radius: 10px; margin-top: 10px; font-size: 14px; border: 2px solid #4a5568;
-            display: flex; flex-direction: column; gap: 8px;
-        }
+        .selector-row select { width: 100%; padding: 8px; font-size: 13px; font-weight: 700; border: 2px solid #4a5568; border-radius: 6px; background: #2d3748; color: white; }
+
+        /* LAYOUTING LIST ANTREAN UTAMA */
+        .compact-list-card, .history-card { background: #2d3748; padding: 12px; border-radius: 10px; margin-top: 10px; font-size: 14px; border: 2px solid #4a5568; display: flex; flex-direction: column; gap: 8px; }
         .history-card { background: #1a202c; border-color: #2d3748; }
         .card-top-info { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 6px; }
         
@@ -129,28 +58,47 @@
         .logistik-grid select, .logistik-grid input[type="date"] { width: 100%; padding: 8px 6px; font-size: 13px; font-weight: 700; border: 2px solid #4a5568; border-radius: 6px; background: #2d3748; color: white; box-sizing: border-box; }
         .logistik-grid label { font-size: 11px; font-weight: 900; color: #cbd5e0; display: block; margin-bottom: 4px; text-transform: uppercase; }
 
-        /* TABEL RINGKAS */
         .table-muatan { width: 100%; border-collapse: collapse; }
         .table-muatan th { background: #1a202c; color: #a0aec0; font-size: 11px; font-weight: 900; padding: 5px; border-bottom: 1px solid #4a5568; text-transform: uppercase; }
-        .table-muatan td { padding: 5px; border-bottom: 1px solid #2d3748; font-size: 12px; color: #cbd5e0; font-weight: 700; }
+        .table-muatan td { padding: 5px; border-bottom: 1px solid #2d2d2d; font-size: 12px; color: #cbd5e0; font-weight: 700; }
         .table-muatan td.num-col { text-align: center; width: 60px; font-size: 13px; }
 
-        /* BUTTONS STYLING */
+        /* BUTTONS */
         .btn-action { border: none; border-radius: 8px; font-weight: 900; cursor: pointer; text-transform: uppercase; }
-        .btn-add { background: #3182ce; color: white; font-size: 11px; padding: 8px 10px; white-space: nowrap; }
         .btn-del-item { background: #742a2a; color: #feb2b2; border: 1px solid #9b2c2c; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-weight: 900; font-size: 12px; }
-        
-        .btn-comp-edit { background: #dd6b20; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-weight: 900; font-size: 11px; cursor: pointer; text-transform: uppercase; box-shadow: 0 2px 0 #b35415; display: inline-flex; align-items: center; }
-        .btn-comp-del { background: #e53e3e; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-weight: 900; font-size: 11px; cursor: pointer; text-transform: uppercase; box-shadow: 0 2px 0 #b83232; display: inline-flex; align-items: center; }
+        .btn-comp-edit { background: #dd6b20; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-weight: 900; font-size: 11px; cursor: pointer; text-transform: uppercase; }
+        .btn-comp-del { background: #e53e3e; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-weight: 900; font-size: 11px; cursor: pointer; text-transform: uppercase; }
         .btn-primary-blue { background: #3182ce; color: white; width: 100%; border: none; font-weight: 900; text-transform: uppercase; border-radius: 8px; cursor: pointer; padding: 12px; }
-        
-        .btn-card-save { background: #27ae60; color: white; width: 100%; padding: 10px; font-size: 14px; border-radius: 8px; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer; box-shadow: 0 3px 0 #1e8449; margin-top: 8px; }
-        .btn-card-save:disabled { background: #718096; box-shadow: none; cursor: not-allowed; }
+        .btn-card-save { background: #27ae60; color: white; width: 100%; padding: 10px; font-size: 14px; border-radius: 8px; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer; margin-top: 8px; }
+        .btn-card-save:disabled { background: #718096; cursor: not-allowed; }
 
         .badge-shift { padding: 4px 8px; border-radius: 5px; color: white; font-size: 11px; font-weight: 900; text-transform: uppercase; display: inline-block; }
         .SUBUH { background: #e67e22; } .SIANG { background: #3498db; } .MALAM { background: #9b59b6; }
         .badge-tgl { background: #4a5568; padding: 4px 8px; border-radius: 5px; color: #cbd5e0; font-size: 11px; font-weight: 700; display: inline-block; }
         .badge-armada { background: #2b6cb0; padding: 4px 8px; border-radius: 5px; color: #fff; font-size: 11px; font-weight: 900; display: inline-block; border: 1px solid #4299e1; }
+
+        /* STYLING POPUP MODAL DUA TAHAP */
+        .modal-sbr { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
+        .modal-sbr-content { background: #1e1e24; margin: 1% auto; padding: 18px; border: 2px solid #4a5568; width: 95%; max-width: 900px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
+        .modal-sbr-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3182ce; padding-bottom: 8px; margin-bottom: 12px; }
+        .modal-sbr-header h3 { margin: 0; font-size: 18px; text-transform: uppercase; font-weight: 900; color: #63b3ed; }
+        .close-sbr-modal { color: #a0aec0; font-size: 26px; font-weight: bold; cursor: pointer; }
+        .close-sbr-modal:hover { color: #fff; }
+        
+        .modal-split-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        @media (max-width: 768px) { .modal-split-grid { grid-template-columns: 1fr; } }
+        
+        .modal-left-box { background: #1a202c; border: 1px solid #4a5568; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .modal-right-box { background: #2d3748; border: 1px solid #3182ce; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; }
+        
+        .box-scroll-barang { max-height: 250px; overflow-y: auto; background: #121214; padding: 5px; border-radius: 6px; border: 1px solid #4a5568; }
+        .box-scroll-tabungan { max-height: 380px; overflow-y: auto; padding-right: 3px; }
+        .box-scroll-barang::-webkit-scrollbar, .box-scroll-tabungan::-webkit-scrollbar { width: 5px; }
+        .box-scroll-barang::-webkit-scrollbar-thumb, .box-scroll-tabungan::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 3px; }
+
+        .item-tabungan-ceklis { display: flex; justify-content: space-between; align-items: center; background: #1a202c; padding: 8px 10px; border-radius: 6px; border: 1px solid #4a5568; margin-bottom: 6px; }
+        .label-sisi-kiri { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: bold; cursor: pointer; }
+        .label-sisi-kiri input[type="checkbox"] { width: 18px; height: 18px; accent-color: #27ae60; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -162,30 +110,23 @@
     </header>
 
     <div class="top-control-wrapper">
-        
         <div class="left-control-panel">
             <div class="control-group">
                 <label>📅 Tanggal Operasional Jalan :</label>
                 <input type="date" id="tglKirimGlobal" onchange="sinkronisasiTanggalGlobal()">
             </div>
-            
-            <div class="control-group" style="margin-top: 5px;">
-                <label>🏢 Pilih Agen Untuk Dijadwalkan :</label>
-                <div class="selector-row">
-                    <select id="dropdownPilihAgen">
-                        <option value="">-- Sedang memuat daftar agen... --</option>
-                    </select>
-                    <button type="button" class="btn-action btn-add" onclick="tambahAgenKeDraftAwal()">+ PILIH AGEN</button>
-                </div>
+            <div class="control-group" style="margin-top: 10px;">
+                <label>⚡ PANEL UTAMA LEMBAR KERJA AGEN :</label>
+                <button type="button" class="btn-primary-blue" onclick="bukaPopupMasterOrder()">📑 BUKA PANEL INPUT &amp; SELEKSI KIRIM</button>
             </div>
         </div>
 
         <div class="right-summary-panel">
             <div class="summary-header">
-                <span>📊 TOTAL KEBUTUHAN BARANG (LIST ANTREAN)</span>
+                <span>📊 Ttl Kebutuhan Brg <br>(LIST ANTREAN UTAMA)</span>
                 <span id="textJumlahAgenAntrean" style="color:#fff;">0 Agen Terdaftar</span>
             </div>
-            <div style="flex: 1; overflow-y: auto; max-height: 125px;">
+            <div style="flex: 1; overflow-y: auto; max-height: 145px;">
                 <table class="table-muatan" id="tableGlobalSummary">
                     <thead>
                         <tr>
@@ -195,19 +136,12 @@
                         </tr>
                     </thead>
                     <tbody id="bodyGlobalSummary">
-                        <tr>
-                            <td colspan="3" style="text-align: center; color: #a0aec0; font-style: italic; padding-top: 20px;">
-                                List antrean kosong.
-                            </td>
-                        </tr>
+                        <tr><td colspan="3" style="text-align: center; color: #a0aec0; font-style: italic; padding-top: 20px;">List antrean kosong.</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
-
     </div>
-
-    <div id="containerDraftAwal"></div>
 
     <div class="section-label">📋 LIST ANTREAN KIRIM (PENGATURAN LOGISTIK & ARMADA MASSAL)</div>
     <div id="containerListKirim">
@@ -220,49 +154,80 @@
     <div id="logJadwalTerkini"></div>
 </div>
 
+<div id="modalMasterOrder" class="modal-sbr">
+    <div class="modal-sbr-content">
+        <div class="modal-sbr-header">
+            <h3>📑 PANEL LEMBAR KERJA &amp; SELEKSI MASTER ORDER KIRIM</h3>
+            <span class="close-sbr-modal" onclick="tutupPopupMasterOrder()">&times;</span>
+        </div>
+        
+        <div class="modal-split-grid">
+            <div class="modal-left-box">
+                <div style="font-size:12px; font-weight:900; color:#63b3ed; border-bottom:1px solid #4a5568; padding-bottom:4px;">TAHAP 1: INPUT ORDER AGEN</div>
+                <div class="control-group">
+                    <label>Pilih Nama Agen :</label>
+                    <div class="selector-row">
+                        <select id="dropdownPilihAgen" onchange="pilihAgenUntukInputOrder()">
+                            <option value="">-- Memuat daftar agen... --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="box-scroll-barang">
+                    <table class="table-input" style="margin:0;">
+                        <thead><tr><th>Nama Item</th><th style="width:65px;">Order</th><th style="width:65px;">Pemen.</th></tr></thead>
+                        <tbody id="bodyInputBarangPopup">
+                            <tr><td colspan="3" style="text-align:center; color:#666; padding:20px; font-style:italic;">Silakan pilih nama agen di atas.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button type="button" class="btn-card-save" style="margin:0;" onclick="simpanKeTabunganOrder()">💾 SIMPAN KE LIST TABUNGAN ORDER</button>
+            </div>
+
+            <div class="modal-right-box">
+                <div style="font-size:12px; font-weight:900; color:#f6ad55; border-bottom:1px solid #4a5568; padding-bottom:4px; margin-bottom:10px; display:flex; justify-content:between; width:100%;">
+                    <span>TAHAP 2: DAFTAR ORDERAN SIAP CEKLIS &amp; KIRIM</span>
+                    <span id="textTotalTabungan" style="color:#fff; margin-left:auto;">0 Order Terbuka</span>
+                </div>
+                <div class="box-scroll-tabungan" id="containerTabunganOrderCeklis">
+                    <div style="text-align:center; color:#a0aec0; font-style:italic; padding-top:40px;">Belum ada tabungan orderan masuk.</div>
+                </div>
+                <button type="button" class="btn-primary-blue" style="margin-top:auto;" onclick="lemparCeklisKeListKirimUtama()">⚡ MASUKKAN AGEN TERPILIH KE LIST KIRIM UTAMA</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
-    
     const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let masterDaftarBarangAgen = {}; 
     let masterKaryawan = [];
     let masterKendaraan = []; 
-    
-    let objDraftAwal = null;       
     let listKirimSementara = [];   
+    let bankTabunganOrder = [];
+    let objOrderAktif = null; 
+    let masterCacheAgenDB = []; 
 
     async function initAplikasi() {
         document.getElementById('tglKirimGlobal').valueAsDate = new Date();
-        const dropdownAgen = document.getElementById('dropdownPilihAgen');
 
         const simpananLokal = localStorage.getItem('sbr_list_kirim_sementara');
         if(simpananLokal) {
             try { listKirimSementara = JSON.parse(simpananLokal); } catch(e) { listKirimSementara = []; }
         }
 
-        const draftLokal = localStorage.getItem('sbr_obj_draft_awal');
-        if(draftLokal) {
-            try { objDraftAwal = JSON.parse(draftLokal); } catch(e) { objDraftAwal = null; }
+        const tabunganLokal = localStorage.getItem('sbr_bank_tabungan_order');
+        if(tabunganLokal) {
+            try { bankTabunganOrder = JSON.parse(tabunganLokal); } catch(e) { bankTabunganOrder = []; }
         }
 
-        // 1. Ambil Data Agen
         try {
             const { data: agen, error: errAgen } = await clientSupabase.from('agen').select('*').order('nama_agen', { ascending: true });
-            if (errAgen) {
-                dropdownAgen.innerHTML = '<option value="">❌ Gagal memuat agen dari database</option>';
-            } else if (agen && agen.length > 0) {
-                dropdownAgen.innerHTML = '<option value="">-- Pilih Agen Untuk Dijadwalkan --</option>';
-                agen.forEach(a => {
-                    if(a.nama_agen) dropdownAgen.options.add(new Option(a.nama_agen, a.nama_agen));
-                });
-            }
-        } catch(e) {
-            dropdownAgen.innerHTML = '<option value="">❌ Koneksi terputus / Error memuat agen</option>';
-        }
+            if (!errAgen && agen) masterCacheAgenDB = agen;
+        } catch(e) { console.error("Gagal koneksi tabel agen:", e); }
 
-        // 2. Ambil Data Mapping Barang
         try {
             const { data: harga } = await clientSupabase.from('harga').select('*');
             if (harga) {
@@ -278,27 +243,21 @@
             }
         } catch(e) { console.error(e); }
 
-        // 3. Ambil Data Karyawan
         try {
             const { data: karyawan } = await clientSupabase.from('karyawan').select('*').eq('aktif', true);
             if (karyawan) masterKaryawan = karyawan.map(k => k.nama_karyawan).filter(Boolean).sort();
         } catch(e) { console.error(e); }
 
-        // 4. Ambil Data Kendaraan Clean (Disesuaikan dengan kolom tipe_mobil)
         try {
             const { data: mobil } = await clientSupabase.from('kendaraan').select('*');
             if (mobil) {
-                masterKendaraan = mobil.map(m => {
-                    return {
-                        plat: (m.plat_nomor || "").trim(),
-                        // Mengambil dari kolom tipe_mobil sesuai database Anda
-                        nama_unit: (m.tipe_mobil || "").trim() 
-                    };
-                });
+                masterKendaraan = mobil.map(m => ({
+                    plat: (m.plat_nomor || "").trim(),
+                    nama_unit: (m.tipe_mobil || "").trim() 
+                }));
             }
         } catch(e) { console.error(e); }
 
-        renderDraftAwal();
         renderListKirimCompact();
         hitungTotalKebutuhanGlobal();
         muatRiwayatJadwalSelesai();
@@ -306,70 +265,177 @@
 
     function simpanKePenyimpananLokal() {
         localStorage.setItem('sbr_list_kirim_sementara', JSON.stringify(listKirimSementara));
-        localStorage.setItem('sbr_obj_draft_awal', JSON.stringify(objDraftAwal));
+        localStorage.setItem('sbr_bank_tabungan_order', JSON.stringify(bankTabunganOrder));
     }
 
     function sinkronisasiTanggalGlobal() {
-        const tglGlobal = document.getElementById('tglKirimGlobal').value;
-        if(objDraftAwal) objDraftAwal.tanggal_berangkat = tglGlobal;
-        simpanKePenyimpananLokal();
-        renderDraftAwal();
         muatRiwayatJadwalSelesai();
     }
 
-    function tambahAgenKeDraftAwal() {
-        const ag = document.getElementById('dropdownPilihAgen').value;
-        if(!ag) return alert("Silakan pilih nama Agen terlebih dahulu!");
-
-        if(listKirimSementara.some(item => item.nama_agen === ag)) {
-            return alert("Agen ini sudah berada di List Antrean sementara!");
+    function bukaPopupMasterOrder() {
+        const dropdown = document.getElementById('dropdownPilihAgen');
+        
+        if (!masterCacheAgenDB || masterCacheAgenDB.length === 0) {
+            dropdown.innerHTML = '<option value="">❌ Gagal memuat data agen / Jaringan terputus</option>';
+        } else {
+            let htmlOptions = '<option value="">-- Pilih Nama Agen --</option>';
+            masterCacheAgenDB.forEach(a => {
+                if(a.nama_agen) {
+                    htmlOptions += `<option value="${a.nama_agen}">${a.nama_agen.toUpperCase()}</option>`;
+                }
+            });
+            dropdown.innerHTML = htmlOptions;
         }
 
-        const tglDefault = document.getElementById('tglKirimGlobal').value;
-        let listBarangMaster = masterDaftarBarangAgen[ag] || [];
-
-        objDraftAwal = {
-            nama_agen: ag,
-            tanggal_berangkat: tglDefault, 
-            plat_nomor: "",
-            shift: "SUBUH",
-            driver_1: "",
-            driver_2: "",
-            is_editing: false,
-            barang: listBarangMaster.map(b => ({ nama_barang: b, qty_order: 0, qty_real: 0 }))
-        };
-
-        simpanKePenyimpananLokal();
-        renderDraftAwal();
+        document.getElementById('bodyInputBarangPopup').innerHTML = `<tr><td colspan="3" style="text-align:center; color:#666; padding:20px; font-style:italic;">Silakan pilih nama agen di atas.</td></tr>`;
+        objOrderAktif = null;
+        
+        renderDaftarTabunganKanan();
+        document.getElementById('modalMasterOrder').style.display = "block";
     }
 
-    function masukkanKeListKirimTengah() {
-        if(!objDraftAwal) return;
-        const adaMuatan = objDraftAwal.barang.some(b => b.qty_order > 0 || b.qty_real > 0);
-        if(!adaMuatan) {
-            if(!confirm("Anda belum mengisi jumlah barang (masih 0 semua). Tetap masukkan ke list antrean?")) return;
+    function tutupPopupMasterOrder() {
+        document.getElementById('modalMasterOrder').style.display = "none";
+    }
+
+    function pilihAgenUntukInputOrder() {
+        const ag = document.getElementById('dropdownPilihAgen').value;
+        const tbody = document.getElementById('bodyInputBarangPopup');
+        if(!ag) { tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#666; padding:20px; font-style:italic;">Silakan pilih nama agen di atas.</td></tr>`; return; }
+
+        let cekEksis = bankTabunganOrder.find(x => x.nama_agen === ag);
+        if(cekEksis) {
+            objOrderAktif = JSON.parse(JSON.stringify(cekEksis));
+        } else {
+            let listBarangMaster = masterDaftarBarangAgen[ag] || [];
+            objOrderAktif = {
+                nama_agen: ag,
+                tanggal_berangkat: document.getElementById('tglKirimGlobal').value,
+                plat_nomor: "", shift: "SUBUH", driver_1: "", driver_2: "",
+                barang: listBarangMaster.map(b => ({ nama_barang: b, qty_order: 0, qty_real: 0 }))
+            };
         }
-        listKirimSementara.push(JSON.parse(JSON.stringify(objDraftAwal)));
-        objDraftAwal = null; 
+        renderFormBarangKiri();
+    }
+
+    function renderFormBarangKiri() {
+        const tbody = document.getElementById('bodyInputBarangPopup');
+        if(!objOrderAktif) return;
+
+        if(objOrderAktif.barang.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#e53e3e; padding:15px;">• Mapping barang agen belum di-set!</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = objOrderAktif.barang.map((b, idxB) => `
+            <tr>
+                <td><strong>${b.nama_barang}</strong></td>
+                <td><input type="number" class="input-qty" value="${b.qty_order}" onchange="ubahQtyKiri(${idxB}, 'qty_order', this.value)" onfocus="if(this.value=='0')this.value=''"></td>
+                <td><input type="number" class="input-qty" value="${b.qty_real}" onchange="ubahQtyKiri(${idxB}, 'qty_real', this.value)" onfocus="if(this.value=='0')this.value=''"></td>
+            </tr>
+        `).join('');
+    }
+
+    function ubahQtyKiri(idxB, kolom, nilai) {
+        if(objOrderAktif) objOrderAktif.barang[idxB][kolom] = parseInt(nilai) || 0;
+    }
+
+    function simpanKeTabunganOrder() {
+        if(!objOrderAktif) return alert("Pilih agen dan isi data orderan terlebih dahulu!");
+
+        objOrderAktif.tanggal_berangkat = document.getElementById('tglKirimGlobal').value;
+
+        let idxEksis = bankTabunganOrder.findIndex(x => x.nama_agen === objOrderAktif.nama_agen);
+        if(idxEksis !== -1) {
+            bankTabunganOrder[idxEksis] = JSON.parse(JSON.stringify(objOrderAktif));
+        } else {
+            bankTabunganOrder.push(JSON.parse(JSON.stringify(objOrderAktif)));
+        }
+
         simpanKePenyimpananLokal();
-        renderDraftAwal();
+        alert(`Order ${objOrderAktif.nama_agen.toUpperCase()} sukses disimpan ke daftar tabungan!`);
+        
+        document.getElementById('dropdownPilihAgen').value = "";
+        document.getElementById('bodyInputBarangPopup').innerHTML = `<tr><td colspan="3" style="text-align:center; color:#666; padding:20px; font-style:italic;">Silakan pilih nama agen di atas.</td></tr>`;
+        objOrderAktif = null;
+
+        renderDaftarTabunganKanan();
+    }
+
+    /* FUNGSI YANG DIROMBAK UNTUK MENAMPILKAN DETAIL ORDER (TANPA PEMENUHAN) DI LIST TABUNGAN */
+    function renderDaftarTabunganKanan() {
+        const container = document.getElementById('containerTabunganOrderCeklis');
+        document.getElementById('textTotalTabungan').innerText = `${bankTabunganOrder.length} Order Terbuka`;
+
+        if(bankTabunganOrder.length === 0) {
+            container.innerHTML = `<div style="text-align:center; color:#a0aec0; font-style:italic; padding-top:40px;">Belum ada tabungan orderan masuk.</div>`;
+            return;
+        }
+
+        container.innerHTML = bankTabunganOrder.map((item, idx) => {
+            let detailItemsHTML = '';
+            item.barang.forEach(b => {
+                if(b.qty_order > 0 || b.qty_real > 0) {
+                    detailItemsHTML += `
+                        <tr>
+                            <td style="padding:2px 0; color:#cbd5e0;">• ${b.nama_barang}</td>
+                            <td style="padding:2px 0; text-align:right; color:#63b3ed; font-weight:bold; width:40px;">${b.qty_order}</td>
+                        </tr>
+                    `;
+                }
+            });
+            
+            if(!detailItemsHTML) detailItemsHTML = `<tr><td style="color:#e53e3e; font-style:italic; font-size:11px;">Belum ada kuantiti diinput</td></tr>`;
+
+            return `
+                <div class="item-tabungan-ceklis" style="flex-direction:column; align-items:stretch; gap:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <label class="label-sisi-kiri">
+                            <input type="checkbox" class="chk-kirim-massal" value="${item.nama_agen}">
+                            <span>🏢 ${item.nama_agen.toUpperCase()}</span>
+                        </label>
+                        <button type="button" class="btn-del-item" style="padding:2px 6px; font-size:11px;" onclick="hapusTabunganOrderSaja(${idx})">BATAL</button>
+                    </div>
+                    <div style="background:#121214; padding:6px 10px; border-radius:6px; border:1px solid #2d3748; font-size:11px;">
+                        <table style="width:100%; border-collapse:collapse;">
+                            ${detailItemsHTML}
+                        </table>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function hapusTabunganOrderSaja(idx) {
+        if(confirm(`Hapus data tabungan order agen ${bankTabunganOrder[idx].nama_agen.toUpperCase()}?`)) {
+            bankTabunganOrder.splice(idx, 1);
+            simpanKePenyimpananLokal();
+            renderDaftarTabunganKanan();
+        }
+    }
+
+    function lemparCeklisKeListKirimUtama() {
+        const ceklisan = document.querySelectorAll('.chk-kirim-massal:checked');
+        if(ceklisan.length === 0) return alert("Pilih minimal satu agen dari daftar untuk dikirim!");
+
+        let counterSukses = 0;
+        ceklisan.forEach(chk => {
+            const namaAgenCek = chk.value;
+            let idxBank = bankTabunganOrder.findIndex(x => x.nama_agen === namaAgenCek);
+            
+            if(idxBank !== -1) {
+                listKirimSementara.push(bankTabunganOrder[idxBank]);
+                bankTabunganOrder.splice(idxBank, 1);
+                counterSukses++;
+            }
+        });
+
+        simpanKePenyimpananLokal();
+        alert(`Berhasil memasukkan ${counterSukses} Agen terpilih ke halaman List Kirim Utama!`);
+        
+        tutupPopupMasterOrder();
         renderListKirimCompact();
         hitungTotalKebutuhanGlobal();
-    }
-
-    function ubahQtyDraft(idxB, kolom, nilai) { 
-        if(objDraftAwal) {
-            objDraftAwal.barang[idxB][kolom] = parseInt(nilai) || 0; 
-            simpanKePenyimpananLokal();
-        }
-    }
-
-    function hapusItemBarangDraft(idxB) { 
-        if(objDraftAwal) { 
-            objDraftAwal.barang.splice(idxB, 1); 
-            simpanKePenyimpananLokal();
-            renderDraftAwal(); 
-        } 
     }
 
     function ubahLogistikDiList(indexList, properti, nilai) {
@@ -378,14 +444,20 @@
     }
 
     function tarikKembaliUntukEdit(index) {
-        objDraftAwal = JSON.parse(JSON.stringify(listKirimSementara[index]));
-        objDraftAwal.is_editing = true;
-        listKirimSementara.splice(index, 1); 
+        let dataTarik = listKirimSementara[index];
+        listKirimSementara.splice(index, 1);
+        
+        let cekEksis = bankTabunganOrder.findIndex(x => x.nama_agen === dataTarik.nama_agen);
+        if(cekEksis !== -1) bankTabunganOrder[cekEksis] = dataTarik;
+        else bankTabunganOrder.push(dataTarik);
+
         simpanKePenyimpananLokal();
-        renderDraftAwal();
         renderListKirimCompact();
         hitungTotalKebutuhanGlobal();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        bukaPopupMasterOrder();
+        document.getElementById('dropdownPilihAgen').value = dataTarik.nama_agen;
+        pilihAgenUntukInputOrder();
     }
 
     function hapusDariListSementara(index) {
@@ -404,23 +476,15 @@
         textJumlahAgen.innerText = `${listKirimSementara.length} Agen Terdaftar`;
 
         if(listKirimSementara.length === 0) {
-            bodySummary.innerHTML = `
-                <tr>
-                    <td colspan="3" style="text-align: center; color: #a0aec0; font-style: italic; padding-top: 20px;">
-                        List antrean kosong.
-                    </td>
-                </tr>`;
+            bodySummary.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #a0aec0; font-style: italic; padding-top: 20px;">List antrean kosong.</td></tr>`;
             return;
         }
 
         let rekapBarang = {}; 
-
         listKirimSementara.forEach(agen => {
             agen.barang.forEach(b => {
                 if(b.qty_order > 0 || b.qty_real > 0) {
-                    if(!rekapBarang[b.nama_barang]) {
-                        rekapBarang[b.nama_barang] = { order: 0, real: 0 };
-                    }
+                    if(!rekapBarang[b.nama_barang]) rekapBarang[b.nama_barang] = { order: 0, real: 0 };
                     rekapBarang[b.nama_barang].order += b.qty_order;
                     rekapBarang[b.nama_barang].real += b.qty_real;
                 }
@@ -429,67 +493,23 @@
 
         let namaKunciBarang = Object.keys(rekapBarang).sort();
         if(namaKunciBarang.length === 0) {
-            bodySummary.innerHTML = `
-                <tr>
-                    <td colspan="3" style="text-align: center; color: #e53e3e; font-style: italic; padding-top: 20px;">
-                        Belum ada kuantiti barang diinput di antrean.
-                    </td>
-                </tr>`;
+            bodySummary.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #e53e3e; font-style: italic; padding-top: 20px;">Belum ada kuantiti barang diinput di antrean.</td></tr>`;
             return;
         }
 
-        let htmlRows = '';
-        namaKunciBarang.forEach(namaBarang => {
-            let dataTot = rekapBarang[namaBarang];
-            htmlRows += `
-                <tr>
-                    <td style="color:#fff;">• <strong>${namaBarang}</strong></td>
-                    <td style="text-align:center; color:#63b3ed; font-size:14px;">${dataTot.order}</td>
-                    <td style="text-align:center; color:#27ae60; font-size:14px; font-weight:bold;">${dataTot.real}</td>
-                </tr>`;
-        });
-
-        bodySummary.innerHTML = htmlRows;
-    }
-
-    function renderDraftAwal() {
-        const container = document.getElementById('containerDraftAwal');
-        if(!objDraftAwal) { container.innerHTML = ''; return; }
-
-        let barisBarang = '';
-        objDraftAwal.barang.forEach((b, idx) => {
-            barisBarang += `
-                <tr>
-                    <td style="text-align:center;"><button type="button" class="btn-del-item" onclick="hapusItemBarangDraft(${idx})">X</button></td>
-                    <td><strong>${b.nama_barang}</strong></td>
-                    <td><input type="number" class="input-qty" value="${b.qty_order}" onchange="ubahQtyDraft(${idx}, 'qty_order', this.value)" onfocus="if(this.value=='0')this.value=''"></td>
-                    <td><input type="number" class="input-qty" value="${b.qty_real}" onchange="ubahQtyDraft(${idx}, 'qty_real', this.value)" onfocus="if(this.value=='0')this.value=''"></td>
-                </tr>
-            `;
-        });
-
-        container.innerHTML = `
-            <div class="card-jadwal-agen" style="border-color: #3182ce; background: #1a202c;">
-                <div class="card-header-agen">
-                    <span class="card-title">🏢 MASUKKAN DATA BARANG: <span style="color:#63b3ed;">${objDraftAwal.nama_agen.toUpperCase()}</span></span>
-                    <span class="status-badge status-draft">${objDraftAwal.is_editing ? '🔄 EDISI ULANG' : '📝 INPUT BARANG'}</span>
-                </div>
-                <table class="table-input">
-                    <thead><tr><th style="width:40px; text-align:center;">HAPUS</th><th>NAMA ITEM</th><th>EST. ORDER</th><th>PEMENUHAN</th></tr></thead>
-                    <tbody>${barisBarang}</tbody>
-                </table>
-                <button type="button" class="btn-primary-blue" style="margin-top:12px; padding:12px; font-size:14px;" onclick="masukkanKeListKirimTengah()">➡️ MASUKKAN KE LIST ANTREAN UTAMA (DI BAWAH)</button>
-            </div>
-        `;
+        bodySummary.innerHTML = namaKunciBarang.map(namaBarang => `
+            <tr>
+                <td style="color:#fff;">• <strong>${namaBarang}</strong></td>
+                <td style="text-align:center; color:#63b3ed; font-size:14px;">${rekapBarang[namaBarang].order}</td>
+                <td style="text-align:center; color:#27ae60; font-size:14px; font-weight:bold;">${rekapBarang[namaBarang].real}</td>
+            </tr>
+        `).join('');
     }
 
     function renderListKirimCompact() {
         const container = document.getElementById('containerListKirim');
         if(listKirimSementara.length === 0) {
-            container.innerHTML = `
-                <div style="text-align:center; color:#a0aec0; font-style:italic; padding:20px; background:#2d3748; border:2px dashed #4a5568; border-radius:12px;">
-                    Belum ada agen yang dimasukkan ke list kirim sementara.
-                </div>`;
+            container.innerHTML = `<div style="text-align:center; color:#a0aec0; font-style:italic; padding:20px; background:#2d3748; border:2px dashed #4a5568; border-radius:12px;">Belum ada agen yang dimasukkan ke list kirim sementara.</div>`;
             return;
         }
 
@@ -501,7 +521,6 @@
             let optMobil = `<option value="">-- Pilih Mobil --</option>`;
             if (masterKendaraan && masterKendaraan.length > 0) {
                 masterKendaraan.forEach(m => {
-                    // PERUBAHAN TAMPILAN DROPDOWN (HANYA MURNI NAMA UNIT)
                     let teksTampil = m.nama_unit ? m.nama_unit : m.plat; 
                     optMobil += `<option value="${m.plat}" ${item.plat_nomor === m.plat ? "selected" : ""}>${teksTampil}</option>`;
                 });
@@ -514,23 +533,15 @@
                 optDriver2 += `<option value="${k}" ${item.driver_2 === k ? "selected" : ""}>${k}</option>`;
             });
 
-            let tableRowsHTML = '';
-            item.barang.forEach(b => {
+            let tableRowsHTML = item.barang.map(b => {
                 if(b.qty_order > 0 || b.qty_real > 0) {
-                    tableRowsHTML += `
-                        <tr>
-                            <td>• ${b.nama_barang}</td>
-                            <td class="num-col">${b.qty_order}</td>
-                            <td class="num-col" style="color:#27ae60; font-weight:bold;">${b.qty_real}</td>
-                        </tr>`;
+                    return `<tr><td>• ${b.nama_barang}</td><td class="num-col">${b.qty_order}</td><td class="num-col" style="color:#27ae60; font-weight:bold;">${b.qty_real}</td></tr>`;
                 }
-            });
+                return '';
+            }).join('');
             
-            if(!tableRowsHTML) {
-                tableRowsHTML = `<tr><td colspan="3" style="color:#e53e3e; font-style:italic; text-align:center; padding:10px;">• Belum ada muatan diinput</td></tr>`;
-            }
+            if(!tableRowsHTML) tableRowsHTML = `<tr><td colspan="3" style="color:#e53e3e; font-style:italic; text-align:center; padding:10px;">• Belum ada muatan diinput</td></tr>`;
 
-            // PERUBAHAN TAMPILAN BADGE (HANYA MURNI NAMA UNIT)
             let kendaraanTerpilih = masterKendaraan.find(m => m.plat === item.plat_nomor);
             let namaUnitTampil = kendaraanTerpilih ? (kendaraanTerpilih.nama_unit ? kendaraanTerpilih.nama_unit : kendaraanTerpilih.plat) : "Belum Set Truk";
             const infoArmada = item.plat_nomor ? `<span class="badge-armada">🚚 ${namaUnitTampil}</span>` : `<span class="badge-armada" style="background:#742a2a; border-color:#9b2c2c;">🚚 Belum Set Truk</span>`;
@@ -585,16 +596,8 @@
 
                     <div class="card-right-muatan">
                         <table class="table-muatan">
-                            <thead>
-                                <tr>
-                                    <th style="text-align: left;">Muatan Barang</th>
-                                    <th>Order</th>
-                                    <th>Pemen.</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${tableRowsHTML}
-                            </tbody>
+                            <thead><tr><th style="text-align: left;">Muatan Barang</th><th>Order</th><th>Pemen.</th></tr></thead>
+                            <tbody>${tableRowsHTML}</tbody>
                         </table>
                     </div>
                 </div>
@@ -612,9 +615,7 @@
             if (!data.tanggal_berangkat) continue;
 
             let keyMobil = `${data.tanggal_berangkat}_${data.shift}_${data.plat_nomor}`;
-            if (data.plat_nomor) {
-                hitungMobil[keyMobil] = (hitungMobil[keyMobil] || 0) + 1;
-            }
+            if (data.plat_nomor) hitungMobil[keyMobil] = (hitungMobil[keyMobil] || 0) + 1;
 
             let keyD1 = `${data.tanggal_berangkat}_${data.driver_1}`;
             let keyD2 = `${data.tanggal_berangkat}_${data.driver_2}`;
@@ -624,7 +625,6 @@
 
             if (hitungMobil[keyMobil] > 2) {
                 let mobilObj = masterKendaraan.find(m => m.plat === data.plat_nomor);
-                // PERUBAHAN TAMPILAN ALERT (HANYA MURNI NAMA UNIT)
                 let namaMobilPeringatan = mobilObj ? (mobilObj.nama_unit ? mobilObj.nama_unit : mobilObj.plat) : data.plat_nomor;
                 alert(`[BATAS ARMADA TERLAMPAUI]\n\nMobil "${namaMobilPeringatan}" sudah terpilih 2 kali pada Shift ${data.shift} tanggal ${data.tanggal_berangkat}.\nTidak boleh dipilih lagi!`);
                 resetNilaiKomponenLogistik(namaAgen, tipeProperti);
@@ -638,16 +638,13 @@
                 return false;
             }
         }
-        
         renderListKirimCompact();
         return true;
     }
 
     function resetNilaiKomponenLogistik(namaAgen, tipeProperti) {
         let idxAgen = listKirimSementara.findIndex(x => x.nama_agen === namaAgen);
-        if (idxAgen !== -1) {
-            listKirimSementara[idxAgen][tipeProperti] = "";
-        }
+        if (idxAgen !== -1) listKirimSementara[idxAgen][tipeProperti] = "";
         simpanKePenyimpananLokal();
         renderListKirimCompact();
     }
@@ -664,10 +661,7 @@
         if(data.driver_1 === data.driver_2) return alert(`[Validasi Gagal] Driver 1 dan Driver 2 untuk Agen ${namaAg} tidak boleh sama!`);
 
         const btnCard = document.getElementById(`btnSimpan_${index}`);
-        if(btnCard) {
-            btnCard.disabled = true;
-            btnCard.innerText = "SEDANG FIX DATA...";
-        }
+        if(btnCard) { btnCard.disabled = true; btnCard.innerText = "SEDANG FIX DATA..."; }
 
         try {
             const coupleDriver = `${data.driver_1} / ${data.driver_2}`;
@@ -675,11 +669,8 @@
             const { data: resJadwal, error: errMaster } = await clientSupabase
                 .from('jadwal_kirim')
                 .insert([{
-                    tanggal_kirim: data.tanggal_berangkat, 
-                    shift: data.shift,
-                    nama_agen: data.nama_agen,
-                    plat_nomor: data.plat_nomor,
-                    driver: coupleDriver
+                    tanggal_kirim: data.tanggal_berangkat, shift: data.shift,
+                    nama_agen: data.nama_agen, plat_nomor: data.plat_nomor, driver: coupleDriver
                 }])
                 .select();
 
@@ -689,12 +680,7 @@
             let detailInserts = [];
             data.barang.forEach(b => {
                 if(b.qty_order > 0 || b.qty_real > 0) {
-                    detailInserts.push({
-                        id_jadwal: idJadwal,
-                        nama_barang: b.nama_barang,
-                        qty_order: b.qty_order,
-                        qty_real: b.qty_real
-                    });
+                    detailInserts.push({ id_jadwal: idJadwal, nama_barang: b.nama_barang, qty_order: b.qty_order, qty_real: b.qty_real });
                 }
             });
 
@@ -704,21 +690,16 @@
             }
 
             alert(`✅ FIX BERHASIL: Jadwal untuk agen ${namaAg} aman masuk ke database!`);
-            
             listKirimSementara.splice(index, 1);
             simpanKePenyimpananLokal();
             
-            renderDraftAwal();
             renderListKirimCompact();
             hitungTotalKebutuhanGlobal();
             muatRiwayatJadwalSelesai();
 
         } catch(e) {
             alert("❌ Gagal Kirim Jadwal Agen: " + e.message);
-            if(btnCard) {
-                btnCard.disabled = false;
-                btnCard.innerText = "🔒 FIX JADWAL AGEN INI";
-            }
+            if(btnCard) { btnCard.disabled = false; btnCard.innerText = "🔒 FIX JADWAL AGEN INI"; }
         }
     }
 
@@ -747,17 +728,9 @@
                 
                 let tableRowsHistoryHTML = '';
                 if(j.jadwal_kirim_detail) {
-                    j.jadwal_kirim_detail.forEach(det => {
-                        tableRowsHistoryHTML += `
-                            <tr>
-                                <td>• ${det.nama_barang}</td>
-                                <td class="num-col">${det.qty_order}</td>
-                                <td class="num-col" style="font-weight:bold;">${det.qty_real}</td>
-                            </tr>`;
-                    });
+                    tableRowsHistoryHTML = j.jadwal_kirim_detail.map(det => `<tr><td>• ${det.nama_barang}</td><td class="num-col">${det.qty_order}</td><td class="num-col" style="font-weight:bold;">${det.qty_real}</td></tr>`).join('');
                 }
 
-                // PERUBAHAN TAMPILAN HISTORY (HANYA MURNI NAMA UNIT)
                 let unitHistori = masterKendaraan.find(m => m.plat === j.plat_nomor);
                 let namaUnitHistori = unitHistori ? (unitHistori.nama_unit ? unitHistori.nama_unit : unitHistori.plat) : j.plat_nomor;
 
@@ -776,39 +749,19 @@
                         <div class="card-left-inputs">
                             <div class="logistik-grid" style="border-color: #4a5568;">
                                 <div class="grid-row">
-                                    <div>
-                                        <label>Tgl Jalan</label>
-                                        <input type="text" value="${j.tanggal_kirim}" disabled style="background:#2d3748; color:#cbd5e0; border:1px solid #4a5568; padding:8px; width:100%; box-sizing:border-box; border-radius:6px; font-weight:bold; font-size:13px;">
-                                    </div>
-                                    <div>
-                                        <label>Shift</label>
-                                        <input type="text" value="${j.shift}" disabled style="background:#2d3748; color:#cbd5e0; border:1px solid #4a5568; padding:8px; width:100%; box-sizing:border-box; border-radius:6px; font-weight:bold; font-size:13px;">
-                                    </div>
+                                    <div><label>Tgl Jalan</label><input type="text" value="${j.tanggal_kirim}" disabled style="background:#2d3748; color:#cbd5e0; border:1px solid #4a5568; padding:8px; width:100%; box-sizing:border-box; border-radius:6px; font-weight:bold; font-size:13px;"></div>
+                                    <div><label>Shift</label><input type="text" value="${j.shift}" disabled style="background:#2d3748; color:#cbd5e0; border:1px solid #4a5568; padding:8px; width:100%; box-sizing:border-box; border-radius:6px; font-weight:bold; font-size:13px;"></div>
                                 </div>
                                 <div class="grid-row">
-                                    <div>
-                                        <label>Armada Mobil</label>
-                                        <input type="text" value="${namaUnitHistori}" disabled style="background:#2d3748; color:#cbd5e0; border:1px solid #4a5568; padding:8px; width:100%; box-sizing:border-box; border-radius:6px; font-weight:bold; font-size:13px;">
-                                    </div>
-                                    <div>
-                                        <label>Driver Couple</label>
-                                        <input type="text" value="${j.driver}" disabled style="background:#2d3748; color:#cbd5e0; border:1px solid #4a5568; padding:8px; width:100%; box-sizing:border-box; border-radius:6px; font-weight:bold; font-size:13px;">
-                                    </div>
+                                    <div><label>Armada Mobil</label><input type="text" value="${namaUnitHistori}" disabled style="background:#2d3748; color:#cbd5e0; border:1px solid #4a5568; padding:8px; width:100%; box-sizing:border-box; border-radius:6px; font-weight:bold; font-size:13px;"></div>
+                                    <div><label>Driver Couple</label><input type="text" value="${j.driver}" disabled style="background:#2d3748; color:#cbd5e0; border:1px solid #4a5568; padding:8px; width:100%; box-sizing:border-box; border-radius:6px; font-weight:bold; font-size:13px;"></div>
                                 </div>
                             </div>
                         </div>
                         <div class="card-right-muatan" style="background: #2d3748;">
                             <table class="table-muatan">
-                                <thead>
-                                    <tr>
-                                        <th style="text-align: left;">Muatan Barang</th>
-                                        <th>Order</th>
-                                        <th>Pemen.</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${tableRowsHistoryHTML}
-                                </tbody>
+                                <thead><tr><th style="text-align: left;">Muatan Barang</th><th>Order</th><th>Pemen.</th></tr></thead>
+                                <tbody>${tableRowsHistoryHTML}</tbody>
                             </table>
                         </div>
                     </div>
