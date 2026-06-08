@@ -41,7 +41,7 @@
         table.table-input th { font-size: 11px; text-align: left; padding: 6px; background: #1a202c; border-bottom: 2px solid #4a5568; font-weight: 900; color: #cbd5e0; text-transform: uppercase; }
         table.table-input td { padding: 6px; border-bottom: 1px solid #4a5568; font-size: 14px; font-weight: 700; }
         .input-qty { width: 65px; padding: 5px; border: 2px solid #4a5568; border-radius: 6px; text-align: center; font-weight: 700; font-size: 14px; background: #1a202c; color: white; }
-        .selector-row select { width: 100%; padding: 8px; font-size: 13px; font-weight: 700; border: 2px solid #4a5568; border-radius: 6px; background: #2d3748; color: white; }
+        .selector-row select { width: 100%; padding: 8px; font-size: 13px; font-weight: 700; border: 2px solid #4a5568; border-radius: 6px; background: #2d3748; color: white; width: 100%; }
 
         /* LAYOUTING LIST ANTREAN UTAMA */
         .compact-list-card, .history-card { background: #2d3748; padding: 12px; border-radius: 10px; margin-top: 10px; font-size: 14px; border: 2px solid #4a5568; display: flex; flex-direction: column; gap: 8px; }
@@ -262,7 +262,7 @@
             }
         } catch(e) { console.error(e); }
 
-        // MENGAMBIL LOG RIWAYAT TERAKHIR DARI TABEL TRANSAKSI UTAMA SESUAI SCREENSHOT
+        // AMBIL DATA TRANSAKSI TERAKHIR DARI DATABASE
         await muatCacheRiwayatTerakhirSemuaAgen();
 
         renderListKirimCompact();
@@ -270,12 +270,11 @@
         muatRiwayatJadwalSelesai();
     }
 
-    // DISESUAIKAN DENGAN SKEMA KORPORAT: nama_agen, tanggal, driver_1, driver_2
     async function muatCacheRiwayatTerakhirSemuaAgen() {
         try {
             const { data: rwt, error } = await clientSupabase
                 .from('transaksi') 
-                .select('nama_agen, tanggal, driver_1, driver_2')
+                .select('nama_agen, tanggal, driver_1, driver_2, plat_nomor')
                 .order('tanggal', { ascending: false });
             
             if(!error && rwt) {
@@ -283,9 +282,7 @@
                 rwt.forEach(log => {
                     if(log.nama_agen) {
                         const agKey = log.nama_agen.toLowerCase().trim();
-                        // Hanya tangkap baris paling atas/terbaru per agen
                         if (!cacheRiwayatTerakhirAgen[agKey]) {
-                            // Menggabungkan driver_1 dan driver_2 agar rapi & komplit
                             let gabungDriver = "-";
                             if(log.driver_1 && log.driver_2) {
                                 gabungDriver = `${log.driver_1} / ${log.driver_2}`;
@@ -297,7 +294,8 @@
 
                             cacheRiwayatTerakhirAgen[agKey] = {
                                 tanggal: log.tanggal,
-                                driver: gabungDriver
+                                driver: gabungDriver,
+                                plat: log.plat_nomor || ""
                             };
                         }
                     }
@@ -564,6 +562,7 @@
         `).join('');
     }
 
+    /* DI SINI DIUBAH AGAR BADGE BIRU DI SAMPING NAMA AGEN MENAMPILKAN TRANSAKSI TERAKHIR */
     function renderListKirimCompact() {
         const container = document.getElementById('containerListKirim');
         if(listKirimSementara.length === 0) {
@@ -600,9 +599,17 @@
             
             if(!tableRowsHTML) tableRowsHTML = `<tr><td colspan="3" style="color:#e53e3e; font-style:italic; text-align:center; padding:10px;">• Belum ada muatan diinput</td></tr>`;
 
-            let kendaraanTerpilih = masterKendaraan.find(m => m.plat === item.plat_nomor);
-            let namaUnitTampil = kendaraanTerpilih ? (kendaraanTerpilih.nama_unit ? kendaraanTerpilih.nama_unit : kendaraanTerpilih.plat) : "Belum Set Truk";
-            const infoArmada = item.plat_nomor ? `<span class="badge-armada">🚚 ${namaUnitTampil}</span>` : `<span class="badge-armada" style="background:#742a2a; border-color:#9b2c2c;">🚚 Belum Set Truk</span>`;
+            // AMBIL DATA TRANSAKSI TERAKHIR DARI CACHE UNTUK BADGE GANTIIN ANGGARA
+            const agKey = item.nama_agen.toLowerCase().trim();
+            const rwtTerakhir = cacheRiwayatTerakhirAgen[agKey];
+            
+            let teksBadgeKirim = "⏳ Belum ada riwayat";
+            if(rwtTerakhir) {
+                // Format ringkas agar muat di dalam badge: Tgl - Driver
+                teksBadgeKirim = `⏮️ ${rwtTerakhir.tanggal} (${rwtTerakhir.driver})`;
+            }
+
+            const infoArmada = `<span class="badge-armada">🚚 ${teksBadgeKirim}</span>`;
 
             card.innerHTML = `
                 <div class="card-top-info">
@@ -749,7 +756,6 @@
 
             alert(`✅ FIX BERHASIL: Jadwal untuk agen ${namaAg} aman masuk ke database!`);
             
-            // Perbarui cache internal pelacakan riwayat langsung dari penginputan logistik barusan
             cacheRiwayatTerakhirAgen[data.nama_agen.toLowerCase().trim()] = {
                 tanggal: data.tanggal_berangkat,
                 driver: coupleDriver
