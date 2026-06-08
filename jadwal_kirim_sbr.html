@@ -212,7 +212,7 @@
     let bankTabunganOrder = [];
     let objOrderAktif = null; 
     let masterCacheAgenDB = []; 
-    let cacheRiwayatTerakhirAgen = {}; // Menyimpan data pengiriman terakhir per agen
+    let cacheRiwayatTerakhirAgen = {}; 
 
     async function initAplikasi() {
         document.getElementById('tglKirimGlobal').valueAsDate = new Date();
@@ -262,7 +262,7 @@
             }
         } catch(e) { console.error(e); }
 
-        // Load data tracking riwayat pengiriman terakhir dari Supabase
+        // MENGAMBIL LOG RIWAYAT TERAKHIR DARI TABEL TRANSAKSI UTAMA SESUAI SCREENSHOT
         await muatCacheRiwayatTerakhirSemuaAgen();
 
         renderListKirimCompact();
@@ -270,29 +270,40 @@
         muatRiwayatJadwalSelesai();
     }
 
-    // Fungsi mengambil log pengiriman paling akhir dari masing-masing agen
+    // DISESUAIKAN DENGAN SKEMA KORPORAT: nama_agen, tanggal, driver_1, driver_2
     async function muatCacheRiwayatTerakhirSemuaAgen() {
         try {
             const { data: rwt, error } = await clientSupabase
-                .from('jadwal_kirim')
-                .select('nama_agen, tanggal_kirim, shift, driver')
-                .order('tanggal_kirim', { ascending: false })
-                .order('id_jadwal', { ascending: false });
+                .from('transaksi') 
+                .select('nama_agen, tanggal, driver_1, driver_2')
+                .order('tanggal', { ascending: false });
             
             if(!error && rwt) {
                 cacheRiwayatTerakhirAgen = {};
                 rwt.forEach(log => {
-                    const agKey = log.nama_agen.toLowerCase().trim();
-                    if (!cacheRiwayatTerakhirAgen[agKey]) {
-                        cacheRiwayatTerakhirAgen[agKey] = {
-                            tanggal: log.tanggal_kirim,
-                            shift: log.shift,
-                            driver: log.driver
-                        };
+                    if(log.nama_agen) {
+                        const agKey = log.nama_agen.toLowerCase().trim();
+                        // Hanya tangkap baris paling atas/terbaru per agen
+                        if (!cacheRiwayatTerakhirAgen[agKey]) {
+                            // Menggabungkan driver_1 dan driver_2 agar rapi & komplit
+                            let gabungDriver = "-";
+                            if(log.driver_1 && log.driver_2) {
+                                gabungDriver = `${log.driver_1} / ${log.driver_2}`;
+                            } else if(log.driver_1) {
+                                gabungDriver = log.driver_1;
+                            } else if(log.driver_2) {
+                                gabungDriver = log.driver_2;
+                            }
+
+                            cacheRiwayatTerakhirAgen[agKey] = {
+                                tanggal: log.tanggal,
+                                driver: gabungDriver
+                            };
+                        }
                     }
                 });
             }
-        } catch(e) { console.error("Gagal memuat cache riwayat kirim:", e); }
+        } catch(e) { console.error("Gagal ambil log dari tabel transaksi:", e); }
     }
 
     function simpanKePenyimpananLokal() {
@@ -418,16 +429,15 @@
             
             if(!detailItemsHTML) detailItemsHTML = `<tr><td style="color:#e53e3e; font-style:italic; font-size:11px;">Belum ada kuantiti diinput</td></tr>`;
 
-            // Mengambil info riwayat terakhir untuk agen dari variabel cache global
             const agKey = item.nama_agen.toLowerCase().trim();
             const rwtTerakhir = cacheRiwayatTerakhirAgen[agKey];
-            let infoRiwayatKirimHTML = `<span class="info-track-kirim" style="color: #ecc94b;">⏳ Belum pernah dikirim (Data Baru)</span>`;
+            let infoRiwayatKirimHTML = `<span class="info-track-kirim" style="color: #ecc94b;">⏳ Belum ada riwayat transaksi di sistem</span>`;
             
             if(rwtTerakhir) {
                 infoRiwayatKirimHTML = `
                     <span class="info-track-kirim">
-                        ⏮️ Terakhir: <b>${rwtTerakhir.tanggal}</b> (${rwtTerakhir.shift}) <br> 
-                        👤 Driver: ${rwtTerakhir.driver || '-'}
+                        ⏮️ Trx Terakhir: <b>${rwtTerakhir.tanggal}</b> <br> 
+                        👤 Driver: ${rwtTerakhir.driver}
                     </span>
                 `;
             }
@@ -739,10 +749,9 @@
 
             alert(`✅ FIX BERHASIL: Jadwal untuk agen ${namaAg} aman masuk ke database!`);
             
-            // Perbarui cache internal riwayat terakhir agen ini agar sinkron secara real-time
+            // Perbarui cache internal pelacakan riwayat langsung dari penginputan logistik barusan
             cacheRiwayatTerakhirAgen[data.nama_agen.toLowerCase().trim()] = {
                 tanggal: data.tanggal_berangkat,
-                shift: data.shift,
                 driver: coupleDriver
             };
 
