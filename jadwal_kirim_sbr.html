@@ -148,7 +148,14 @@
         </div>
     </div>
 
-    <div class="section-label">📋 LIST ANTREAN KIRIM (PENGATURAN LOGISTIK & ARMADA MASSAL)</div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0 8px;">
+        <div class="section-label" style="margin: 0; flex: 1;">📋 LIST ANTREAN KIRIM (PENGATURAN LOGISTIK & ARMADA MASSAL)</div>
+        <button class="btn-action" style="background: #25D366; color: white; padding: 10px 15px; margin-left: 10px; font-size: 13px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);" onclick="exportKeWA()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+            SHARE KE WA GROUP
+        </button>
+    </div>
+    
     <div id="containerListKirim">
         <div style="text-align:center; color:#a0aec0; font-style:italic; padding:20px; background:#2d3748; border:2px dashed #4a5568; border-radius:12px;">
             Belum ada agen yang dimasukkan ke list kirim sementara.
@@ -197,6 +204,11 @@
                     <div style="text-align:center; color:#a0aec0; font-style:italic; padding-top:40px;">Belum ada tabungan orderan masuk.</div>
                 </div>
                 <button type="button" class="btn-primary-blue" style="margin-top:auto;" onclick="lemparCeklisKeListKirimUtama()">⚡ MASUKKAN AGEN TERPILIH KE LIST KIRIM UTAMA</button>
+                <button type="button" class="btn-action" style="background: #25D366; color: white; padding: 10px; margin-top: 10px; font-weight: 900; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="exportTabunganKeWA()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+    SHARE TABUNGAN ORDER KE WA
+</button>
+
             </div>
         </div>
     </div>
@@ -562,7 +574,6 @@
         `).join('');
     }
 
-    /* FORMAT LIST ANTREAN DIGANTI MENGGUNAKAN TEKS BIASA DI BAWAH NAMA AGEN (PERSIS SEPERTI DI POPUP) */
     function renderListKirimCompact() {
         const container = document.getElementById('containerListKirim');
         if(listKirimSementara.length === 0) {
@@ -599,7 +610,6 @@
             
             if(!tableRowsHTML) tableRowsHTML = `<tr><td colspan="3" style="color:#e53e3e; font-style:italic; text-align:center; padding:10px;">• Belum ada muatan diinput</td></tr>`;
 
-            // Mengambil history kirim dari tabel transaksi
             const agKey = item.nama_agen.toLowerCase().trim();
             const rwtTerakhir = cacheRiwayatTerakhirAgen[agKey];
             
@@ -844,6 +854,87 @@
             });
         } catch(e) { console.error(e); }
     }
+
+    function exportKeWA() {
+        if(listKirimSementara.length === 0) {
+            alert("⚠️ Belum ada data di List Antrean Kirim untuk dibagikan!");
+            return;
+        }
+
+        let tglGlobal = document.getElementById('tglKirimGlobal').value;
+        
+        // Header Pesan WA
+        let teksWA = `📋 *RENCANA PENGIRIMAN SBR PUTRA FOOD*\n`;
+        teksWA += `📅 Tgl Operasional: *${tglGlobal}*\n\n`;
+        teksWA += `==========================\n\n`;
+
+        // Looping setiap agen yang ada di list antrean
+        listKirimSementara.forEach((item) => {
+            teksWA += `🏢 *AGEN: ${item.nama_agen.toUpperCase()}*\n`;
+            teksWA += `📅 Tgl Kirim: ${item.tanggal_berangkat || '-'}\n`;
+            teksWA += `⏰ Shift: *${item.shift || '-'}*\n`;
+            
+            // Cari nama mobil agar yang muncul bukan cuma plat nomor
+            let namaMobil = item.plat_nomor;
+            let unitMobil = masterKendaraan.find(m => m.plat === item.plat_nomor);
+            if(unitMobil && unitMobil.nama_unit) namaMobil = `${unitMobil.nama_unit} (${item.plat_nomor})`;
+
+            teksWA += `🚚 Armada: ${namaMobil || 'Belum dipilih'}\n`;
+            teksWA += `👤 Sopir: ${item.driver_1 || '-'} & ${item.driver_2 || '-'}\n\n`;
+            teksWA += `📦 *MUATAN:*\n`;
+            
+            let adaMuatan = false;
+            item.barang.forEach(b => {
+                if(b.qty_order > 0 || b.qty_real > 0) {
+                    // Format muatan rapi menggunakan bullet point WA
+                    teksWA += `  ▪️ ${b.nama_barang} : *Order ${b.qty_order}* \n`;
+                    adaMuatan = true;
+                }
+            });
+            
+            if(!adaMuatan) teksWA += `  _(Belum ada rincian muatan)_\n`;
+            
+            teksWA += `\n--------------------------\n\n`;
+        });
+
+        // Membersihkan spasi kosong di akhir
+        teksWA = teksWA.trim();
+
+        // Mengkonversi teks menjadi format link WhatsApp dan membuka tab baru
+        let urlWA = `https://wa.me/?text=${encodeURIComponent(teksWA)}`;
+        window.open(urlWA, '_blank');
+    }
+function exportTabunganKeWA() {
+    if(bankTabunganOrder.length === 0) {
+        alert("⚠️ Belum ada data di Tabungan Order untuk dibagikan!");
+        return;
+    }
+
+    let teksWA = `📋 *DAFTAR ORDER*\n`;
+    teksWA += `--------------------------\n\n`;
+
+    bankTabunganOrder.forEach((item) => {
+        teksWA += `🏢 *AGEN: ${item.nama_agen.toUpperCase()}*\n`;
+        teksWA += `📦 *RINCIAN ORDER:*\n`;
+        
+        let adaMuatan = false;
+        item.barang.forEach(b => {
+            if(b.qty_order > 0 || b.qty_real > 0) {
+                teksWA += `  ▪️ ${b.nama_barang} : *Order ${b.qty_order}*\n`;
+                adaMuatan = true;
+            }
+        });
+        
+        if(!adaMuatan) teksWA += `  _(Belum ada rincian muatan)_\n`;
+        teksWA += `\n`;
+    });
+
+    teksWA += `==========================\n`;
+    teksWA += `_Data ini adalah orderan yang sudah dicatat dan siap diproses Pengiriman._`;
+
+    let urlWA = `https://wa.me/?text=${encodeURIComponent(teksWA)}`;
+    window.open(urlWA, '_blank');
+}
 
     window.onload = initAplikasi;
 </script>
