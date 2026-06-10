@@ -135,7 +135,15 @@
     <div class="modal-content">
         <h3>Tambah Item</h3>
         <div class="form-group"><label>Barang</label><select id="modalBarang"></select></div>
-        <div class="form-group"><label>Satuan</label><select id="modalSatuan"><option>Ball</option><option>Pack</option><option>Pcs</option></select></div>
+        <div class="form-group"><label>Satuan</label>
+        <select id="modalSatuan">
+        <option>Ball</option>
+        <option>Pack</option>
+        <option>Pcs</option>
+                <option>Duz</option>
+                        <option>Karung</option>
+        </select>
+        </div>
         <div class="form-group"><label>Qty</label><input type="number" id="modalQty" value="0" onfocus="clearZero(this)"></div>
         <div class="form-group"><label>Keterangan</label><input type="text" id="modalKet" placeholder="Opsional..."></div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
