@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBR Putra Food - Data Master Logistik</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; }
+        .container { background: white; padding: 15px; border-radius: 15px; max-width: 750px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        header h2 { margin: 0; color: #1a202c; font-size: 18px; text-transform: uppercase; font-weight: 900; }
+        .btn-back { background: #4a5568; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 700; cursor: pointer; text-decoration: none; font-size: 12px; }
+        
+        .grid-panel { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        @media(min-width: 600px) { .grid-panel { grid-template-columns: 1fr 1fr; } }
+        
+        .card { background: #edf2f7; border: 1px solid #cbd5e0; padding: 12px; border-radius: 10px; }
+        .card h3 { margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; font-weight: 900; color: var(--p-color); border-bottom: 1px dashed #cbd5e0; padding-bottom: 5px; }
+        
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; font-weight: 700; margin-bottom: 3px; font-size: 13px; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; border: 2px solid #cbd5e0; border-radius: 6px; box-sizing: border-box; font-size: 15px; font-weight: 700; outline: none; }
+        
+        .btn-submit { width: 100%; padding: 10px; border: none; border-radius: 6px; font-weight: 900; cursor: pointer; color: white; text-transform: uppercase; font-size: 13px; margin-top: 5px; }
+        .btn-blue { background: #3182ce; }
+        .btn-green { background: #27ae60; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; border-radius: 6px; overflow: hidden; font-size: 13px; }
+        th { text-align: left; padding: 8px 5px; background: #1a202c; color: white; font-weight: 900; }
+        td { padding: 8px 5px; border-bottom: 1px solid #e2e8f0; font-weight: 700; }
+        .btn-delete { background: #e53e3e; color: white; border: none; padding: 3px 6px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h2>MASTER DATA KOTA & TRANSIT</h2>
+        <a href="input_nota.html" class="btn-back">⬅️ INPUT NOTA</a>
+    </header>
+
+    <div class="grid-panel">
+        <!-- PANEL 1: SUB AGEN & KOTA -->
+        <div class="card">
+            <h3>1. Master Sub Agen</h3>
+            <div class="form-group">
+                <label>Agen Induk</label>
+                <select id="inputInduk"><option value="Pak Rahmat">Pak Rahmat</option></select>
+            </div>
+            <div class="form-group">
+                <label>Nama Sub Agen</label>
+                <input type="text" id="inputSubNama" placeholder="Contoh: Yeyen">
+            </div>
+            <div class="form-group">
+                <label>Kota Tujuan</label>
+                <input type="text" id="inputKota" placeholder="Contoh: Lampung">
+            </div>
+            <button class="btn-submit btn-blue" onclick="simpanSub()">Simpan Sub Agen</button>
+            <table id="tableSub"><thead><tr><th>SUB AGEN (KOTA)</th><th>#</th></tr></thead><tbody></tbody></table>
+        </div>
+
+        <!-- PANEL 2: TITIK TRANSIT / KARGO -->
+        <div class="card">
+            <h3>2. Master Alamat Kirim / Transit</h3>
+            <div class="form-group">
+                <label>Nama Lokasi Transit / Kargo</label>
+                <input type="text" id="inputTransit" placeholder="Contoh: Petojo / Kargo A">
+            </div>
+            <button class="btn-submit btn-green" onclick="simpanTransit()">Simpan Titik Transit</button>
+            <table id="tableTransit"><thead><tr><th>TITIK TRANSIT (BONGKAR)</th><th>#</th></tr></thead><tbody></tbody></table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function loadData() {
+        const { data: sub } = await clientSupabase.from('sub_agen').select('*').order('nama_sub_agen');
+        const tbSub = document.getElementById('tableSub').querySelector('tbody');
+        tbSub.innerHTML = '';
+        if(sub) sub.forEach(s => {
+            tbSub.insertRow().innerHTML = `<td><b>${s.nama_sub_agen}</b><br><small style="color:#27ae60">Kota: ${s.kota_tujuan}</small></td><td><button class="btn-delete" onclick="hapus('sub_agen', ${s.id})">❌</button></td>`;
+        });
+
+        const { data: trs } = await clientSupabase.from('master_alamat_kirim').select('*').order('titik_transit');
+        const tbTrs = document.getElementById('tableTransit').querySelector('tbody');
+        tbTrs.innerHTML = '';
+        if(trs) trs.forEach(t => {
+            tbTrs.insertRow().innerHTML = `<td><b>${t.titik_transit}</b></td><td><button class="btn-delete" onclick="hapus('master_alamat_kirim', ${t.id})">❌</button></td>`;
+        });
+    }
+
+    async function simpanSub() {
+        const i = document.getElementById('inputInduk').value, n = document.getElementById('inputSubNama').value.trim(), k = document.getElementById('inputKota').value.trim();
+        if(!n || !k) return alert("Isi Nama & Kota!");
+        await clientSupabase.from('sub_agen').insert([{ nama_agen_induk: i, nama_sub_agen: n, kota_tujuan: k }]);
+        document.getElementById('inputSubNama').value = ""; document.getElementById('inputKota').value = ""; loadData();
+    }
+
+    async function simpanTransit() {
+        const t = document.getElementById('inputTransit').value.trim();
+        if(!t) return alert("Isi Titik Transit!");
+        await clientSupabase.from('master_alamat_kirim').insert([{ titik_transit: t }]);
+        document.getElementById('inputTransit').value = ""; loadData();
+    }
+
+    async function hapus(tabel, id) { if(confirm("Hapus data ini?")) { await clientSupabase.from(tabel).delete().eq('id', id); loadData(); } }
+    window.onload = loadData;
+</script>
+</body>
+</html>

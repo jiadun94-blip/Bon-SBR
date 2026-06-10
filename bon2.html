@@ -1,17 +1,14 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id"> 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBR Putra Food - Input Nota</title>
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="theme-color" content="#2c3e50">
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
-    
     <style>
         :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
         body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; font-size: 17px; }
@@ -76,10 +73,17 @@
         <input type="text" id="noNota" readonly placeholder="No. Nota">
         <input type="date" id="tglNota">
         <select id="pilihAgen" onchange="updateBon()"><option value="">-- AGEN --</option></select>
+        
         <select id="driver1" disabled style="background:#edf2f7; color:#4a5568;"><option value="">-- DRIVER 1 --</option></select>
         <select id="pilihMobil"><option value="">-- MOBIL --</option></select>
         <select id="driver2"><option value="">-- DRIVER 2 (Ops) --</option></select>
+
+        <select id="subAgen" style="display: none;" onchange="updateSubAgenCity()"><option value="">-- SUB AGEN --</option></select>
+        <select id="alamatKirimSelect" style="display: none;" onchange="updateDetailTransit()"><option value="">-- TITIK TRANSIT --</option></select>
+        
+        <input type="text" id="kotaTujuanDisplay" placeholder="Kota Tujuan" readonly style="display: none; background:#edf2f7; color:#4a5568;">
     </div>
+
 
     <div>
         <div class="section-label"><span>📦 DIKIRIM :</span><button class="btn-action" style="background:#27ae60" onclick="openModal('Kirim')">+ ITEM</button></div>
@@ -151,6 +155,13 @@
     const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let database = { harga: {}, barang: [] };
+    let listSubAgen = [];     
+    let listTitikTransit = []; 
+    
+    // Variabel penampung teks untuk print & db
+    let selectedKotaTujuanText = ""; 
+    let selectedTitikTransitText = "";
+
     let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim'; let editIndex = -1;
     let btCharacteristic = null;
     let lastPrintText = "";
@@ -182,6 +193,13 @@
                     database.harga[h.nama_agen][`${h.nama_barang}_${h.satuan}`] = h.harga_jual;
                 });
             }
+
+            // LOAD DATA KOTA DAN TRANSIT
+            const { data: subData } = await clientSupabase.from('sub_agen').select('*').order('nama_sub_agen');
+            if(subData) listSubAgen = subData;
+
+            const { data: trsData } = await clientSupabase.from('master_alamat_kirim').select('*').order('titik_transit');
+            if(trsData) listTitikTransit = trsData;
 
             const { data: karyawan, error: errorKaryawan } = await clientSupabase.from('karyawan').select('*').eq('aktif', true);
             if (errorKaryawan) throw new Error("Gagal muat DRIVER: " + errorKaryawan.message);
@@ -220,11 +238,20 @@
         document.getElementById('pilihAgen').value = "";
         document.getElementById('pilihMobil').value = "";
         document.getElementById('driver2').value = "";
+        
+        document.getElementById('subAgen').innerHTML = '<option value="">-- SUB AGEN --</option>';
+        document.getElementById('alamatKirimSelect').innerHTML = '<option value="">-- TITIK TRANSIT --</option>';
+        document.getElementById('kotaTujuanDisplay').value = "";
+        selectedKotaTujuanText = "";
+        selectedTitikTransitText = "";
+        
         document.getElementById('inputCash').value = "0";
         document.getElementById('inputTrf').value = "0";
         document.getElementById('inputBonLama').value = "0";
         document.getElementById('inputOngkir').value = "0";
         document.getElementById('notifBon').style.display = "none";
+        
+        updateBon();
         itemsKirim = []; itemsRetur = []; render(); hitungTotal();
     }
 
@@ -243,8 +270,46 @@
         const ag = document.getElementById('pilihAgen').value;
         const saldoBon = database.harga[ag]?.bon || 0;
         
-        const agenPakeOngkir = ["Jawa Timur", "Wido Ke Jawa"]; 
+        const agenPakeOngkir = ["Edi (o)", "Wanto (o)","Catur (o)","Djago Snack (o)","Rizky (o)"]; 
         const isOngkir = agenPakeOngkir.includes(ag);
+
+        const isSubAgen = (ag === "Pak Rahmat");
+
+        const elemDrv1 = document.getElementById('driver1');
+        const elemDrv2 = document.getElementById('driver2');
+        const elemMobil = document.getElementById('pilihMobil');
+        
+        const elemSubAgen = document.getElementById('subAgen');
+        const elemTransitSelect = document.getElementById('alamatKirimSelect');
+        const elemKotaDisp = document.getElementById('kotaTujuanDisplay');
+
+        if (isSubAgen) {
+            elemDrv1.style.display = 'none';
+            elemDrv2.style.display = 'none';
+            elemMobil.style.display = 'none';
+            
+            elemSubAgen.style.display = '';
+            elemTransitSelect.style.display = '';
+            elemKotaDisp.style.display = '';
+
+            elemSubAgen.innerHTML = '<option value="">-- SUB AGEN --</option>';
+            listSubAgen.filter(s => s.nama_agen_induk === ag).forEach(s => {
+                elemSubAgen.options.add(new Option(s.nama_sub_agen, s.nama_sub_agen));
+            });
+
+            elemTransitSelect.innerHTML = '<option value="">-- TITIK TRANSIT --</option>';
+            listTitikTransit.forEach(a => {
+                elemTransitSelect.options.add(new Option(a.titik_transit, a.id));
+            });
+        } else {
+            elemDrv1.style.display = '';
+            elemDrv2.style.display = '';
+            elemMobil.style.display = '';
+            
+            elemSubAgen.style.display = 'none';
+            elemTransitSelect.style.display = 'none';
+            elemKotaDisp.style.display = 'none';
+        }
 
         document.getElementById('boxBonLama').style.display = saldoBon > 0 ? "block" : "none";
         document.getElementById('boxOngkir').style.display = isOngkir ? "block" : "none";
@@ -253,6 +318,33 @@
         document.getElementById('inputBonLama').value = saldoBon.toLocaleString('id-ID');
         document.getElementById('notifBon').style.display = saldoBon > 0 ? "block" : "none";
         hitungTotal();
+    }
+
+    // Melacak kota dari nama sub agen yang dipilih
+    function updateSubAgenCity() {
+        const subNama = document.getElementById('subAgen').value;
+        const subData = listSubAgen.find(s => s.nama_sub_agen === subNama);
+        const dispElem = document.getElementById('kotaTujuanDisplay');
+        
+        if (subData) {
+            selectedKotaTujuanText = subData.kota_tujuan;
+            dispElem.value = "Kota Tujuan: " + subData.kota_tujuan;
+        } else {
+            selectedKotaTujuanText = "";
+            dispElem.value = "";
+        }
+    }
+
+    // Melacak titik transit yang dipilih
+    function updateDetailTransit() {
+        const idTrs = document.getElementById('alamatKirimSelect').value;
+        const dataTrs = listTitikTransit.find(a => String(a.id) === String(idTrs));
+        
+        if (dataTrs) {
+            selectedTitikTransitText = dataTrs.titik_transit;
+        } else {
+            selectedTitikTransitText = "";
+        }
     }
 
     function openModal(mode) { 
@@ -379,6 +471,12 @@
         if(!ag) return alert("Pilih Agen!");
         if(itemsKirim.length === 0 && itemsRetur.length === 0) return alert("Pilih barang dikirim atau retur!");
 
+        const isSubAgen = (ag === "Pak Rahmat");
+        const subAgenVal = document.getElementById('subAgen').value;
+        if(isSubAgen && (!subAgenVal || !selectedTitikTransitText)) {
+            return alert("Pilih Sub Agen & Titik Transit Kargo terlebih dahulu!");
+        }
+
         const btn = document.getElementById('btnSimpan');
         btn.innerText = "MENYIMPAN DATA..."; btn.disabled = true;
 
@@ -386,11 +484,12 @@
         const tglInput = document.getElementById('tglNota').value;
         const [y, m, d] = tglInput.split('-');
         const tglIndo = `${d}-${m}-${y}`;
+        
         const drv1 = document.getElementById('driver1').value;
         const drv2 = document.getElementById('driver2').value;
         const drvGabung = drv2 ? `${drv1} / ${drv2}` : drv1;
         const mobil = document.getElementById('pilihMobil').value;
-        
+
         const tk = itemsKirim.reduce((a, b) => a + b.total, 0);
         const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
         const bl = getAngka('inputBonLama');
@@ -405,7 +504,16 @@
 
         let p = `\x1B\x40\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10SBR PUTRA FOOD\n\x1B\x21\x00\x1B\x45\x00Lembang, Bandung Barat\n------------------------------------------------\n`;
         p += `\x1B\x61\x00` + buatBaris(`NO: ${noNota}`, `TGL: ${tglIndo}`);
-        p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10${ag.toUpperCase()}\n\x1B\x21\x00\x1B\x45\x00DRV: ${drvGabung} [ ${mobil} ]\n------------------------------------------------\n\x1B\x61\x00`;
+        
+        // Komposisi cetak info pengiriman pada struk belanjaan
+        let infoPengiriman = "";
+        if (isSubAgen) {
+            infoPengiriman = `SUB AGEN: ${subAgenVal} [ ${selectedKotaTujuanText.toUpperCase()} ]\nTITIK TRANSIT: ${selectedTitikTransitText.toUpperCase()}`;
+        } else {
+            infoPengiriman = `DRV: ${drvGabung} [ ${mobil} ]`;
+        }
+
+        p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10${ag.toUpperCase()}\n\x1B\x21\x00\x1B\x45\x00${infoPengiriman}\n------------------------------------------------\n\x1B\x61\x00`;
         
         itemsKirim.forEach(i => { 
             p += `${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, i.total.toLocaleString());
@@ -428,13 +536,25 @@
         p += buatBaris(`Bayar CASH:`, `Rp ${cash.toLocaleString()}`) + buatBaris(`Bayar TRF:`, `Rp ${trf.toLocaleString()}`) + `------------------------------------------------\n` + `\x1B\x45\x01\x1B\x21\x10` + buatBaris(`SISA BON:`, `Rp ${sisa.toLocaleString()}`) + `\x1B\x45\x00\x1B\x21\x00\n\n( ............................ )\n------------------------------------------------\n\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD\n\n\n\n\n`;
 
         try {
-            await clientSupabase.from('transaksi_dp').insert([{
+            const transaksiPayload = {
                 no_nota: noNota, nama_agen: ag, tanggal: tglInput,
-                driver_1: drv1, driver_2: drv2, plat_nomor: mobil, 
                 total_kirim: tk, total_retur: tr, bon_lama: bl, 
                 ongkir: ongkir, 
                 bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
-            }]);
+            };
+
+            if (isSubAgen) {
+                // "PEMBAJAKAN" KOLOM ARMADA AGAR TIDAK PERLU TAMBAH KOLOM BARU DI DB
+                transaksiPayload.driver_1 = subAgenVal;             // Nama Sub Agen (Yeyen) masuk ke Driver 1
+                transaksiPayload.driver_2 = selectedKotaTujuanText; // Kota Tujuan (Lampung) masuk ke Driver 2
+                transaksiPayload.plat_nomor = selectedTitikTransitText; // Titik Transit (Petojo) masuk ke Plat Nomor
+            } else {
+                transaksiPayload.driver_1 = drv1;
+                transaksiPayload.driver_2 = drv2;
+                transaksiPayload.plat_nomor = mobil;
+            }
+
+            await clientSupabase.from('transaksi_dp').insert([transaksiPayload]);
 
             const details = [
                 ...itemsKirim.map(i => ({ no_nota: noNota, nama_barang: i.barang, qty: i.qty, satuan: i.satuan, tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total, keterangan: i.keterangan })),
