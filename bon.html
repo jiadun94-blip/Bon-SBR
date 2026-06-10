@@ -91,7 +91,7 @@
         <div class="sub-display"><span>SUBTOTAL:</span><span id="subRetur">Rp 0</span></div>
         
         <div id="boxBonLama" style="display:none;">
-            <div class="section-label">📄 BON LAMA :</div>
+            <div class="section-label" id="labelBonUI">📄 BON LAMA :</div>
             <div style="background:#fffaf0; padding:10px; border-radius:10px; border:2px solid #ed8936;">
                 <input type="text" id="inputBonLama" class="input-manual" style="background:transparent; border:none; height:auto;" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
             </div>
@@ -109,7 +109,7 @@
         <div class="sum-row"><span>Kirim:</span><span id="txtKirim">Rp 0</span></div>
         <div class="sum-row"><span>Retur:</span><span id="txtRetur">Rp 0</span></div>
         <div class="sum-row" id="rowTxtOngkir" style="display:none;"><span>Ongkir:</span><span id="txtOngkir">Rp 0</span></div>
-        <div class="sum-row"><span>Bon Lama:</span><span id="txtBon">Rp 0</span></div>
+        <div class="sum-row"><span id="labelSumBon">Bon Lama:</span><span id="txtBon">Rp 0</span></div>
         <div class="sum-row grand-total"><span>SISA AKHIR:</span><span id="txtGrand">Rp 0</span></div>
     </div>
 
@@ -153,6 +153,7 @@
     let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim'; let editIndex = -1;
     let btCharacteristic = null;
     let lastPrintText = "";
+    let isDeposit = false;
 
     function clearZero(el) { if(el.value === "0" || el.value === 0) el.value = ""; }
 
@@ -223,7 +224,12 @@
         document.getElementById('inputTrf').value = "0";
         document.getElementById('inputBonLama').value = "0";
         document.getElementById('inputOngkir').value = "0";
+        
         document.getElementById('notifBon').style.display = "none";
+        document.getElementById('labelBonUI').innerText = "📄 BON LAMA :";
+        document.getElementById('labelSumBon').innerText = "Bon Lama:";
+        isDeposit = false;
+
         itemsKirim = []; itemsRetur = []; render(); hitungTotal();
     }
 
@@ -242,16 +248,37 @@
         const ag = document.getElementById('pilihAgen').value;
         const saldoBon = database.harga[ag]?.bon || 0;
         
-        // --- NAMA AGEN YANG DIKENAKAN ONGKIR ---
         const agenPakeOngkir = ["Jawa Timur", "Catur", "Dajo Snack", "Edi", "Rizky", "Wanto"]; 
         const isOngkir = agenPakeOngkir.includes(ag);
 
-        document.getElementById('boxBonLama').style.display = saldoBon > 0 ? "block" : "none";
+        isDeposit = saldoBon < 0;
+
+        document.getElementById('boxBonLama').style.display = saldoBon !== 0 ? "block" : "none";
         document.getElementById('boxOngkir').style.display = isOngkir ? "block" : "none";
         document.getElementById('rowTxtOngkir').style.display = isOngkir ? "flex" : "none";
 
-        document.getElementById('inputBonLama').value = saldoBon.toLocaleString('id-ID');
-        document.getElementById('notifBon').style.display = saldoBon > 0 ? "block" : "none";
+        document.getElementById('labelBonUI').innerText = isDeposit ? "📄 DEPOSIT :" : "📄 BON LAMA :";
+        document.getElementById('labelSumBon').innerText = isDeposit ? "Deposit:" : "Bon Lama:";
+
+        document.getElementById('inputBonLama').value = Math.abs(saldoBon).toLocaleString('id-ID');
+        
+        const notif = document.getElementById('notifBon');
+        if (saldoBon > 0) {
+            notif.innerText = "⚠️ AGEN INI PUNYA BON LAMA!";
+            notif.style.display = "block";
+            notif.style.color = "#c53030";
+            notif.style.backgroundColor = "#fff5f5";
+            notif.style.borderColor = "#feb2b2";
+        } else if (saldoBon < 0) {
+            notif.innerText = "✅ AGEN INI PUNYA DEPOSIT!";
+            notif.style.display = "block";
+            notif.style.color = "#27ae60";
+            notif.style.backgroundColor = "#e8f8f5";
+            notif.style.borderColor = "#a3e4d7";
+        } else {
+            notif.style.display = "none";
+        }
+
         hitungTotal();
     }
 
@@ -321,19 +348,23 @@
     function hitungTotal() {
         const tk = itemsKirim.reduce((a, b) => a + b.total, 0); 
         const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
-        const bl = getAngka('inputBonLama'); 
+        
+        const bl_input = getAngka('inputBonLama'); 
+        const bl_actual = isDeposit ? -bl_input : bl_input; 
+        
         const ongkir = getAngka('inputOngkir');
         const cs = getAngka('inputCash'); 
         const tf = getAngka('inputTrf');
         
-        const sisa = (tk - tr - ongkir + bl - cs - tf);
+        const sisa = (tk - tr - ongkir + bl_actual - cs - tf);
         
         document.getElementById('subKirim').innerText = "Rp " + tk.toLocaleString('id-ID');
         document.getElementById('subRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
         document.getElementById('txtKirim').innerText = "Rp " + tk.toLocaleString('id-ID');
         document.getElementById('txtRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
         document.getElementById('txtOngkir').innerText = "Rp " + ongkir.toLocaleString('id-ID');
-        document.getElementById('txtBon').innerText = "Rp " + bl.toLocaleString('id-ID');
+        
+        document.getElementById('txtBon').innerText = (isDeposit ? "-Rp " : "Rp ") + bl_input.toLocaleString('id-ID');
         document.getElementById('txtGrand').innerText = "Rp " + sisa.toLocaleString('id-ID');
     }
 
@@ -371,7 +402,6 @@
     }
 
     async function simpanDanPrint() {
-        // --- AWAL BAGIAN VALIDASI KELENGKAPAN DATA ---
         let errorList = [];
         const ag = document.getElementById('pilihAgen').value;
         const drv1 = document.getElementById('driver1').value;
@@ -389,7 +419,6 @@
             errorList.push("- Belum ada item (Kirim atau Retur) yang dimasukkan");
         }
         
-        // Validasi Pembayaran: Jika keduanya kosong / bernilai 0
         if (cash === 0 && trf === 0) {
             errorList.push("- Pembayaran belum diisi (Nilai CASH dan TRANSFER tidak boleh keduanya Rp 0)");
         }
@@ -398,7 +427,6 @@
             alert("⚠️ DATA BELUM LENGKAP:\n\n" + errorList.join("\n") + "\n\nSilakan lengkapi terlebih dahulu!");
             return; 
         }
-        // --- AKHIR BAGIAN VALIDASI KELENGKAPAN DATA ---
 
         const btn = document.getElementById('btnSimpan');
         btn.innerText = "MENYIMPAN DATA..."; btn.disabled = true;
@@ -411,9 +439,11 @@
         
         const tk = itemsKirim.reduce((a, b) => a + b.total, 0);
         const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
-        const bl = getAngka('inputBonLama');
+        const bl_input = getAngka('inputBonLama');
+        const bl_actual = isDeposit ? -bl_input : bl_input;
         const ongkir = getAngka('inputOngkir');
-        const tagihanBersih = tk - tr - ongkir + bl;
+        
+        const tagihanBersih = tk - tr - ongkir + bl_actual;
         const sisa = tagihanBersih - cash - trf;
 
         const lebar = 48; 
@@ -438,7 +468,11 @@
         }
 
         if(ongkir > 0) p += buatBaris(`ONGKIR:`, `-Rp ${ongkir.toLocaleString()}`);
-        p += buatBaris(`BON LAMA:`, `Rp ${bl.toLocaleString()}`);
+        
+        const labelBonPrint = isDeposit ? "DEPOSIT:" : "BON LAMA:";
+        const valBonPrint = isDeposit ? `-Rp ${bl_input.toLocaleString()}` : `Rp ${bl_input.toLocaleString()}`;
+        p += buatBaris(labelBonPrint, valBonPrint);
+
         p += `================================================\n`;
         p += `\x1B\x45\x01` + buatBaris(`TOTAL TAGIHAN:`, `Rp ${tagihanBersih.toLocaleString()}`) + `\x1B\x45\x00`;
         p += `------------------------------------------------\n`;
@@ -453,7 +487,7 @@
             await clientSupabase.from('transaksi').insert([{
                 no_nota: noNota, nama_agen: ag, tanggal: tglInput,
                 driver_1: drv1, driver_2: drv2, plat_nomor: mobil, 
-                total_kirim: tk, total_retur: tr, bon_lama: bl, 
+                total_kirim: tk, total_retur: tr, bon_lama: bl_actual, 
                 ongkir: ongkir, 
                 bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
             }]);
