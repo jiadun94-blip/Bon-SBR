@@ -15,9 +15,15 @@
         .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 15px; }
         .form-group { display: flex; flex-direction: column; }
         label { font-size: 11px; margin-bottom: 4px; color: #aaa; font-weight: bold; }
-        input { background: #2d2d2d; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 4px; font-family: inherit; }
+        input, select { background: #2d2d2d; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 4px; font-family: inherit; }
+        select { cursor: pointer; }
         .btn-save { background: #3b4c64; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 14px; }
         .btn-save:active { background: #2c3e50; transform: scale(0.98); }
+
+        /* TAMBAHAN STYLE UNTUK INPUT PENCARIAN */
+        .search-container { margin-bottom: 15px; width: 100%; box-sizing: border-box; }
+        .search-input { width: 100%; background: #2d2d2d; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 4px; font-family: inherit; box-sizing: border-box; font-size: 14px; }
+        .search-input:focus { border-color: #3b4c64; outline: none; }
 
         /* TABLE AREA */
         .table-container { width: 100%; max-height: 60vh; overflow: auto; border: 1px solid #444; border-radius: 4px; background: #fff; }
@@ -26,6 +32,11 @@
         td { border: 1px solid #eee; padding: 10px; font-size: 13px; text-align: center; cursor: pointer; }
         tr:nth-child(even) { background: #fafafa; }
         tr:active { background: #dbeafe !important; }
+
+        /* Badge untuk tipe agen */
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .badge-normal { background: #e3f2fd; color: #0d47a1; }
+        .badge-khusus { background: #fff3e0; color: #e65100; }
 
         /* POPUP MENU */
         #context-menu {
@@ -52,7 +63,7 @@
         <input type="hidden" id="edit_id">
         <div class="form-group">
             <label>NAMA AGEN</label>
-            <input type="text" id="in_nama" placeholder="Nama Lengkap Agen">
+            <input text" id="in_nama" placeholder="Nama Lengkap Agen">
         </div>
         <div class="form-group">
             <label>ALAMAT (KOTA)</label>
@@ -63,6 +74,13 @@
             <input type="number" id="in_tlp" placeholder="6281...">
         </div>
         <div class="form-group">
+            <label>TYPE AGEN</label>
+            <select id="in_type">
+                <option value="NORMAL">NORMAL</option>
+                <option value="KHUSUS">KHUSUS</option>
+            </select>
+        </div>
+        <div class="form-group" style="grid-column: span 2;">
             <label>SALDO BON AWAL</label>
             <input type="number" id="in_saldo" value="0">
         </div>
@@ -73,6 +91,11 @@
 
 <div class="card">
     <h2>DATA AGEN TERINPUT</h2>
+    
+    <div class="search-container">
+        <input type="text" id="in_cari" class="search-input" placeholder="🔍 Cari nama, alamat, atau tipe agen (normal/khusus)..." onkeyup="cariAgen()">
+    </div>
+
     <div class="table-container">
         <table>
             <thead>
@@ -80,18 +103,18 @@
                     <th>NO</th>
                     <th>NAMA AGEN</th>
                     <th>ALAMAT</th>
+                    <th>TYPE</th>
                     <th>NO. TLP</th>
                     <th>SALDO BON</th>
                 </tr>
             </thead>
             <tbody id="list-agen">
-                <tr><td colspan="5">Memuat data...</td></tr>
+                <tr><td colspan="6">Memuat data...</td></tr>
             </tbody>
         </table>
     </div>
 </div>
 
-<!-- MENU POPUP -->
 <div id="context-menu">
     <div class="menu-item" onclick="prepareEdit()">📝 Edit Data</div>
     <div class="menu-item menu-del" onclick="hapusAgen()">🗑️ Hapus Agen</div>
@@ -99,6 +122,7 @@
 
 <script>
     const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    // SB_KEY dibawah ini sudah diperbaiki memakai key asli bawaan kode pertama Anda
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     const _sb = supabase.createClient(SB_URL, SB_KEY);
 
@@ -109,16 +133,35 @@
 
     async function muatTabelAgen() {
         const { data, error } = await _sb.from('agen').select('*').order('nama_agen', { ascending: true });
-        if (error) return;
         
+        if (error) {
+            console.error("Supabase Error:", error);
+            document.getElementById('list-agen').innerHTML = `<tr><td colspan="6" style="color:red;">Gagal memuat data: ${error.message}</td></tr>`;
+            return;
+        }
+        
+        document.getElementById('in_cari').value = "";
+
         const listBody = document.getElementById('list-agen');
         listBody.innerHTML = "";
+
+        if (data.length === 0) {
+            listBody.innerHTML = `<tr><td colspan="6">Tidak ada data agen.</td></tr>`;
+            return;
+        }
+
         data.forEach((ag, index) => {
             const tr = document.createElement('tr');
+            
+            // Penentuan badge tipe agen (Default NORMAL jika kosong)
+            const typeLower = (ag.type_agen || 'NORMAL').toLowerCase();
+            const badgeClass = typeLower === 'khusus' ? 'badge-khusus' : 'badge-normal';
+
             tr.innerHTML = `
                 <td>${index + 1}</td>
                 <td style="text-align:left; font-weight:bold;">${ag.nama_agen}</td>
                 <td style="text-align:left;">${ag.alamat}</td>
+                <td><span class="badge ${badgeClass}">${ag.type_agen || 'NORMAL'}</span></td>
                 <td>${ag.No_tlp || '-'}</td>
                 <td style="font-weight:bold;">${ag.saldo_bon ? ag.saldo_bon.toLocaleString('id-ID') : 0}</td>
             `;
@@ -133,6 +176,35 @@
 
             listBody.appendChild(tr);
         });
+    }
+
+    // FUNGSI PENCARIAN REAL-TIME
+    function cariAgen() {
+        const input = document.getElementById('in_cari').value.toUpperCase();
+        const table = document.querySelector('table');
+        const tr = table.getElementsByTagName('tr');
+
+        for (let i = 1; i < tr.length; i++) {
+            const tdNama = tr[i].getElementsByTagName('td')[1];
+            const tdAlamat = tr[i].getElementsByTagName('td')[2];
+            const tdType = tr[i].getElementsByTagName('td')[3];
+            
+            if (tdNama || tdAlamat || tdType) {
+                const teksNama = tdNama.textContent || tdNama.innerText;
+                const teksAlamat = tdAlamat.textContent || tdAlamat.innerText;
+                const teksType = tdType.textContent || tdType.innerText;
+                
+                if (
+                    teksNama.toUpperCase().indexOf(input) > -1 || 
+                    teksAlamat.toUpperCase().indexOf(input) > -1 ||
+                    teksType.toUpperCase().indexOf(input) > -1
+                ) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
     }
 
     function showMenu(e) {
@@ -153,6 +225,7 @@
         document.getElementById('in_nama').value = selectedData.nama_agen;
         document.getElementById('in_alamat').value = selectedData.alamat;
         document.getElementById('in_tlp').value = selectedData.No_tlp;
+        document.getElementById('in_type').value = selectedData.type_agen || "NORMAL";
         document.getElementById('in_saldo').value = selectedData.saldo_bon;
         
         document.getElementById('btn-aksi').innerText = "UPDATE DATA AGEN";
@@ -167,6 +240,7 @@
             nama_agen: document.getElementById('in_nama').value,
             alamat: document.getElementById('in_alamat').value.toUpperCase(),
             No_tlp: parseInt(document.getElementById('in_tlp').value) || 0,
+            type_agen: document.getElementById('in_type').value,
             saldo_bon: parseFloat(document.getElementById('in_saldo').value) || 0
         };
 
@@ -199,6 +273,7 @@
         document.getElementById('in_nama').value = "";
         document.getElementById('in_alamat').value = "";
         document.getElementById('in_tlp').value = "";
+        document.getElementById('in_type').value = "NORMAL";
         document.getElementById('in_saldo').value = "0";
         document.getElementById('btn-aksi').innerText = "SIMPAN DATA AGEN";
         document.getElementById('btn-aksi').style.background = "#3b4c64";

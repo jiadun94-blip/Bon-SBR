@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SBR Putra Food - Input Nota</title>
+    <title>SBR Putra Food - Input Nota Khusus</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="theme-color" content="#2c3e50">
@@ -72,7 +72,7 @@
     <div class="info-grid">
         <input type="text" id="noNota" readonly placeholder="No. Nota">
         <input type="date" id="tglNota">
-        <select id="pilihAgen" onchange="updateBon()"><option value="">-- AGEN --</option></select>
+        <select id="pilihAgen" onchange="updateBon()"><option value="">-- AGEN KHUSUS --</option></select>
         
         <select id="driver1" disabled style="background:#edf2f7; color:#4a5568;"><option value="">-- DRIVER 1 --</option></select>
         <select id="pilihMobil"><option value="">-- MOBIL --</option></select>
@@ -178,13 +178,14 @@
 
     async function init() {
         try {
-            const { data: agen, error: errorAgen } = await clientSupabase.from('agen').select('*');
+            // HANYA MENGAMBIL AGEN DENGAN TIPE 'KHUSUS'
+            const { data: agen, error: errorAgen } = await clientSupabase.from('agen').select('*').eq('type_agen', 'KHUSUS');
             if (errorAgen) throw new Error("Gagal muat AGEN: " + errorAgen.message);
             
             if(agen) {
                 agen.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen));
                 const selAgen = document.getElementById('pilihAgen');
-                selAgen.innerHTML = '<option value="">-- AGEN --</option>';
+                selAgen.innerHTML = '<option value="">-- AGEN KHUSUS --</option>';
                 agen.forEach(a => {
                     const labelBon = a.saldo_bon > 0 ? ` (!)` : "";
                     selAgen.options.add(new Option(a.nama_agen + labelBon, a.nama_agen));
@@ -278,8 +279,8 @@
         const ag = document.getElementById('pilihAgen').value;
         const saldoBon = database.harga[ag]?.bon || 0;
         
-        const agenPakeOngkir = ["Edi (o)", "Wanto (o)","Catur (o)","Djago Snack (o)","Rizky (o)"]; 
-        const isOngkir = agenPakeOngkir.includes(ag);
+        // Aturan Ongkir Baru: Selalu tampilkan jika ada agen yang dipilih (Karena ini halaman agen khusus)
+        const isOngkir = (ag !== "");
 
         const isSubAgen = (ag === "Pak Rahmat");
 
@@ -494,7 +495,7 @@
         const tglIndo = `${d}-${m}-${y}`;
         
         const drv1 = document.getElementById('driver1').value;
-        const drv2 = document.getElementById('driver2').value;
+        const drv2 = document.getElementById('driver2');
         const drvGabung = drv2 ? `${drv1} / ${drv2}` : drv1;
         const mobil = document.getElementById('pilihMobil').value;
 
