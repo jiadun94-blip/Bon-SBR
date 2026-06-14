@@ -40,23 +40,23 @@
         .pending { background: #ffedd5; color: #9a3412; font-weight: bold; border-radius: 4px; padding: 2px 6px; }
 
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(3px); }
-.modal-content { 
-    background: #1e1e1e; 
-    margin: 2% auto; /* Jarak atas diperkecil agar lebih luas */
-    border-radius: 12px; 
-    width: 90%; 
-    max-width: 480px; 
-    border: 1px solid #444; 
-    overflow: hidden; 
-    box-shadow: 0 20px 40px rgba(0,0,0,0.5); 
-}
+        .modal-content { 
+            background: #1e1e1e; 
+            margin: 2% auto;
+            border-radius: 12px; 
+            width: 90%; 
+            max-width: 480px; 
+            border: 1px solid #444; 
+            overflow: hidden; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5); 
+        }
         .modal-header { background: #2d2d2d; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; }
-.modal-body { 
-    padding: 15px; 
-    max-height: 75vh; /* Menggunakan 80% tinggi layar */
-    overflow-y: auto; 
-    color: #eee; 
-}
+        .modal-body { 
+            padding: 15px; 
+            max-height: 75vh;
+            overflow-y: auto; 
+            color: #eee; 
+        }
         .close-btn { font-size: 24px; cursor: pointer; color: #aaa; }
         
         .table-pop { width: 100%; border-collapse: collapse; }
@@ -211,7 +211,6 @@
             const { data: detail, error: errDet } = await _sb.from('transaksi_detail').select('*').eq('no_nota', noNota);
             if (errDet) throw errDet;
 
-            // Menambahkan 'keterangan' ke dalam select
             const { data: riwayatBayar, error: errBayar } = await _sb.from('pembayaran_bon')
                 .select('tanggal, bayar_cash, bayar_transfer, keterangan')
                 .eq('no_nota_referensi', noNota);
@@ -257,25 +256,34 @@
             }
 
 
-            
             const tagihanBersih = (trx.total_kirim || 0) - (trx.total_retur || 0) + (trx.bon_lama || 0);
             
-            s += `<br><div class="struk-row"><span>BON LAMA:</span><span>Rp ${(trx.bon_lama || 0).toLocaleString('id-ID')}</span></div>`;
+            // Logika untuk BON LAMA -> DEPOSIT
+            let bonLama = trx.bon_lama || 0;
+            let teksBonLama = bonLama < 0 ? "DEPOSIT:" : "BON LAMA:";
+            let nominalBonLama = Math.abs(bonLama);
+
+            s += `<br><div class="struk-row"><span>${teksBonLama}</span><span>Rp ${nominalBonLama.toLocaleString('id-ID')}</span></div>`;
+            
             s += `<div class="struk-double-separator"></div>`;
             s += `<div class="struk-row struk-bold"><span>TOTAL TAGIHAN:</span><span>Rp ${tagihanBersih.toLocaleString('id-ID')}</span></div>`;
             s += `<div class="struk-separator"></div>`;
             s += `<div class="struk-row"><span>Bayar CASH:</span><span>Rp ${(trx.bayar_cash || 0).toLocaleString('id-ID')}</span></div>`;
             s += `<div class="struk-row"><span>Bayar TRF:</span><span>Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}</span></div>`;
             s += `<div class="struk-separator"></div>`;
-            s += `<div class="struk-row struk-bold" style="font-size:14px; color:#dc2626;"><span>SISA BON:</span><span>Rp ${(trx.sisa_akhir || 0).toLocaleString('id-ID')}</span></div>`;
+            
+            // Logika untuk SISA BON -> DEPOSIT
+            let sisaAkhir = trx.sisa_akhir || 0;
+            let teksSisa = sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:";
+            let nominalSisa = Math.abs(sisaAkhir); 
+
+            s += `<div class="struk-row struk-bold" style="font-size:14px; color:#dc2626;"><span>${teksSisa}</span><span>Rp ${nominalSisa.toLocaleString('id-ID')}</span></div>`;
             s += `<div class="struk-separator"></div>`;
             s += `<div class="struk-center struk-bold" style="margin-top:10px; text-align:center;">SBR PUTRA FOOD SYSTEM</div>`;
             
-                        // Menampilkan riwayat dengan keterangan
-if (riwayatBayar && riwayatBayar.length > 0) {
+            if (riwayatBayar && riwayatBayar.length > 0) {
                 s += `<br><div class="struk-bold">RIWAYAT CICILAN:</div>`;
                 riwayatBayar.forEach(p => {
-                    // Tampilkan baris untuk setiap pembayaran
                     let detailBayar = "";
                     if ((p.bayar_cash || 0) > 0) detailBayar += `CASH: Rp ${p.bayar_cash.toLocaleString('id-ID')} `;
                     if ((p.bayar_transfer || 0) > 0) detailBayar += `TRF: Rp ${p.bayar_transfer.toLocaleString('id-ID')}`;
