@@ -147,18 +147,15 @@
 
 <script>
     const userAktif = localStorage.getItem("userNama");
-    // Karena ini environment testing lokal, kita uncomment redirect agar bisa jalan standalone tanpa login page
-    // if (!userAktif) { window.location.href = "index.html"; }
+    
     function logout() { localStorage.clear(); window.location.href = "index.html"; }
 
-    // --- LOGIKA HIDE/SHOW UKURAN KERTAS ---
     const selectPrinter = document.getElementById('ukuranKertas');
     if (userAktif === "Hadi" || userAktif === "Hadiat" || userAktif === "Mpang") {
-        selectPrinter.style.display = "inline-block"; // Tampilkan pilihan kertas
+        selectPrinter.style.display = "inline-block";
     } else {
-        selectPrinter.style.display = "none"; // Sembunyikan untuk driver lain
+        selectPrinter.style.display = "none";
     }
-    // --------------------------------------
 
     const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
@@ -167,7 +164,7 @@
     let database = { harga: {}, barang: [] };
     let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim'; let editIndex = -1;
     let btCharacteristic = null;
-    let lastPrintText = "";
+    let lastPrintText = ""; // Template base yang mengandung string [JENIS_CETAKAN]
     let isDeposit = false;
 
     function clearZero(el) { if(el.value === "0" || el.value === 0) el.value = ""; }
@@ -411,7 +408,9 @@
         if(!lastPrintText) return alert("Belum ada data cetak terakhir!");
         if(!btCharacteristic) return alert("Printer belum terhubung!");
         try {
-            await printToBT(lastPrintText);
+            // Replace penanda dengan keterangan REPRINT
+            let cetakReprint = lastPrintText.replace('[JENIS_CETAKAN]', '*** REPRINT NOTA ***');
+            await printToBT(cetakReprint);
             alert("✅ Berhasil Reprint Nota!");
         } catch(e) { alert("Reprint Gagal: " + e); }
     }
@@ -472,6 +471,9 @@
         const garisSamaDengan = "=".repeat(lebar) + "\n";
 
         let p = `\x1B\x40`; 
+        // Menambahkan placeholder untuk jenis cetakan di baris paling atas
+        p += `\x1B\x61\x01\x1B\x45\x01[JENIS_CETAKAN]\n\x1B\x45\x00\n`; 
+        
         p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10SBR PUTRA FOOD\n`; 
         p += `\x1B\x21\x00\x1B\x45\x00Lembang, Bandung Barat\n${garisStrip}`; 
         p += `\x1B\x61\x00` + buatBaris(`NO: ${noNota}`, `TGL: ${tglIndo}`); 
@@ -488,7 +490,7 @@
             itemsRetur.forEach(i => { p += `[RETUR] ${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, `-${i.total.toLocaleString()}`); });
             p += garisStrip + buatBaris(`TOTAL RETUR:`, `Rp ${tr.toLocaleString()}`);
         }
-
+        p += garisStrip;
         if(ongkir > 0) p += buatBaris(`ONGKIR:`, `-Rp ${ongkir.toLocaleString()}`);
         
         const labelBonPrint = isDeposit ? "DEPOSIT:" : "BON LAMA:";
@@ -523,9 +525,21 @@
             await clientSupabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
 
             if (btCharacteristic) {
-                btn.innerText = "MENCETAK NOTA...";
-                await printToBT(p);
-                lastPrintText = p; 
+                // 1. Cetak struk untuk CUSTOMER
+                btn.innerText = "MENCETAK CUSTOMER...";
+                let cetakCustomer = p.replace('[JENIS_CETAKAN]', '=== LEMBAR CUSTOMER ===');
+                await printToBT(cetakCustomer);
+                
+                // Jeda 5 detik agar kertas ada waktu untuk ditarik keluar / disobek
+                btn.innerText = "JEDA... (SIAPKAN KERTAS)";
+                await new Promise(r => setTimeout(r, 5000));
+                
+                // 2. Cetak struk untuk ADMIN
+                btn.innerText = "MENCETAK ADMIN...";
+                let cetakAdmin = p.replace('[JENIS_CETAKAN]', '=== LEMBAR ADMIN ===');
+                await printToBT(cetakAdmin);
+                
+                lastPrintText = p; // Simpan template asli untuk keperluan REPRINT
                 document.getElementById('btnReprint').disabled = false;
             } else {
                 lastPrintText = p;
