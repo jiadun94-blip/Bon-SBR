@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SBR Putra Food - Pembayaran Bon</title>
+    <title>SBR Putra Food - Pembayaran Bon Khusus</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -32,11 +32,11 @@
 <body>
 
 <div class="container">
-    <header><h2>SBR<span>digital</span> ADMIN</h2><p>TERIMA PEMBAYARAN BON</p></header>
+    <header><h2>SBR<span>digital</span> ADMIN</h2><p>TERIMA PEMBAYARAN BON KHUSUS</p></header>
 
     <div class="row-flex">
         <div class="form-group"><label>Tanggal</label><input type="date" id="tglBayar"></div>
-        <div class="form-group"><label>Nama Agen</label><select id="pilihAgen" onchange="loadDataAgen()"><option value="">-- PILIH --</option></select></div>
+        <div class="form-group"><label>Nama Agen</label><select id="pilihAgen" onchange="loadDataAgen()"><option value="">-- PILIH AGEN KHUSUS --</option></select></div>
     </div>
 
     <div class="display-box">
@@ -70,17 +70,16 @@
     async function initHalaman() {
         document.getElementById('tglBayar').valueAsDate = new Date();
         
-        // Memuat ulang data Agen terbaru langsung dari database
         const { data: agen } = await clientSupabase.from('agen').select('*');
         const selAgen = document.getElementById('pilihAgen');
-        selAgen.innerHTML = '<option value="">-- PILIH --</option>';
+        selAgen.innerHTML = '<option value="">-- PILIH AGEN KHUSUS --</option>';
         listAgen = {};
 
         if (agen) {
-            // FILTER: Menyembunyikan agen 'KHUSUS', jadi hanya tampil yang Normal/Null
-            const agenNormal = agen.filter(a => a.type_agen !== 'KHUSUS');
+            // FILTER: Hanya agen dengan type_agen 'KHUSUS'
+            const agenKhusus = agen.filter(a => a.type_agen === 'KHUSUS');
             
-            agenNormal.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen)).forEach(a => {
+            agenKhusus.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen)).forEach(a => {
                 selAgen.options.add(new Option(a.nama_agen, a.nama_agen));
                 listAgen[a.nama_agen] = a.saldo_bon || 0;
             });
@@ -89,7 +88,8 @@
     }
 
     async function loadTabelRiwayat() {
-        const { data: riwayat } = await clientSupabase.from('pembayaran_bon').select('*').order('id', { ascending: false }).limit(10);
+        // TAMPILKAN DARI pembayaran_bon2
+        const { data: riwayat } = await clientSupabase.from('pembayaran_bon2').select('*').order('id', { ascending: false }).limit(10);
         const tbody = document.querySelector('#tabelRiwayatBayar tbody');
         tbody.innerHTML = '';
         if (riwayat) {
@@ -117,7 +117,6 @@
     }
 
     function formatRupiah(el) { 
-        // Mengamankan posisi kursor sebelum melakukan manipulasi string format titik
         let cursorPosition = el.selectionStart;
         let originalLength = el.value.length;
 
@@ -128,7 +127,6 @@
             el.value = Number(v).toLocaleString('id-ID');
         }
 
-        // Menjaga agar pergerakan kursor saat menghapus di depan/tengah tetap sinkron dan rapi
         let newLength = el.value.length;
         cursorPosition = cursorPosition + (newLength - originalLength);
         el.setSelectionRange(cursorPosition, cursorPosition);
@@ -181,7 +179,15 @@
         const bonLama = listAgen[ag] || 0;
         const sisaAkhir = bonLama - cash - trf;
         
-        const { data: nota } = await clientSupabase.from('transaksi').select('no_nota, id').eq('nama_agen', ag).gt('sisa_akhir', 0).order('id', { ascending: false }).limit(1);
+        // AMBIL NOTA DARI transaksi_dp
+        const { data: nota, error: errCariNota } = await clientSupabase.from('transaksi_dp')
+            .select('no_nota, id')
+            .eq('nama_agen', ag)
+            .gt('sisa_akhir', 0)
+            .order('id', { ascending: false })
+            .limit(1);
+            
+        if (errCariNota) return alert("Gagal mencari nota di transaksi_dp: " + errCariNota.message);
         const noNotaRef = (nota && nota.length > 0) ? nota[0].no_nota : "NON-NOTA";
 
         const btn = document.getElementById('btnSimpan');
@@ -189,9 +195,10 @@
         btn.innerText = "MEMPROSES...";
 
         try {
-            await clientSupabase.from('pembayaran_bon').insert([{
+            // 1. SIMPAN KE PEMBAYARAN BON 2 (Tabel Khusus)
+            const { error: errPay } = await clientSupabase.from('pembayaran_bon2').insert([{
                 no_kuitansi: "KWT-" + Date.now().toString().slice(-6),
-                no_nota_referensi: noNotaRef,
+                no_nota_referensi: noNotaRef, 
                 tanggal: document.getElementById('tglBayar').value,
                 nama_agen: ag,
                 bon_sebelumnya: bonLama,
@@ -200,17 +207,25 @@
                 sisa_bon_akhir: sisaAkhir,
                 keterangan: document.getElementById('inputKeterangan').value
             }]);
+            
+            if (errPay) throw new Error("Gagal simpan pembayaran_bon2: " + errPay.message);
 
-            await clientSupabase.from('agen').update({ saldo_bon: sisaAkhir }).eq('nama_agen', ag);
-            if (nota && nota.length > 0) await clientSupabase.from('transaksi').update({ sisa_akhir: sisaAkhir }).eq('id', nota[0].id);
+            // 2. UPDATE TABEL AGEN
+            const { error: errAgen } = await clientSupabase.from('agen').update({ saldo_bon: sisaAkhir }).eq('nama_agen', ag);
+            if (errAgen) throw new Error("Gagal update tabel agen: " + errAgen.message);
+            
+            // 3. UPDATE TABEL TRANSAKSI DP
+            if (nota && nota.length > 0) {
+                const { error: errTrx } = await clientSupabase.from('transaksi_dp').update({ sisa_akhir: sisaAkhir }).eq('id', nota[0].id);
+                if (errTrx) throw new Error("Gagal update transaksi_dp: " + errTrx.message);
+            }
 
             alert("✅ Sukses Melakukan Pembayaran! Nota Ref: " + noNotaRef);
             
-            // Mengembalikan form ke keadaan kosong/0 & memperbarui riwayat instan tanpa reload halaman
             resetForm();
             await initHalaman();
         } catch (e) { 
-            alert("❌ Gagal: " + e.message); 
+            alert("❌ SISTEM DATABASE ERROR:\n\n" + e.message); 
             btn.disabled = false; 
             btn.innerText = "Simpan Pembayaran";
         }

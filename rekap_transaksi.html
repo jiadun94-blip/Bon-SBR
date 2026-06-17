@@ -282,13 +282,6 @@
             s += `<div class="struk-row"><span>Bayar CASH:</span><span>Rp ${(trx.bayar_cash || 0).toLocaleString('id-ID')}</span></div>`;
             s += `<div class="struk-row"><span>Bayar TRF:</span><span>Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}</span></div>`;
             s += `<div class="struk-separator"></div>`;
-            
-            let sisaAkhir = trx.sisa_akhir || 0;
-            let teksSisa = sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:";
-            s += `<div class="struk-row struk-bold" style="font-size:14px; color:#dc2626;"><span>${teksSisa}</span><span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span></div>`;
-            s += `<div class="struk-separator"></div>`;
-            s += `<div class="struk-center struk-bold" style="margin-top:10px; text-align:center;">SBR PUTRA FOOD SYSTEM</div>`;
-            
             if (riwayatBayar && riwayatBayar.length > 0) {
                 s += `<br><div class="struk-bold">RIWAYAT CICILAN:</div>`;
                 riwayatBayar.forEach(p => {
@@ -298,6 +291,14 @@
                     let ket = p.keterangan ? `<div style="font-size:11px; color:#555;">&nbsp;&nbsp;(${p.keterangan})</div>` : '';
                     s += `<div class="struk-row"><span>&nbsp;&nbsp;${p.tanggal}</span><span>${detailBayar}</span></div>${ket}`;
                 });
+                            s += `<div class="struk-separator"></div>`;
+            let sisaAkhir = trx.sisa_akhir || 0;
+            let teksSisa = sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:";
+            s += `<div class="struk-row struk-bold" style="font-size:14px; color:#dc2626;"><span>${teksSisa}</span><span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-separator"></div>`;
+            s += `<div class="struk-center struk-bold" style="margin-top:10px; text-align:center;">SBR PUTRA FOOD SYSTEM</div>`;
+            
+            
             }
             s += `</div>`;
             
