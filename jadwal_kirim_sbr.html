@@ -16,32 +16,50 @@
         header h2 { margin: 0; color: #fff; font-size: 22px; text-transform: uppercase; font-weight: 900; }
         .subtitle { font-size: 12px; color: #a0aec0; font-weight: bold; }
 
-        /* LAYOUT ATAS 50:50 */
-        .top-control-wrapper { display: flex; gap: 15px; margin-bottom: 15px; align-items: stretch; width: 100%; }
-        
-        .left-control-panel {
-            flex: 1; width: calc(50% - 7.5px); min-width: 0; display: flex; flex-direction: column; gap: 10px;
-            background: #1a202c; padding: 12px; border-radius: 12px; border: 2px solid #2d3748; box-sizing: border-box; justify-content: center;
-        }
-        .control-group { display: flex; flex-direction: column; gap: 4px; }
-        .control-group label { font-size: 11px; font-weight: 900; color: #cbd5e0; text-transform: uppercase; }
-        .control-group input[type="date"] { padding: 8px; border-radius: 6px; border: 2px solid #4a5568; font-size: 13px; font-weight: 700; background: #2d3748; color: white; width: 100%; box-sizing: border-box; }
-
-        .right-summary-panel {
+        /* DUA CARD REKAP SEJAJAR DI ATAS */
+        .top-summary-grid { display: flex; gap: 15px; margin-bottom: 15px; align-items: stretch; width: 100%; }
+        .summary-card {
             flex: 1; width: calc(50% - 7.5px); min-width: 0; background: #2d3748; border: 2px solid #3182ce;
-            border-radius: 12px; padding: 10px; display: flex; flex-direction: column; box-sizing: border-box;
+            border-radius: 12px; padding: 12px; display: flex; flex-direction: column; box-sizing: border-box;
         }
-        .summary-header { font-size: 12px; font-weight: 900; color: #63b3ed; text-transform: uppercase; border-bottom: 2px solid #4a5568; padding-bottom: 5px; margin-bottom: 6px; display: flex; justify-content: space-between; }
+        .summary-card.stock { border-color: #ecc94b; flex: 1.3; } /* Card kanan lebih lebar sedikit */
+        
+        .summary-header { font-size: 12px; font-weight: 900; color: #63b3ed; text-transform: uppercase; border-bottom: 2px solid #4a5568; padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .summary-card.stock .summary-header { color: #f6e05e; }
+
+        /* BARIS KONTROL (TANGGAL & TOMBOL) DI BAWAH CARD REKAP */
+        .bottom-control-panel { display: flex; gap: 15px; background: #1a202c; padding: 15px; border-radius: 12px; border: 2px solid #4a5568; align-items: flex-end; margin-bottom: 15px; }
+        .control-group { display: flex; flex-direction: column; gap: 6px; }
+        .control-group label { font-size: 11px; font-weight: 900; color: #cbd5e0; text-transform: uppercase; letter-spacing: 0.5px; }
+        .control-group input[type="date"] { padding: 10px; border-radius: 6px; border: 2px solid #4a5568; font-size: 14px; font-weight: 700; background: #2d3748; color: white; width: 100%; box-sizing: border-box; }
+
+        @media (max-width: 768px) {
+            .top-summary-grid { flex-direction: column; }
+            .summary-card { width: 100%; }
+            .bottom-control-panel { flex-direction: column; align-items: stretch; }
+            .bottom-control-panel .btn-primary-blue { margin-top: 5px; }
+        }
 
         .section-label { font-size: 15px; font-weight: 900; padding: 8px; background: #2b6cb0; color: white; border-radius: 6px; margin: 15px 0 8px; text-transform: uppercase; }
         .section-label.database { background: #d35400; }
+
+        /* TABLE MUATAN DAN SIMULASI */
+        .table-muatan { width: 100%; border-collapse: collapse; }
+        .table-muatan th { background: #1a202c; color: #a0aec0; font-size: 11px; font-weight: 900; padding: 6px; border-bottom: 1px solid #4a5568; text-transform: uppercase; }
+        .table-muatan td { padding: 6px; border-bottom: 1px solid #2d2d2d; font-size: 12px; color: #cbd5e0; font-weight: 700; }
+        .table-muatan td.num-col { text-align: center; width: 60px; font-size: 13px; }
+
+        .table-simulasi th { background: #744210; color: #fefcbf; border-bottom: 1px solid #b7791f; }
+        .table-simulasi td { border-bottom: 1px solid #4a5568; padding: 4px; }
+        .input-sim-armada { width: 100%; box-sizing: border-box; background: #121214; border: 1px solid #4a5568; color: #cbd5e0; padding: 5px; border-radius: 4px; font-size: 12px; }
+        .input-sim-saldo { width: 100%; box-sizing: border-box; background: #1a202c; border: 1px solid #4a5568; color: #fff; padding: 5px; border-radius: 4px; font-size: 13px; text-align: center; font-weight: bold; }
 
         /* TABLE INPUT DI POPUP */
         table.table-input { width: 100%; border-collapse: collapse; margin: 5px 0; }
         table.table-input th { font-size: 11px; text-align: left; padding: 6px; background: #1a202c; border-bottom: 2px solid #4a5568; font-weight: 900; color: #cbd5e0; text-transform: uppercase; }
         table.table-input td { padding: 6px; border-bottom: 1px solid #4a5568; font-size: 14px; font-weight: 700; }
         .input-qty { width: 65px; padding: 5px; border: 2px solid #4a5568; border-radius: 6px; text-align: center; font-weight: 700; font-size: 14px; background: #1a202c; color: white; }
-        .selector-row select { width: 100%; padding: 8px; font-size: 13px; font-weight: 700; border: 2px solid #4a5568; border-radius: 6px; background: #2d3748; color: white; width: 100%; }
+        .selector-row select { width: 100%; padding: 8px; font-size: 13px; font-weight: 700; border: 2px solid #4a5568; border-radius: 6px; background: #2d3748; color: white; }
 
         /* LAYOUTING LIST ANTREAN UTAMA */
         .compact-list-card, .history-card { background: #2d3748; padding: 12px; border-radius: 10px; margin-top: 10px; font-size: 14px; border: 2px solid #4a5568; display: flex; flex-direction: column; gap: 8px; }
@@ -58,17 +76,12 @@
         .logistik-grid select, .logistik-grid input[type="date"] { width: 100%; padding: 8px 6px; font-size: 13px; font-weight: 700; border: 2px solid #4a5568; border-radius: 6px; background: #2d3748; color: white; box-sizing: border-box; }
         .logistik-grid label { font-size: 11px; font-weight: 900; color: #cbd5e0; display: block; margin-bottom: 4px; text-transform: uppercase; }
 
-        .table-muatan { width: 100%; border-collapse: collapse; }
-        .table-muatan th { background: #1a202c; color: #a0aec0; font-size: 11px; font-weight: 900; padding: 5px; border-bottom: 1px solid #4a5568; text-transform: uppercase; }
-        .table-muatan td { padding: 5px; border-bottom: 1px solid #2d2d2d; font-size: 12px; color: #cbd5e0; font-weight: 700; }
-        .table-muatan td.num-col { text-align: center; width: 60px; font-size: 13px; }
-
         /* BUTTONS */
         .btn-action { border: none; border-radius: 8px; font-weight: 900; cursor: pointer; text-transform: uppercase; }
         .btn-del-item { background: #742a2a; color: #feb2b2; border: 1px solid #9b2c2c; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-weight: 900; font-size: 12px; }
         .btn-comp-edit { background: #dd6b20; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-weight: 900; font-size: 11px; cursor: pointer; text-transform: uppercase; }
         .btn-comp-del { background: #e53e3e; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-weight: 900; font-size: 11px; cursor: pointer; text-transform: uppercase; }
-        .btn-primary-blue { background: #3182ce; color: white; width: 100%; border: none; font-weight: 900; text-transform: uppercase; border-radius: 8px; cursor: pointer; padding: 12px; }
+        .btn-primary-blue { background: #3182ce; color: white; width: 100%; border: none; font-weight: 900; text-transform: uppercase; border-radius: 8px; cursor: pointer; padding: 14px; font-size: 13px; letter-spacing: 0.5px; }
         .btn-card-save { background: #27ae60; color: white; width: 100%; padding: 10px; font-size: 14px; border-radius: 8px; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer; margin-top: 8px; }
         .btn-card-save:disabled { background: #718096; cursor: not-allowed; }
 
@@ -100,7 +113,6 @@
         .label-sisi-kiri { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: bold; cursor: pointer; }
         .label-sisi-kiri input[type="checkbox"] { width: 18px; height: 18px; accent-color: #27ae60; cursor: pointer; }
 
-        /* INFO TRACKING HISTORY TERAKHIR DI TABUNGAN & LIST ANTREAN */
         .info-track-kirim { font-size: 10.5px; color: #a0aec0; margin-top: 3px; font-style: italic; display: block; line-height: 1.3; }
         .info-track-antrean { padding-left: 0px; }
         .info-track-tabungan { padding-left: 28px; }
@@ -114,30 +126,21 @@
         <div class="subtitle">MATRIKS PLANNING & PENYUSUNAN JADWAL KIRIM AGEN</div>
     </header>
 
-    <div class="top-control-wrapper">
-        <div class="left-control-panel">
-            <div class="control-group">
-                <label>📅 Tanggal Operasional Jalan :</label>
-                <input type="date" id="tglKirimGlobal" onchange="sinkronisasiTanggalGlobal()">
-            </div>
-            <div class="control-group" style="margin-top: 10px;">
-                <label>⚡ PANEL UTAMA LEMBAR KERJA AGEN :</label>
-                <button type="button" class="btn-primary-blue" onclick="bukaPopupMasterOrder()">📑 BUKA PANEL INPUT &amp; SELEKSI KIRIM</button>
-            </div>
-        </div>
-
-        <div class="right-summary-panel">
+    <!-- 2 CARD REKAP SEJAJAR DI ATAS -->
+    <div class="top-summary-grid">
+        <!-- CARD 1: REKAP TOTAL ORIGINAL (KIRI) -->
+        <div class="summary-card">
             <div class="summary-header">
-                <span>📊 Ttl Kebutuhan Brg <br>(LIST ANTREAN UTAMA)</span>
-                <span id="textJumlahAgenAntrean" style="color:#fff;">0 Agen Terdaftar</span>
+                <span>📊 Ttl Kebutuhan (Antrean)</span>
+                <span id="textJumlahAgenAntrean" style="color:#fff;">0 Agen</span>
             </div>
-            <div style="flex: 1; overflow-y: auto; max-height: 145px;">
-                <table class="table-muatan" id="tableGlobalSummary">
+            <div style="flex: 1; overflow-y: auto; max-height: 250px;">
+                <table class="table-muatan">
                     <thead>
                         <tr>
                             <th style="text-align: left;">Nama Item Barang</th>
-                            <th style="width: 80px; text-align: center;">Total Order</th>
-                            <th style="width: 80px; text-align: center;">Total Pemen.</th>
+                            <th style="width: 75px; text-align: center;">Ttl Order</th>
+                            <th style="width: 75px; text-align: center;">Ttl Pemen.</th>
                         </tr>
                     </thead>
                     <tbody id="bodyGlobalSummary">
@@ -145,6 +148,43 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        <!-- CARD 2: SIMULASI SALDO ARMADA SPESIFIK ITEM (KANAN) -->
+        <div class="summary-card stock">
+            <div class="summary-header" style="flex-wrap: wrap; gap: 5px;">
+                <span style="display:flex; align-items:center;">📦 SIMULASI ALOKASI ITEM</span>
+                <select id="pilihItemSimulasi" onchange="renderTabelSimulasi()" style="padding:4px; border-radius:4px; background:#1a202c; color:#fff; border:1px solid #4a5568; font-size:12px; font-weight:bold; min-width:120px;">
+                    <option value="">-- Pilih Item --</option>
+                </select>
+            </div>
+            <div style="flex: 1; overflow-y: auto; max-height: 250px;">
+                <table class="table-muatan table-simulasi">
+                    <thead>
+                        <tr>
+                            <th style="width: 28%; text-align: left;">Armada</th>
+                            <th style="width: 17%; text-align: center;">Saldo Kirim</th>
+                            <th style="width: 25%; text-align: left;">Agen</th>
+                            <th style="width: 13%; text-align: center;">Dikirim</th>
+                            <th style="width: 17%; text-align: center;">Sisa Setelah Dikirim</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyStockSummary">
+                        <tr><td colspan="5" style="text-align: center; color: #a0aec0; font-style: italic; padding-top: 20px;">Pilih item di atas.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL TANGGAL DAN TOMBOL DI BAWAH CARD (DIBUAT 50:50) -->
+    <div class="bottom-control-panel">
+        <div class="control-group" style="flex: 1;">
+            <label>📅 TGL OPERASIONAL JALAN :</label>
+            <input type="date" id="tglKirimGlobal" onchange="sinkronisasiTanggalGlobal()" style="height: 46px;">
+        </div>
+        <div style="flex: 1;">
+            <button type="button" class="btn-primary-blue" style="margin: 0; height: 46px; display: flex; align-items: center; justify-content: center;" onclick="bukaPopupMasterOrder()">📑 BUKA PANEL INPUT &amp; SELEKSI KIRIM</button>
         </div>
     </div>
 
@@ -162,7 +202,7 @@
         </div>
     </div>
 
-    <div class="section-label database">📜 HISTORY PENGIRIMAN (SUDAH FIX)</div>
+    <div class="section-label database" style="margin-top: 30px;">📜 HISTORY PENGIRIMAN (SUDAH FIX)</div>
     <div id="logJadwalTerkini"></div>
 </div>
 
@@ -205,10 +245,9 @@
                 </div>
                 <button type="button" class="btn-primary-blue" style="margin-top:auto;" onclick="lemparCeklisKeListKirimUtama()">⚡ MASUKKAN AGEN TERPILIH KE LIST KIRIM UTAMA</button>
                 <button type="button" class="btn-action" style="background: #25D366; color: white; padding: 10px; margin-top: 10px; font-weight: 900; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="exportTabunganKeWA()">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-    SHARE TABUNGAN ORDER KE WA
-</button>
-
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                    SHARE TABUNGAN ORDER KE WA
+                </button>
             </div>
         </div>
     </div>
@@ -224,6 +263,7 @@
     let masterKendaraan = []; 
     let listKirimSementara = [];   
     let bankTabunganOrder = [];
+    let cacheSupplyArmada = {}; // Menyimpan supply armada per item
     let objOrderAktif = null; 
     let masterCacheAgenDB = []; 
     let cacheRiwayatTerakhirAgen = {}; 
@@ -239,6 +279,11 @@
         const tabunganLokal = localStorage.getItem('sbr_bank_tabungan_order');
         if(tabunganLokal) {
             try { bankTabunganOrder = JSON.parse(tabunganLokal); } catch(e) { bankTabunganOrder = []; }
+        }
+
+        const supplyLokal = localStorage.getItem('sbr_supply_armada');
+        if(supplyLokal) {
+            try { cacheSupplyArmada = JSON.parse(supplyLokal); } catch(e) { cacheSupplyArmada = {}; }
         }
 
         try {
@@ -319,6 +364,7 @@
     function simpanKePenyimpananLokal() {
         localStorage.setItem('sbr_list_kirim_sementara', JSON.stringify(listKirimSementara));
         localStorage.setItem('sbr_bank_tabungan_order', JSON.stringify(bankTabunganOrder));
+        localStorage.setItem('sbr_supply_armada', JSON.stringify(cacheSupplyArmada));
     }
 
     function sinkronisasiTanggalGlobal() {
@@ -420,7 +466,7 @@
         document.getElementById('textTotalTabungan').innerText = `${bankTabunganOrder.length} Order Terbuka`;
 
         if(bankTabunganOrder.length === 0) {
-            container.innerHTML = `<div style="text-align:center; color:#a0aec0; font-style:italic; padding-top:40px;">Belum ada tabungan orderan masuk.</div>`;
+            container.innerHTML = `<div style="text-align:center; color:#a0aec0; font-style:italic; padding:top:40px;">Belum ada tabungan orderan masuk.</div>`;
             return;
         }
 
@@ -537,14 +583,35 @@
         }
     }
 
-    function hitungTotalKebutuhanGlobal() {
-        const bodySummary = document.getElementById('bodyGlobalSummary');
-        const textJumlahAgen = document.getElementById('textJumlahAgenAntrean');
+    // UPDATE SUPPLY ARMADA DI TABEL SIMULASI
+    function updateSupplyItem(item, index, field, value) {
+        if(!cacheSupplyArmada[item]) cacheSupplyArmada[item] = [];
+        while(cacheSupplyArmada[item].length <= index) cacheSupplyArmada[item].push({});
         
-        textJumlahAgen.innerText = `${listKirimSementara.length} Agen Terdaftar`;
+        cacheSupplyArmada[item][index][field] = value;
+        
+        // Auto tambah baris kosong di bawah jika baris terakhir diisi
+        let lastRow = cacheSupplyArmada[item][cacheSupplyArmada[item].length - 1];
+        if(lastRow.armada || lastRow.qty) {
+            cacheSupplyArmada[item].push({});
+        }
+
+        simpanKePenyimpananLokal();
+        renderTabelSimulasi();
+    }
+
+    function hitungTotalKebutuhanGlobal() {
+        const bodyOriginal = document.getElementById('bodyGlobalSummary');
+        const textJumlahAgen = document.getElementById('textJumlahAgenAntrean');
+        const dropdownSimulasi = document.getElementById('pilihItemSimulasi');
+        let selectedItemSimulasi = dropdownSimulasi.value;
+        
+        textJumlahAgen.innerText = `${listKirimSementara.length} Agen`;
 
         if(listKirimSementara.length === 0) {
-            bodySummary.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #a0aec0; font-style: italic; padding-top: 20px;">List antrean kosong.</td></tr>`;
+            bodyOriginal.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #a0aec0; font-style: italic; padding-top: 20px;">List antrean kosong.</td></tr>`;
+            dropdownSimulasi.innerHTML = '<option value="">-- Pilih Item --</option>';
+            renderTabelSimulasi();
             return;
         }
 
@@ -561,17 +628,105 @@
 
         let namaKunciBarang = Object.keys(rekapBarang).sort();
         if(namaKunciBarang.length === 0) {
-            bodySummary.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #e53e3e; font-style: italic; padding-top: 20px;">Belum ada kuantiti barang diinput di antrean.</td></tr>`;
+            bodyOriginal.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #e53e3e; font-style: italic; padding-top: 20px;">Belum ada kuantiti diinput.</td></tr>`;
+            dropdownSimulasi.innerHTML = '<option value="">-- Pilih Item --</option>';
+            renderTabelSimulasi();
             return;
         }
 
-        bodySummary.innerHTML = namaKunciBarang.map(namaBarang => `
+        // RENDER KARTU KIRI (GLOBAL)
+        bodyOriginal.innerHTML = namaKunciBarang.map(namaBarang => `
             <tr>
-                <td style="color:#fff;">• <strong>${namaBarang}</strong></td>
-                <td style="text-align:center; color:#63b3ed; font-size:14px;">${rekapBarang[namaBarang].order}</td>
+                <td style="color:#fff; font-size:13px;">• <strong>${namaBarang}</strong></td>
+                <td style="text-align:center; color:#63b3ed; font-size:14px; font-weight:bold;">${rekapBarang[namaBarang].order}</td>
                 <td style="text-align:center; color:#27ae60; font-size:14px; font-weight:bold;">${rekapBarang[namaBarang].real}</td>
             </tr>
         `).join('');
+
+        // UPDATE DROPDOWN KARTU KANAN (SIMULASI ITEM)
+        dropdownSimulasi.innerHTML = '<option value="">-- Pilih Item --</option>';
+        namaKunciBarang.forEach(brg => {
+            dropdownSimulasi.innerHTML += `<option value="${brg}" ${brg === selectedItemSimulasi ? 'selected' : ''}>${brg}</option>`;
+        });
+        
+        // Auto select pertama jika tidak ada yang dipilih
+        if(!namaKunciBarang.includes(selectedItemSimulasi) && namaKunciBarang.length > 0) {
+            dropdownSimulasi.value = namaKunciBarang[0];
+        }
+        
+        renderTabelSimulasi();
+    }
+
+    function renderTabelSimulasi() {
+        const container = document.getElementById('bodyStockSummary');
+        let item = document.getElementById('pilihItemSimulasi').value;
+        
+        if(!item) {
+             container.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #a0aec0; font-style: italic; padding: 30px;">Silakan pilih item di atas untuk mulai simulasi.</td></tr>`;
+             return;
+        }
+
+        // Tarik data Permintaan (Agen & Dikirim) dari antrean
+        let demandList = [];
+        listKirimSementara.forEach(agen => {
+            let brg = agen.barang.find(b => b.nama_barang === item);
+            if(brg && brg.qty_order > 0) { // Kita patokan pada Kebutuhan/Order
+                demandList.push({ agen: agen.nama_agen, qty: brg.qty_order });
+            }
+        });
+
+        // Siapkan data Pemasukan (Armada & Saldo)
+        if(!cacheSupplyArmada[item]) cacheSupplyArmada[item] = [{},{},{},{}]; // Minimal 4 baris input
+        let supplyList = cacheSupplyArmada[item];
+
+        let maxRows = Math.max(supplyList.length, demandList.length);
+        if (maxRows < 4) maxRows = 4;
+
+        let totalSupply = supplyList.reduce((sum, s) => sum + (parseInt(s.qty) || 0), 0);
+        let sisaBerjalan = totalSupply;
+
+        let html = '';
+        for(let i=0; i < maxRows; i++) {
+             let sup = supplyList[i] || {armada:'', qty:''};
+             let dem = demandList[i];
+             
+             let htmlAgen = '';
+             let htmlSisa = '';
+
+             if(dem) {
+                 sisaBerjalan -= dem.qty;
+                 htmlAgen = `
+                    <td style="color:#cbd5e0; font-size:12px;">${dem.agen}</td>
+                    <td style="text-align:center; color:#63b3ed; font-weight:bold;">${dem.qty}</td>
+                 `;
+                 htmlSisa = `<td style="text-align:center; font-weight:900; font-size:14px; color:${sisaBerjalan < 0 ? '#e53e3e' : '#27ae60'}">${sisaBerjalan}</td>`;
+             } else {
+                 if(i >= demandList.length && demandList.length > 0) {
+                     // Jika baris agen habis tapi baris armada masih ada, tampilkan strip dan sisa terakhir
+                     htmlAgen = `<td style="text-align:center; color:#718096;">-</td><td style="text-align:center; color:#718096;">0</td>`;
+                     htmlSisa = `<td style="text-align:center; font-weight:900; font-size:14px; color:${sisaBerjalan < 0 ? '#e53e3e' : '#27ae60'}">${sisaBerjalan}</td>`;
+                 } else {
+                     htmlAgen = `<td></td><td></td>`;
+                     htmlSisa = `<td></td>`;
+                 }
+             }
+
+             html += `<tr>
+                 <td><input type="text" class="input-sim-armada" value="${sup.armada || ''}" onchange="updateSupplyItem('${item}', ${i}, 'armada', this.value)" placeholder="Nama Armada..."></td>
+                 <td><input type="number" class="input-sim-saldo" value="${sup.qty || ''}" onchange="updateSupplyItem('${item}', ${i}, 'qty', this.value)"></td>
+                 ${htmlAgen}
+                 ${htmlSisa}
+             </tr>`;
+        }
+
+        // Tambahkan baris Total Kiriman di paling bawah
+        html += `<tr>
+            <td style="text-align:right; font-weight:900; color:#f6ad55; font-size:13px; padding-top:10px;">Total Kiriman :</td>
+            <td style="text-align:center; font-weight:900; color:#f6ad55; font-size:15px; padding-top:10px;">${totalSupply}</td>
+            <td colspan="3"></td>
+        </tr>`;
+
+        container.innerHTML = html;
     }
 
     function renderListKirimCompact() {
@@ -863,18 +1018,15 @@
 
         let tglGlobal = document.getElementById('tglKirimGlobal').value;
         
-        // Header Pesan WA
         let teksWA = `📋 *RENCANA PENGIRIMAN SBR PUTRA FOOD*\n`;
         teksWA += `📅 Tgl Operasional: *${tglGlobal}*\n\n`;
         teksWA += `==========================\n\n`;
 
-        // Looping setiap agen yang ada di list antrean
         listKirimSementara.forEach((item) => {
             teksWA += `🏢 *AGEN: ${item.nama_agen.toUpperCase()}*\n`;
             teksWA += `📅 Tgl Kirim: ${item.tanggal_berangkat || '-'}\n`;
             teksWA += `⏰ Shift: *${item.shift || '-'}*\n`;
             
-            // Cari nama mobil agar yang muncul bukan cuma plat nomor
             let namaMobil = item.plat_nomor;
             let unitMobil = masterKendaraan.find(m => m.plat === item.plat_nomor);
             if(unitMobil && unitMobil.nama_unit) namaMobil = `${unitMobil.nama_unit} (${item.plat_nomor})`;
@@ -886,55 +1038,51 @@
             let adaMuatan = false;
             item.barang.forEach(b => {
                 if(b.qty_order > 0 || b.qty_real > 0) {
-                    // Format muatan rapi menggunakan bullet point WA
                     teksWA += `  ▪️ ${b.nama_barang} : *Order ${b.qty_order}* \n`;
                     adaMuatan = true;
                 }
             });
             
             if(!adaMuatan) teksWA += `  _(Belum ada rincian muatan)_\n`;
-            
             teksWA += `\n--------------------------\n\n`;
         });
 
-        // Membersihkan spasi kosong di akhir
         teksWA = teksWA.trim();
-
-        // Mengkonversi teks menjadi format link WhatsApp dan membuka tab baru
         let urlWA = `https://wa.me/?text=${encodeURIComponent(teksWA)}`;
         window.open(urlWA, '_blank');
     }
-function exportTabunganKeWA() {
-    if(bankTabunganOrder.length === 0) {
-        alert("⚠️ Belum ada data di Tabungan Order untuk dibagikan!");
-        return;
-    }
 
-    let teksWA = `📋 *DAFTAR ORDER*\n`;
-    teksWA += `--------------------------\n\n`;
+    function exportTabunganKeWA() {
+        if(bankTabunganOrder.length === 0) {
+            alert("⚠️ Belum ada data di Tabungan Order untuk dibagikan!");
+            return;
+        }
 
-    bankTabunganOrder.forEach((item) => {
-        teksWA += `🏢 *AGEN: ${item.nama_agen.toUpperCase()}*\n`;
-        teksWA += `📦 *RINCIAN ORDER:*\n`;
-        
-        let adaMuatan = false;
-        item.barang.forEach(b => {
-            if(b.qty_order > 0 || b.qty_real > 0) {
-                teksWA += `  ▪️ ${b.nama_barang} : *Order ${b.qty_order}*\n`;
-                adaMuatan = true;
-            }
+        let teksWA = `📋 *DAFTAR ORDER*\n`;
+        teksWA += `--------------------------\n\n`;
+
+        bankTabunganOrder.forEach((item) => {
+            teksWA += `🏢 *AGEN: ${item.nama_agen.toUpperCase()}*\n`;
+            teksWA += `📦 *RINCIAN ORDER:*\n`;
+            
+            let adaMuatan = false;
+            item.barang.forEach(b => {
+                if(b.qty_order > 0 || b.qty_real > 0) {
+                    teksWA += `  ▪️ ${b.nama_barang} : *Order ${b.qty_order}*\n`;
+                    adaMuatan = true;
+                }
+            });
+            
+            if(!adaMuatan) teksWA += `  _(Belum ada rincian muatan)_\n`;
+            teksWA += `\n`;
         });
-        
-        if(!adaMuatan) teksWA += `  _(Belum ada rincian muatan)_\n`;
-        teksWA += `\n`;
-    });
 
-    teksWA += `==========================\n`;
-    teksWA += `_Data ini adalah orderan yang sudah dicatat dan siap diproses Pengiriman._`;
+        teksWA += `==========================\n`;
+        teksWA += `_Data ini adalah orderan yang sudah dicatat dan siap diproses Pengiriman._`;
 
-    let urlWA = `https://wa.me/?text=${encodeURIComponent(teksWA)}`;
-    window.open(urlWA, '_blank');
-}
+        let urlWA = `https://wa.me/?text=${encodeURIComponent(teksWA)}`;
+        window.open(urlWA, '_blank');
+    }
 
     window.onload = initAplikasi;
 </script>
