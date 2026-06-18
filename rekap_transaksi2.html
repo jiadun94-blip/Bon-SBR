@@ -260,11 +260,14 @@
             s += `<div class="struk-row"><span>Bayar CASH:</span><span>Rp ${(trx.bayar_cash || 0).toLocaleString('id-ID')}</span></div>`;
             s += `<div class="struk-row"><span>Bayar TRF:</span><span>Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}</span></div>`;
             s += `<div class="struk-separator"></div>`;
+            
             // Tambahkan setelah TOTAL RETUR
-if ((trx.ongkir || 0) > 0) {
-    s += `<div class="struk-row"><span>ONGKIR:</span><span>Rp ${(trx.ongkir || 0).toLocaleString('id-ID')}</span></div>`;
-}
-                        if (riwayatBayar && riwayatBayar.length > 0) {
+            if ((trx.ongkir || 0) > 0) {
+                s += `<div class="struk-row"><span>ONGKIR:</span><span>Rp ${(trx.ongkir || 0).toLocaleString('id-ID')}</span></div>`;
+            }
+            
+            // Blok riwayat cicilan
+            if (riwayatBayar && riwayatBayar.length > 0) {
                 s += `<br><div class="struk-bold">RIWAYAT CICILAN:</div>`;
                 riwayatBayar.forEach(p => {
                     let detailBayar = "";
@@ -274,14 +277,15 @@ if ((trx.ongkir || 0) > 0) {
                     s += `<div class="struk-row"><span>&nbsp;&nbsp;${p.tanggal}</span><span>${detailBayar}</span></div>${ket}`;
                 });
                 s += `<div class="struk-separator"></div>`;
+            }
+            
+            // Sisa Bon sekarang berada di luar blok riwayat cicilan
             let sisaAkhir = trx.sisa_akhir || 0;
             let teksSisa = sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:";
             s += `<div class="struk-row struk-bold" style="font-size:14px; color:#dc2626;"><span>${teksSisa}</span><span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span></div>`;
             s += `<div class="struk-separator"></div>`;
             s += `<div class="struk-center struk-bold" style="margin-top:10px; text-align:center;">SBR PUTRA FOOD SYSTEM</div>`;
             
-
-            }
             s += `</div>`;
             
             modalIsi.innerHTML = s;
@@ -380,9 +384,9 @@ if ((trx.ongkir || 0) > 0) {
         teks += formatBarisKiriKanan("Bayar TRF:", `Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}`);
         teks += GARIS;
         // Tambahkan setelah TOTAL RETUR
-if ((trx.ongkir || 0) > 0) {
-    teks += formatBarisKiriKanan("ONGKIR:", `Rp ${(trx.ongkir || 0).toLocaleString('id-ID')}`);
-}
+        if ((trx.ongkir || 0) > 0) {
+            teks += formatBarisKiriKanan("ONGKIR:", `Rp ${(trx.ongkir || 0).toLocaleString('id-ID')}`);
+        }
 
         if (riwayatBayar && riwayatBayar.length > 0) {
             teks += ESC_BOLD_ON + "RIWAYAT CICILAN:\n" + ESC_BOLD_OFF;
