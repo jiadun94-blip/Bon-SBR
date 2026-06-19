@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring Pengiriman</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container mt-4 mb-5">
+    <h3 class="text-center text-uppercase">Monitoring Pengiriman</h3>
+    <p class="text-center fw-bold text-secondary" id="tanggalHariIni"></p>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white fw-bold">
+            Data Armada & Total Bawaan
+        </div>
+        <div class="card-body" id="containerArmada">
+            <label class="form-label">Daftar Armada & Total Kiriman Dibawa</label>
+            
+            <div class="row mb-2 baris-armada">
+                <div class="col-8">
+                    <select class="form-select select-armada">
+                        <option value="">-- Pilih Kendaraan --</option>
+                        <option value="D 1621 PH ( GM Mini )">D 1621 PH ( GM Mini ) - GM minibus</option>
+                        <option value="D 8740 UI ( GM Van 03 )">D 8740 UI ( GM Van 03 ) - GM Van 03</option>
+                        <option value="D 8976 FR ( GM Box 1 )">D 8976 FR ( GM Box 1 ) - GM Box 1</option>
+                        <option value="AE 8340 KE ( Traga Van )">AE 8340 KE ( Traga Van ) - Traga Van</option>
+                        <option value="D 8607 FN ( Traga Box )">D 8607 FN ( Traga Box ) - Traga Box</option>
+                        <option value="D 8132 TP ( GM box 2 )">D 8132 TP ( GM box 2 ) - GM Box 2</option>
+                        <option value="D 1234 S ( free )">D 1234 SBR ( free ) - Pick up</option>
+                        <option value="D 4444 SBR ( BALLEN )">D 4444 SBR ( BALLEN ) - Ballen</option>
+                        <option value="D 5555 SBR ( ANGGARA )">D 5555 SBR ( ANGGARA ) - Anggara</option>
+                        <option value="SUSULAN">SUSULAN</option>
+                    </select>
+                </div>
+                <div class="col-4">
+                    <input type="number" class="form-control input-qty-bawa" placeholder="Total Bawa">
+                </div>
+            </div>
+            
+            <button class="btn btn-sm btn-outline-primary mt-2" id="btnTambahArmada">+ Tambah Baris Armada</button>
+        </div>
+        <div class="card-footer text-end bg-white">
+            <span class="fw-bold">Total Armada Membawa: </span>
+            <span class="fw-bold fs-5 text-primary" id="displayTotalBawa">0</span>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-success text-white fw-bold">
+            Distribusi Data Agen
+        </div>
+        <div class="card-body" id="containerAgen">
+            <label class="form-label">Daftar Agen & Jumlah Kiriman</label>
+            
+            <div class="row mb-2 baris-agen">
+                <div class="col-8">
+                    <select class="form-select select-agen">
+                        <option value="">-- Pilih Agen --</option>
+                        <option value="Abdul Gani">Abdul Gani</option>
+                        <option value="Abdurahman">Abdurahman</option>
+                        <option value="Abdurahman (AMBIL)">Abdurahman (AMBIL)</option>
+                        <option value="Aef Putra">Aef Putra</option>
+                        <option value="Armind">Armind</option>
+                        <option value="Asyari">Asyari</option>
+                        <option value="Berkah Mulya">Berkah Mulya</option>
+                        <option value="Bos emon">Bos emon</option>
+                        <option value="Bos Jacklin">Bos Jacklin</option>
+                        <option value="Bu Gito">Bu Gito</option>
+                        <option value="H.Iwan">H.Iwan</option>
+                        <option value="H.Unjani">H.Unjani</option>
+                        <option value="Isma">Isma</option>
+                        <option value="Kang Azis">Kang Azis</option>
+                        <option value="Kedoya">Kedoya</option>
+                        <option value="Koh Beni">Koh Beni</option>
+                        <option value="Kondang Jaya">Kondang Jaya</option>
+                        <option value="Misbah">Misbah</option>
+                        <option value="Ngadimin">Ngadimin</option>
+                        <option value="Ngatimin">Ngatimin</option>
+                        <option value="Paidi">Paidi</option>
+                        <option value="Pak Maman">Pak Maman</option>
+                        <option value="Rasyid Unus">Rasyid Unus</option>
+                        <option value="Rian">Rian</option>
+                        <option value="H. Iman">H. Iman</option>
+                        <option value="Soleh">Soleh</option>
+                        <option value="Sugiman">Sugiman</option>
+                        <option value="Wido">Wido</option>
+                        <option value="Arya">Arya</option>
+                        <option value="Yusril">Yusril</option>
+                        <option value="GUDANG">GUDANG</option>
+                    </select>
+                </div>
+                <div class="col-4">
+                    <input type="number" class="form-control input-qty-agen" placeholder="Qty">
+                </div>
+            </div>
+            
+            <button class="btn btn-sm btn-outline-success mt-2" id="btnTambahAgen">+ Tambah Baris Agen</button>
+        </div>
+        <div class="card-footer text-end bg-white">
+            <span class="fw-bold">Total Distribusi Agen: </span>
+            <span class="fw-bold fs-5 text-success" id="displayTotalAgen">0</span>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm border-warning">
+        <div class="card-body bg-warning bg-opacity-25 d-flex justify-content-between align-items-center">
+            <span class="fw-bold fs-5">Selisih (Bawaan - Distribusi):</span>
+            <span class="fw-bold fs-4 text-danger" id="displaySelisih">0</span>
+        </div>
+    </div>
+
+    <div class="d-grid gap-2">
+        <button class="btn btn-success btn-lg fw-bold" id="btnKirimWA">
+            Kirim Rekap via WhatsApp
+        </button>
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        
+        // 1. Set Tanggal Hari Ini
+        const elTanggal = document.getElementById("tanggalHariIni");
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        elTanggal.textContent = new Date().toLocaleDateString('id-ID', options);
+
+        // Elemen Display Total
+        const displayTotalBawa = document.getElementById("displayTotalBawa");
+        const displayTotalAgen = document.getElementById("displayTotalAgen");
+        const displaySelisih = document.getElementById("displaySelisih");
+
+        // FUNGSI HITUNG SELISIH
+        function hitungSelisih() {
+            const bawa = parseFloat(displayTotalBawa.textContent) || 0;
+            const agen = parseFloat(displayTotalAgen.textContent) || 0;
+            const selisih = bawa - agen;
+            
+            displaySelisih.textContent = selisih;
+            
+            // Ubah warna teks jika selisihnya tidak 0 (bisa disesuaikan)
+            if (selisih !== 0) {
+                displaySelisih.className = "fw-bold fs-4 text-danger";
+            } else {
+                displaySelisih.className = "fw-bold fs-4 text-success";
+            }
+        }
+
+        // ==========================================
+        // LOGIKA CARD ARMADA
+        // ==========================================
+        const containerArmada = document.getElementById("containerArmada");
+        const btnTambahArmada = document.getElementById("btnTambahArmada");
+
+        const armadaOptionsHTML = `
+            <option value="">-- Pilih Kendaraan --</option>
+            <option value="D 1621 PH ( GM Mini )">D 1621 PH ( GM Mini ) - GM minibus</option>
+            <option value="D 8740 UI ( GM Van 03 )">D 8740 UI ( GM Van 03 ) - GM Van 03</option>
+            <option value="D 8976 FR ( GM Box 1 )">D 8976 FR ( GM Box 1 ) - GM Box 1</option>
+            <option value="AE 8340 KE ( Traga Van )">AE 8340 KE ( Traga Van ) - Traga Van</option>
+            <option value="D 8607 FN ( Traga Box )">D 8607 FN ( Traga Box ) - Traga Box</option>
+            <option value="D 8132 TP ( GM box 2 )">D 8132 TP ( GM box 2 ) - GM Box 2</option>
+            <option value="D 1234 S ( free )">D 1234 SBR ( free ) - Pick up</option>
+            <option value="D 4444 SBR ( BALLEN )">D 4444 SBR ( BALLEN ) - Ballen</option>
+            <option value="D 5555 SBR ( ANGGARA )">D 5555 SBR ( ANGGARA ) - Anggara</option>
+            <option value="SUSULAN">SUSULAN</option>
+        `;
+
+        function hitungTotalBawa() {
+            let total = 0;
+            document.querySelectorAll(".input-qty-bawa").forEach(input => {
+                const val = parseFloat(input.value);
+                if (!isNaN(val)) total += val;
+            });
+            displayTotalBawa.textContent = total;
+            hitungSelisih(); // Update selisih tiap ada perubahan
+        }
+
+        // Event listener input armada pertama
+        document.querySelectorAll(".input-qty-bawa").forEach(input => {
+            input.addEventListener("input", hitungTotalBawa);
+        });
+
+        // Tambah baris armada
+        btnTambahArmada.addEventListener("click", function() {
+            const row = document.createElement("div");
+            row.className = "row mb-2 baris-armada";
+            row.innerHTML = `
+                <div class="col-8">
+                    <select class="form-select select-armada">
+                        ${armadaOptionsHTML}
+                    </select>
+                </div>
+                <div class="col-4 d-flex gap-2">
+                    <input type="number" class="form-control input-qty-bawa" placeholder="Total Bawa">
+                    <button class="btn btn-danger btn-sm btn-hapus-armada">X</button>
+                </div>
+            `;
+            containerArmada.insertBefore(row, btnTambahArmada);
+
+            row.querySelector(".input-qty-bawa").addEventListener("input", hitungTotalBawa);
+            row.querySelector(".btn-hapus-armada").addEventListener("click", function() {
+                row.remove();
+                hitungTotalBawa();
+            });
+        });
+
+        // ==========================================
+        // LOGIKA CARD AGEN
+        // ==========================================
+        const containerAgen = document.getElementById("containerAgen");
+        const btnTambahAgen = document.getElementById("btnTambahAgen");
+
+        const agenOptionsHTML = `
+            <option value="">-- Pilih Agen --</option>
+            <option value="Abdul Gani">Abdul Gani</option>
+            <option value="Abdurahman">Abdurahman</option>
+            <option value="Abdurahman (AMBIL)">Abdurahman (AMBIL)</option>
+            <option value="Aef Putra">Aef Putra</option>
+            <option value="Armind">Armind</option>
+            <option value="Asyari">Asyari</option>
+            <option value="Berkah Mulya">Berkah Mulya</option>
+            <option value="Bos emon">Bos emon</option>
+            <option value="Bos Jacklin">Bos Jacklin</option>
+            <option value="Bu Gito">Bu Gito</option>
+            <option value="H.Iwan">H.Iwan</option>
+            <option value="H.Unjani">H.Unjani</option>
+            <option value="Isma">Isma</option>
+            <option value="Kang Azis">Kang Azis</option>
+            <option value="Kedoya">Kedoya</option>
+            <option value="Koh Beni">Koh Beni</option>
+            <option value="Kondang Jaya">Kondang Jaya</option>
+            <option value="Misbah">Misbah</option>
+            <option value="Ngadimin">Ngadimin</option>
+            <option value="Ngatimin">Ngatimin</option>
+            <option value="Paidi">Paidi</option>
+            <option value="Pak Maman">Pak Maman</option>
+            <option value="Rasyid Unus">Rasyid Unus</option>
+            <option value="Rian">Rian</option>
+            <option value="H. Iman">H. Iman</option>
+            <option value="Soleh">Soleh</option>
+            <option value="Sugiman">Sugiman</option>
+            <option value="Wido">Wido</option>
+            <option value="Arya">Arya</option>
+            <option value="Yusril">Yusril</option>
+            <option value="GUDANG">GUDANG</option>
+        `;
+
+        function hitungTotalAgen() {
+            let total = 0;
+            document.querySelectorAll(".input-qty-agen").forEach(input => {
+                const val = parseFloat(input.value);
+                if (!isNaN(val)) total += val;
+            });
+            displayTotalAgen.textContent = total;
+            hitungSelisih(); // Update selisih tiap ada perubahan
+        }
+
+        // Event listener input agen pertama
+        document.querySelectorAll(".input-qty-agen").forEach(input => {
+            input.addEventListener("input", hitungTotalAgen);
+        });
+
+        // Tambah baris agen
+        btnTambahAgen.addEventListener("click", function() {
+            const row = document.createElement("div");
+            row.className = "row mb-2 baris-agen";
+            row.innerHTML = `
+                <div class="col-8">
+                    <select class="form-select select-agen">
+                        ${agenOptionsHTML}
+                    </select>
+                </div>
+                <div class="col-4 d-flex gap-2">
+                    <input type="number" class="form-control input-qty-agen" placeholder="Qty">
+                    <button class="btn btn-danger btn-sm btn-hapus-agen">X</button>
+                </div>
+            `;
+            containerAgen.insertBefore(row, btnTambahAgen);
+
+            row.querySelector(".input-qty-agen").addEventListener("input", hitungTotalAgen);
+            row.querySelector(".btn-hapus-agen").addEventListener("click", function() {
+                row.remove();
+                hitungTotalAgen();
+            });
+        });
+
+        // ==========================================
+        // LOGIKA KIRIM WHATSAPP
+        // ==========================================
+        const btnKirimWA = document.getElementById("btnKirimWA");
+        
+        btnKirimWA.addEventListener("click", function() {
+            let teksWA = `*MONITORING PENGIRIMAN*\n`;
+            teksWA += `Tanggal: ${elTanggal.textContent}\n\n`;
+
+            // Rekap Armada
+            teksWA += `*🚗 DATA ARMADA & BAWAAN*\n`;
+            let adaArmada = false;
+            document.querySelectorAll(".baris-armada").forEach(baris => {
+                const armada = baris.querySelector(".select-armada").value;
+                const qty = baris.querySelector(".input-qty-bawa").value;
+                if (armada && qty) {
+                    teksWA += `- ${armada} : ${qty}\n`;
+                    adaArmada = true;
+                }
+            });
+            if (!adaArmada) teksWA += `- Belum ada data diinput\n`;
+            teksWA += `*Total Bawa:* ${displayTotalBawa.textContent}\n\n`;
+
+            // Rekap Agen
+            teksWA += `*📦 DISTRIBUSI AGEN*\n`;
+            let adaAgen = false;
+            document.querySelectorAll(".baris-agen").forEach(baris => {
+                const agen = baris.querySelector(".select-agen").value;
+                const qty = baris.querySelector(".input-qty-agen").value;
+                if (agen && qty) {
+                    teksWA += `- ${agen} : ${qty}\n`;
+                    adaAgen = true;
+                }
+            });
+            if (!adaAgen) teksWA += `- Belum ada data diinput\n`;
+            teksWA += `*Total Distribusi:* ${displayTotalAgen.textContent}\n\n`;
+
+            // Rekap Selisih
+            teksWA += `*⚖️ SELISIH (Bawaan - Distribusi): ${displaySelisih.textContent}*`;
+
+            // Proses Kirim via URL WhatsApp (Buka tab baru)
+            const encodedText = encodeURIComponent(teksWA);
+            window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+        });
+
+    });
+</script>
+</body>
+</html>
