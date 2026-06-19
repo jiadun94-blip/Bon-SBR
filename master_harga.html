@@ -11,11 +11,10 @@
             font-family: 'Roboto Condensed', sans-serif; 
             background: #121212; 
             color: #e0e0e0; 
-            margin: 0; padding: 0; /* Padding dipindah ke container inner */
+            margin: 0; padding: 0; 
             user-select: none;
         }
 
-        /* CONTAINER UTAMA UNTUK FORM (FREEZE/STICKY) */
         .sticky-header {
             position: sticky;
             top: 0;
@@ -59,7 +58,6 @@
             text-transform: uppercase; font-size: 13px;
         }
 
-        /* BAGIAN TABEL (SCROLLABLE) */
         .content-body {
             padding: 0 15px 15px 15px;
         }
@@ -77,7 +75,6 @@
 
         table { width: 100%; border-collapse: collapse; background: white; color: #000; }
         
-        /* FREEZE HEADER TABEL */
         thead th { 
             position: sticky;
             top: 0;
@@ -94,7 +91,6 @@
         .text-bold { font-weight: bold; }
         .price-text { font-weight: bold; text-align: right; color: #000; }
 
-        /* MENU POPUP */
         #contextMenu {
             display: none; position: absolute; background: #2d2d2d; color: white;
             border-radius: 8px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.8);
@@ -199,15 +195,24 @@
                 <td class="price-text">${h.harga_jual.toLocaleString('id-ID')}</td>
             `;
 
+            // Event sentuh lama untuk HP/Tablet
             tr.ontouchstart = (e) => startPress(e, h);
             tr.ontouchend = () => clearTimeout(timer);
-            tr.onmousedown = (e) => startPress(e, h);
+            
+            // Event klik kiri tahan untuk PC (opsional, dibatasi hanya klik kiri)
+            tr.onmousedown = (e) => { if(e.button === 0) startPress(e, h); };
             tr.onmouseup = () => clearTimeout(timer);
+
+            // EVENT KLIK KANAN (NATIVE PC)
+            tr.oncontextmenu = (e) => {
+                e.preventDefault(); // Mencegah menu default browser muncul
+                selectedData = h;
+                showMenu(e);
+            };
 
             tbody.appendChild(tr);
         });
 
-        // BARIS TAMBAHAN: Memanggil filter otomatis setiap kali tabel selesai dimuat
         filterTabel();
     }
 
@@ -276,7 +281,11 @@
         });
     }
 
-    window.onclick = (e) => { if(e.target.id !== 'contextMenu') tutupMenu(); }
+    // Ubah window.onclick ke mousedown agar tidak bentrok dengan klik kanan di beberapa browser
+    window.addEventListener('mousedown', (e) => { 
+        if(!e.target.closest('#contextMenu')) tutupMenu(); 
+    });
+    
     init();
 </script>
 </body>
