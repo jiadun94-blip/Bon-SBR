@@ -108,7 +108,6 @@
 </head>
 <body>
 
-<!-- AREA YANG DI-FREEZE (FORM INPUT) -->
 <div class="sticky-header">
     <div class="card">
         <div class="header-section">TAMBAH / UPDATE HARGA</div>
@@ -143,7 +142,6 @@
     </div>
 </div>
 
-<!-- AREA YANG BISA DI-SCROLL (DAFTAR DATA) -->
 <div class="content-body">
     <input type="text" id="cariData" class="search-box" placeholder="Cari Agen atau Barang..." onkeyup="filterTabel()">
     <div class="table-container">
@@ -208,6 +206,9 @@
 
             tbody.appendChild(tr);
         });
+
+        // BARIS TAMBAHAN: Memanggil filter otomatis setiap kali tabel selesai dimuat
+        filterTabel();
     }
 
     function startPress(e, data) {

@@ -453,9 +453,7 @@
             errorList.push("- Belum ada item (Kirim atau Retur) yang dimasukkan");
         }
         
-        if (cash === 0 && trf === 0) {
-            errorList.push("- Pembayaran belum diisi (Nilai CASH dan TRANSFER tidak boleh keduanya Rp 0)");
-        }
+        // Validasi wajib bayar dihilangkan di sini
 
         if (errorList.length > 0) {
             alert("⚠️ DATA BELUM LENGKAP:\n\n" + errorList.join("\n") + "\n\nSilakan lengkapi terlebih dahulu!");
