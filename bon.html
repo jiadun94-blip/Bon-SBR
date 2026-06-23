@@ -119,7 +119,15 @@
     </div>
 
     <div class="section-label">💵 PEMBAYARAN :</div>
-    <div class="pay-row">
+    
+    <div style="margin-top: 10px; padding: 10px; background: #fffaf0; border: 2px solid #ed8936; border-radius: 10px;">
+        <label style="display: flex; align-items: center; font-weight: 900; font-size: 16px; color: #dd6b20; cursor: pointer;">
+            <input type="checkbox" id="cbTidakTitip" style="width: 22px; height: 22px; margin-right: 12px; cursor: pointer;" onchange="togglePembayaran()">
+            TIDAK TITIP UANG (BON FULL)
+        </label>
+    </div>
+
+    <div class="pay-row" id="areaPembayaran">
         <div><label style="font-size:14px; font-weight:900;">CASH</label><input type="text" id="inputCash" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
         <div><label style="font-size:14px; font-weight:900;">TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
     </div>
@@ -169,14 +177,34 @@
 
     function clearZero(el) { if(el.value === "0" || el.value === 0) el.value = ""; }
 
+    // FUNGSI BARU UNTUK MENGUNCI INPUT PEMBAYARAN
+    function togglePembayaran() {
+        const isChecked = document.getElementById('cbTidakTitip').checked;
+        const inputCash = document.getElementById('inputCash');
+        const inputTrf = document.getElementById('inputTrf');
+
+        if (isChecked) {
+            inputCash.value = "0";
+            inputTrf.value = "0";
+            inputCash.disabled = true;
+            inputTrf.disabled = true;
+            inputCash.style.backgroundColor = "#edf2f7"; 
+            inputTrf.style.backgroundColor = "#edf2f7";
+        } else {
+            inputCash.disabled = false;
+            inputTrf.disabled = false;
+            inputCash.style.backgroundColor = "#fff";
+            inputTrf.style.backgroundColor = "#fff";
+        }
+        hitungTotal();
+    }
+
     async function init() {
         try {
             const { data: agen, error: errorAgen } = await clientSupabase.from('agen').select('*');
             if (errorAgen) throw new Error("Gagal muat AGEN: " + errorAgen.message);
             
             if(agen) {
-                // --- FILTER AGEN BERDASARKAN KOLOM type_agen ---
-                // Menyembunyikan agen yang memiliki type_agen 'KHUSUS'
                 const agenNormal = agen.filter(a => a.type_agen !== 'KHUSUS');
                 
                 agenNormal.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen));
@@ -240,6 +268,10 @@
         document.getElementById('inputTrf').value = "0";
         document.getElementById('inputBonLama').value = "0";
         document.getElementById('inputOngkir').value = "0";
+        
+        // RESET CHECKBOX
+        document.getElementById('cbTidakTitip').checked = false;
+        togglePembayaran();
         
         document.getElementById('notifBon').style.display = "none";
         document.getElementById('labelBonUI').innerText = "📄 BON LAMA :";
@@ -436,8 +468,10 @@
             errorList.push("- Belum ada item (Kirim atau Retur) yang dimasukkan");
         }
         
-        if (cash === 0 && trf === 0) {
-            errorList.push("- Pembayaran belum diisi (Nilai CASH dan TRANSFER tidak boleh keduanya Rp 0)");
+        // VALIDASI BARU: Cek apakah checkbox dicentang
+        const isTidakTitip = document.getElementById('cbTidakTitip').checked;
+        if (cash === 0 && trf === 0 && !isTidakTitip) {
+            errorList.push("- Pembayaran belum diisi (Pilih centang 'TIDAK TITIP UANG' jika memang Bon Full)");
         }
 
         if (errorList.length > 0) {
