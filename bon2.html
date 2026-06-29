@@ -42,8 +42,9 @@
         .form-group select, .form-group input { width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 19px; font-weight: 700; }
         
         .sub-display { background: #f8fafc; padding: 10px; font-size: 17px; font-weight: 900; text-align: right; border: 2px solid #cbd5e0; border-top: none; display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #e2e8f0; padding: 12px; border-radius: 10px; margin-top: 10px; }
+        .pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #e2e8f0; padding: 12px; border-radius: 10px; margin-top: 10px; transition: 0.3s; }
         .input-manual { width: 100%; padding: 12px; border: 2px solid #4a5568; border-radius: 8px; font-weight: 900; text-align: right; box-sizing: border-box; font-size: 22px; background: #fff; }
+        .input-manual:disabled { background: #cbd5e0; cursor: not-allowed; }
         
         .summary-box { background: #1a202c; padding: 18px; border-radius: 12px; margin-top: 15px; color: white; }
         .sum-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 18px; }
@@ -68,7 +69,7 @@
 
     <div class="bt-panel">
         <button id="btnConnect" onclick="connectBT()">🔗 HUBUNGKAN PRINTER</button>
-        <select id="ukuranKertas">
+        <select id="ukuranKertas" onchange="simpanUkuranKertas()">
             <option value="48">Kertas 80mm (Besar - 48 Karakter)</option>
             <option value="32">Kertas 58mm (Kecil - 32 Karakter)</option>
         </select>
@@ -119,7 +120,14 @@
     </div>
 
     <div class="section-label">💵 PEMBAYARAN :</div>
-    <div class="pay-row">
+    <div style="background:#fffaf0; padding:10px; border-radius:10px; border:2px solid #e67e22; margin-bottom:10px;">
+        <label style="font-weight:900; display:flex; align-items:center; gap:10px; cursor:pointer; font-size:16px; color:#c05621;">
+            <input type="checkbox" id="cbTidakTitip" onchange="togglePembayaran()" style="width:22px; height:22px;">
+            TIDAK ADA TITIPAN UANG (NOL)
+        </label>
+    </div>
+
+    <div class="pay-row" id="areaPembayaran">
         <div><label style="font-size:14px; font-weight:900;">CASH</label><input type="text" id="inputCash" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
         <div><label style="font-size:14px; font-weight:900;">TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
     </div>
@@ -165,6 +173,7 @@
     let database = { harga: {}, barang: [] };
     let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim'; let editIndex = -1;
     let btCharacteristic = null;
+    let connectedDeviceId = null; // Tambahan ID Printer
     let lastPrintText = ""; 
     let isDeposit = false;
 
@@ -176,10 +185,7 @@
             if (errorAgen) throw new Error("Gagal muat AGEN: " + errorAgen.message);
             
             if(agen) {
-                // --- FILTER AGEN BERDASARKAN KOLOM type_agen ---
-                // HANYA memunculkan agen yang memiliki type_agen 'KHUSUS'
                 const agenKhusus = agen.filter(a => a.type_agen === 'KHUSUS');
-                
                 agenKhusus.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen));
                 const selAgen = document.getElementById('pilihAgen');
                 selAgen.innerHTML = '<option value="">-- AGEN KHUSUS --</option>';
@@ -233,7 +239,7 @@
 
     function resetForm() {
         document.getElementById('tglNota').valueAsDate = new Date();
-        document.getElementById('noNota').value = "SBR-" + Date.now().toString().slice(-6); // Penanda kode DP khusus
+        document.getElementById('noNota').value = "SBR-" + Date.now().toString().slice(-6); 
         document.getElementById('pilihAgen').value = "";
         document.getElementById('pilihMobil').value = "";
         document.getElementById('driver2').value = "";
@@ -242,11 +248,18 @@
         document.getElementById('inputBonLama').value = "0";
         document.getElementById('inputOngkir').value = "0";
         
+        document.getElementById('cbTidakTitip').checked = false;
+        togglePembayaran();
+        
         document.getElementById('notifBon').style.display = "none";
         document.getElementById('labelBonUI').innerText = "📄 BON LAMA :";
         document.getElementById('labelSumBon').innerText = "Bon Lama:";
+        
+        document.getElementById('boxOngkir').style.display = "none";
+        document.getElementById('rowTxtOngkir').style.display = "none";
+        document.getElementById('boxBonLama').style.display = "none";
+        
         isDeposit = false;
-
         itemsKirim = []; itemsRetur = []; render(); hitungTotal();
     }
 
@@ -255,49 +268,54 @@
         const btn = document.getElementById('btnSimpan');
         btn.disabled = false;
         btn.innerText = "SIMPAN & PRINT";
-        
         const btnRep = document.getElementById('btnReprint');
         btnRep.disabled = true;
         lastPrintText = "";
     }
 
+    function togglePembayaran() {
+        const cb = document.getElementById('cbTidakTitip').checked;
+        const cash = document.getElementById('inputCash');
+        const trf = document.getElementById('inputTrf');
+        const area = document.getElementById('areaPembayaran');
+
+        if(cb) {
+            cash.value = "0"; trf.value = "0";
+            cash.disabled = true; trf.disabled = true;
+            area.style.opacity = "0.5";
+        } else {
+            cash.disabled = false; trf.disabled = false;
+            area.style.opacity = "1";
+        }
+        hitungTotal();
+    }
+
     function updateBon() {
         const ag = document.getElementById('pilihAgen').value;
         const saldoBon = database.harga[ag]?.bon || 0;
-        
-        const agenPakeOngkir = ["Jawa Timur", "Catur", "Dajo Snack", "Edi", "Rizky", "Wanto"]; 
-        const isOngkir = agenPakeOngkir.includes(ag);
+        const isOngkir = ag !== ""; 
 
-        // --- SISTEM DETEKSI DEPOSIT BERDASARKAN MINUS ---
         isDeposit = saldoBon < 0;
-
         document.getElementById('boxBonLama').style.display = saldoBon !== 0 ? "block" : "none";
         document.getElementById('boxOngkir').style.display = isOngkir ? "block" : "none";
         document.getElementById('rowTxtOngkir').style.display = isOngkir ? "flex" : "none";
 
-        // Ubah text UI menjadi Deposit jika bon lama minus
         document.getElementById('labelBonUI').innerText = isDeposit ? "📄 DEPOSIT :" : "📄 BON LAMA :";
         document.getElementById('labelSumBon').innerText = isDeposit ? "Deposit:" : "Bon Lama:";
-
         document.getElementById('inputBonLama').value = Math.abs(saldoBon).toLocaleString('id-ID');
         
         const notif = document.getElementById('notifBon');
         if (saldoBon > 0) {
             notif.innerText = "⚠️ AGEN INI PUNYA BON LAMA!";
-            notif.style.display = "block";
-            notif.style.color = "#c53030";
-            notif.style.backgroundColor = "#fff5f5";
-            notif.style.borderColor = "#feb2b2";
+            notif.style.display = "block"; notif.style.color = "#c53030";
+            notif.style.backgroundColor = "#fff5f5"; notif.style.borderColor = "#feb2b2";
         } else if (saldoBon < 0) {
             notif.innerText = "✅ AGEN INI PUNYA DEPOSIT!";
-            notif.style.display = "block";
-            notif.style.color = "#27ae60";
-            notif.style.backgroundColor = "#e8f8f5";
-            notif.style.borderColor = "#a3e4d7";
+            notif.style.display = "block"; notif.style.color = "#27ae60";
+            notif.style.backgroundColor = "#e8f8f5"; notif.style.borderColor = "#a3e4d7";
         } else {
             notif.style.display = "none";
         }
-
         hitungTotal();
     }
 
@@ -308,8 +326,7 @@
         const mBarang = document.getElementById('modalBarang');
         mBarang.innerHTML = '<option value="">-- Pilih Barang --</option>';
         mBarang.disabled = false;
-        
-        document.getElementById('modalKet').value = ""; // Reset keterangan
+        document.getElementById('modalKet').value = ""; 
 
         const daftarHargaAgen = database.harga[ag];
         let listBarangTersedia = [];
@@ -329,13 +346,13 @@
     function addItem() {
         const ag = document.getElementById('pilihAgen').value;
         const b = document.getElementById('modalBarang').value;
-        const ket = document.getElementById('modalKet').value; // Ambil nilai keterangan
+        const ket = document.getElementById('modalKet').value; 
         const s = document.getElementById('modalSatuan').value;
         const q = parseFloat(document.getElementById('modalQty').value) || 0;
         const h = database.harga[ag]?.[`${b}_${s}`];
         if (h === undefined) return alert("Satuan " + s + " tidak tersedia untuk barang ini!");
         
-        const it = { barang: b, satuan: s, qty: q, harga: h, total: q * h, ket: ket }; // Masukkan keterangan ke object
+        const it = { barang: b, satuan: s, qty: q, harga: h, total: q * h, ket: ket }; 
         
         if (editIndex > -1) {
             if(q === 0) (currentMode === 'Kirim' ? itemsKirim : itemsRetur).splice(editIndex, 1);
@@ -349,7 +366,7 @@
         const item = mode === 'Kirim' ? itemsKirim[idx] : itemsRetur[idx];
         document.getElementById('modalBarang').innerHTML = `<option value="${item.barang}">${item.barang}</option>`;
         document.getElementById('modalBarang').disabled = true;
-        document.getElementById('modalKet').value = item.ket || ""; // Set keterangan jika ada saat di edit
+        document.getElementById('modalKet').value = item.ket || ""; 
         document.getElementById('modalSatuan').value = item.satuan; 
         document.getElementById('modalQty').value = item.qty;
         document.getElementById('modalInput').style.display = "block";
@@ -360,7 +377,6 @@
             const tb = document.getElementById(id).querySelector('tbody'); tb.innerHTML = '';
             data.forEach((it, idx) => {
                 const r = tb.insertRow();
-                // Tampilkan keterangan di tabel UI jika ada
                 let ketHtml = it.ket && it.ket.trim() !== "" ? `<br><small style="color:#e67e22;"><i>* ${it.ket}</i></small>` : "";
                 
                 r.innerHTML = `<td>${it.barang}${ketHtml}<br><small>${it.satuan}@${it.harga.toLocaleString()}</small></td>
@@ -377,18 +393,11 @@
     function hitungTotal() {
         const tk = itemsKirim.reduce((a, b) => a + b.total, 0); 
         const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
-        
         const bl_input = getAngka('inputBonLama'); 
-        
-        // --- LOGIKA PENGURANG DEPOSIT ---
-        // Jika isDeposit true, bl_actual jadi minus, memotong total tagihan otomatis.
         const bl_actual = isDeposit ? -bl_input : bl_input; 
-        
         const ongkir = getAngka('inputOngkir');
         const cs = getAngka('inputCash'); 
         const tf = getAngka('inputTrf');
-        
-        // sisa akhir = (Kirim - Retur - Ongkir) + Deposit/Bon - Bayar
         const sisa = (tk - tr - ongkir + bl_actual - cs - tf);
         
         document.getElementById('subKirim').innerText = "Rp " + tk.toLocaleString('id-ID');
@@ -396,9 +405,16 @@
         document.getElementById('txtKirim').innerText = "Rp " + tk.toLocaleString('id-ID');
         document.getElementById('txtRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
         document.getElementById('txtOngkir').innerText = "Rp " + ongkir.toLocaleString('id-ID');
-        
         document.getElementById('txtBon').innerText = (isDeposit ? "-Rp " : "Rp ") + bl_input.toLocaleString('id-ID');
         document.getElementById('txtGrand').innerText = "Rp " + sisa.toLocaleString('id-ID');
+    }
+
+    // --- BAGIAN YANG DIPERBARUI: LOGIKA SIMPAN UKURAN KERTAS BERDASARKAN ID ---
+    function simpanUkuranKertas() {
+        const val = document.getElementById('ukuranKertas').value;
+        if (connectedDeviceId) {
+            localStorage.setItem('printerSize_' + connectedDeviceId, val);
+        }
     }
 
     async function connectBT() {
@@ -411,8 +427,33 @@
             const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
             const characteristics = await service.getCharacteristics();
             btCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
-            document.getElementById('statusBT').innerText = "Status: Terhubung (" + device.name + ")";
+            
+            connectedDeviceId = device.id; // Simpan ID unik mesin printer
+            let dName = device.name || "Printer BT";
+            document.getElementById('statusBT').innerText = "Status: Terhubung (" + dName + ")";
             document.getElementById('statusBT').style.color = "#27ae60";
+
+            const selectPrinter = document.getElementById('ukuranKertas');
+            
+            // 1. Cek memori HP, apakah ID mesin ini pernah diatur ukurannya?
+            const savedSize = localStorage.getItem('printerSize_' + connectedDeviceId);
+            
+            if (savedSize) {
+                // Jika sudah ada memori, gunakan ukuran yang diingat
+                selectPrinter.value = savedSize;
+            } else {
+                // 2. Jika belum ada memori, tebak dari nama (jaga-jaga jika pakai merk printer lain di kemudian hari)
+                let nameUpper = dName.toUpperCase();
+                if (nameUpper.includes("58") || nameUpper.includes("MTP-2") || nameUpper.includes("PT-210") || nameUpper.includes("POS-58")) {
+                    selectPrinter.value = "32"; 
+                } else if (nameUpper.includes("80") || nameUpper.includes("MTP-3") || nameUpper.includes("PT-310") || nameUpper.includes("POS-80")) {
+                    selectPrinter.value = "48"; 
+                }
+                
+                // Simpan tebakan awal ke memori
+                simpanUkuranKertas();
+            }
+
         } catch (e) { alert("BT Gagal: " + e); }
     }
 
@@ -452,8 +493,6 @@
         if (itemsKirim.length === 0 && itemsRetur.length === 0) {
             errorList.push("- Belum ada item (Kirim atau Retur) yang dimasukkan");
         }
-        
-        // Validasi wajib bayar dihilangkan di sini
 
         if (errorList.length > 0) {
             alert("⚠️ DATA BELUM LENGKAP:\n\n" + errorList.join("\n") + "\n\nSilakan lengkapi terlebih dahulu!");
@@ -475,7 +514,6 @@
         const bl_actual = isDeposit ? -bl_input : bl_input;
         const ongkir = getAngka('inputOngkir');
         
-        // --- TOTAL TAGIHAN OTOMATIS BERKURANG KARENA bl_actual MINUS ---
         const tagihanBersih = tk - tr - ongkir + bl_actual;
         const sisa = tagihanBersih - cash - trf;
 
@@ -501,11 +539,10 @@
         
         p += `\x1B\x21\x00`;
         
-        // Cetak Item Kirim dan Keterangannya di bawah barang
         itemsKirim.forEach(i => { 
             p += `${i.barang}\n`;
             if (i.ket && i.ket.trim() !== "") {
-                p += `  * ${i.ket}\n`; // <-- Muncul di Struk
+                p += `  * ${i.ket}\n`; 
             }
             p += buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, i.total.toLocaleString()); 
         });
@@ -513,12 +550,10 @@
 
         if(itemsRetur.length > 0) {
             p += `\n\x1B\x45\x01BARANG RETUR:\x1B\x45\x00\n`;
-            
-            // Cetak Item Retur dan Keterangannya di bawah barang
             itemsRetur.forEach(i => { 
                 p += `[RETUR] ${i.barang}\n`;
                 if (i.ket && i.ket.trim() !== "") {
-                    p += `  * ${i.ket}\n`; // <-- Muncul di Struk
+                    p += `  * ${i.ket}\n`; 
                 }
                 p += buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, `-${i.total.toLocaleString()}`); 
             });
@@ -527,7 +562,6 @@
         p += garisStrip;
         if(ongkir > 0) p += buatBaris(`ONGKIR:`, `-Rp ${ongkir.toLocaleString()}`);
         
-        // Cetak baris deposit dengan indikator minus
         const labelBonPrint = isDeposit ? "DEPOSIT:" : "BON LAMA:";
         const valBonPrint = isDeposit ? `-Rp ${bl_input.toLocaleString()}` : `Rp ${bl_input.toLocaleString()}`;
         p += buatBaris(labelBonPrint, valBonPrint);
@@ -544,7 +578,6 @@
         p += `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`;
 
         try {
-            // MENGGUNAKAN TABEL transaksi_dp
             await clientSupabase.from('transaksi_dp').insert([{
                 no_nota: noNota, nama_agen: ag, tanggal: tglInput,
                 driver_1: drv1, driver_2: drv2, plat_nomor: mobil, 
@@ -553,7 +586,6 @@
                 bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
             }]);
 
-            // MENGGUNAKAN TABEL transaksi_detaildp beserta kolom keterangan
             const details = [
                 ...itemsKirim.map(i => ({ no_nota: noNota, nama_barang: i.barang, keterangan: i.ket, qty: i.qty, satuan: i.satuan, tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
                 ...itemsRetur.map(i => ({ no_nota: noNota, nama_barang: i.barang, keterangan: i.ket, qty: i.qty, satuan: i.satuan, tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))

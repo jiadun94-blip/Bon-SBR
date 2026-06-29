@@ -68,7 +68,7 @@
 
     <div class="bt-panel">
         <button id="btnConnect" onclick="connectBT()">🔗 HUBUNGKAN PRINTER</button>
-        <select id="ukuranKertas">
+        <select id="ukuranKertas" onchange="simpanUkuranKertas()">
             <option value="48">Kertas 80mm (Besar - 48 Karakter)</option>
             <option value="32">Kertas 58mm (Kecil - 32 Karakter)</option>
         </select>
@@ -155,7 +155,9 @@
 
 <script>
     const userAktif = localStorage.getItem("userNama");
-    
+    let btCharacteristic = null;
+    let connectedDeviceId = null; // Menyimpan ID unik printer
+
     function logout() { localStorage.clear(); window.location.href = "index.html"; }
 
     const selectPrinter = document.getElementById('ukuranKertas');
@@ -171,13 +173,11 @@
 
     let database = { harga: {}, barang: [] };
     let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim'; let editIndex = -1;
-    let btCharacteristic = null;
     let lastPrintText = ""; 
     let isDeposit = false;
 
     function clearZero(el) { if(el.value === "0" || el.value === 0) el.value = ""; }
 
-    // FUNGSI BARU UNTUK MENGUNCI INPUT PEMBAYARAN
     function togglePembayaran() {
         const isChecked = document.getElementById('cbTidakTitip').checked;
         const inputCash = document.getElementById('inputCash');
@@ -199,6 +199,14 @@
         hitungTotal();
     }
 
+    // SIMPAN PILIHAN UKURAN KE MEMORI HP BERDASARKAN ID PRINTER
+    function simpanUkuranKertas() {
+        const val = document.getElementById('ukuranKertas').value;
+        if (connectedDeviceId) {
+            localStorage.setItem('printerSize_' + connectedDeviceId, val);
+        }
+    }
+
     async function init() {
         try {
             const { data: agen, error: errorAgen } = await clientSupabase.from('agen').select('*');
@@ -206,7 +214,6 @@
             
             if(agen) {
                 const agenNormal = agen.filter(a => a.type_agen !== 'KHUSUS');
-                
                 agenNormal.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen));
                 const selAgen = document.getElementById('pilihAgen');
                 selAgen.innerHTML = '<option value="">-- AGEN --</option>';
@@ -268,16 +275,10 @@
         document.getElementById('inputTrf').value = "0";
         document.getElementById('inputBonLama').value = "0";
         document.getElementById('inputOngkir').value = "0";
-        
-        // RESET CHECKBOX
         document.getElementById('cbTidakTitip').checked = false;
         togglePembayaran();
-        
         document.getElementById('notifBon').style.display = "none";
-        document.getElementById('labelBonUI').innerText = "📄 BON LAMA :";
-        document.getElementById('labelSumBon').innerText = "Bon Lama:";
         isDeposit = false;
-
         itemsKirim = []; itemsRetur = []; render(); hitungTotal();
     }
 
@@ -286,30 +287,22 @@
         const btn = document.getElementById('btnSimpan');
         btn.disabled = false;
         btn.innerText = "SIMPAN & PRINT";
-        
-        const btnRep = document.getElementById('btnReprint');
-        btnRep.disabled = true;
+        document.getElementById('btnReprint').disabled = true;
         lastPrintText = "";
     }
 
     function updateBon() {
         const ag = document.getElementById('pilihAgen').value;
         const saldoBon = database.harga[ag]?.bon || 0;
-        
         const agenPakeOngkir = ["Jawa Timur", "Catur", "Dajo Snack", "Edi", "Rizky", "Wanto"]; 
         const isOngkir = agenPakeOngkir.includes(ag);
-
         isDeposit = saldoBon < 0;
-
         document.getElementById('boxBonLama').style.display = saldoBon !== 0 ? "block" : "none";
         document.getElementById('boxOngkir').style.display = isOngkir ? "block" : "none";
         document.getElementById('rowTxtOngkir').style.display = isOngkir ? "flex" : "none";
-
         document.getElementById('labelBonUI').innerText = isDeposit ? "📄 DEPOSIT :" : "📄 BON LAMA :";
         document.getElementById('labelSumBon').innerText = isDeposit ? "Deposit:" : "Bon Lama:";
-
         document.getElementById('inputBonLama').value = Math.abs(saldoBon).toLocaleString('id-ID');
-        
         const notif = document.getElementById('notifBon');
         if (saldoBon > 0) {
             notif.innerText = "⚠️ AGEN INI PUNYA BON LAMA!";
@@ -326,7 +319,6 @@
         } else {
             notif.style.display = "none";
         }
-
         hitungTotal();
     }
 
@@ -396,14 +388,11 @@
     function hitungTotal() {
         const tk = itemsKirim.reduce((a, b) => a + b.total, 0); 
         const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
-        
         const bl_input = getAngka('inputBonLama'); 
         const bl_actual = isDeposit ? -bl_input : bl_input; 
-        
         const ongkir = getAngka('inputOngkir');
         const cs = getAngka('inputCash'); 
         const tf = getAngka('inputTrf');
-        
         const sisa = (tk - tr - ongkir + bl_actual - cs - tf);
         
         document.getElementById('subKirim').innerText = "Rp " + tk.toLocaleString('id-ID');
@@ -411,7 +400,6 @@
         document.getElementById('txtKirim').innerText = "Rp " + tk.toLocaleString('id-ID');
         document.getElementById('txtRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
         document.getElementById('txtOngkir').innerText = "Rp " + ongkir.toLocaleString('id-ID');
-        
         document.getElementById('txtBon').innerText = (isDeposit ? "-Rp " : "Rp ") + bl_input.toLocaleString('id-ID');
         document.getElementById('txtGrand').innerText = "Rp " + sisa.toLocaleString('id-ID');
     }
@@ -426,8 +414,19 @@
             const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
             const characteristics = await service.getCharacteristics();
             btCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
+            
+            // Simpan ID Unik Printer
+            connectedDeviceId = device.id;
+            
             document.getElementById('statusBT').innerText = "Status: Terhubung (" + device.name + ")";
             document.getElementById('statusBT').style.color = "#27ae60";
+
+            // Cek apakah ada ukuran yang tersimpan di memori untuk ID printer ini
+            const savedSize = localStorage.getItem('printerSize_' + connectedDeviceId);
+            if (savedSize) {
+                document.getElementById('ukuranKertas').value = savedSize;
+            }
+
         } catch (e) { alert("BT Gagal: " + e); }
     }
 
@@ -468,7 +467,6 @@
             errorList.push("- Belum ada item (Kirim atau Retur) yang dimasukkan");
         }
         
-        // VALIDASI BARU: Cek apakah checkbox dicentang
         const isTidakTitip = document.getElementById('cbTidakTitip').checked;
         if (cash === 0 && trf === 0 && !isTidakTitip) {
             errorList.push("- Pembayaran belum diisi (Pilih centang 'TIDAK TITIP UANG' jika memang Bon Full)");
