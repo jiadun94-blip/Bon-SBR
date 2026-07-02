@@ -82,7 +82,7 @@
         <input type="text" id="noNota" readonly placeholder="No. Nota">
         <input type="date" id="tglNota">
         <select id="pilihAgen" onchange="updateBon()"><option value="">-- AGEN KHUSUS --</option></select>
-        <select id="driver1" disabled style="background:#edf2f7; color:#4a5568;"><option value="">-- DRIVER 1 --</option></select>
+        <select id="driver1"><option value="">-- DRIVER 1 --</option></select>
         <select id="pilihMobil"><option value="">-- MOBIL --</option></select>
         <select id="driver2"><option value="">-- DRIVER 2 --</option></select>
     </div>
@@ -145,7 +145,15 @@
         <h3>Tambah Item</h3>
         <div class="form-group"><label>Barang</label><select id="modalBarang"></select></div>
         <div class="form-group"><label>Keterangan (Opsional)</label><input type="text" id="modalKet" placeholder="Cth: Titipan, Bonus, dll"></div>
-        <div class="form-group"><label>Satuan</label><select id="modalSatuan"><option>Ball</option><option>Pack</option><option>Pcs</option></select></div>
+        <div class="form-group">
+            <label>Satuan</label>
+            <select id="modalSatuan">
+                <option>Ball</option>
+                <option>Pack</option>
+                <option>Pcs</option>
+                <option>Duz</option>
+                <option>Karung</option>
+                </select></div>
         <div class="form-group"><label>Qty</label><input type="number" id="modalQty" value="0" onfocus="clearZero(this)"></div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
             <button onclick="closeModal()" style="padding:10px; border-radius:8px; border:1px solid #ccc;">BATAL</button>
@@ -173,7 +181,7 @@
     let database = { harga: {}, barang: [] };
     let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim'; let editIndex = -1;
     let btCharacteristic = null;
-    let connectedDeviceId = null; // Tambahan ID Printer
+    let connectedDeviceId = null; 
     let lastPrintText = ""; 
     let isDeposit = false;
 
@@ -219,7 +227,7 @@
                     d2.options.add(new Option(k.nama_karyawan, k.nama_karyawan));
                 });
             }
-            if(userAktif) d1.value = userAktif;
+            if(userAktif) d1.value = userAktif; 
 
             const { data: mobil, error: errorMobil } = await clientSupabase.from('kendaraan').select('*');
             if (errorMobil) throw new Error("Gagal muat MOBIL: " + errorMobil.message);
@@ -409,7 +417,6 @@
         document.getElementById('txtGrand').innerText = "Rp " + sisa.toLocaleString('id-ID');
     }
 
-    // --- BAGIAN YANG DIPERBARUI: LOGIKA SIMPAN UKURAN KERTAS BERDASARKAN ID ---
     function simpanUkuranKertas() {
         const val = document.getElementById('ukuranKertas').value;
         if (connectedDeviceId) {
@@ -428,29 +435,24 @@
             const characteristics = await service.getCharacteristics();
             btCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
             
-            connectedDeviceId = device.id; // Simpan ID unik mesin printer
+            connectedDeviceId = device.id; 
             let dName = device.name || "Printer BT";
             document.getElementById('statusBT').innerText = "Status: Terhubung (" + dName + ")";
             document.getElementById('statusBT').style.color = "#27ae60";
 
             const selectPrinter = document.getElementById('ukuranKertas');
             
-            // 1. Cek memori HP, apakah ID mesin ini pernah diatur ukurannya?
             const savedSize = localStorage.getItem('printerSize_' + connectedDeviceId);
             
             if (savedSize) {
-                // Jika sudah ada memori, gunakan ukuran yang diingat
                 selectPrinter.value = savedSize;
             } else {
-                // 2. Jika belum ada memori, tebak dari nama (jaga-jaga jika pakai merk printer lain di kemudian hari)
                 let nameUpper = dName.toUpperCase();
                 if (nameUpper.includes("58") || nameUpper.includes("MTP-2") || nameUpper.includes("PT-210") || nameUpper.includes("POS-58")) {
                     selectPrinter.value = "32"; 
                 } else if (nameUpper.includes("80") || nameUpper.includes("MTP-3") || nameUpper.includes("PT-310") || nameUpper.includes("POS-80")) {
                     selectPrinter.value = "48"; 
                 }
-                
-                // Simpan tebakan awal ke memori
                 simpanUkuranKertas();
             }
 

@@ -228,6 +228,12 @@
 
             itemsKirim.forEach(i => {
                 s += `<div>${i.nama_barang}</div>`;
+                
+                // Tambahan untuk memunculkan keterangan di struk digital
+                if (i.keterangan && i.keterangan.trim() !== "") {
+                    s += `<div style="font-size: 11px; padding-left: 8px; color: #555;">* ${i.keterangan}</div>`;
+                }
+
                 s += `<div class="struk-row struk-item-detail">
                         <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}</span>
                         <span>${(i.subtotal || 0).toLocaleString('id-ID')}</span>
@@ -240,6 +246,12 @@
                 s += `<br><div class="struk-bold">BARANG RETUR:</div>`;
                 itemsRetur.forEach(i => {
                     s += `<div>[RETUR] ${i.nama_barang}</div>`;
+                    
+                    // Tambahan untuk memunculkan keterangan retur di struk digital
+                    if (i.keterangan && i.keterangan.trim() !== "") {
+                        s += `<div style="font-size: 11px; padding-left: 8px; color: #555;">* ${i.keterangan}</div>`;
+                    }
+
                     s += `<div class="struk-row struk-item-detail">
                             <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}</span>
                             <span>-${(i.subtotal || 0).toLocaleString('id-ID')}</span>
