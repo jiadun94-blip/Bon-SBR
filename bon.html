@@ -160,13 +160,6 @@
 
     function logout() { localStorage.clear(); window.location.href = "index.html"; }
 
-    const selectPrinter = document.getElementById('ukuranKertas');
-    if (userAktif === "Hadi" || userAktif === "Hadiat" || userAktif === "Mpang") {
-        selectPrinter.style.display = "inline-block";
-    } else {
-        selectPrinter.style.display = "none";
-    }
-
     const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
