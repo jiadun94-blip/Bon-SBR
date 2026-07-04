@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SBR Putra Food - Data Karyawan</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="theme-color" content="#2c3e50">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; font-size: 17px; }
+        .container { background: white; padding: 12px; border-radius: 15px; max-width: 600px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        header h2 { margin: 0; color: #1a202c; font-size: 22px; text-transform: uppercase; font-weight: 900; }
+        .btn-back { background: #718096; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 900; cursor: pointer; text-decoration: none; font-size: 12px; display: inline-block; }
+        
+        .form-box { background: #edf2f7; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #cbd5e0; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-weight: 900; margin-bottom: 5px; font-size: 14px; color: #4a5568; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 17px; font-weight: 700; outline: none; }
+        .form-group input:focus, .form-group select:focus { border-color: #3182ce; }
+        
+        .btn-save { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; color: white; background: #27ae60; font-size: 18px; text-transform: uppercase; box-shadow: 0 4px 0 #1e8449; margin-top: 5px; }
+        .btn-save:disabled { background: #a0aec0; box-shadow: none; cursor: not-allowed; }
+        .btn-cancel-edit { display: none; width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; color: white; background: #718096; font-size: 16px; margin-top: 10px; }
+        
+        .section-label { font-size: 17px; font-weight: 900; padding: 10px; background: #1a202c; color: white; border-radius: 6px; margin: 15px 0 10px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Baris Pencarian & Sort */
+        .tools-bar { display: grid; grid-template-columns: 1fr 120px; gap: 8px; margin-bottom: 10px; }
+        .tools-bar input, .tools-bar select { padding: 10px; border: 2px solid #cbd5e0; border-radius: 8px; font-size: 14px; font-weight: 700; outline: none; box-sizing: border-box; }
+        .tools-bar input:focus, .tools-bar select:focus { border-color: #3182ce; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
+        th { font-size: 14px; text-align: left; padding: 10px 5px; background: #edf2f7; border-bottom: 2px solid #cbd5e0; font-weight: 900; }
+        td { padding: 12px 5px; border-bottom: 1px solid #e2e8f0; font-size: 16px; font-weight: 700; }
+        
+        .tr-tahan { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; cursor: pointer; }
+        .tr-tahan:active { background-color: #e2e8f0; }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
+        .modal-content { background: white; margin: 40% auto; padding: 25px; border-radius: 15px; width: 80%; max-width: 350px; text-align: center; box-shadow: 0 5px 30px rgba(0,0,0,0.3); }
+        .modal-btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: 900; font-size: 16px; margin-bottom: 12px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h2>DATA KARYAWAN</h2>
+        <a href="javascript:history.back()" class="btn-back">⬅ KEMBALI</a>
+    </header>
+
+    <div class="form-box">
+        <div class="form-group">
+            <label>NAMA KARYAWAN</label>
+            <input type="text" id="inputNama" placeholder="Ketik nama karyawan...">
+        </div>
+        <div class="form-group">
+            <label>BAGIAN</label>
+            <select id="inputBagian">
+                <option value="">-- Pilih Bagian --</option>
+                <option value="Driver">Driver</option>
+                <option value="Aro">Aro</option>
+                <option value="Simping">Simping</option>
+                <option value="Terigu">Terigu</option>
+                <option value="Distribusi">Distribusi</option>
+                <option value="Sisrik">Sisrik</option>
+            </select>
+        </div>
+        <button class="btn-save" id="btnSimpan" onclick="simpanKaryawan()">SIMPAN KARYAWAN</button>
+        <button class="btn-cancel-edit" id="btnBatalEdit" onclick="batalEdit()">BATAL EDIT</button>
+    </div>
+
+    <div class="section-label">
+        <span>📋 DAFTAR KARYAWAN</span>
+        <small style="font-size:10px; font-weight:normal; color:#cbd5e0;">(Tahan Baris = Edit)</small>
+    </div>
+
+    <div class="tools-bar">
+        <input type="text" id="inputCari" placeholder="🔍 Cari nama..." oninput="renderTabel()">
+        <select id="inputUrut" onchange="renderTabel()">
+            <option value="nama_asc">Urut: A-Z</option>
+            <option value="nama_desc">Urut: Z-A</option>
+            <option value="bagian_asc">Bagian</option>
+        </select>
+    </div>
+    
+    <table id="tabelKaryawan">
+        <thead>
+            <tr>
+                <th>NAMA</th>
+                <th>BAGIAN</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+</div>
+
+<div id="modalAksi" class="modal">
+    <div class="modal-content">
+        <h3 id="aksiNama" style="margin-top:0; font-size:24px; color:#1a202c;">Nama</h3>
+        <p id="aksiBagian" style="color:#718096; font-weight:900; margin-top:-10px; margin-bottom:25px;">Bagian</p>
+        
+        <button class="modal-btn" style="background:#3182ce; color:white; box-shadow:0 4px 0 #2b6cb0;" onclick="siapkanEdit()">✏️ EDIT KARYAWAN</button>
+        <button class="modal-btn" style="background:#e53e3e; color:white; box-shadow:0 4px 0 #c53030;" onclick="prosesHapus()">🗑️ HAPUS KARYAWAN</button>
+        <button class="modal-btn" style="background:#edf2f7; color:#4a5568; border:2px solid #cbd5e0;" onclick="tutupAksi()">BATAL</button>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let editKaryawanId = null;
+    let targetAksiId = null;
+    let pressTimer;
+    let dataKaryawanUtama = []; // Menyimpan data master agar tidak perlu loading internet terus saat ngetik pencarian
+
+    function startPress(id, nama, bagian) {
+        pressTimer = window.setTimeout(function() { bukaAksi(id, nama, bagian); }, 600);
+    }
+    function cancelPress() { clearTimeout(pressTimer); }
+
+    function bukaAksi(id, nama, bagian) {
+        if (window.navigator.vibrate) window.navigator.vibrate(50);
+        targetAksiId = id;
+        document.getElementById('aksiNama').innerText = nama;
+        document.getElementById('aksiBagian').innerText = bagian;
+        document.getElementById('modalAksi').style.display = 'block';
+    }
+    
+    function tutupAksi() {
+        document.getElementById('modalAksi').style.display = 'none';
+        targetAksiId = null;
+    }
+
+    // Panggil data dari Supabase 1x saja
+    async function muatData() {
+        const tbody = document.querySelector('#tabelKaryawan tbody');
+        tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:20px;">⏳ Memuat data...</td></tr>';
+
+        const { data, error } = await clientSupabase.from('karyawan').select('*');
+        if (error) { console.error("Error muat data:", error); return; }
+
+        dataKaryawanUtama = data || [];
+        renderTabel(); // Proses pencarian & urutan lalu tampilkan
+    }
+
+    // Fungsi Render untuk memproses Sort & Search secara instan
+    function renderTabel() {
+        const kataKunci = document.getElementById('inputCari').value.toLowerCase();
+        const modeUrut = document.getElementById('inputUrut').value;
+        const tbody = document.querySelector('#tabelKaryawan tbody');
+        tbody.innerHTML = '';
+
+        // 1. Proses Filter (Pencarian)
+        let dataTampil = dataKaryawanUtama.filter(item => {
+            const nama = (item.nama_karyawan || '').toLowerCase();
+            const bagian = (item.bagian || '').toLowerCase();
+            return nama.includes(kataKunci) || bagian.includes(kataKunci);
+        });
+
+        // 2. Proses Sort (Pengurutan)
+        dataTampil.sort((a, b) => {
+            let valA, valB;
+            if (modeUrut.startsWith('nama')) {
+                valA = (a.nama_karyawan || '').toLowerCase();
+                valB = (b.nama_karyawan || '').toLowerCase();
+            } else {
+                valA = (a.bagian || '').toLowerCase();
+                valB = (b.bagian || '').toLowerCase();
+            }
+
+            if (valA < valB) return modeUrut.endsWith('asc') ? -1 : 1;
+            if (valA > valB) return modeUrut.endsWith('asc') ? 1 : -1;
+            return 0;
+        });
+
+        // 3. Tampilkan ke Tabel HTML
+        if (dataTampil.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:#e53e3e; padding:20px;">Data tidak ditemukan</td></tr>';
+            return;
+        }
+
+        dataTampil.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.className = "tr-tahan";
+            const nama = item.nama_karyawan || '-';
+            const bagian = item.bagian || '-';
+            
+            tr.innerHTML = `<td>${nama}</td><td>${bagian}</td>`;
+            
+            tr.onmousedown = () => startPress(item.id, nama, bagian);
+            tr.onmouseup = cancelPress;
+            tr.onmouseleave = cancelPress;
+            tr.ontouchstart = () => startPress(item.id, nama, bagian);
+            tr.ontouchend = cancelPress;
+            tr.ontouchcancel = cancelPress;
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    function siapkanEdit() {
+        const nama = document.getElementById('aksiNama').innerText;
+        const bagian = document.getElementById('aksiBagian').innerText;
+        
+        document.getElementById('inputNama').value = nama;
+        document.getElementById('inputBagian').value = bagian;
+        
+        editKaryawanId = targetAksiId;
+        
+        const btnSimpan = document.getElementById('btnSimpan');
+        btnSimpan.innerText = "UPDATE DATA";
+        btnSimpan.style.background = "#3182ce";
+        btnSimpan.style.boxShadow = "0 4px 0 #2b6cb0";
+        document.getElementById('btnBatalEdit').style.display = "block";
+        
+        tutupAksi();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function batalEdit() {
+        document.getElementById('inputNama').value = '';
+        document.getElementById('inputBagian').value = '';
+        editKaryawanId = null;
+        
+        const btnSimpan = document.getElementById('btnSimpan');
+        btnSimpan.innerText = "SIMPAN KARYAWAN";
+        btnSimpan.style.background = "#27ae60";
+        btnSimpan.style.boxShadow = "0 4px 0 #1e8449";
+        document.getElementById('btnBatalEdit').style.display = "none";
+    }
+
+    async function simpanKaryawan() {
+        const nama = document.getElementById('inputNama').value.trim();
+        const bagian = document.getElementById('inputBagian').value;
+
+        if (!nama || !bagian) return alert("⚠️ Nama dan Bagian harus diisi!");
+
+        const btn = document.getElementById('btnSimpan');
+        btn.innerText = "MENYIMPAN..."; btn.disabled = true;
+
+        try {
+            if (editKaryawanId) {
+                const { error } = await clientSupabase.from('karyawan')
+                    .update({ nama_karyawan: nama, bagian: bagian })
+                    .eq('id', editKaryawanId);
+                if (error) throw error;
+            } else {
+                const { error } = await clientSupabase.from('karyawan')
+                    .insert([{ nama_karyawan: nama, bagian: bagian, aktif: true }]);
+                if (error) throw error;
+            }
+            batalEdit();
+            muatData(); // Tarik data ulang untuk update array memori
+        } catch (e) {
+            alert("❌ Gagal menyimpan data:\n" + e.message);
+            batalEdit();
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function prosesHapus() {
+        const nama = document.getElementById('aksiNama').innerText;
+        if (!confirm(`Apakah Anda yakin ingin menghapus data ${nama}?`)) return;
+
+        const btn = document.getElementById('btnSimpan');
+        btn.innerText = "MENGHAPUS..."; 
+        
+        try {
+            const { error } = await clientSupabase.from('karyawan').delete().eq('id', targetAksiId);
+            if (error) throw error;
+            
+            tutupAksi();
+            muatData(); // Tarik data ulang
+            batalEdit();
+        } catch (e) {
+            alert("❌ Gagal menghapus data:\n" + e.message);
+            btn.innerText = "SIMPAN KARYAWAN";
+        }
+    }
+
+    window.onload = muatData;
+</script>
+
+</body>
+</html>
