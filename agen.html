@@ -2,60 +2,60 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBR | Database Agen v4</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Roboto Condensed', sans-serif; background-color: #121212; color: #eee; margin: 0; padding: 10px; user-select: none; }
-        .card { background: #1e1e1e; border-radius: 8px; padding: 15px; border: 1px solid #333; margin-bottom: 20px; }
-        h2 { margin: 0 0 15px; font-size: 16px; text-align: center; background: #333; padding: 10px; border-radius: 6px; color: #fff; text-transform: uppercase; }
+        body { font-family: 'Roboto Condensed', sans-serif; background-color: #121212; color: #eee; margin: 0; padding: 8px; user-select: none; }
+        .card { background: #1e1e1e; border-radius: 8px; padding: 12px; border: 1px solid #333; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); }
+        h2 { margin: 0 0 12px; font-size: 14px; text-align: center; background: #2d2d2d; padding: 10px; border-radius: 6px; color: #fff; text-transform: uppercase; border: 1px solid #444; letter-spacing: 1px; }
         
-        /* FORM LAYOUT ASLI BAPAK */
-        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 15px; }
+        /* FORM LAYOUT */
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
         .form-group { display: flex; flex-direction: column; }
-        label { font-size: 11px; margin-bottom: 4px; color: #aaa; font-weight: bold; }
-        input, select { background: #2d2d2d; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 4px; font-family: inherit; }
+        label { font-size: 10px; margin-bottom: 4px; color: #bbb; font-weight: bold; letter-spacing: 0.5px; }
+        input, select { background: #2d2d2d; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 6px; font-family: inherit; font-size: 13px; transition: border 0.3s; }
+        input:focus, select:focus { border-color: #3498db; outline: none; }
         select { cursor: pointer; }
-        .btn-save { background: #3b4c64; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 14px; }
-        .btn-save:active { background: #2c3e50; transform: scale(0.98); }
+        
+        .btn-save { background: #3b4c64; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.1s; }
+        .btn-save:active { transform: translateY(4px); }
 
-        /* TAMBAHAN STYLE UNTUK INPUT PENCARIAN */
-        .search-container { margin-bottom: 15px; width: 100%; box-sizing: border-box; }
-        .search-input { width: 100%; background: #2d2d2d; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 4px; font-family: inherit; box-sizing: border-box; font-size: 14px; }
-        .search-input:focus { border-color: #3b4c64; outline: none; }
+        /* PENCARIAN */
+        .search-container { margin-bottom: 12px; width: 100%; box-sizing: border-box; }
+        .search-input { width: 100%; background: #2d2d2d; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 6px; font-family: inherit; box-sizing: border-box; font-size: 13px; }
+        .search-input:focus { border-color: #3498db; outline: none; }
 
-        /* TABLE AREA */
-        .table-container { width: 100%; max-height: 60vh; overflow: auto; border: 1px solid #444; border-radius: 4px; background: #fff; }
-        table { width: 100%; border-collapse: collapse; color: #000; }
-        th { background: #f0f0f0; position: sticky; top: 0; z-index: 10; border: 1px solid #ccc; padding: 10px; font-size: 12px; }
-        td { border: 1px solid #eee; padding: 10px; font-size: 13px; text-align: center; cursor: pointer; }
-        tr:nth-child(even) { background: #fafafa; }
-        tr:active { background: #dbeafe !important; }
+        /* TABLE AREA (Gaya Baru & Diperkecil) */
+        .table-container { width: 100%; max-height: 60vh; overflow-x: auto; border: 1px solid #333; border-radius: 8px; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        
+        table { width: 100%; border-collapse: collapse; color: #1e293b; min-width: 100%; } 
+        
+        thead th { background: #f8fafc; color: #475569; position: sticky; top: 0; z-index: 10; padding: 10px 5px; font-size: 10px; text-transform: uppercase; border-bottom: 2px solid #cbd5e1; text-align: left; letter-spacing: 0.5px; }
+        thead th.center { text-align: center; }
+        thead th.right { text-align: right; }
+        
+        td { border-bottom: 1px solid #f1f5f9; padding: 8px 5px; font-size: 12px; vertical-align: middle; }
+        tr:hover { background: #f8fafc; }
+        
+        .text-bold { font-weight: bold; color: #0f172a; }
+        .price-text { font-weight: bold; text-align: right; color: #16a085; font-size: 12px; white-space: nowrap; }
+        .nowrap { white-space: nowrap; }
 
-        /* Badge untuk tipe agen */
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
-        .badge-normal { background: #e3f2fd; color: #0d47a1; }
-        .badge-khusus { background: #fff3e0; color: #e65100; }
+        /* Badge tipe agen */
+        .badge { padding: 3px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; text-transform: uppercase; display: inline-block; white-space: nowrap;}
+        .badge-normal { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .badge-khusus { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
 
-        /* POPUP MENU */
-        #context-menu {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            background: #222;
-            border: 1px solid #444;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            width: 160px;
-        }
-        .menu-item { padding: 12px 15px; color: #fff; cursor: pointer; font-size: 14px; border-bottom: 1px solid #333; }
-        .menu-item:last-child { border-bottom: none; }
-        .menu-item:hover { background: #3b4c64; }
-        .menu-del { color: #ff6b6b; }
+        /* Kolom Aksi */
+        .action-cell { display: flex; gap: 4px; justify-content: center; align-items: center; }
+        .btn-action { display: inline-flex; align-items: center; justify-content: center; background: #f1f5f9; border: 1px solid #cbd5e1; cursor: pointer; font-size: 12px; padding: 5px 8px; border-radius: 4px; transition: all 0.2s; }
+        .btn-action.edit:hover { background: #dbeafe; border-color: #93c5fd; }
+        .btn-action.delete:hover { background: #fee2e2; border-color: #fca5a5; }
     </style>
 </head>
-<body onclick="hideMenu()">
+<body>
 
 <div class="card">
     <h2 id="title-form">TAMBAH AGEN BARU</h2>
@@ -63,7 +63,7 @@
         <input type="hidden" id="edit_id">
         <div class="form-group">
             <label>NAMA AGEN</label>
-            <input text" id="in_nama" placeholder="Nama Lengkap Agen">
+            <input type="text" id="in_nama" placeholder="Nama Agen">
         </div>
         <div class="form-group">
             <label>ALAMAT (KOTA)</label>
@@ -81,53 +81,47 @@
             </select>
         </div>
         <div class="form-group" style="grid-column: span 2;">
-            <label>SALDO BON AWAL</label>
+            <label>SALDO BON AWAL (RP)</label>
             <input type="number" id="in_saldo" value="0">
         </div>
     </div>
     <button class="btn-save" id="btn-aksi" onclick="simpanAgen()">SIMPAN DATA AGEN</button>
-    <button class="btn-save" id="btn-batal" onclick="resetForm()" style="display:none; background:#555; margin-top:10px;">BATAL EDIT</button>
+    <button class="btn-save" id="btn-batal" onclick="resetForm()" style="display:none; background:#555; margin-top:8px;">BATAL EDIT</button>
 </div>
 
 <div class="card">
     <h2>DATA AGEN TERINPUT</h2>
     
     <div class="search-container">
-        <input type="text" id="in_cari" class="search-input" placeholder="🔍 Cari nama, alamat, atau tipe agen (normal/khusus)..." onkeyup="cariAgen()">
+        <input type="text" id="in_cari" class="search-input" placeholder="🔍 Cari agen..." onkeyup="cariAgen()">
     </div>
 
     <div class="table-container">
         <table>
             <thead>
                 <tr>
-                    <th>NO</th>
+                    <th width="20" class="center">NO</th>
                     <th>NAMA AGEN</th>
                     <th>ALAMAT</th>
-                    <th>TYPE</th>
-                    <th>NO. TLP</th>
-                    <th>SALDO BON</th>
+                    <th width="45" class="center">TYPE</th>
+                    <th width="65">NO. TLP</th>
+                    <th width="75" class="right">SALDO BON</th>
+                    <th width="60" class="center">AKSI</th>
                 </tr>
             </thead>
             <tbody id="list-agen">
-                <tr><td colspan="6">Memuat data...</td></tr>
+                <tr><td colspan="7" style="text-align: center;">Memuat data...</td></tr>
             </tbody>
         </table>
     </div>
 </div>
 
-<div id="context-menu">
-    <div class="menu-item" onclick="prepareEdit()">📝 Edit Data</div>
-    <div class="menu-item menu-del" onclick="hapusAgen()">🗑️ Hapus Agen</div>
-</div>
-
 <script>
     const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
-    // SB_KEY dibawah ini sudah diperbaiki memakai key asli bawaan kode pertama Anda
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     const _sb = supabase.createClient(SB_URL, SB_KEY);
 
-    let selectedData = null;
-    let longPressTimer;
+    let currentAgenData = [];
 
     window.onload = () => muatTabelAgen();
 
@@ -135,103 +129,64 @@
         const { data, error } = await _sb.from('agen').select('*').order('nama_agen', { ascending: true });
         
         if (error) {
-            console.error("Supabase Error:", error);
-            document.getElementById('list-agen').innerHTML = `<tr><td colspan="6" style="color:red;">Gagal memuat data: ${error.message}</td></tr>`;
+            document.getElementById('list-agen').innerHTML = `<tr><td colspan="7" style="color:red; text-align:center;">Gagal muat data</td></tr>`;
             return;
         }
-        
-        document.getElementById('in_cari').value = "";
 
+        currentAgenData = data || [];
         const listBody = document.getElementById('list-agen');
         listBody.innerHTML = "";
 
-        if (data.length === 0) {
-            listBody.innerHTML = `<tr><td colspan="6">Tidak ada data agen.</td></tr>`;
+        if (currentAgenData.length === 0) {
+            listBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Tidak ada data agen.</td></tr>`;
             return;
         }
 
-        data.forEach((ag, index) => {
+        currentAgenData.forEach((ag, index) => {
             const tr = document.createElement('tr');
-            
-            // Penentuan badge tipe agen (Default NORMAL jika kosong)
-            const typeLower = (ag.type_agen || 'NORMAL').toLowerCase();
-            const badgeClass = typeLower === 'khusus' ? 'badge-khusus' : 'badge-normal';
+            const badgeClass = (ag.type_agen || 'NORMAL').toLowerCase() === 'khusus' ? 'badge-khusus' : 'badge-normal';
 
             tr.innerHTML = `
-                <td>${index + 1}</td>
-                <td style="text-align:left; font-weight:bold;">${ag.nama_agen}</td>
-                <td style="text-align:left;">${ag.alamat}</td>
-                <td><span class="badge ${badgeClass}">${ag.type_agen || 'NORMAL'}</span></td>
-                <td>${ag.No_tlp || '-'}</td>
-                <td style="font-weight:bold;">${ag.saldo_bon ? ag.saldo_bon.toLocaleString('id-ID') : 0}</td>
+                <td align="center" style="color: #64748b;">${index + 1}</td>
+                <td class="text-bold">${ag.nama_agen}</td>
+                <td>${ag.alamat}</td>
+                <td align="center"><span class="badge ${badgeClass}">${ag.type_agen || 'NORMAL'}</span></td>
+                <td class="nowrap">${ag.No_tlp || '-'}</td>
+                <td class="price-text nowrap">Rp ${ag.saldo_bon ? ag.saldo_bon.toLocaleString('id-ID') : 0}</td>
+                <td>
+                    <div class="action-cell">
+                        <button class="btn-action edit" onclick="prepareEdit(${index})" title="Edit">✏️</button>
+                        <button class="btn-action delete" onclick="hapusAgen(${index})" title="Hapus">🗑️</button>
+                    </div>
+                </td>
             `;
-
-            // EVENT TEKAN LAMA
-            tr.ontouchstart = (e) => {
-                selectedData = ag;
-                longPressTimer = setTimeout(() => showMenu(e), 600);
-            };
-            tr.ontouchend = () => clearTimeout(longPressTimer);
-            tr.oncontextmenu = (e) => { e.preventDefault(); selectedData = ag; showMenu(e); };
-
             listBody.appendChild(tr);
+        });
+        cariAgen();
+    }
+
+    function cariAgen() {
+        const input = document.getElementById('in_cari').value.toUpperCase();
+        const tr = document.querySelectorAll("#list-agen tr");
+        tr.forEach(row => {
+            row.style.display = row.innerText.toUpperCase().includes(input) ? "" : "none";
         });
     }
 
-    // FUNGSI PENCARIAN REAL-TIME
-    function cariAgen() {
-        const input = document.getElementById('in_cari').value.toUpperCase();
-        const table = document.querySelector('table');
-        const tr = table.getElementsByTagName('tr');
-
-        for (let i = 1; i < tr.length; i++) {
-            const tdNama = tr[i].getElementsByTagName('td')[1];
-            const tdAlamat = tr[i].getElementsByTagName('td')[2];
-            const tdType = tr[i].getElementsByTagName('td')[3];
-            
-            if (tdNama || tdAlamat || tdType) {
-                const teksNama = tdNama.textContent || tdNama.innerText;
-                const teksAlamat = tdAlamat.textContent || tdAlamat.innerText;
-                const teksType = tdType.textContent || tdType.innerText;
-                
-                if (
-                    teksNama.toUpperCase().indexOf(input) > -1 || 
-                    teksAlamat.toUpperCase().indexOf(input) > -1 ||
-                    teksType.toUpperCase().indexOf(input) > -1
-                ) {
-                    tr[i].style.display = "";
-                } else {
-                    tr[i].style.display = "none";
-                }
-            }
-        }
-    }
-
-    function showMenu(e) {
-        const menu = document.getElementById('context-menu');
-        const x = e.touches ? e.touches[0].pageX : e.pageX;
-        const y = e.touches ? e.touches[0].pageY : e.pageY;
-        menu.style.display = 'block';
-        menu.style.left = x + 'px';
-        menu.style.top = y + 'px';
-    }
-
-    function hideMenu() { document.getElementById('context-menu').style.display = 'none'; }
-
-    function prepareEdit() {
-        if(!selectedData) return;
+    function prepareEdit(index) {
+        const ag = currentAgenData[index];
         document.getElementById('title-form').innerText = "EDIT DATA AGEN";
-        document.getElementById('edit_id').value = selectedData.id;
-        document.getElementById('in_nama').value = selectedData.nama_agen;
-        document.getElementById('in_alamat').value = selectedData.alamat;
-        document.getElementById('in_tlp').value = selectedData.No_tlp;
-        document.getElementById('in_type').value = selectedData.type_agen || "NORMAL";
-        document.getElementById('in_saldo').value = selectedData.saldo_bon;
+        document.getElementById('edit_id').value = ag.id;
+        document.getElementById('in_nama').value = ag.nama_agen;
+        document.getElementById('in_alamat').value = ag.alamat;
+        document.getElementById('in_tlp').value = ag.No_tlp;
+        document.getElementById('in_type').value = ag.type_agen || "NORMAL";
+        document.getElementById('in_saldo').value = ag.saldo_bon;
         
-        document.getElementById('btn-aksi').innerText = "UPDATE DATA AGEN";
-        document.getElementById('btn-aksi').style.background = "#2ecc71";
+        const btnAksi = document.getElementById('btn-aksi');
+        btnAksi.innerText = "UPDATE DATA AGEN";
+        btnAksi.style.background = "#2ecc71";
         document.getElementById('btn-batal').style.display = "block";
-        window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
     async function simpanAgen() {
@@ -246,22 +201,25 @@
 
         if(!payload.nama_agen || !payload.alamat) return alert("Data wajib diisi!");
 
+        const btnAksi = document.getElementById('btn-aksi');
+        btnAksi.innerText = "MENYIMPAN...";
+
         let res;
         if(id) res = await _sb.from('agen').update(payload).eq('id', id);
         else res = await _sb.from('agen').insert([payload]);
 
         if(res.error) alert(res.error.message);
         else {
-            alert(id ? "Data diperbarui!" : "Agen ditambahkan!");
             resetForm();
             muatTabelAgen();
         }
+        btnAksi.innerText = id ? "UPDATE DATA AGEN" : "SIMPAN DATA AGEN";
     }
 
-    async function hapusAgen() {
-        if(!selectedData) return;
-        if(confirm(`Hapus agen ${selectedData.nama_agen}?`)) {
-            const { error } = await _sb.from('agen').delete().eq('id', selectedData.id);
+    async function hapusAgen(index) {
+        const ag = currentAgenData[index];
+        if(confirm(`Hapus agen ${ag.nama_agen}?`)) {
+            const { error } = await _sb.from('agen').delete().eq('id', ag.id);
             if(error) alert(error.message);
             else muatTabelAgen();
         }
@@ -278,7 +236,6 @@
         document.getElementById('btn-aksi').innerText = "SIMPAN DATA AGEN";
         document.getElementById('btn-aksi').style.background = "#3b4c64";
         document.getElementById('btn-batal').style.display = "none";
-        selectedData = null;
     }
 </script>
 </body>

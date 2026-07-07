@@ -15,12 +15,14 @@
             user-select: none;
         }
 
+        /* Modifikasi Sticky Header agar mencakup Search Bar */
         .sticky-header {
             position: sticky;
             top: 0;
             z-index: 100;
             background: #121212;
-            padding: 15px 15px 5px 15px;
+            padding: 15px 15px 10px 15px; /* Sedikit penyesuaian padding bawah */
+            border-bottom: 1px solid #333; /* Pemisah visual yang jelas */
         }
         
         .card { 
@@ -55,17 +57,17 @@
         .btn-save { 
             background: #34495e; color: white; border: none; padding: 12px; 
             border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; 
-            text-transform: uppercase; font-size: 13px;
+            text-transform: uppercase; font-size: 13px; margin-bottom: 10px;
+        }
+
+        .search-box { 
+            padding: 12px; border: 1px solid #444; 
+            border-radius: 6px; width: 100%; box-sizing: border-box; 
+            background: #2d2d2d; color: white; font-family: inherit;
         }
 
         .content-body {
-            padding: 0 15px 15px 15px;
-        }
-        
-        .search-box { 
-            margin: 10px 0; padding: 12px; border: 1px solid #444; 
-            border-radius: 6px; width: 100%; box-sizing: border-box; 
-            background: #2d2d2d; color: white; font-family: inherit;
+            padding: 15px;
         }
         
         .table-container { 
@@ -73,33 +75,33 @@
             border: 1px solid #333;
         }
 
-        table { width: 100%; border-collapse: collapse; background: white; color: #000; }
+        table { width: 100%; border-collapse: collapse; background: white; color: #000; min-width: 600px;} /* Min-width agar tabel tidak terlalu terjepit */
         
         thead th { 
-            position: sticky;
-            top: 0;
             background: #e0e0e0; color: #000; 
-            z-index: 10;
             padding: 12px 8px; font-size: 11px; text-transform: uppercase; 
             border: 1px solid #ccc; text-align: center;
         }
         
-        td { padding: 12px 8px; border: 1px solid #eee; font-size: 13px; color: #000; }
+        td { padding: 12px 8px; border: 1px solid #eee; font-size: 13px; color: #000; vertical-align: middle;}
         tr:nth-child(even) { background: #f2f2f2; }
         tr:nth-child(odd) { background: #ffffff; }
         
         .text-bold { font-weight: bold; }
         .price-text { font-weight: bold; text-align: right; color: #000; }
-
-        #contextMenu {
-            display: none; position: absolute; background: #2d2d2d; color: white;
-            border-radius: 8px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.8);
-            z-index: 1000; min-width: 160px; border: 1px solid #444;
+        
+        /* Tombol Aksi di dalam tabel */
+        .btn-action {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 5px;
+            margin: 0 2px;
+            border-radius: 4px;
         }
-        .menu-item { padding: 15px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #444; text-align: center; font-weight: bold; }
-        .menu-item:last-child { border-bottom: none; }
-        .menu-edit { color: #5fb8ff; }
-        .menu-delete { color: #ff7675; }
+        .btn-action:hover { background: #e0e0e0; }
+
     </style>
 </head>
 <body>
@@ -135,11 +137,13 @@
             </div>
         </div>
         <button class="btn-save" id="btnSimpan" onclick="simpanHarga()">SIMPAN DATA HARGA</button>
+        
+        <!-- Search Box dipindah ke dalam sticky header -->
+        <input type="text" id="cariData" class="search-box" placeholder="Cari Agen atau Barang..." onkeyup="filterTabel()">
     </div>
 </div>
 
 <div class="content-body">
-    <input type="text" id="cariData" class="search-box" placeholder="Cari Agen atau Barang..." onkeyup="filterTabel()">
     <div class="table-container">
         <table>
             <thead>
@@ -149,6 +153,7 @@
                     <th>BARANG</th>
                     <th width="40">SAT</th>
                     <th>HARGA JUAL</th>
+                    <th width="70">AKSI</th> <!-- Tambahan Kolom Aksi -->
                 </tr>
             </thead>
             <tbody id="bodyTabel"></tbody>
@@ -156,19 +161,13 @@
     </div>
 </div>
 
-<div id="contextMenu">
-    <div class="menu-item menu-edit" onclick="handleEdit()">📝 EDIT DATA</div>
-    <div class="menu-item menu-delete" onclick="handleDelete()">🗑️ HAPUS DATA</div>
-    <div class="menu-item" onclick="tutupMenu()">❌ BATAL</div>
-</div>
-
 <script>
     const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     const _sb = supabase.createClient(SB_URL, SB_KEY);
 
-    let selectedData = null;
-    let timer;
+    // Array global untuk menyimpan data sementara agar mudah diakses tombol aksi
+    let currentData = []; 
 
     async function init() {
         const { data: agens } = await _sb.from('agen').select('nama_agen').order('nama_agen');
@@ -185,7 +184,9 @@
         const tbody = document.getElementById('bodyTabel');
         tbody.innerHTML = "";
         
-        data?.forEach((h, index) => {
+        currentData = data || []; // Simpan ke global
+        
+        currentData.forEach((h, index) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td align="center">${index + 1}</td>
@@ -193,64 +194,36 @@
                 <td>${h.nama_barang}</td>
                 <td align="center">${h.satuan}</td>
                 <td class="price-text">${h.harga_jual.toLocaleString('id-ID')}</td>
+                <td align="center">
+                    <button class="btn-action" onclick="handleEdit(${index})" title="Edit">✏️</button>
+                    <button class="btn-action" onclick="handleDelete(${index})" title="Hapus">🗑️</button>
+                </td>
             `;
-
-            // Event sentuh lama untuk HP/Tablet
-            tr.ontouchstart = (e) => startPress(e, h);
-            tr.ontouchend = () => clearTimeout(timer);
-            
-            // Event klik kiri tahan untuk PC (opsional, dibatasi hanya klik kiri)
-            tr.onmousedown = (e) => { if(e.button === 0) startPress(e, h); };
-            tr.onmouseup = () => clearTimeout(timer);
-
-            // EVENT KLIK KANAN (NATIVE PC)
-            tr.oncontextmenu = (e) => {
-                e.preventDefault(); // Mencegah menu default browser muncul
-                selectedData = h;
-                showMenu(e);
-            };
-
             tbody.appendChild(tr);
         });
 
         filterTabel();
     }
 
-    function startPress(e, data) {
-        timer = setTimeout(() => {
-            selectedData = data;
-            showMenu(e);
-        }, 600);
-    }
-
-    function showMenu(e) {
-        const menu = document.getElementById('contextMenu');
-        menu.style.display = 'block';
-        const posX = (e.touches ? e.touches[0].pageX : e.pageX);
-        const posY = (e.touches ? e.touches[0].pageY : e.pageY);
-        menu.style.left = (posX - 80) + 'px';
-        menu.style.top = (posY - 20) + 'px';
-    }
-
-    function tutupMenu() { document.getElementById('contextMenu').style.display = 'none'; }
-
-    function handleEdit() {
-        document.getElementById('editId').value = selectedData.id;
-        document.getElementById('selAgen').value = selectedData.nama_agen;
-        document.getElementById('selBarang').value = selectedData.nama_barang;
-        document.getElementById('selSatuan').value = selectedData.satuan;
-        document.getElementById('inpHarga').value = selectedData.harga_jual;
+    function handleEdit(index) {
+        const targetData = currentData[index];
+        document.getElementById('editId').value = targetData.id;
+        document.getElementById('selAgen').value = targetData.nama_agen;
+        document.getElementById('selBarang').value = targetData.nama_barang;
+        document.getElementById('selSatuan').value = targetData.satuan;
+        document.getElementById('inpHarga').value = targetData.harga_jual;
         document.getElementById('btnSimpan').innerText = "UPDATE DATA HARGA";
-        tutupMenu();
+        
+        // Gulung kembali ke atas (form input)
         window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
-    async function handleDelete() {
-        if(confirm(`Hapus harga ${selectedData.nama_barang}?`)) {
-            await _sb.from('harga').delete().eq('id', selectedData.id);
+    async function handleDelete(index) {
+        const targetData = currentData[index];
+        if(confirm(`Hapus harga ${targetData.nama_barang} untuk agen ${targetData.nama_agen}?`)) {
+            await _sb.from('harga').delete().eq('id', targetData.id);
             muatDataHarga();
         }
-        tutupMenu();
     }
 
     async function simpanHarga() {
@@ -281,11 +254,6 @@
         });
     }
 
-    // Ubah window.onclick ke mousedown agar tidak bentrok dengan klik kanan di beberapa browser
-    window.addEventListener('mousedown', (e) => { 
-        if(!e.target.closest('#contextMenu')) tutupMenu(); 
-    });
-    
     init();
 </script>
 </body>
