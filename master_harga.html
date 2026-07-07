@@ -15,92 +15,113 @@
             user-select: none;
         }
 
-        /* Modifikasi Sticky Header agar mencakup Search Bar */
+        /* Sticky Header */
         .sticky-header {
             position: sticky;
             top: 0;
             z-index: 100;
             background: #121212;
-            padding: 15px 15px 10px 15px; /* Sedikit penyesuaian padding bawah */
-            border-bottom: 1px solid #333; /* Pemisah visual yang jelas */
+            padding: 15px 15px 10px 15px;
+            border-bottom: 1px solid #333; 
         }
         
         .card { 
             background: #1e1e1e; 
-            padding: 15px; border-radius: 8px; 
+            padding: 15px; border-radius: 10px; 
             border: 1px solid #333; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
         }
 
         .header-section {
             background: #2d2d2d;
             color: white;
             text-align: center;
-            padding: 10px;
-            border-radius: 6px;
+            padding: 12px;
+            border-radius: 8px;
             font-weight: bold;
             text-transform: uppercase;
-            margin-bottom: 12px;
-            font-size: 13px;
+            margin-bottom: 15px;
+            font-size: 15px;
             letter-spacing: 1px;
+            border: 1px solid #444;
         }
         
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        label { display: block; font-size: 10px; font-weight: bold; margin-bottom: 4px; color: #aaa; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 6px; color: #bbb; letter-spacing: 0.5px; }
         
         select, input { 
-            width: 100%; padding: 10px; border: 1px solid #444; 
-            border-radius: 6px; background: #2d2d2d; color: #fff; box-sizing: border-box; 
-            font-family: inherit; font-size: 14px;
+            width: 100%; padding: 12px; border: 1px solid #444; 
+            border-radius: 8px; background: #2d2d2d; color: #fff; box-sizing: border-box; 
+            font-family: inherit; font-size: 15px; transition: border 0.3s;
         }
+        select:focus, input:focus { border-color: #3498db; outline: none; }
         
         .btn-save { 
-            background: #34495e; color: white; border: none; padding: 12px; 
-            border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; 
-            text-transform: uppercase; font-size: 13px; margin-bottom: 10px;
+            background: #2980b9; color: white; border: none; padding: 14px; 
+            border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; 
+            text-transform: uppercase; font-size: 15px; margin-bottom: 15px;
+            box-shadow: 0 4px 0 #1c5980; transition: all 0.1s; letter-spacing: 1px;
         }
+        .btn-save:active { transform: translateY(4px); box-shadow: none; }
 
         .search-box { 
             padding: 12px; border: 1px solid #444; 
-            border-radius: 6px; width: 100%; box-sizing: border-box; 
-            background: #2d2d2d; color: white; font-family: inherit;
+            border-radius: 8px; width: 100%; box-sizing: border-box; 
+            background: #2d2d2d; color: white; font-family: inherit; font-size: 14px;
         }
 
-        .content-body {
-            padding: 15px;
-        }
+        .content-body { padding: 15px; }
         
         .table-container { 
-            width: 100%; overflow-x: auto; border-radius: 6px; 
-            border: 1px solid #333;
+            width: 100%; overflow-x: auto; border-radius: 10px; 
+            border: 1px solid #333; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
-        table { width: 100%; border-collapse: collapse; background: white; color: #000; min-width: 600px;} /* Min-width agar tabel tidak terlalu terjepit */
+        table { width: 100%; border-collapse: collapse; background: white; color: #1e293b; min-width: 650px;} 
         
         thead th { 
-            background: #e0e0e0; color: #000; 
-            padding: 12px 8px; font-size: 11px; text-transform: uppercase; 
-            border: 1px solid #ccc; text-align: center;
+            background: #f8fafc; color: #475569; 
+            padding: 15px 10px; font-size: 12px; text-transform: uppercase; 
+            border-bottom: 2px solid #cbd5e1; text-align: left; letter-spacing: 0.5px;
+        }
+        thead th.center { text-align: center; }
+        thead th.right { text-align: right; }
+        
+        td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; font-size: 14px; vertical-align: middle; }
+        tr:hover { background: #f8fafc; }
+        
+        .text-bold { font-weight: bold; color: #0f172a; }
+        .price-text { font-weight: bold; text-align: right; color: #16a085; font-size: 15px; }
+        
+        .badge-satuan { 
+            background: #e2e8f0; color: #475569; 
+            padding: 4px 8px; border-radius: 6px; 
+            font-size: 11px; font-weight: bold; 
+            display: inline-block; text-transform: uppercase;
         }
         
-        td { padding: 12px 8px; border: 1px solid #eee; font-size: 13px; color: #000; vertical-align: middle;}
-        tr:nth-child(even) { background: #f2f2f2; }
-        tr:nth-child(odd) { background: #ffffff; }
+        /* Modifikasi Kolom Aksi agar Sejajar (Horizontal) */
+        .action-cell { 
+            display: flex; 
+            gap: 6px; 
+            justify-content: center; 
+            align-items: center; 
+        }
         
-        .text-bold { font-weight: bold; }
-        .price-text { font-weight: bold; text-align: right; color: #000; }
-        
-        /* Tombol Aksi di dalam tabel */
         .btn-action {
-            background: none;
-            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
             cursor: pointer;
-            font-size: 16px;
-            padding: 5px;
-            margin: 0 2px;
-            border-radius: 4px;
+            font-size: 14px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
         }
-        .btn-action:hover { background: #e0e0e0; }
+        .btn-action.edit:hover { background: #dbeafe; border-color: #93c5fd; }
+        .btn-action.delete:hover { background: #fee2e2; border-color: #fca5a5; }
 
     </style>
 </head>
@@ -138,8 +159,7 @@
         </div>
         <button class="btn-save" id="btnSimpan" onclick="simpanHarga()">SIMPAN DATA HARGA</button>
         
-        <!-- Search Box dipindah ke dalam sticky header -->
-        <input type="text" id="cariData" class="search-box" placeholder="Cari Agen atau Barang..." onkeyup="filterTabel()">
+        <input type="text" id="cariData" class="search-box" placeholder="🔍 Cari Agen atau Barang..." onkeyup="filterTabel()">
     </div>
 </div>
 
@@ -148,12 +168,12 @@
         <table>
             <thead>
                 <tr>
-                    <th width="30">NO</th>
+                    <th width="40" class="center">NO</th>
                     <th>NAMA AGEN</th>
                     <th>BARANG</th>
-                    <th width="40">SAT</th>
-                    <th>HARGA JUAL</th>
-                    <th width="70">AKSI</th> <!-- Tambahan Kolom Aksi -->
+                    <th width="70" class="center">SATUAN</th>
+                    <th width="120" class="right">HARGA JUAL</th>
+                    <th width="110" class="center">AKSI</th>
                 </tr>
             </thead>
             <tbody id="bodyTabel"></tbody>
@@ -166,7 +186,6 @@
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     const _sb = supabase.createClient(SB_URL, SB_KEY);
 
-    // Array global untuk menyimpan data sementara agar mudah diakses tombol aksi
     let currentData = []; 
 
     async function init() {
@@ -184,19 +203,21 @@
         const tbody = document.getElementById('bodyTabel');
         tbody.innerHTML = "";
         
-        currentData = data || []; // Simpan ke global
+        currentData = data || []; 
         
         currentData.forEach((h, index) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td align="center">${index + 1}</td>
+                <td align="center" style="color: #64748b;">${index + 1}</td>
                 <td class="text-bold">${h.nama_agen}</td>
                 <td>${h.nama_barang}</td>
-                <td align="center">${h.satuan}</td>
-                <td class="price-text">${h.harga_jual.toLocaleString('id-ID')}</td>
-                <td align="center">
-                    <button class="btn-action" onclick="handleEdit(${index})" title="Edit">✏️</button>
-                    <button class="btn-action" onclick="handleDelete(${index})" title="Hapus">🗑️</button>
+                <td align="center"><span class="badge-satuan">${h.satuan}</span></td>
+                <td class="price-text">Rp ${h.harga_jual.toLocaleString('id-ID')}</td>
+                <td>
+                    <div class="action-cell">
+                        <button class="btn-action edit" onclick="handleEdit(${index})" title="Edit">✏️</button>
+                        <button class="btn-action delete" onclick="handleDelete(${index})" title="Hapus">🗑️</button>
+                    </div>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -212,10 +233,13 @@
         document.getElementById('selBarang').value = targetData.nama_barang;
         document.getElementById('selSatuan').value = targetData.satuan;
         document.getElementById('inpHarga').value = targetData.harga_jual;
-        document.getElementById('btnSimpan').innerText = "UPDATE DATA HARGA";
         
-        // Gulung kembali ke atas (form input)
-        window.scrollTo({top: 0, behavior: 'smooth'});
+        const btn = document.getElementById('btnSimpan');
+        btn.innerText = "UPDATE DATA HARGA";
+        btn.style.background = "#e67e22";
+        btn.style.boxShadow = "0 4px 0 #d35400";
+        
+        // Scroll dinonaktifkan agar posisi tabel tetap diam
     }
 
     async function handleDelete(index) {
@@ -238,11 +262,18 @@
 
         if(id) payload.id = id;
 
+        const btn = document.getElementById('btnSimpan');
+        const oldText = btn.innerText;
+        btn.innerText = "MENYIMPAN...";
+
         await _sb.from('harga').upsert(payload, { onConflict: 'nama_agen,nama_barang,satuan' });
         
         document.getElementById('editId').value = "";
         document.getElementById('inpHarga').value = "";
-        document.getElementById('btnSimpan').innerText = "SIMPAN DATA HARGA";
+        btn.innerText = "SIMPAN DATA HARGA";
+        btn.style.background = "#2980b9";
+        btn.style.boxShadow = "0 4px 0 #1c5980";
+
         muatDataHarga();
     }
 
