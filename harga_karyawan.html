@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SBR Putra Food - Harga & Potongan Karyawan</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="theme-color" content="#2c3e50">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; font-size: 15px; }
+        .container { background: white; padding: 12px; border-radius: 15px; max-width: 700px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        header h2 { margin: 0; color: #1a202c; font-size: 18px; text-transform: uppercase; font-weight: 900; }
+        .btn-back { background: #718096; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 900; cursor: pointer; text-decoration: none; font-size: 12px; display: inline-block; }
+        
+        .form-box { background: #edf2f7; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #cbd5e0; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-weight: 900; margin-bottom: 5px; font-size: 13px; color: #4a5568; text-transform: uppercase; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 15px; font-weight: 700; outline: none; }
+        .form-group input:focus, .form-group select:focus { border-color: #3182ce; }
+        .form-group input[readonly] { background: #e2e8f0; color: #718096; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        
+        /* Style Khusus Potongan */
+        .potongan-header { font-size: 13px; font-weight: 900; color: #e53e3e; text-transform: uppercase; margin-top: 15px; margin-bottom: 5px; border-bottom: 2px solid #feb2b2; padding-bottom: 5px; }
+        .potongan-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+        .potongan-row input { padding: 10px; font-size: 14px; border-color: #feb2b2; }
+        .potongan-row input:focus { border-color: #e53e3e; }
+        
+        .btn-save { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; color: white; background: #27ae60; font-size: 18px; text-transform: uppercase; box-shadow: 0 4px 0 #1e8449; margin-top: 10px; }
+        .btn-save:disabled { background: #a0aec0; box-shadow: none; cursor: not-allowed; }
+        .btn-cancel-edit { display: none; width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; color: white; background: #718096; font-size: 16px; margin-top: 10px; }
+        
+        .section-label { font-size: 15px; font-weight: 900; padding: 10px; background: #1a202c; color: white; border-radius: 6px; margin: 15px 0 10px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+        .search-bar { width: 100%; padding: 10px; border: 2px solid #cbd5e0; border-radius: 8px; font-size: 14px; font-weight: 700; outline: none; margin-bottom: 10px; box-sizing: border-box; }
+        
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 5px; min-width: 600px; }
+        th { font-size: 11px; text-align: left; padding: 10px 5px; background: #edf2f7; border-bottom: 2px solid #cbd5e0; font-weight: 900; text-transform: uppercase; }
+        td { padding: 10px 5px; border-bottom: 1px solid #e2e8f0; font-size: 14px; font-weight: 700; vertical-align: top; }
+        
+        .tr-tahan { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; cursor: pointer; }
+        .tr-tahan:active { background-color: #e2e8f0; }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
+        .modal-content { background: white; margin: 40% auto; padding: 25px; border-radius: 15px; width: 80%; max-width: 350px; text-align: center; box-shadow: 0 5px 30px rgba(0,0,0,0.3); }
+        .modal-btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: 900; font-size: 16px; margin-bottom: 12px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h2>HARGA & POTONGAN</h2>
+        <a href="javascript:history.back()" class="btn-back">⬅ KEMBALI</a>
+    </header>
+
+    <div class="form-box">
+        <input type="hidden" id="editIdData">
+        
+        <div class="grid-2">
+            <div class="form-group">
+                <label>PILIH KARYAWAN</label>
+                <select id="pilihKaryawan" onchange="cekDataKaryawan()">
+                    <option value="">-- Memuat Data... --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>BAGIAN</label>
+                <input type="text" id="inputBagian" readonly placeholder="-">
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label id="labelNormal">Harga Normal (Rp)</label>
+                <input type="number" id="inputNormal" placeholder="0" value="" onfocus="if(this.value==='0') this.value='';">
+            </div>
+            <div class="form-group">
+                <label id="labelLembur">Harga Lembur (Rp)</label>
+                <input type="number" id="inputLembur" placeholder="0" value="" onfocus="if(this.value==='0') this.value='';">
+            </div>
+        </div>
+
+        <!-- AREA POTONGAN (SIMPAN KE SUPABASE JSON) -->
+        <div class="potongan-header">💸 RUTINAN / POTONGAN KARYAWAN</div>
+        <small style="color:#718096; display:block; margin-bottom:10px; font-size:11px; line-height:1.4;">Data ini tersimpan ke Database. Ketik nama potongan dan nominalnya. Kosongkan jika tidak ada.</small>
+        
+        <div class="potongan-row">
+            <input type="text" id="namaPot1" placeholder="Nama Potongan 1">
+            <input type="number" id="nomPot1" placeholder="Nominal (Rp)">
+        </div>
+        <div class="potongan-row">
+            <input type="text" id="namaPot2" placeholder="Nama Potongan 2">
+            <input type="number" id="nomPot2" placeholder="Nominal (Rp)">
+        </div>
+        <div class="potongan-row">
+            <input type="text" id="namaPot3" placeholder="Nama Potongan 3">
+            <input type="number" id="nomPot3" placeholder="Nominal (Rp)">
+        </div>
+        <div class="potongan-row">
+            <input type="text" id="namaPot4" placeholder="Nama Potongan 4">
+            <input type="number" id="nomPot4" placeholder="Nominal (Rp)">
+        </div>
+        <div class="potongan-row">
+            <input type="text" id="namaPot5" placeholder="Nama Potongan 5">
+            <input type="number" id="nomPot5" placeholder="Nominal (Rp)">
+        </div>
+
+        <button class="btn-save" id="btnSimpan" onclick="simpanHarga()">SIMPAN DATA</button>
+        <button class="btn-cancel-edit" id="btnBatalEdit" onclick="batalEdit()">BATAL EDIT</button>
+    </div>
+
+    <div class="section-label">
+        <span>📋 DAFTAR HARGA & POTONGAN</span>
+        <small style="font-size:10px; font-weight:normal; color:#cbd5e0;">(Tahan = Edit)</small>
+    </div>
+    
+    <input type="text" id="inputCari" class="search-bar" placeholder="🔍 Cari nama karyawan..." oninput="renderTabel()">
+
+    <div class="table-wrapper">
+        <table id="tabelHarga">
+            <thead>
+                <tr>
+                    <th>NAMA & BAGIAN</th>
+                    <th>HARGA NORMAL</th>
+                    <th>HARGA LEMBUR</th>
+                    <th>POTONGAN (TOTAL & RINCIAN)</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="modalAksi" class="modal">
+    <div class="modal-content">
+        <h3 id="aksiNama" style="margin-top:0; font-size:24px; color:#1a202c;">Nama</h3>
+        <p id="aksiBagian" style="color:#718096; font-weight:900; margin-top:-10px; margin-bottom:25px;">Bagian</p>
+        
+        <button class="modal-btn" style="background:#3182ce; color:white; box-shadow:0 4px 0 #2b6cb0;" onclick="siapkanEditDariModal()">✏️ EDIT DATA</button>
+        <button class="modal-btn" style="background:#e53e3e; color:white; box-shadow:0 4px 0 #c53030;" onclick="prosesHapus()">🗑️ HAPUS DATA</button>
+        <button class="modal-btn" style="background:#edf2f7; color:#4a5568; border:2px solid #cbd5e0;" onclick="tutupAksi()">BATAL</button>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let masterKaryawan = [];
+    let dataHarga = [];
+    let pressTimer;
+    let targetAksiData = null;
+
+    async function init() {
+        await muatMasterKaryawan();
+        await muatDataHarga();
+    }
+
+    async function muatMasterKaryawan() {
+        const selKaryawan = document.getElementById('pilihKaryawan');
+        const { data, error } = await clientSupabase.from('karyawan').select('*').order('nama_karyawan');
+        
+        if (error) { console.error(error); return; }
+        
+        masterKaryawan = data || [];
+        selKaryawan.innerHTML = '<option value="">-- Pilih Karyawan --</option>';
+        masterKaryawan.forEach(k => {
+            const opt = new Option(k.nama_karyawan, k.nama_karyawan);
+            opt.dataset.bagian = k.bagian;
+            selKaryawan.options.add(opt);
+        });
+    }
+
+    async function muatDataHarga() {
+        const tbody = document.querySelector('#tabelHarga tbody');
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">⏳ Memuat data...</td></tr>';
+
+        const { data, error } = await clientSupabase.from('harga_produksi').select('*').order('nama_karyawan');
+        if (error) { console.error("Error:", error); return; }
+
+        dataHarga = data || [];
+        renderTabel();
+    }
+
+    function cekDataKaryawan() {
+        const sel = document.getElementById('pilihKaryawan');
+        const txtBagian = document.getElementById('inputBagian');
+        const lblNormal = document.getElementById('labelNormal');
+        const lblLembur = document.getElementById('labelLembur');
+        
+        if(sel.selectedIndex <= 0) {
+            batalEdit();
+            return;
+        }
+
+        const nama = sel.value;
+        const bagian = sel.options[sel.selectedIndex].dataset.bagian;
+        txtBagian.value = bagian;
+
+        const bagianProduksi = ["Aro", "Sisrik", "Simping", "Terigu"];
+        if (bagianProduksi.includes(bagian)) {
+            lblNormal.innerText = "Harga Normal (Per Pcs)";
+            lblLembur.innerText = "Harga Lembur (Per Pcs)";
+        } else {
+            lblNormal.innerText = "Uang Harian (Per Hari)";
+            lblLembur.innerText = "Uang Lembur (Per Jam)";
+        }
+
+        const hargaExist = dataHarga.find(h => h.nama_karyawan === nama);
+
+        if (hargaExist) {
+            document.getElementById('editIdData').value = hargaExist.id;
+            document.getElementById('inputNormal').value = hargaExist.harga_normal || "";
+            document.getElementById('inputLembur').value = hargaExist.harga_lembur || "";
+            
+            // Ambil data potongan_rutin (JSON) dari database
+            let potKar = hargaExist.potongan_rutin || [];
+            
+            // Isi form Potongan
+            for (let i = 0; i < 5; i++) {
+                document.getElementById('namaPot'+(i+1)).value = potKar[i]?.nama || "";
+                document.getElementById('nomPot'+(i+1)).value = potKar[i]?.nominal || "";
+            }
+            
+            const btnSimpan = document.getElementById('btnSimpan');
+            btnSimpan.innerText = "UPDATE DATA";
+            btnSimpan.style.background = "#3182ce";
+            btnSimpan.style.boxShadow = "0 4px 0 #2b6cb0";
+            document.getElementById('btnBatalEdit').style.display = "block";
+        } else {
+            document.getElementById('editIdData').value = "";
+            document.getElementById('inputNormal').value = "";
+            document.getElementById('inputLembur').value = "";
+            for(let i=1; i<=5; i++){
+                document.getElementById('namaPot'+i).value = "";
+                document.getElementById('nomPot'+i).value = "";
+            }
+            
+            const btnSimpan = document.getElementById('btnSimpan');
+            btnSimpan.innerText = "SIMPAN DATA";
+            btnSimpan.style.background = "#27ae60";
+            btnSimpan.style.boxShadow = "0 4px 0 #1e8449";
+            document.getElementById('btnBatalEdit').style.display = "none";
+        }
+    }
+
+    function formatRp(angka) {
+        return Number(angka).toLocaleString('id-ID');
+    }
+
+    function renderTabel() {
+        const kataKunci = document.getElementById('inputCari').value.toLowerCase();
+        const tbody = document.querySelector('#tabelHarga tbody');
+        tbody.innerHTML = '';
+
+        let dataTampil = dataHarga.filter(item => item.nama_karyawan.toLowerCase().includes(kataKunci));
+
+        if (dataTampil.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#e53e3e; padding: 20px;">Belum ada data harga</td></tr>';
+            return;
+        }
+
+        dataTampil.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.className = "tr-tahan";
+            
+            // Mengambil & Memproses JSON Potongan
+            let potKar = item.potongan_rutin || [];
+            let totPot = 0;
+            let rincianHtml = "";
+            
+            potKar.forEach(p => { 
+                let nom = Number(p.nominal) || 0;
+                if (nom > 0) {
+                    totPot += nom;
+                    let namaPotongan = p.nama ? p.nama : "Lainnya";
+                    rincianHtml += `<div>- ${namaPotongan}: Rp ${formatRp(nom)}</div>`;
+                }
+            });
+            
+            let tampilanPotongan = "-";
+            if (totPot > 0) {
+                tampilanPotongan = `
+                    <div style="font-weight:900;">-Rp ${formatRp(totPot)}</div>
+                    <div style="font-size:11px; color:#718096; margin-top:4px; line-height:1.4;">
+                        ${rincianHtml}
+                    </div>
+                `;
+            }
+            
+            tr.innerHTML = `
+                <td>${item.nama_karyawan}<br><small style="color:#718096;">${item.bagian}</small></td>
+                <td style="color:#27ae60;">Rp ${formatRp(item.harga_normal)}</td>
+                <td style="color:#d69e2e;">Rp ${formatRp(item.harga_lembur || 0)}</td>
+                <td style="color:#e53e3e;">${tampilanPotongan}</td>
+            `;
+            
+            const itemDataJson = JSON.stringify(item).replace(/"/g, '&quot;');
+            
+            tr.onmousedown = () => startPress(itemDataJson);
+            tr.onmouseup = cancelPress;
+            tr.onmouseleave = cancelPress;
+            tr.ontouchstart = () => startPress(itemDataJson);
+            tr.ontouchend = cancelPress;
+            tr.ontouchcancel = cancelPress;
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    function startPress(itemJson) {
+        pressTimer = window.setTimeout(function() { bukaAksi(itemJson); }, 600);
+    }
+    function cancelPress() { clearTimeout(pressTimer); }
+
+    function bukaAksi(itemJson) {
+        if (window.navigator.vibrate) window.navigator.vibrate(50);
+        targetAksiData = JSON.parse(itemJson);
+        
+        document.getElementById('aksiNama').innerText = targetAksiData.nama_karyawan;
+        document.getElementById('aksiBagian').innerText = targetAksiData.bagian;
+        document.getElementById('modalAksi').style.display = 'block';
+    }
+    
+    function tutupAksi() {
+        document.getElementById('modalAksi').style.display = 'none';
+        targetAksiData = null;
+    }
+
+    function siapkanEditDariModal() {
+        document.getElementById('pilihKaryawan').value = targetAksiData.nama_karyawan;
+        cekDataKaryawan(); 
+        tutupAksi();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function batalEdit() {
+        document.getElementById('pilihKaryawan').value = '';
+        document.getElementById('inputBagian').value = '';
+        document.getElementById('inputNormal').value = '';
+        document.getElementById('inputLembur').value = '';
+        document.getElementById('editIdData').value = '';
+        document.getElementById('labelNormal').innerText = 'Harga Normal (Rp)';
+        document.getElementById('labelLembur').innerText = 'Harga Lembur (Rp)';
+        
+        for(let i=1; i<=5; i++){
+            document.getElementById('namaPot'+i).value = "";
+            document.getElementById('nomPot'+i).value = "";
+        }
+        
+        const btnSimpan = document.getElementById('btnSimpan');
+        btnSimpan.innerText = "SIMPAN DATA";
+        btnSimpan.style.background = "#27ae60";
+        btnSimpan.style.boxShadow = "0 4px 0 #1e8449";
+        document.getElementById('btnBatalEdit').style.display = "none";
+    }
+
+    async function simpanHarga() {
+        const idData = document.getElementById('editIdData').value;
+        const nama = document.getElementById('pilihKaryawan').value;
+        const bagian = document.getElementById('inputBagian').value;
+        const normal = parseFloat(document.getElementById('inputNormal').value) || 0;
+        const lembur = parseFloat(document.getElementById('inputLembur').value) || 0;
+
+        if (!nama) return alert("⚠️ Pilih Karyawan terlebih dahulu!");
+
+        const btn = document.getElementById('btnSimpan');
+        btn.innerText = "MENYIMPAN..."; btn.disabled = true;
+
+        // Siapkan Array Potongan untuk JSON
+        let arrPotongan = [];
+        for (let i = 1; i <= 5; i++) {
+            arrPotongan.push({
+                nama: document.getElementById('namaPot'+i).value,
+                nominal: parseFloat(document.getElementById('nomPot'+i).value) || 0
+            });
+        }
+
+        const payload = {
+            nama_karyawan: nama,
+            bagian: bagian,
+            harga_normal: normal,
+            harga_lembur: lembur,
+            potongan_rutin: arrPotongan // Simpan array ke kolom JSON
+        };
+
+        try {
+            if (idData) {
+                const { error } = await clientSupabase.from('harga_produksi').update(payload).eq('id', idData);
+                if (error) throw error;
+            } else {
+                const { error } = await clientSupabase.from('harga_produksi').insert([payload]);
+                if (error) throw error;
+            }
+            
+            batalEdit();
+            await muatDataHarga(); 
+            alert("✅ Data Harga & Potongan berhasil disimpan!");
+        } catch (e) {
+            alert("❌ Gagal menyimpan data:\n" + e.message + "\n\nPASTIKAN Anda sudah menambahkan kolom 'potongan_rutin' (tipe JSONB) di tabel harga_produksi!");
+            batalEdit();
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function prosesHapus() {
+        if (!confirm(`Apakah Anda yakin ingin menghapus data harga & potongan untuk ${targetAksiData.nama_karyawan}?`)) return;
+        
+        tutupAksi();
+        try {
+            const { error } = await clientSupabase.from('harga_produksi').delete().eq('id', targetAksiData.id);
+            if (error) throw error;
+            
+            await muatDataHarga();
+            batalEdit();
+        } catch (e) {
+            alert("❌ Gagal menghapus data:\n" + e.message);
+        }
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>

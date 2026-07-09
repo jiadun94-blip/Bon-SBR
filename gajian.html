@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SBR Putra Food - Penggajian</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="theme-color" content="#2c3e50">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; font-size: 14px; }
+        .container { background: white; padding: 15px; border-radius: 15px; max-width: 1000px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        header h2 { margin: 0; color: #1a202c; font-size: 20px; text-transform: uppercase; font-weight: 900; }
+        .btn-back { background: #718096; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 900; cursor: pointer; text-decoration: none; font-size: 12px; }
+        
+        /* Filter Box */
+        .filter-box { background: #f0f4f8; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        .grid-3 { display: flex; flex-direction: row; gap: 15px; align-items: flex-start; justify-content: space-between; }
+        .grid-3 .form-group { flex: 1; min-width: 0; } 
+        @media (max-width: 500px) { 
+            .grid-3 { flex-direction: column; } 
+        }
+        
+        .form-group label { display: block; font-weight: 900; margin-bottom: 6px; font-size: 11px; color: #4a5568; text-transform: uppercase; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 14px; font-weight: 700; outline: none; background: white; }
+        .form-group input:focus, .form-group select:focus { border-color: #3182ce; box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.2); }
+        
+        .btn-bt { width: 100%; padding: 12px; background: #e67e22; color: white; border: none; border-radius: 8px; font-weight: 900; font-size: 15px; cursor: pointer; box-shadow: 0 4px 0 #b35d15; margin-bottom: 5px; text-transform: uppercase; }
+        #statusBT { font-size: 12px; font-weight: bold; display: block; color: #e53e3e; text-align: center; margin-bottom: 15px; }
+        
+        .table-wrapper { overflow-x: auto; border: 1px solid #cbd5e0; border-radius: 8px; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; min-width: 850px; }
+        th, td { border-bottom: 1px solid #cbd5e0; padding: 12px 10px; text-align: left; vertical-align: middle; }
+        th { background: #1a202c; color: white; font-weight: 900; font-size: 13px; text-transform: uppercase; white-space: nowrap; }
+        
+        /* Style Teks Potongan Otomatis */
+        .potongan-item { font-size: 13px; font-weight: 700; color: #e53e3e; margin-bottom: 3px; display: block; }
+        .potongan-none { font-size: 12px; font-style: italic; color: #718096; }
+        
+        .total-gaji { color: #27ae60; font-size: 20px; font-weight: 900; white-space: nowrap; }
+        .tarif-badge { display: inline-block; background: #edf2f7; border: 1px solid #cbd5e0; padding: 3px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; color: #4a5568; margin-top: 4px; }
+        
+        .btn-print-all { background: #3182ce; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: 900; cursor: pointer; font-size: 15px; width: 100%; box-shadow: 0 4px 0 #2b6cb0; text-transform: uppercase; display: none; }
+        .btn-print-all:active { transform: translateY(2px); box-shadow: 0 2px 0 #2b6cb0; }
+        .btn-print-all:disabled { background: #a0aec0; box-shadow: none; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h2>REKAP & SLIP GAJI</h2>
+        <a href="javascript:history.back()" class="btn-back">⬅ KEMBALI</a>
+    </header>
+
+    <button class="btn-bt" id="btnConnect" onclick="connectBT()">🖨️ HUBUNGKAN PRINTER BLUETOOTH</button>
+    <span id="statusBT">Status Printer: Terputus</span>
+
+    <div class="filter-box">
+        <div class="grid-3">
+            <div class="form-group">
+                <label>PILIH BAGIAN</label>
+                <select id="pilihBagian" onchange="hitungRekapMingguan()">
+                    <option value="">-- Pilih Bagian --</option>
+                    <option value="Aro">Aro</option>
+                    <option value="Sisrik">Sisrik</option>
+                    <option value="Simping">Simping</option>
+                    <option value="Terigu">Terigu</option>
+                    <option value="Distribusi">Distribusi</option>
+                    <option value="Driver">Driver</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>DARI TANGGAL</label>
+                <input type="date" id="tglDari" onchange="hitungRekapMingguan()">
+            </div>
+            <div class="form-group">
+                <label>SAMPAI TANGGAL</label>
+                <input type="date" id="tglSampai" onchange="hitungRekapMingguan()">
+            </div>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table id="tabelGaji">
+            <thead>
+                <tr>
+                    <th>NAMA KARYAWAN</th>
+                    <th>KINERJA & TARIF</th>
+                    <th style="width: 200px;">RINCIAN POTONGAN (AUTO)</th>
+                    <th>TOTAL DITERIMA</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="4" style="text-align:center; padding: 20px; color:#718096; font-weight:bold;">Pilih Bagian & Tanggal terlebih dahulu.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <button class="btn-print-all" id="btnCetakSemua" onclick="cetakSemuaSlip()">🖨️ CETAK SEMUA SLIP (BAGIAN INI)</button>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let btCharacteristic = null;
+    let dataKaryawanGlobal = [];
+    const bagianProduksi = ["Aro", "Sisrik", "Simping", "Terigu"];
+
+    function initDefaultDates() {
+        let today = new Date();
+        let day = today.getDay(); 
+        let daysToSubtract = (day + 1) % 7; 
+        
+        let saturday = new Date(today);
+        saturday.setDate(today.getDate() - daysToSubtract);
+        
+        let friday = new Date(saturday);
+        friday.setDate(saturday.getDate() + 6);
+
+        document.getElementById('tglDari').valueAsDate = saturday;
+        document.getElementById('tglSampai').valueAsDate = friday;
+    }
+    window.onload = initDefaultDates;
+
+    // --- BLUETOOTH PRINTER ---
+    async function connectBT() {
+        try {
+            const device = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+            });
+            const server = await device.gatt.connect();
+            const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+            const characteristics = await service.getCharacteristics();
+            btCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
+            
+            document.getElementById('statusBT').innerText = "Status Printer: TERHUBUNG ✅ (" + device.name + ")";
+            document.getElementById('statusBT').style.color = "#27ae60";
+        } catch (e) { 
+            alert("Koneksi Printer Dibatalkan / Gagal."); 
+        }
+    }
+
+    async function printDataToBT(text) {
+        if (!btCharacteristic) throw "Printer belum terhubung! Silakan klik tombol oranye di atas.";
+        const data = new TextEncoder().encode(text);
+        for (let i = 0; i < data.length; i += 20) {
+            await btCharacteristic.writeValue(data.slice(i, i + 20));
+            await new Promise(r => setTimeout(r, 40)); 
+        }
+    }
+
+    function formatRp(angka) {
+        return Number(angka).toLocaleString('id-ID');
+    }
+
+    // --- PROSES DATA GAJI OTOMATIS ---
+    async function hitungRekapMingguan() {
+        const bag = document.getElementById('pilihBagian').value;
+        const tglAwal = document.getElementById('tglDari').value;
+        const tglAkhir = document.getElementById('tglSampai').value;
+        const btnCetakSemua = document.getElementById('btnCetakSemua');
+        
+        if (!bag || !tglAwal || !tglAkhir) {
+            btnCetakSemua.style.display = 'none';
+            return;
+        }
+
+        const tbody = document.querySelector('#tabelGaji tbody');
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; font-weight:bold; padding:20px;">⏳ Mengambil data dari database...</td></tr>';
+        btnCetakSemua.style.display = 'none';
+
+        try {
+            // 1. Tarik Data Absensi (Kinerja & Lembur)
+            const { data: absensi, error: errAbs } = await clientSupabase
+                .from('absensi').select('*')
+                .eq('bagian', bag)
+                .gte('tanggal', tglAwal).lte('tanggal', tglAkhir)
+                .order('nama_karyawan');
+            if (errAbs) throw errAbs;
+
+            // 2. Tarik Data Harga (Tarif per Karyawan & JSON Potongan)
+            const { data: dbHarga, error: errHrg } = await clientSupabase
+                .from('harga_produksi').select('*')
+                .eq('bagian', bag);
+            if (errHrg) throw errHrg;
+
+            if (!absensi || absensi.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#e53e3e; font-weight:bold;">Belum ada data absensi di periode ini.</td></tr>';
+                return;
+            }
+
+            // Mapping Data Harga & Potongan
+            let mapHarga = {};
+            dbHarga.forEach(h => { 
+                mapHarga[h.nama_karyawan] = { 
+                    normal: Number(h.harga_normal) || 0, 
+                    lembur: Number(h.harga_lembur) || 0,
+                    potonganArray: h.potongan_rutin || [] // Mengambil array JSON Potongan
+                }; 
+            });
+
+            let rekap = {};
+            absensi.forEach(row => {
+                let nama = row.nama_karyawan;
+                if (!rekap[nama]) {
+                    rekap[nama] = {
+                        nama: nama, bagian: row.bagian,
+                        totalHadir: 0, totalProduksi: 0, totalLembur: 0 
+                    };
+                }
+                if (row.status_hadir === 'Hadir') {
+                    rekap[nama].totalHadir += 1;
+                    rekap[nama].totalProduksi += Number(row.hasil_produksi) || 0;
+                    rekap[nama].totalLembur += Number(row.jam_lembur) || 0; 
+                }
+            });
+
+            dataKaryawanGlobal = Object.values(rekap);
+            let htmlTabel = '';
+            const isProd = bagianProduksi.includes(bag);
+
+            dataKaryawanGlobal.forEach((kar) => {
+                let tarifInfo = mapHarga[kar.nama] || { normal: 0, lembur: 0, potonganArray: [] };
+                let peringatanTarif = !mapHarga[kar.nama] ? `<br><small style="color:#e53e3e;">⚠️ Tarif belum diatur!</small>` : '';
+
+                let gajiKinerja = isProd ? (kar.totalProduksi * tarifInfo.normal) : (kar.totalHadir * tarifInfo.normal);
+                let gajiLembur = (kar.totalLembur * tarifInfo.lembur);
+                let gajiKotor = gajiKinerja + gajiLembur;
+                
+                // Menghitung & Menyusun UI Potongan dari JSON
+                let htmlPotongan = '';
+                let totalPotongan = 0;
+                
+                if (tarifInfo.potonganArray.length > 0) {
+                    tarifInfo.potonganArray.forEach(p => {
+                        let nom = Number(p.nominal) || 0;
+                        if (nom > 0) {
+                            totalPotongan += nom;
+                            let namaPotongan = p.nama ? p.nama : "Lainnya";
+                            htmlPotongan += `<span class="potongan-item">${namaPotongan}: -Rp ${formatRp(nom)}</span>`;
+                        }
+                    });
+                }
+
+                if (totalPotongan === 0) {
+                    htmlPotongan = '<span class="potongan-none">- Tidak ada potongan -</span>';
+                }
+
+                let gajiBersih = gajiKotor - totalPotongan;
+
+                // Teks Kinerja
+                let txtKinerja = isProd ? 
+                    `<b style="color:#27ae60; font-size:15px;">${kar.totalProduksi}</b> Pcs <span class="tarif-badge">@ Rp${formatRp(tarifInfo.normal)}</span>` : 
+                    `<b style="color:#27ae60; font-size:15px;">${kar.totalHadir}</b> Hari <span class="tarif-badge">@ Rp${formatRp(tarifInfo.normal)}</span>`;
+                
+                let txtLembur = kar.totalLembur > 0 ? 
+                    `<br><b style="color:#e67e22; font-size:15px;">${kar.totalLembur}</b> Pcs (Lbr) <span class="tarif-badge">@ Rp${formatRp(tarifInfo.lembur)}</span>` : '';
+
+                // Simpan kalkulasi untuk struk
+                kar.calc = {
+                    tarifNormal: tarifInfo.normal, 
+                    tarifLembur: tarifInfo.lembur,
+                    gajiKinerja: gajiKinerja, 
+                    gajiLembur: gajiLembur, 
+                    gajiKotor: gajiKotor,
+                    potonganArray: tarifInfo.potonganArray,
+                    totalPotongan: totalPotongan,
+                    gajiBersih: gajiBersih
+                };
+
+                htmlTabel += `
+                    <tr>
+                        <td>
+                            <strong style="font-size:16px;">${kar.nama}</strong><br>
+                            <small style="color:#718096;">${kar.bagian}</small>
+                            ${peringatanTarif}
+                        </td>
+                        <td>${txtKinerja}${txtLembur}</td>
+                        <td>${htmlPotongan}</td>
+                        <td class="total-gaji">Rp ${formatRp(gajiBersih)}</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = htmlTabel;
+            btnCetakSemua.style.display = 'block';
+
+        } catch (e) {
+            alert("Gagal menghitung: " + e.message);
+        }
+    }
+
+    // --- GENERATOR TEKS STRUK ---
+    function generateSlipString(kar) {
+        const tglAwal = document.getElementById('tglDari').value.split('-').reverse().join('/');
+        const tglAkhir = document.getElementById('tglSampai').value.split('-').reverse().join('/');
+        const isProd = bagianProduksi.includes(kar.bagian);
+        let lebar = 32; 
+
+        const buatBaris = (kiri, kanan) => { 
+            let spasi = lebar - String(kiri).length - String(kanan).length; 
+            return kiri + " ".repeat(Math.max(1, spasi)) + kanan + "\n"; 
+        };
+        const garisStrip = "-".repeat(lebar) + "\n";
+        const garisSama = "=".repeat(lebar) + "\n";
+
+        let p = `\x1B\x40\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10SBR PUTRA FOOD\n\x1B\x21\x00\x1B\x45\x00`; 
+        p += `SLIP GAJI KARYAWAN\nPeriode: ${tglAwal} - ${tglAkhir}\n${garisSama}`;
+        
+        p += `\x1B\x61\x00`; 
+        p += buatBaris(`NAMA:`, kar.nama.toUpperCase());
+        p += buatBaris(`BAGIAN:`, kar.bagian.toUpperCase());
+        p += garisStrip;
+
+        if (isProd) {
+            p += buatBaris(`Total Produksi:`, `${kar.totalProduksi} Pcs`);
+            p += buatBaris(`Harga (Pcs):`, `Rp ${formatRp(kar.calc.tarifNormal)}`);
+            p += buatBaris(`Subtotal:`, `Rp ${formatRp(kar.calc.gajiKinerja)}`);
+        } else {
+            p += buatBaris(`Total Hadir:`, `${kar.totalHadir} Hari`);
+            p += buatBaris(`Uang Harian:`, `Rp ${formatRp(kar.calc.tarifNormal)}`);
+            p += buatBaris(`Subtotal:`, `Rp ${formatRp(kar.calc.gajiKinerja)}`);
+        }
+
+        if (kar.totalLembur > 0) {
+            p += `\n`;
+            p += buatBaris(`Total Lembur:`, `${kar.totalLembur} Pcs`);
+            p += buatBaris(`Harga Lembur:`, `Rp ${formatRp(kar.calc.tarifLembur)}`);
+            p += buatBaris(`Subtotal Lembur:`, `Rp ${formatRp(kar.calc.gajiLembur)}`);
+        }
+        
+        // Cetak Potongan dari Array
+        if (kar.calc.totalPotongan > 0) {
+            p += `\n`;
+            kar.calc.potonganArray.forEach(pot => {
+                let nom = Number(pot.nominal) || 0;
+                if (nom > 0) {
+                    let nm = pot.nama ? pot.nama : "Lainnya";
+                    // Truncate nama potongan agar tidak merusak layout struk jika terlalu panjang
+                    let nmStr = nm.length > 15 ? nm.substring(0, 15) + "..." : nm;
+                    p += buatBaris(`${nmStr}:`, `-Rp ${formatRp(nom)}`);
+                }
+            });
+        }
+        
+        p += garisSama;
+        p += `\x1B\x45\x01` + buatBaris(`TOTAL DITERIMA:`, `Rp ${formatRp(kar.calc.gajiBersih)}`) + `\x1B\x45\x00`;
+        p += `\n\n\x1B\x61\x01Diterima Oleh,\n\n\n\n( ${kar.nama} )\n\n\n\n\x1D\x56\x42\x00`; 
+
+        return p;
+    }
+
+    // --- CETAK SEMUA SLIP ---
+    async function cetakSemuaSlip() {
+        if (!btCharacteristic) { alert("Printer belum terhubung!"); return; }
+        if (dataKaryawanGlobal.length === 0) return;
+
+        const btn = document.getElementById('btnCetakSemua');
+        btn.innerText = "⏳ MENCETAK SEMUA SLIP..."; btn.disabled = true;
+
+        try {
+            let gabunganPrint = "";
+            for(let i = 0; i < dataKaryawanGlobal.length; i++) {
+                gabunganPrint += generateSlipString(dataKaryawanGlobal[i]);
+            }
+            await printDataToBT(gabunganPrint);
+        } catch (e) {
+            alert("Gagal mencetak: " + e);
+        } finally {
+            btn.innerText = "🖨️ CETAK SEMUA SLIP (BAGIAN INI)"; btn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>

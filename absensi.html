@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SBR Putra Food - Rekap & Input Massal</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="theme-color" content="#2c3e50">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; font-size: 14px; }
+        .container { background: white; padding: 12px; border-radius: 15px; max-width: 1200px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        header h2 { margin: 0; color: #1a202c; font-size: 18px; text-transform: uppercase; font-weight: 900; }
+        .btn-back { background: #718096; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 900; cursor: pointer; text-decoration: none; font-size: 12px; }
+        
+        .filter-box { background: #edf2f7; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #cbd5e0; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        @media (max-width: 600px) { .grid-3 { grid-template-columns: 1fr; } }
+        
+        .form-group label { display: block; font-weight: 900; margin-bottom: 5px; font-size: 12px; color: #4a5568; text-transform: uppercase; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 15px; font-weight: 700; outline: none; background: white; }
+        .form-group input:focus, .form-group select:focus { border-color: #3182ce; }
+        
+        /* Desain Tabel Grid Mingguan */
+        .table-wrapper { overflow-x: auto; border: 1px solid #cbd5e0; background: #fff; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th, td { border: 1px solid #cbd5e0; padding: 8px 4px; text-align: center; vertical-align: middle; }
+        
+        th { background: #f8fafc; color: #1a202c; font-weight: 900; font-size: 13px; text-transform: capitalize; }
+        .th-clickable { cursor: pointer; background: #ebf8ff; color: #2b6cb0; border-bottom: 3px solid #3182ce; }
+        .th-clickable:hover { background: #bee3f8; }
+        
+        .sticky-col { position: sticky; left: 0; background: #fff; z-index: 2; font-weight: 900; white-space: nowrap; text-align: left; padding-left: 10px; border-right: 2px solid #a0aec0; }
+        th.sticky-col { background: #f8fafc; z-index: 3; text-align: center; padding-left: 4px; }
+        
+        .row-header { background: #f8fafc; font-size: 13px; font-weight: bold; color: #4a5568; }
+        .total-col { background: #f8fafc; font-weight: 900; font-size: 15px; }
+
+        .cell-data { cursor: pointer; min-width: 50px; font-weight: 700; font-size: 15px; color: #2d3748; }
+        .cell-data:hover { background: #edf2f7; }
+        .cell-data:active { background: #e2e8f0; }
+
+        .hari-ini { background: #fffaf0 !important; }
+        .absen-text { color: #e53e3e; font-size: 13px; font-weight: 900; }
+        .lembur-badge { background: #ebf8ff; color: #3182ce; border-radius: 4px; padding: 2px 4px; font-size: 12px; margin-top: 2px; display: inline-block; border: 1px solid #90cdf4; }
+
+        /* Modal Input Tunggal & Massal */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
+        .modal-content { background: white; margin: 10% auto; padding: 20px; border-radius: 15px; width: 90%; max-width: 600px; box-shadow: 0 5px 30px rgba(0,0,0,0.3); max-height: 80vh; overflow-y: auto; }
+        .modal-header { font-size: 18px; font-weight: 900; border-bottom: 2px solid #edf2f7; padding-bottom: 10px; margin-bottom: 15px; color: #2d3748; text-align: center; }
+        
+        .btn-modal-save { width: 100%; padding: 15px; background: #27ae60; color: white; border: none; border-radius: 8px; font-weight: 900; font-size: 16px; margin-top: 15px; cursor: pointer; box-shadow: 0 4px 0 #1e8449; text-transform: uppercase; }
+        .btn-modal-close { width: 100%; padding: 12px; background: #718096; color: white; border: none; border-radius: 8px; font-weight: 900; margin-top: 10px; cursor: pointer; }
+        
+        /* Desain Tabel Dalam Modal Massal */
+        .m-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .m-table th { background: #1a202c; color: white; padding: 8px; font-size: 11px; }
+        .m-table td { padding: 8px; border-bottom: 1px solid #e2e8f0; }
+        .m-input { width: 100%; padding: 8px; border: 2px solid #cbd5e0; border-radius: 6px; font-size: 14px; font-weight: 900; outline: none; box-sizing: border-box; text-align: center; }
+        .m-input:focus { border-color: #3182ce; background: #ebf8ff; }
+        .m-input:disabled { background: #e2e8f0; }
+        .m-sel { width: 100%; padding: 8px; border: 2px solid #cbd5e0; border-radius: 6px; font-size: 13px; font-weight: 900; outline: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h2>REKAP & INPUT DATA</h2>
+        <a href="javascript:history.back()" class="btn-back">⬅ KEMBALI</a>
+    </header>
+
+    <div class="filter-box">
+        <div class="grid-3">
+            <div class="form-group">
+                <label>PILIH BAGIAN</label>
+                <select id="pilihBagian" onchange="muatData()">
+                    <option value="Aro">Aro</option>
+                    <option value="Sisrik">Sisrik</option>
+                    <option value="Simping">Simping</option>
+                    <option value="Terigu">Terigu</option>
+                    <option value="Distribusi">Distribusi</option>
+                    <option value="Driver">Driver</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>DARI TANGGAL</label>
+                <input type="date" id="tglDari" onchange="muatData()">
+            </div>
+            <div class="form-group">
+                <label>SAMPAI TANGGAL</label>
+                <input type="date" id="tglSampai" onchange="muatData()">
+            </div>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table id="tabelGrid">
+            <thead>
+                <tr id="headBaris1"></tr>
+                <tr id="headHari"></tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="10" style="padding: 20px; color:#718096; text-align: center;">⏳ Memuat data...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="modalMassal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header" id="modalMassalTitle">INPUT MASSAL</div>
+        <input type="hidden" id="massalTanggal">
+        
+        <table class="m-table">
+            <thead>
+                <tr>
+                    <th style="text-align:left;">NAMA</th>
+                    <th>STATUS</th>
+                    <th class="m-col-prod">PRODUKSI (Pcs)</th>
+                    <th class="m-col-prod">LEMBUR (Pcs)</th>
+                </tr>
+            </thead>
+            <tbody id="massalTbody">
+                </tbody>
+        </table>
+
+        <button class="btn-modal-save" id="btnSimpanMassal" onclick="simpanMassal()">💾 SIMPAN SEMUA DATA</button>
+        <button class="btn-modal-close" onclick="tutupModalMassal()">BATAL</button>
+    </div>
+</div>
+
+<div id="modalTunggal" class="modal">
+    <div class="modal-content" style="max-width:400px; margin-top:20%;">
+        <div class="modal-header" id="modalTunggalTitle">NAMA - TANGGAL</div>
+        
+        <input type="hidden" id="mTunggalId">
+        <input type="hidden" id="mTunggalTgl">
+        <input type="hidden" id="mTunggalNama">
+        <input type="hidden" id="mTunggalBagian">
+
+        <div class="form-group">
+            <label>STATUS</label>
+            <select id="mTunggalStatus">
+                <option value="Hadir">Hadir</option>
+                <option value="Izin">Izin</option>
+                <option value="Sakit">Sakit</option>
+                <option value="Alpa">Alpa</option>
+            </select>
+        </div>
+        <div class="form-group box-produksi" id="boxProdTunggal">
+            <label style="color:#dd6b20;">PRODUKSI (PCS)</label>
+            <input type="number" id="mTunggalHasil" value="0" onfocus="if(this.value==='0') this.value='';">
+        </div>
+        <div class="form-group">
+            <label>LEMBUR (PCS)</label>
+            <input type="number" id="mTunggalLembur" value="0" onfocus="if(this.value==='0') this.value='';">
+        </div>
+
+        <button class="btn-modal-save" id="btnSimpanTunggal" onclick="simpanTunggal()">SIMPAN DATA</button>
+        <button class="btn-modal-close" style="background:transparent; color:#e53e3e; border:2px solid #e53e3e;" id="btnHapusTunggal" onclick="hapusTunggal()">🗑️ HAPUS DATA</button>
+        <button class="btn-modal-close" onclick="document.getElementById('modalTunggal').style.display='none'">BATAL</button>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const namaHariIndo = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+    const bagianProduksi = ["Aro", "Sisrik", "Simping", "Terigu"];
+    
+    let currentDateRange = [];
+    let dataKaryawanFiltered = [];
+    let dataAbsensiRange = [];
+
+    // Set Default Rentang Waktu
+    function initDefaultDates() {
+        let today = new Date();
+        let saturday = new Date(today);
+        saturday.setDate(today.getDate() - ((today.getDay() + 1) % 7));
+        let friday = new Date(saturday);
+        friday.setDate(saturday.getDate() + 6);
+
+        document.getElementById('tglDari').valueAsDate = saturday;
+        document.getElementById('tglSampai').valueAsDate = friday;
+    }
+
+    function toYMD(d) {
+        let y = d.getFullYear();
+        let m = String(d.getMonth() + 1).padStart(2, '0');
+        let day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+    
+    function toDM(d) {
+        let m = String(d.getMonth() + 1).padStart(2, '0');
+        let day = String(d.getDate()).padStart(2, '0');
+        return `${day}/${m}`;
+    }
+
+    // Fungsi Render Grid Mingguan
+    async function muatData() {
+        const bag = document.getElementById('pilihBagian').value;
+        const startStr = document.getElementById('tglDari').value;
+        const endStr = document.getElementById('tglSampai').value;
+
+        if (!bag || !startStr || !endStr) return;
+
+        let start = new Date(startStr);
+        let end = new Date(endStr);
+        currentDateRange = [];
+        while (start <= end) { currentDateRange.push(new Date(start)); start.setDate(start.getDate() + 1); }
+        
+        const tbody = document.querySelector('#tabelGrid tbody');
+        tbody.innerHTML = '<tr><td colspan="10" style="padding: 20px; text-align:center;">⏳ Mengambil data...</td></tr>';
+
+        try {
+            const { data: kar } = await clientSupabase.from('karyawan').select('*').eq('bagian', bag).order('nama_karyawan');
+            dataKaryawanFiltered = kar || [];
+
+            const { data: abs } = await clientSupabase.from('absensi').select('*').eq('bagian', bag).gte('tanggal', startStr).lte('tanggal', endStr);
+            dataAbsensiRange = abs || [];
+
+            renderGrid(bag);
+        } catch (e) { alert(e.message); }
+    }
+
+    function renderGrid(bagianAktif) {
+        const thead1 = document.getElementById('headBaris1');
+        const theadHari = document.getElementById('headHari');
+        const tbody = document.querySelector('#tabelGrid tbody');
+        let todayYMD = toYMD(new Date());
+
+        const isProduksi = bagianProduksi.includes(bagianAktif);
+        const colCount = currentDateRange.length;
+
+        if (isProduksi) {
+            thead1.innerHTML = `
+                <th rowspan="2" class="sticky-col">Nama / Bagian</th>
+                <th rowspan="2">Rincian</th>
+                <th colspan="${colCount}" style="background: #e2e8f0;">Tanggal (Klik untuk Input Massal)</th>
+                <th rowspan="2">Total (Pcs)</th>
+            `;
+        } else {
+            thead1.innerHTML = `
+                <th rowspan="2" class="sticky-col">Nama / Bagian</th>
+                <th colspan="${colCount}" style="background: #e2e8f0;">Tanggal (Klik untuk Input Massal)</th>
+                <th rowspan="2">Total<br>Lembur</th>
+            `;
+        }
+
+        // Header Hari (Bisa diklik untuk buka Modal Massal)
+        let thHariHTML = '';
+        currentDateRange.forEach(d => {
+            let ymd = toYMD(d);
+            thHariHTML += `<th class="th-clickable" onclick="bukaModalMassal('${ymd}')">
+                ${namaHariIndo[d.getDay()]}<br><span style="font-weight:normal; font-size:11px;">${toDM(d)}</span><br><small>✏️ Edit</small>
+            </th>`;
+        });
+        theadHari.innerHTML = thHariHTML;
+
+        if (dataKaryawanFiltered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="${colCount + 3}" style="padding:20px; text-align:center; color:#e53e3e;">Belum ada karyawan.</td></tr>`;
+            return;
+        }
+
+        let bodyHTML = '';
+        dataKaryawanFiltered.forEach(k => {
+            let totalProd = 0, totalLemb = 0;
+            let rowProdHTML = '', rowLembHTML = '', rowTunggalHTML = '';
+
+            currentDateRange.forEach(d => {
+                let ymd = toYMD(d);
+                let isToday = (ymd === todayYMD) ? 'hari-ini' : '';
+                let record = dataAbsensiRange.find(a => a.nama_karyawan === k.nama_karyawan && a.tanggal === ymd);
+                let recJson = record ? JSON.stringify(record).replace(/"/g, '&quot;') : '';
+                
+                let valProd = '', valLemb = '', valTunggal = '';
+
+                if (record) {
+                    if (record.status_hadir === 'Hadir') {
+                        valProd = record.hasil_produksi > 0 ? record.hasil_produksi : '';
+                        valLemb = record.jam_lembur > 0 ? record.jam_lembur : ''; // Jam_lembur ini sbenarnya menampung Pcs Lembur
+                        valTunggal = `<span style="color:#27ae60; font-weight:900;">H</span>`;
+                        if (record.jam_lembur > 0) valTunggal += `<br><span class="lembur-badge">+${record.jam_lembur}</span>`;
+
+                        totalProd += Number(record.hasil_produksi) || 0;
+                        totalLemb += Number(record.jam_lembur) || 0;
+                    } else {
+                        let txtAbsen = `<span class="absen-text">${record.status_hadir.substring(0,1)}</span>`;
+                        valProd = txtAbsen; valLemb = '-'; valTunggal = txtAbsen;
+                    }
+                }
+
+                const clickEvent = `onclick="bukaModalTunggal('${k.nama_karyawan}', '${ymd}', '${k.bagian}', '${recJson}')"`;
+                rowProdHTML += `<td class="cell-data ${isToday}" ${clickEvent}>${valProd}</td>`;
+                rowLembHTML += `<td class="cell-data ${isToday}" ${clickEvent}>${valLemb}</td>`;
+                rowTunggalHTML += `<td class="cell-data ${isToday}" ${clickEvent}>${valTunggal}</td>`;
+            });
+
+            if (isProduksi) {
+                bodyHTML += `<tr><td rowspan="2" class="sticky-col">${k.nama_karyawan}</td><td class="row-header">Produksi</td>${rowProdHTML}<td class="total-col" style="color:#27ae60;" rowspan="1">${totalProd||''}</td></tr>
+                             <tr><td class="row-header">Lembur</td>${rowLembHTML}<td class="total-col" style="color:#d97706;" rowspan="1">${totalLemb||''}</td></tr>`;
+            } else {
+                bodyHTML += `<tr><td class="sticky-col">${k.nama_karyawan}</td>${rowTunggalHTML}<td class="total-col" style="color:#d97706;">${totalLemb||''}</td></tr>`;
+            }
+        });
+        
+        tbody.innerHTML = bodyHTML;
+    }
+
+    // --- MODAL MASSAL (Diklik dari Header Tanggal) ---
+    function bukaModalMassal(tgl) {
+        document.getElementById('massalTanggal').value = tgl;
+        let tglText = toDM(new Date(tgl));
+        document.getElementById('modalMassalTitle').innerText = `INPUT MASSAL: ${tglText}`;
+        
+        const bag = document.getElementById('pilihBagian').value;
+        const isProd = bagianProduksi.includes(bag);
+        
+        // Atur Header Tabel Modal
+        const colsProd = document.querySelectorAll('.m-col-prod');
+        colsProd.forEach(c => c.style.display = isProd ? "table-cell" : "none");
+
+        let html = '';
+        dataKaryawanFiltered.forEach((k, i) => {
+            let rec = dataAbsensiRange.find(a => a.nama_karyawan === k.nama_karyawan && a.tanggal === tgl);
+            let stat = rec ? rec.status_hadir : 'Hadir';
+            let prod = rec ? rec.hasil_produksi : '';
+            let lemb = rec ? rec.jam_lembur : '';
+
+            let tdProd = isProd ? `
+                <td><input type="number" id="m_prod_${i}" class="m-input" value="${prod}" onfocus="if(this.value=='0')this.value=''"></td>
+                <td><input type="number" id="m_lemb_${i}" class="m-input" style="border-color:#e67e22; color:#d97706;" value="${lemb}" onfocus="if(this.value=='0')this.value=''"></td>
+            ` : `<td style="display:none;"></td><td style="display:none;"></td>`;
+
+            html += `<tr>
+                <td><strong style="font-size:14px;">${k.nama_karyawan}</strong></td>
+                <td>
+                    <select id="m_stat_${i}" class="m-sel" onchange="cekStatusMassal(${i})">
+                        <option value="Hadir" ${stat=='Hadir'?'selected':''}>Hadir</option>
+                        <option value="Izin" ${stat=='Izin'?'selected':''}>Izin</option>
+                        <option value="Sakit" ${stat=='Sakit'?'selected':''}>Sakit</option>
+                        <option value="Alpa" ${stat=='Alpa'?'selected':''}>Alpa</option>
+                    </select>
+                </td>
+                ${tdProd}
+            </tr>`;
+        });
+
+        document.getElementById('massalTbody').innerHTML = html;
+        document.getElementById('modalMassal').style.display = 'block';
+
+        // Set state disabled untuk Izin/Sakit
+        dataKaryawanFiltered.forEach((_, i) => cekStatusMassal(i));
+    }
+
+    function cekStatusMassal(index) {
+        let stat = document.getElementById(`m_stat_${index}`).value;
+        let p = document.getElementById(`m_prod_${index}`);
+        let l = document.getElementById(`m_lemb_${index}`);
+        if(p && l) {
+            if(stat !== 'Hadir') { p.disabled=true; p.value=''; l.disabled=true; l.value=''; } 
+            else { p.disabled=false; l.disabled=false; }
+        }
+    }
+
+    function tutupModalMassal() { document.getElementById('modalMassal').style.display = 'none'; }
+
+    async function simpanMassal() {
+        const tgl = document.getElementById('massalTanggal').value;
+        const bag = document.getElementById('pilihBagian').value;
+        const btn = document.getElementById('btnSimpanMassal');
+        const isProd = bagianProduksi.includes(bag);
+        
+        btn.innerText = "⏳ MENYIMPAN..."; btn.disabled = true;
+
+        let payloadData = [];
+        let listNama = [];
+
+        dataKaryawanFiltered.forEach((k, i) => {
+            let stat = document.getElementById(`m_stat_${i}`).value;
+            let prod = isProd && stat === 'Hadir' ? (parseFloat(document.getElementById(`m_prod_${i}`).value)||0) : 0;
+            let lemb = isProd && stat === 'Hadir' ? (parseFloat(document.getElementById(`m_lemb_${i}`).value)||0) : 0;
+            if(!isProd && stat === 'Hadir') lemb = (parseFloat(document.getElementById(`m_lemb_${i}`).value)||0); // untuk non-prod lembur
+
+            listNama.push(k.nama_karyawan);
+            payloadData.push({
+                tanggal: tgl,
+                nama_karyawan: k.nama_karyawan,
+                bagian: bag,
+                status_hadir: stat,
+                hasil_produksi: prod,
+                jam_lembur: lemb // dipakai untuk nyimpen 'Pcs Lembur'
+            });
+        });
+
+        try {
+            await clientSupabase.from('absensi').delete().eq('tanggal', tgl).eq('bagian', bag).in('nama_karyawan', listNama);
+            await clientSupabase.from('absensi').insert(payloadData);
+            
+            tutupModalMassal();
+            muatData(); // Refresh Grid
+        } catch(e) { alert("Gagal: " + e.message); }
+        finally { btn.innerText = "💾 SIMPAN SEMUA DATA"; btn.disabled = false; }
+    }
+
+    // --- MODAL TUNGGAL (Diklik dari 1 cell) ---
+    function bukaModalTunggal(nama, tgl, bagian, recJson) {
+        document.getElementById('modalTunggalTitle').innerText = `${nama} - ${toDM(new Date(tgl))}`;
+        document.getElementById('mTunggalNama').value = nama;
+        document.getElementById('mTunggalTgl').value = tgl;
+        document.getElementById('mTunggalBagian').value = bagian;
+
+        document.getElementById('boxProdTunggal').style.display = bagianProduksi.includes(bagian) ? "block" : "none";
+
+        if(recJson) {
+            let r = JSON.parse(recJson);
+            document.getElementById('mTunggalId').value = r.id;
+            document.getElementById('mTunggalStatus').value = r.status_hadir;
+            document.getElementById('mTunggalHasil').value = r.hasil_produksi;
+            document.getElementById('mTunggalLembur').value = r.jam_lembur;
+            document.getElementById('btnHapusTunggal').style.display = 'block';
+        } else {
+            document.getElementById('mTunggalId').value = '';
+            document.getElementById('mTunggalStatus').value = 'Hadir';
+            document.getElementById('mTunggalHasil').value = '0';
+            document.getElementById('mTunggalLembur').value = '0';
+            document.getElementById('btnHapusTunggal').style.display = 'none';
+        }
+        document.getElementById('modalTunggal').style.display = 'block';
+    }
+
+    async function simpanTunggal() {
+        const payload = {
+            tanggal: document.getElementById('mTunggalTgl').value,
+            nama_karyawan: document.getElementById('mTunggalNama').value,
+            bagian: document.getElementById('mTunggalBagian').value,
+            status_hadir: document.getElementById('mTunggalStatus').value,
+            hasil_produksi: parseFloat(document.getElementById('mTunggalHasil').value)||0,
+            jam_lembur: parseFloat(document.getElementById('mTunggalLembur').value)||0
+        };
+        const id = document.getElementById('mTunggalId').value;
+        try {
+            if(id) await clientSupabase.from('absensi').update(payload).eq('id', id);
+            else await clientSupabase.from('absensi').insert([payload]);
+            document.getElementById('modalTunggal').style.display = 'none';
+            muatData();
+        } catch(e) { alert(e); }
+    }
+
+    async function hapusTunggal() {
+        if(!confirm("Hapus data ini?")) return;
+        try {
+            await clientSupabase.from('absensi').delete().eq('id', document.getElementById('mTunggalId').value);
+            document.getElementById('modalTunggal').style.display = 'none';
+            muatData();
+        } catch(e) { alert(e); }
+    }
+
+    window.onload = () => { initDefaultDates(); muatData(); };
+</script>
+
+</body>
+</html>
