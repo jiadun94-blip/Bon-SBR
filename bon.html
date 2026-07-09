@@ -10,6 +10,8 @@
     <meta name="theme-color" content="#2c3e50">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Tambahan Library HTML2Canvas untuk Cetak Gambar -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
@@ -56,6 +58,13 @@
         .btn-reprint { padding: 15px; background: #e67e22; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #b35d15; text-transform: uppercase; }
         .btn-reprint:disabled { background: #cbd5e0; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
         .btn-clear { padding: 15px; background: #718096; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #4a5568; text-transform: uppercase; }
+        
+        /* Gaya untuk area cetak gambar tersembunyi */
+        .struk-visual-container { position: absolute; left: -9999px; top: 0; width: 400px; }
+        .struk-visual { background: #fff; padding: 25px; color: #000; font-family: 'Courier New', Courier, monospace; font-size: 14px; border: 1px solid #ccc; line-height: 1.4; }
+        .struk-visual .garis { border-top: 1px dashed #000; margin: 8px 0; }
+        .struk-visual .garis-tebal { border-top: 2px dashed #000; margin: 8px 0; }
+        .struk-visual .flex-row { display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
@@ -140,6 +149,7 @@
     </div>
 </div>
 
+<!-- Modal Input Item -->
 <div id="modalInput" class="modal">
     <div class="modal-content">
         <h3>Tambah Item</h3>
@@ -153,10 +163,25 @@
     </div>
 </div>
 
+<!-- Modal Preview Laporan -->
+<div id="modalPreviewLaporan" class="modal">
+    <div class="modal-content" style="text-align: center;">
+        <h3 style="margin-top:0; color:#27ae60;">✅ Struk Laporan Digital Siap!</h3>
+        <p style="font-size:14px; color:#4a5568;">Gambar sudah otomatis terunduh ke Galeri/Download HP Anda. Siap dikirim ke Admin.</p>
+        <img id="imgPreviewLaporan" style="width:100%; border:1px solid #cbd5e0; border-radius:8px; margin-bottom:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1);" />
+        <button onclick="document.getElementById('modalPreviewLaporan').style.display='none'" style="width:100%; padding:15px; background:#3182ce; color:white; border:none; border-radius:10px; font-weight:900; font-size:16px; cursor:pointer;">TUTUP</button>
+    </div>
+</div>
+
+<!-- Wadah Tersembunyi untuk Render Gambar -->
+<div class="struk-visual-container">
+    <div id="areaCetakGambar" class="struk-visual"></div>
+</div>
+
 <script>
     const userAktif = localStorage.getItem("userNama");
     let btCharacteristic = null;
-    let connectedDeviceId = null; // Menyimpan ID unik printer
+    let connectedDeviceId = null; 
 
     function logout() { localStorage.clear(); window.location.href = "index.html"; }
 
@@ -192,7 +217,6 @@
         hitungTotal();
     }
 
-    // SIMPAN PILIHAN UKURAN KE MEMORI HP BERDASARKAN ID PRINTER
     function simpanUkuranKertas() {
         const val = document.getElementById('ukuranKertas').value;
         if (connectedDeviceId) {
@@ -408,13 +432,11 @@
             const characteristics = await service.getCharacteristics();
             btCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
             
-            // Simpan ID Unik Printer
             connectedDeviceId = device.id;
             
             document.getElementById('statusBT').innerText = "Status: Terhubung (" + device.name + ")";
             document.getElementById('statusBT').style.color = "#27ae60";
 
-            // Cek apakah ada ukuran yang tersimpan di memori untuk ID printer ini
             const savedSize = localStorage.getItem('printerSize_' + connectedDeviceId);
             if (savedSize) {
                 document.getElementById('ukuranKertas').value = savedSize;
@@ -440,6 +462,95 @@
             await printToBT(cetakReprint);
             alert("✅ Berhasil Reprint Nota!");
         } catch(e) { alert("Reprint Gagal: " + e); }
+    }
+
+    // FUNGSI UNTUK MERENDER HTML KE GAMBAR (HTML2CANVAS)
+    async function buatGambarLaporan(dataStruk) {
+        const area = document.getElementById('areaCetakGambar');
+        
+        let htmlContent = `
+            <div style="text-align: center; margin-bottom: 10px;">
+                <h2 style="margin: 0; font-family: 'Roboto', sans-serif; font-size: 22px;">SBR PUTRA FOOD</h2>
+                <div>Lembang, Bandung Barat</div>
+                <div class="garis"></div>
+                <div style="font-weight: bold; font-size: 16px; margin: 5px 0;">*** LEMBAR ADMIN ***</div>
+                <div class="garis"></div>
+            </div>
+            <div class="flex-row"><span>NO: ${dataStruk.noNota}</span><span>TGL: ${dataStruk.tglIndo}</span></div>
+            <div style="text-align: center; font-weight: bold; font-size: 18px; margin: 10px 0;">
+                ${dataStruk.ag.toUpperCase()}
+            </div>
+            <div>DRV: ${dataStruk.drvGabung} [ ${dataStruk.mobil} ]</div>
+            <div class="garis"></div>
+        `;
+
+        if(dataStruk.itemsKirim.length > 0) {
+            dataStruk.itemsKirim.forEach(i => {
+                htmlContent += `
+                    <div style="margin-top: 4px;">${i.barang}</div>
+                    <div class="flex-row">
+                        <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${i.harga.toLocaleString('id-ID')}</span>
+                        <span>${i.total.toLocaleString('id-ID')}</span>
+                    </div>
+                `;
+            });
+            htmlContent += `<div class="garis"></div>`;
+            htmlContent += `<div class="flex-row" style="font-weight: bold;"><span>TOTAL KIRIM:</span><span>Rp ${dataStruk.tk.toLocaleString('id-ID')}</span></div>`;
+        }
+
+        if(dataStruk.itemsRetur.length > 0) {
+            htmlContent += `<div style="font-weight: bold; margin-top: 10px;">BARANG RETUR:</div>`;
+            dataStruk.itemsRetur.forEach(i => {
+                htmlContent += `
+                    <div style="margin-top: 4px;">[RETUR] ${i.barang}</div>
+                    <div class="flex-row">
+                        <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${i.harga.toLocaleString('id-ID')}</span>
+                        <span>-${i.total.toLocaleString('id-ID')}</span>
+                    </div>
+                `;
+            });
+            htmlContent += `<div class="garis"></div>`;
+            htmlContent += `<div class="flex-row" style="font-weight: bold;"><span>TOTAL RETUR:</span><span>Rp ${dataStruk.tr.toLocaleString('id-ID')}</span></div>`;
+        }
+        
+        htmlContent += `<div class="garis"></div>`;
+        if(dataStruk.ongkir > 0) {
+            htmlContent += `<div class="flex-row"><span>ONGKIR:</span><span>-Rp ${dataStruk.ongkir.toLocaleString('id-ID')}</span></div>`;
+        }
+
+        const labelBonPrint = isDeposit ? "DEPOSIT:" : "BON LAMA:";
+        const valBonPrint = isDeposit ? `-Rp ${dataStruk.bl_input.toLocaleString('id-ID')}` : `Rp ${dataStruk.bl_input.toLocaleString('id-ID')}`;
+        htmlContent += `<div class="flex-row"><span>${labelBonPrint}</span><span>${valBonPrint}</span></div>`;
+
+        htmlContent += `<div class="garis-tebal"></div>`;
+        htmlContent += `<div class="flex-row" style="font-weight: bold; font-size: 16px;"><span>TOTAL TAGIHAN:</span><span>Rp ${dataStruk.tagihanBersih.toLocaleString('id-ID')}</span></div>`;
+        htmlContent += `<div class="garis"></div>`;
+        htmlContent += `<div class="flex-row"><span>Bayar CASH:</span><span>Rp ${dataStruk.cash.toLocaleString('id-ID')}</span></div>`;
+        htmlContent += `<div class="flex-row"><span>Bayar TRF:</span><span>Rp ${dataStruk.trf.toLocaleString('id-ID')}</span></div>`;
+        htmlContent += `<div class="garis"></div>`;
+        
+        const labelSisa = dataStruk.sisa < 0 ? "DEPOSIT:" : "SISA BON:";
+        htmlContent += `<div class="flex-row" style="font-weight: bold; font-size: 16px;"><span>${labelSisa}</span><span>Rp ${Math.abs(dataStruk.sisa).toLocaleString('id-ID')}</span></div>`;
+        htmlContent += `<div class="garis"></div>`;
+        htmlContent += `<div style="text-align: center; margin-top: 30px; font-weight: bold;">SBR PUTRA FOOD SYSTEM</div>`;
+
+        area.innerHTML = htmlContent;
+
+        // Render to canvas
+        const canvas = await html2canvas(area, { scale: 2, backgroundColor: "#ffffff", logging: false });
+        const imgUrl = canvas.toDataURL("image/jpeg", 0.9);
+        
+        // Munculkan di modal
+        document.getElementById('imgPreviewLaporan').src = imgUrl;
+        document.getElementById('modalPreviewLaporan').style.display = 'block';
+
+        // Auto Download
+        const downloadLink = document.createElement("a");
+        downloadLink.href = imgUrl;
+        downloadLink.download = `Laporan_SBR_${dataStruk.noNota}.jpg`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
     }
 
     async function simpanDanPrint() {
@@ -531,7 +642,8 @@
         p += buatBaris(`Bayar TRF:`, `Rp ${trf.toLocaleString()}`);
         p += garisStrip;
         
-        p += `\x1B\x45\x01\x1B\x21\x10` + buatBaris(`SISA BON:`, `Rp ${sisa.toLocaleString()}`) + `\x1B\x45\x00\x1B\x21\x00\n\n`;
+        const labelSisaBluetooth = sisa < 0 ? "DEPOSIT:" : "SISA BON:";
+        p += `\x1B\x45\x01\x1B\x21\x10` + buatBaris(`${labelSisaBluetooth}`, `Rp ${Math.abs(sisa).toLocaleString()}`) + `\x1B\x45\x00\x1B\x21\x00\n\n`;
         p += `\x1B\x61\x01\x1B\x21\x00` + `\n\n\n` + `( ............................ )\n` + garisStrip;
         p += `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`;
 
@@ -551,6 +663,7 @@
             await clientSupabase.from('transaksi_detail').insert(details);
             await clientSupabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
 
+            // Trigger Cetak Bluetooth (Jika Tersambung)
             if (btCharacteristic) {
                 btn.innerText = "MENCETAK CUSTOMER...";
                 let cetakCustomer = p.replace('[JENIS_CETAKAN]', '=== LEMBAR CUSTOMER ===');
@@ -562,14 +675,19 @@
                 btn.innerText = "MENCETAK ADMIN...";
                 let cetakAdmin = p.replace('[JENIS_CETAKAN]', '=== LEMBAR ADMIN ===');
                 await printToBT(cetakAdmin);
-                
-                lastPrintText = p; 
-                document.getElementById('btnReprint').disabled = false;
-            } else {
-                lastPrintText = p;
-                document.getElementById('btnReprint').disabled = false;
-                alert("ℹ️ Data BERHASIL disimpan ke Database!");
-            }
+            } 
+            
+            lastPrintText = p;
+            document.getElementById('btnReprint').disabled = false;
+            
+            // Proses generate gambar digital
+            btn.innerText = "MEMBUAT LAPORAN DIGITAL...";
+            await buatGambarLaporan({
+                noNota, tglIndo, ag, drvGabung, mobil,
+                itemsKirim, itemsRetur, tk, tr, ongkir,
+                bl_input, tagihanBersih, cash, trf, sisa
+            });
+
             btn.innerText = "SUKSES DISIMPAN";
         } catch (e) {
             alert("❌ DATABASE ERROR: " + (e.message || e));
