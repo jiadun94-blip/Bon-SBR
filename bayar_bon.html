@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBR Putra Food - Pembayaran Bon</title>
+    <!-- Tambahan Library untuk Export JPG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -22,7 +24,6 @@
         .display-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 15px; font-weight: bold; }
         .display-row.highlight { font-size: 18px; color: #d63031; border-top: 1px solid #ddd; padding-top: 5px; margin-top: 8px; }
         
-        /* Gaya untuk Box Informasi Nota Terakhir */
         .info-nota-box { display: none; background: #fff5f5; border: 1px solid #feb2b2; border-radius: 6px; padding: 10px; margin: 8px 0; font-size: 13px; color: #c53030; }
         .info-nota-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
         .info-nota-row span:last-child { font-weight: bold; color: #2d3748; }
@@ -35,7 +36,6 @@
         th { font-size: 12px; padding: 8px; background: #f1f2f6; border-bottom: 2px solid #ddd; text-transform: uppercase; }
         td { padding: 8px; border-bottom: 1px solid #edf2f7; font-size: 13px; font-weight: bold; }
 
-        /* Gaya untuk Link Nota & Modal Digital */
         .nota-link { color: #2563eb; text-decoration: underline; cursor: pointer; font-weight: bold; }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(3px); }
         .modal-content { background: #1e1e1e; margin: 10% auto; border-radius: 12px; width: 90%; max-width: 480px; border: 1px solid #444; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
@@ -55,7 +55,7 @@
 </head>
 <body>
 
-<div class="container">
+<div class="container" id="mainContainer">
     <header><h2>SBR<span>digital</span> ADMIN</h2><p>TERIMA PEMBAYARAN BON</p></header>
 
     <div class="row-flex">
@@ -65,15 +65,12 @@
 
     <div class="display-box">
         <div class="display-row"><span>Bon Saat Ini:</span><span id="txtBonLama">Rp 0</span></div>
-        
-        <!-- Wadah Informasi Detail Nota Terakhir -->
         <div id="infoNotaTerakhir" class="info-nota-box">
             <div style="font-weight: bold; border-bottom: 1px dashed #fc8181; padding-bottom: 4px; margin-bottom: 6px;">⚠️ DETAIL PENGIRIMAN TERAKHIR:</div>
             <div class="info-nota-row"><span>No. Nota:</span><span id="txtNotaTerakhir">-</span></div>
             <div class="info-nota-row"><span>Tgl Kirim:</span><span id="txtTglKirim">-</span></div>
             <div class="info-nota-row" style="margin-bottom: 0;"><span>Driver:</span><span id="txtDriverKirim">-</span></div>
         </div>
-
         <div class="display-row highlight"><span>Total Tagihan:</span><span id="txtTotalTagihan">Rp 0</span></div>
     </div>
 
@@ -110,10 +107,17 @@
 <script>
     const clientSupabase = supabase.createClient("https://yxcxvkairftqzmptkorr.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs");
     let listAgen = {};
+    let printDataText = ""; // Variabel global untuk menyimpan data ESC/POS
+
+    // === Fungsi Padding Teks Kiri-Kanan untuk Kertas 80mm (48 Karakter) ===
+    function padLR(left, right, width = 48) {
+        let spaces = width - left.length - right.length;
+        if (spaces < 1) spaces = 1;
+        return left + " ".repeat(spaces) + right;
+    }
 
     async function initHalaman() {
         document.getElementById('tglBayar').valueAsDate = new Date();
-        
         const { data: agen } = await clientSupabase.from('agen').select('*');
         const selAgen = document.getElementById('pilihAgen');
         selAgen.innerHTML = '<option value="">-- PILIH --</option>';
@@ -121,7 +125,6 @@
 
         if (agen) {
             const agenNormal = agen.filter(a => a.type_agen !== 'KHUSUS');
-            
             agenNormal.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen)).forEach(a => {
                 const labelBon = a.saldo_bon > 0 ? " (!)" : "";
                 selAgen.options.add(new Option(a.nama_agen + labelBon, a.nama_agen));
@@ -137,7 +140,6 @@
         tbody.innerHTML = '';
         if (riwayat) {
             riwayat.forEach(r => {
-                // Konversi No Nota Menjadi Link yang bisa di-klik jika bukan "NON-NOTA"
                 let linkNotaHtml = r.no_nota_referensi && r.no_nota_referensi !== 'NON-NOTA' 
                     ? `<span class="nota-link" onclick="bukaStrukNota('${r.no_nota_referensi}')">${r.no_nota_referensi}</span>` 
                     : `<span style="color:#666;">${r.no_nota_referensi || '-'}</span>`;
@@ -153,43 +155,27 @@
         }
     }
 
-    function clearZero(el) { 
-        if (el.value === "0" || el.value === 0) el.value = ""; 
-    }
-
-    function restoreZero(el) { 
-        if (el.value === "") {
-            el.value = "0";
-            hitungSisa();
-        }
-    }
+    function clearZero(el) { if (el.value === "0" || el.value === 0) el.value = ""; }
+    function restoreZero(el) { if (el.value === "") { el.value = "0"; hitungSisa(); } }
 
     function formatRupiah(el) { 
         let cursorPosition = el.selectionStart;
         let originalLength = el.value.length;
-
         let v = el.value.replace(/[^0-9]/g, '');
-        if (v === "") {
-            el.value = "0";
-        } else {
-            el.value = Number(v).toLocaleString('id-ID');
-        }
-
+        if (v === "") el.value = "0";
+        else el.value = Number(v).toLocaleString('id-ID');
         let newLength = el.value.length;
         cursorPosition = cursorPosition + (newLength - originalLength);
         el.setSelectionRange(cursorPosition, cursorPosition);
     }
     
-    function getAngka(id) { 
-        return parseFloat(document.getElementById(id).value.replace(/[^0-9]/g, '')) || 0; 
-    }
+    function getAngka(id) { return parseFloat(document.getElementById(id).value.replace(/[^0-9]/g, '')) || 0; }
 
     async function loadDataAgen() {
         const ag = document.getElementById('pilihAgen').value;
         const bon = listAgen[ag] || 0;
         document.getElementById('txtBonLama').innerText = "Rp " + bon.toLocaleString('id-ID');
         document.getElementById('txtTotalTagihan').innerText = "Rp " + bon.toLocaleString('id-ID');
-        
         const infoNotaBox = document.getElementById('infoNotaTerakhir');
         
         if (ag && bon > 0) {
@@ -198,22 +184,14 @@
             document.getElementById('txtDriverKirim').innerText = "Memuat...";
             infoNotaBox.style.display = "block";
 
-            const { data: trx, error } = await clientSupabase
-                .from('transaksi')
-                .select('no_nota, tanggal, driver_1, driver_2')
-                .eq('nama_agen', ag)
-                .order('created_at', { ascending: false })
-                .limit(1);
+            const { data: trx } = await clientSupabase.from('transaksi').select('no_nota, tanggal, driver_1, driver_2').eq('nama_agen', ag).order('created_at', { ascending: false }).limit(1);
 
             if (trx && trx.length > 0) {
                 const t = trx[0];
                 const [y, m, d] = t.tanggal.split('-');
-                const tglIndo = `${d}-${m}-${y}`;
                 const drvGabung = t.driver_2 ? `${t.driver_1} / ${t.driver_2}` : t.driver_1;
-                
-                // Menjadikan No Nota bisa diklik dan membuka modal
                 document.getElementById('txtNotaTerakhir').innerHTML = `<span class="nota-link" onclick="bukaStrukNota('${t.no_nota}')">${t.no_nota}</span>`;
-                document.getElementById('txtTglKirim').innerText = tglIndo || '-';
+                document.getElementById('txtTglKirim').innerText = `${d}-${m}-${y}` || '-';
                 document.getElementById('txtDriverKirim').innerText = drvGabung || '-';
             } else {
                 infoNotaBox.style.display = "none";
@@ -221,7 +199,6 @@
         } else {
             infoNotaBox.style.display = "none";
         }
-
         hitungSisa();
     }
 
@@ -241,7 +218,6 @@
         document.getElementById('txtTotalTagihan').innerText = "Rp 0";
         document.getElementById('txtSisaAkhir').innerText = "Rp 0";
         document.getElementById('infoNotaTerakhir').style.display = "none";
-        
         const btn = document.getElementById('btnSimpan');
         btn.disabled = false;
         btn.innerText = "Simpan Pembayaran";
@@ -254,9 +230,7 @@
         const cash = getAngka('inputCash');
         const trf = getAngka('inputTrf');
         
-        if (cash === 0 && trf === 0) {
-            return alert("Isi nominal pembayaran CASH atau TRANSFER terlebih dahulu!");
-        }
+        if (cash === 0 && trf === 0) return alert("Isi nominal pembayaran CASH atau TRANSFER terlebih dahulu!");
 
         const bonLama = listAgen[ag] || 0;
         const sisaAkhir = bonLama - cash - trf;
@@ -285,7 +259,6 @@
             if (nota && nota.length > 0) await clientSupabase.from('transaksi').update({ sisa_akhir: sisaAkhir }).eq('id', nota[0].id);
 
             alert("✅ Sukses Melakukan Pembayaran! Nota Ref: " + noNotaRef);
-            
             resetForm();
             await initHalaman();
         } catch (e) { 
@@ -295,15 +268,8 @@
         }
     }
 
-    // ============================================
-    // FUNGSI UNTUK MENAMPILKAN POP UP NOTA DIGITAL
-    // ============================================
-    function tutupModal() { 
-        document.getElementById('modalDetail').style.display = "none"; 
-    }
-    window.onclick = (e) => { 
-        if (e.target == document.getElementById('modalDetail')) tutupModal(); 
-    }
+    function tutupModal() { document.getElementById('modalDetail').style.display = "none"; }
+    window.onclick = (e) => { if (e.target == document.getElementById('modalDetail')) tutupModal(); }
 
     async function bukaStrukNota(noNota) {
         if (!noNota || noNota === 'NON-NOTA') return;
@@ -313,23 +279,19 @@
         document.getElementById('modalDetail').style.display = "block";
 
         try {
-            const { data: trx, error: errTrx } = await clientSupabase.from('transaksi').select('*').eq('no_nota', noNota).single();
-            if (errTrx) throw errTrx;
-
-            const { data: detail, error: errDet } = await clientSupabase.from('transaksi_detail').select('*').eq('no_nota', noNota);
-            if (errDet) throw errDet;
-
-            const { data: riwayatBayar, error: errBayar } = await clientSupabase.from('pembayaran_bon')
-                .select('tanggal, bayar_cash, bayar_transfer, keterangan')
-                .eq('no_nota_referensi', noNota);
+            const { data: trx } = await clientSupabase.from('transaksi').select('*').eq('no_nota', noNota).single();
+            const { data: detail } = await clientSupabase.from('transaksi_detail').select('*').eq('no_nota', noNota);
+            const { data: riwayatBayar } = await clientSupabase.from('pembayaran_bon').select('tanggal, bayar_cash, bayar_transfer, keterangan').eq('no_nota_referensi', noNota);
 
             const [y, m, d] = trx.tanggal.split('-');
             const drvGabung = trx.driver_2 ? `${trx.driver_1} / ${trx.driver_2}` : trx.driver_1;
 
-            let s = `<div class="struk-box">
+            // ============================================
+            // 1. MEMBUAT TAMPILAN HTML UNTUK MODAL LAYAR
+            // ============================================
+            let s = `<div class="struk-box" id="areaStruk">
                         <div class="struk-center">
-                            <span class="struk-title">SBR PUTRA FOOD</span><br>
-                            Lembang, Bandung Barat<br>
+                            <span class="struk-title">SBR PUTRA FOOD</span><br>Lembang, Bandung Barat<br>
                         </div>
                         <div class="struk-separator"></div>
                         <div class="struk-row"><span>NO: ${trx.no_nota}</span><span>TGL: ${d}-${m}-${y}</span></div>
@@ -337,37 +299,65 @@
                         <div>DRV: ${drvGabung} [ ${trx.plat_nomor || '-'} ]</div>
                         <div class="struk-separator"></div>`;
 
+            // ============================================
+            // 2. MEMBUAT DATA ESC/POS (TEXT) UNTUK PRINTER BLUETOOTH (48 Karakter)
+            // ============================================
+            let txt = "\x1B\x40"; // ESC @ (Initialize printer)
+            txt += "\x1B\x61\x01"; // Center align
+            txt += "SBR PUTRA FOOD\nLembang, Bandung Barat\n";
+            txt += "\x1B\x61\x00"; // Left align
+            txt += "------------------------------------------------\n";
+            txt += padLR(`NO: ${trx.no_nota}`, `TGL: ${d}-${m}-${y}`) + "\n";
+            txt += "\x1B\x61\x01"; // Center align
+            txt += `${trx.nama_agen.toUpperCase()}\n`;
+            txt += `DRV: ${drvGabung} [ ${trx.plat_nomor || '-'} ]\n`;
+            txt += "\x1B\x61\x00"; // Left align
+            txt += "------------------------------------------------\n";
+
             const itemsKirim = detail.filter(i => i.tipe === 'Kirim');
             const itemsRetur = detail.filter(i => i.tipe === 'Retur');
 
             itemsKirim.forEach(i => {
+                // Tampilan Web
                 s += `<div>${i.nama_barang}</div>`;
                 s += `<div class="struk-row struk-item-detail">
                         <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}</span>
                         <span>${(i.subtotal || 0).toLocaleString('id-ID')}</span>
                       </div>`;
+                // Tampilan Text Bluetooth
+                txt += `${i.nama_barang}\n`;
+                txt += padLR(`  ${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}`, `${(i.subtotal || 0).toLocaleString('id-ID')}`) + "\n";
             });
             s += `<div class="struk-separator"></div>`;
             s += `<div class="struk-row"><span>TOTAL KIRIM:</span><span>Rp ${(trx.total_kirim || 0).toLocaleString('id-ID')}</span></div>`;
+            
+            txt += "------------------------------------------------\n";
+            txt += padLR("TOTAL KIRIM:", `Rp ${(trx.total_kirim || 0).toLocaleString('id-ID')}`) + "\n";
 
             if(itemsRetur.length > 0) {
                 s += `<br><div class="struk-bold">BARANG RETUR:</div>`;
+                txt += "\nBARANG RETUR:\n";
                 itemsRetur.forEach(i => {
                     s += `<div>[RETUR] ${i.nama_barang}</div>`;
                     s += `<div class="struk-row struk-item-detail">
                             <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}</span>
                             <span>-${(i.subtotal || 0).toLocaleString('id-ID')}</span>
                           </div>`;
+                    txt += `[RETUR] ${i.nama_barang}\n`;
+                    txt += padLR(`  ${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}`, `-${(i.subtotal || 0).toLocaleString('id-ID')}`) + "\n";
                 });
                 s += `<div class="struk-separator"></div>`;
                 s += `<div class="struk-row"><span>TOTAL RETUR:</span><span>Rp ${(trx.total_retur || 0).toLocaleString('id-ID')}</span></div>`;
+                
+                txt += "------------------------------------------------\n";
+                txt += padLR("TOTAL RETUR:", `Rp ${(trx.total_retur || 0).toLocaleString('id-ID')}`) + "\n";
             }
 
             const tagihanBersih = (trx.total_kirim || 0) - (trx.total_retur || 0) + (trx.bon_lama || 0);
             let bonLama = trx.bon_lama || 0;
-            let teksBonLama = bonLama < 0 ? "DEPOSIT:" : "BON LAMA:";
-            s += `<br><div class="struk-row"><span>${teksBonLama}</span><span>Rp ${Math.abs(bonLama).toLocaleString('id-ID')}</span></div>`;
+            let labelBonLama = bonLama < 0 ? "DEPOSIT:" : "BON LAMA:";
             
+            s += `<br><div class="struk-row"><span>${labelBonLama}</span><span>Rp ${Math.abs(bonLama).toLocaleString('id-ID')}</span></div>`;
             s += `<div class="struk-double-separator"></div>`;
             s += `<div class="struk-row struk-bold"><span>TOTAL TAGIHAN:</span><span>Rp ${tagihanBersih.toLocaleString('id-ID')}</span></div>`;
             s += `<div class="struk-separator"></div>`;
@@ -375,39 +365,132 @@
             s += `<div class="struk-row"><span>Bayar TRF:</span><span>Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}</span></div>`;
             s += `<div class="struk-separator"></div>`;
 
+            txt += "\n" + padLR(labelBonLama, `Rp ${Math.abs(bonLama).toLocaleString('id-ID')}`) + "\n";
+            txt += "================================================\n";
+            txt += padLR("TOTAL TAGIHAN:", `Rp ${tagihanBersih.toLocaleString('id-ID')}`) + "\n";
+            txt += "------------------------------------------------\n";
+            txt += padLR("Bayar CASH:", `Rp ${(trx.bayar_cash || 0).toLocaleString('id-ID')}`) + "\n";
+            txt += padLR("Bayar TRF:", `Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}`) + "\n";
+            txt += "------------------------------------------------\n";
+
             if (riwayatBayar && riwayatBayar.length > 0) {
                 s += `<br><div class="struk-bold">RIWAYAT CICILAN:</div>`;
-                // Urutkan dari yang paling lama ke yang terbaru
+                txt += "\nRIWAYAT CICILAN:\n";
                 riwayatBayar.sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
-                
                 riwayatBayar.forEach(p => {
                     let detailBayar = "";
-                    if ((p.bayar_cash || 0) > 0) detailBayar += `CASH: Rp ${p.bayar_cash.toLocaleString('id-ID')} `;
-                    if ((p.bayar_transfer || 0) > 0) detailBayar += `TRF: Rp ${p.bayar_transfer.toLocaleString('id-ID')}`;
+                    if ((p.bayar_cash || 0) > 0) detailBayar += `CASH: ${p.bayar_cash.toLocaleString('id-ID')} `;
+                    if ((p.bayar_transfer || 0) > 0) detailBayar += `TRF: ${p.bayar_transfer.toLocaleString('id-ID')}`;
                     let ket = p.keterangan ? `<div style="font-size:11px; color:#555;">&nbsp;&nbsp;(${p.keterangan})</div>` : '';
-                    
-                    // Format Tanggal jadi Tanggal Bulan Tahun
                     let tglSplit = p.tanggal.split('-');
                     let namaBulan = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
                     let tglIndoFormat = tglSplit.length === 3 ? `${tglSplit[2]} ${namaBulan[parseInt(tglSplit[1])-1]} ${tglSplit[0]}` : p.tanggal;
                     
                     s += `<div class="struk-row"><span>&nbsp;&nbsp;${tglIndoFormat}</span><span>${detailBayar}</span></div>${ket}`;
+                    txt += padLR(`  ${tglIndoFormat}`, detailBayar) + "\n";
+                    if (p.keterangan) txt += `  (${p.keterangan})\n`;
                 });
                 s += `<div class="struk-separator"></div>`;
+                txt += "------------------------------------------------\n";
             }
 
             let sisaAkhir = trx.sisa_akhir || 0;
-            let teksSisa = sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:";
-            s += `<div class="struk-row struk-bold" style="font-size:14px; color:#dc2626;"><span>${teksSisa}</span><span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span></div>`;
+            let labelSisa = sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:";
+            s += `<div class="struk-row struk-bold" style="font-size:14px; color:#dc2626;"><span>${labelSisa}</span><span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span></div>`;
             s += `<div class="struk-separator"></div>`;
             s += `<div class="struk-center struk-bold" style="margin-top:10px; text-align:center;">SBR PUTRA FOOD SYSTEM</div>`;
-            
             s += `</div>`;
+
+            txt += padLR(labelSisa, `Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}`) + "\n";
+            txt += "------------------------------------------------\n";
+            txt += "\x1B\x61\x01"; // Center
+            txt += "SBR PUTRA FOOD SYSTEM\n\n\n\n";
+            txt += "\x1D\x56\x41\x03"; // Feed and cut (untuk printer yang support auto cutter)
+            
+            // Simpan teks final ke variabel global agar bisa diambil fungsi Bluetooth
+            window.printDataText = txt;
+
+            s += `<div class="action-buttons" style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button onclick="printStrukBluetooth()" style="flex:1; background:#2980b9; color:white; padding:10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">🖨️ PRINT BLUETOOTH</button>
+                    <button onclick="downloadStrukJPG()" style="flex:1; background:#27ae60; color:white; padding:10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">📸 SAVE JPG</button>
+                  </div>`;
             
             modalIsi.innerHTML = s;
         } catch (e) {
             modalIsi.innerHTML = `<p style='color:red; text-align:center;'>Gagal memuat struk: ${e.message}</p>`;
         }
+    }
+
+    // ============================================
+    // FUNGSI BLUETOOTH API & EXPORT JPG
+    // ============================================
+
+    // Fungsi Print via Web Bluetooth API (Support Chrome Android/PC)
+    async function printStrukBluetooth() {
+        if (!navigator.bluetooth) {
+            alert("Perangkat atau browser Anda tidak mendukung Web Bluetooth API. Pastikan menggunakan Google Chrome versi terbaru dan URL menggunakan HTTPS.");
+            return;
+        }
+
+        try {
+            // Mencari semua device Bluetooth di sekitar (acceptAllDevices)
+            const device = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', '00001101-0000-1000-8000-00805f9b34fb']
+            });
+
+            console.log("Menghubungkan ke GATT Server...");
+            const server = await device.gatt.connect();
+
+            console.log("Mencari Service Printer...");
+            const services = await server.getPrimaryServices();
+            let printCharacteristic = null;
+
+            // Looping untuk mencari characteristic yang bisa di-write (dikirim teks)
+            for (let service of services) {
+                const characteristics = await service.getCharacteristics();
+                for (let characteristic of characteristics) {
+                    if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
+                        printCharacteristic = characteristic;
+                        break;
+                    }
+                }
+                if (printCharacteristic) break;
+            }
+
+            if (!printCharacteristic) {
+                throw new Error("Tidak menemukan karakteristik device yang bisa menerima data cetak.");
+            }
+
+            // Convert String ke Uint8Array
+            const encoder = new TextEncoder();
+            const data = encoder.encode(window.printDataText);
+
+            // Printer BLE memiliki limit MTU (Maximum Transmission Unit)
+            // Jadi data harus dikirim dalam potongan kecil (chunk), biasanya aman di 100 byte
+            const CHUNK_SIZE = 100; 
+            for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+                let chunk = data.slice(i, i + CHUNK_SIZE);
+                await printCharacteristic.writeValue(chunk);
+            }
+
+            alert("✅ Perintah cetak berhasil dikirim ke " + device.name);
+        } catch (error) {
+            console.error(error);
+            // Gagal biasanya karena user membatalkan (cancel popup), device offline, atau tidak ada service printer.
+            alert("❌ Gagal mencetak: " + error.message);
+        }
+    }
+
+    // Export Struk Spesifik ke JPG
+    function downloadStrukJPG() {
+        const target = document.getElementById('areaStruk');
+        html2canvas(target, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+            let link = document.createElement('a');
+            link.download = `Struk_Digital_${Date.now()}.jpg`;
+            link.href = canvas.toDataURL('image/jpeg');
+            link.click();
+        });
     }
 
     window.onload = initHalaman;
