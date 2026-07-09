@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SBR | Rekap Terpadu v6.2</title>
+    <!-- Library Supabase & Excel -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Library HTML2Canvas untuk Simpan Gambar -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Courier+New:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
@@ -128,7 +131,8 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3 id="modalJudul" style="margin:0; font-size:15px;">RINCIAN DATA</h3>
-            <div style="display: flex; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <button id="btnCetakGambar" onclick="cetakGambar()" style="display:none; background:#16a34a; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">📸 SIMPAN JPG</button>
                 <button id="btnCetak" onclick="cetakStrukBluetooth()" style="display:none; background:#2563eb; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">🖨️ CETAK BLUETOOTH</button>
                 <span class="close-btn" onclick="tutupModal()">&times;</span>
             </div>
@@ -192,6 +196,7 @@
         const modalIsi = document.getElementById('modalIsi');
         document.getElementById('modalJudul').innerText = `RINCIAN ${tipeKlik.toUpperCase()} - ${noNota}`;
         document.getElementById('btnCetak').style.display = "none"; 
+        document.getElementById('btnCetakGambar').style.display = "none";
         modalIsi.innerHTML = "<p style='text-align:center;'>Mengambil data...</p>";
         document.getElementById('modalDetail').style.display = "block";
 
@@ -211,10 +216,19 @@
         modalIsi.innerHTML = html;
     }
 
+    // FUNGSI HELPER UNTUK MENGUBAH TANGGAL MENJADI TANGGAL BULAN TAHUN
+    function formatTglBulanTahun(tglStr) {
+        if (!tglStr) return "";
+        const [y, m, d] = tglStr.split('-');
+        const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        return `${d} ${namaBulan[parseInt(m)-1]} ${y}`;
+    }
+
     async function bukaStrukNota(noNota) {
         const modalIsi = document.getElementById('modalIsi');
         document.getElementById('modalJudul').innerText = `STRUK DETAIL NOTA`;
         document.getElementById('btnCetak').style.display = "inline-block"; 
+        document.getElementById('btnCetakGambar').style.display = "inline-block";
         modalIsi.innerHTML = "<p style='text-align:center;'>Membuka struk belanja...</p>";
         document.getElementById('modalDetail').style.display = "block";
 
@@ -225,9 +239,13 @@
             const { data: detail, error: errDet } = await _sb.from('transaksi_detail').select('*').eq('no_nota', noNota);
             if (errDet) throw errDet;
 
-            const { data: riwayatBayar, error: errBayar } = await _sb.from('pembayaran_bon')
+            const { data: rawRiwayatBayar, error: errBayar } = await _sb.from('pembayaran_bon')
                 .select('tanggal, bayar_cash, bayar_transfer, keterangan')
                 .eq('no_nota_referensi', noNota);
+
+            // MENGURUTKAN RIWAYAT BAYAR DARI YANG TERLAMA KE TERBARU (Ascending)
+            let riwayatBayar = rawRiwayatBayar || [];
+            riwayatBayar.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
 
             dataStrukAktif = { trx, detail, riwayatBayar };
 
@@ -290,10 +308,14 @@
                     if ((p.bayar_cash || 0) > 0) detailBayar += `CASH: Rp ${p.bayar_cash.toLocaleString('id-ID')} `;
                     if ((p.bayar_transfer || 0) > 0) detailBayar += `TRF: Rp ${p.bayar_transfer.toLocaleString('id-ID')}`;
                     let ket = p.keterangan ? `<div style="font-size:11px; color:#555;">&nbsp;&nbsp;(${p.keterangan})</div>` : '';
-                    s += `<div class="struk-row"><span>&nbsp;&nbsp;${p.tanggal}</span><span>${detailBayar}</span></div>${ket}`;
+                    
+                    // Format Tanggal di HTML View
+                    let tglIndo = formatTglBulanTahun(p.tanggal);
+                    
+                    s += `<div class="struk-row"><span>&nbsp;&nbsp;${tglIndo}</span><span>${detailBayar}</span></div>${ket}`;
                 });
                 s += `<div class="struk-separator"></div>`;
-            } // Kurung tutup dipindah ke sini
+            }
 
             let sisaAkhir = trx.sisa_akhir || 0;
             let teksSisa = sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:";
@@ -312,14 +334,12 @@
     function tutupModal() { 
         document.getElementById('modalDetail').style.display = "none"; 
         document.getElementById('btnCetak').style.display = "none"; 
+        document.getElementById('btnCetakGambar').style.display = "none";
     }
     window.onclick = (e) => { if (e.target == document.getElementById('modalDetail')) tutupModal(); }
 
-    // ====== FUNGSI PERATA TEKS DINAMIS ======
     function formatBarisKiriKanan(kiri, kanan) {
-        // Ambil nilai ukuran kertas dari dropdown HTML
         const LEBAR_MAX = parseInt(document.getElementById('lebarKertas').value);
-        
         let spasi = LEBAR_MAX - (kiri.length + String(kanan).length);
         if (spasi < 1) spasi = 1;
         return kiri + " ".repeat(spasi) + kanan + "\n";
@@ -334,7 +354,6 @@
 
         const { trx, detail, riwayatBayar } = dataStrukAktif;
 
-        // ====== GARIS DINAMIS ======
         const LEBAR_MAX = parseInt(document.getElementById('lebarKertas').value);
         const GARIS = "-".repeat(LEBAR_MAX) + "\n";
         const GARIS_GANDA = "=".repeat(LEBAR_MAX) + "\n";
@@ -407,7 +426,11 @@
                 let det = "";
                 if ((p.bayar_cash || 0) > 0) det += `CSH: Rp ${p.bayar_cash.toLocaleString('id-ID')} `;
                 if ((p.bayar_transfer || 0) > 0) det += `TRF: Rp ${p.bayar_transfer.toLocaleString('id-ID')}`;
-                teks += formatBarisKiriKanan(`  ${p.tanggal}`, det.trim());
+                
+                // Format Tanggal di Struk Bluetooth
+                let tglIndo = formatTglBulanTahun(p.tanggal);
+                
+                teks += formatBarisKiriKanan(`  ${tglIndo}`, det.trim());
             });
             teks += GARIS;
         }
@@ -444,17 +467,14 @@
             }
             if (!characteristic) throw new Error("Karakteristik write tidak ditemukan.");
 
-            // ==== BAGIAN PERBAIKAN BUFFER OVERFLOW ====
             let encoder = new TextEncoder();
             let dataUint8 = encoder.encode(teks);
             
-            let chunkSize = 100; // Dikurangi dari 256 jadi 100 agar aman untuk memori thermal
+            let chunkSize = 100; 
             for (let i = 0; i < dataUint8.length; i += chunkSize) {
                 await characteristic.writeValue(dataUint8.slice(i, i + chunkSize));
-                // Jeda 100 milidetik agar memori printer tidak tumpah/kelolodan
                 await new Promise(resolve => setTimeout(resolve, 100)); 
             }
-            // ============================================
             
             device.gatt.disconnect();
             document.getElementById('btnCetak').innerText = "🖨️ CETAK BLUETOOTH";
@@ -512,6 +532,50 @@
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Detail Keuangan");
         XLSX.writeFile(workbook, `Rekap_SBR_Komplit_${document.getElementById('tglMulai').value}.xlsx`);
+    }
+
+    async function cetakGambar() {
+        const areaStruk = document.getElementById('areaCetakStruk');
+        if (!areaStruk) {
+            alert("Area struk tidak ditemukan!");
+            return;
+        }
+
+        const btn = document.getElementById('btnCetakGambar');
+        const teksAsli = btn.innerText;
+        btn.innerText = "⏳ Memproses...";
+        btn.disabled = true;
+
+        try {
+            const canvas = await html2canvas(areaStruk, {
+                scale: 2, 
+                backgroundColor: "#ffffff",
+                logging: false
+            });
+
+            const imageURL = canvas.toDataURL("image/jpeg", 0.9);
+
+            const downloadLink = document.createElement("a");
+            downloadLink.href = imageURL;
+            
+            let namaFile = "Bukti_Validasi_SBR";
+            if (dataStrukAktif && dataStrukAktif.trx && dataStrukAktif.trx.no_nota) {
+                namaFile += "_" + dataStrukAktif.trx.no_nota;
+            }
+            
+            downloadLink.download = namaFile + ".jpg";
+            
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+
+        } catch (error) {
+            console.error("Error cetak gambar:", error);
+            alert("Gagal memproses gambar: " + error.message);
+        } finally {
+            btn.innerText = teksAsli;
+            btn.disabled = false;
+        }
     }
 </script>
 
