@@ -17,9 +17,16 @@
         .form-group { margin-bottom: 12px; }
         .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; text-transform: uppercase; color: #444; }
         .form-group select, .form-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; font-weight: bold; color: #000; }
+        
         .display-box { background: #f8f9fa; padding: 12px; border-radius: 8px; border: 1px dashed #cbd5e0; margin-bottom: 12px; }
         .display-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 15px; font-weight: bold; }
-        .display-row.highlight { font-size: 18px; color: #d63031; border-top: 1px solid #ddd; padding-top: 5px; }
+        .display-row.highlight { font-size: 18px; color: #d63031; border-top: 1px solid #ddd; padding-top: 5px; margin-top: 8px; }
+        
+        /* Gaya untuk Box Informasi Nota Terakhir */
+        .info-nota-box { display: none; background: #fff5f5; border: 1px solid #feb2b2; border-radius: 6px; padding: 10px; margin: 8px 0; font-size: 13px; color: #c53030; }
+        .info-nota-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .info-nota-row span:last-child { font-weight: bold; color: #2d3748; }
+        
         .input-manual { width: 100%; padding: 10px; border: 1px solid #1e272e; border-radius: 6px; font-weight: bold; text-align: right; box-sizing: border-box; font-size: 20px; }
         .btn-submit { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; color: white; background: #1e272e; font-size: 16px; text-transform: uppercase; }
         .btn-submit:disabled { background: #a0aec0; }
@@ -41,6 +48,15 @@
 
     <div class="display-box">
         <div class="display-row"><span>Bon Saat Ini:</span><span id="txtBonLama">Rp 0</span></div>
+        
+        <!-- Wadah Informasi Detail Nota Terakhir -->
+        <div id="infoNotaTerakhir" class="info-nota-box">
+            <div style="font-weight: bold; border-bottom: 1px dashed #fc8181; padding-bottom: 4px; margin-bottom: 6px;">⚠️ DETAIL PENGIRIMAN TERAKHIR:</div>
+            <div class="info-nota-row"><span>No. Nota:</span><span id="txtNotaTerakhir">-</span></div>
+            <div class="info-nota-row"><span>Tgl Kirim:</span><span id="txtTglKirim">-</span></div>
+            <div class="info-nota-row" style="margin-bottom: 0;"><span>Driver:</span><span id="txtDriverKirim">-</span></div>
+        </div>
+
         <div class="display-row highlight"><span>Total Tagihan:</span><span id="txtTotalTagihan">Rp 0</span></div>
     </div>
 
@@ -70,18 +86,18 @@
     async function initHalaman() {
         document.getElementById('tglBayar').valueAsDate = new Date();
         
-        // Memuat ulang data Agen terbaru langsung dari database
         const { data: agen } = await clientSupabase.from('agen').select('*');
         const selAgen = document.getElementById('pilihAgen');
         selAgen.innerHTML = '<option value="">-- PILIH --</option>';
         listAgen = {};
 
         if (agen) {
-            // FILTER: Menyembunyikan agen 'KHUSUS', jadi hanya tampil yang Normal/Null
             const agenNormal = agen.filter(a => a.type_agen !== 'KHUSUS');
             
             agenNormal.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen)).forEach(a => {
-                selAgen.options.add(new Option(a.nama_agen, a.nama_agen));
+                // Menambahkan Tanda Seru jika ada Bon
+                const labelBon = a.saldo_bon > 0 ? " (!)" : "";
+                selAgen.options.add(new Option(a.nama_agen + labelBon, a.nama_agen));
                 listAgen[a.nama_agen] = a.saldo_bon || 0;
             });
         }
@@ -117,7 +133,6 @@
     }
 
     function formatRupiah(el) { 
-        // Mengamankan posisi kursor sebelum melakukan manipulasi string format titik
         let cursorPosition = el.selectionStart;
         let originalLength = el.value.length;
 
@@ -128,7 +143,6 @@
             el.value = Number(v).toLocaleString('id-ID');
         }
 
-        // Menjaga agar pergerakan kursor saat menghapus di depan/tengah tetap sinkron dan rapi
         let newLength = el.value.length;
         cursorPosition = cursorPosition + (newLength - originalLength);
         el.setSelectionRange(cursorPosition, cursorPosition);
@@ -138,11 +152,45 @@
         return parseFloat(document.getElementById(id).value.replace(/[^0-9]/g, '')) || 0; 
     }
 
-    function loadDataAgen() {
+    // Mengambil data agen dan rincian transaksi terakhir
+    async function loadDataAgen() {
         const ag = document.getElementById('pilihAgen').value;
         const bon = listAgen[ag] || 0;
         document.getElementById('txtBonLama').innerText = "Rp " + bon.toLocaleString('id-ID');
         document.getElementById('txtTotalTagihan').innerText = "Rp " + bon.toLocaleString('id-ID');
+        
+        const infoNotaBox = document.getElementById('infoNotaTerakhir');
+        
+        if (ag && bon > 0) {
+            document.getElementById('txtNotaTerakhir').innerText = "Memuat...";
+            document.getElementById('txtTglKirim').innerText = "Memuat...";
+            document.getElementById('txtDriverKirim').innerText = "Memuat...";
+            infoNotaBox.style.display = "block";
+
+            // Mengambil transaksi pengiriman terakhir agen
+            const { data: trx, error } = await clientSupabase
+                .from('transaksi')
+                .select('no_nota, tanggal, driver_1, driver_2')
+                .eq('nama_agen', ag)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if (trx && trx.length > 0) {
+                const t = trx[0];
+                const [y, m, d] = t.tanggal.split('-');
+                const tglIndo = `${d}-${m}-${y}`;
+                const drvGabung = t.driver_2 ? `${t.driver_1} / ${t.driver_2}` : t.driver_1;
+                
+                document.getElementById('txtNotaTerakhir').innerText = t.no_nota || '-';
+                document.getElementById('txtTglKirim').innerText = tglIndo || '-';
+                document.getElementById('txtDriverKirim').innerText = drvGabung || '-';
+            } else {
+                infoNotaBox.style.display = "none";
+            }
+        } else {
+            infoNotaBox.style.display = "none";
+        }
+
         hitungSisa();
     }
 
@@ -161,6 +209,7 @@
         document.getElementById('txtBonLama').innerText = "Rp 0";
         document.getElementById('txtTotalTagihan').innerText = "Rp 0";
         document.getElementById('txtSisaAkhir').innerText = "Rp 0";
+        document.getElementById('infoNotaTerakhir').style.display = "none";
         
         const btn = document.getElementById('btnSimpan');
         btn.disabled = false;
@@ -206,7 +255,6 @@
 
             alert("✅ Sukses Melakukan Pembayaran! Nota Ref: " + noNotaRef);
             
-            // Mengembalikan form ke keadaan kosong/0 & memperbarui riwayat instan tanpa reload halaman
             resetForm();
             await initHalaman();
         } catch (e) { 
