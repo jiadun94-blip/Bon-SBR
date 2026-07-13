@@ -221,8 +221,10 @@
         if (!tglStr) return "";
         const [y, m, d] = tglStr.split('-');
         const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-        return `${d} ${namaBulan[parseInt(m)-1]} ${y}`;
+        // Tambahkan .slice(-2) pada huruf y di baris bawah ini
+        return `${d} ${namaBulan[parseInt(m)-1]} ${y.slice(-2)}`;
     }
+
 
     async function bukaStrukNota(noNota) {
         const modalIsi = document.getElementById('modalIsi');
@@ -415,11 +417,6 @@
         teks += formatBarisKiriKanan("Bayar TRF:", `Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}`);
         teks += GARIS;
         
-        let sisaAkhir = trx.sisa_akhir || 0;
-        let teksSisa = sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:";
-        teks += ESC_BOLD_ON + formatBarisKiriKanan(teksSisa, `Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}`) + ESC_BOLD_OFF;
-        teks += GARIS;
-
         if (riwayatBayar && riwayatBayar.length > 0) {
             teks += ESC_BOLD_ON + "RIWAYAT CICILAN:\n" + ESC_BOLD_OFF;
             riwayatBayar.forEach(p => {
@@ -432,7 +429,14 @@
                 
                 teks += formatBarisKiriKanan(`  ${tglIndo}`, det.trim());
             });
-            teks += GARIS;
+                        teks += GARIS;
+        let sisaAkhir = trx.sisa_akhir || 0;
+        let teksSisa = sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:";
+        teks += ESC_BOLD_ON + formatBarisKiriKanan(teksSisa, `Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}`) + ESC_BOLD_OFF;
+        teks += GARIS;
+
+        
+
         }
 
         teks += ESC_CENTER + ESC_BOLD_ON + "SBR PUTRA FOOD SYSTEM\n" + ESC_BOLD_OFF;
