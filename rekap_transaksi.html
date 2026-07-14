@@ -417,7 +417,7 @@
         teks += formatBarisKiriKanan("Bayar TRF:", `Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}`);
         teks += GARIS;
         
-        if (riwayatBayar && riwayatBayar.length > 0) {
+        (riwayatBayar && riwayatBayar.length > 0) {
             teks += ESC_BOLD_ON + "RIWAYAT CICILAN:\n" + ESC_BOLD_OFF;
             riwayatBayar.forEach(p => {
                 let det = "";
