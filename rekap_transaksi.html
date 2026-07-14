@@ -417,7 +417,7 @@
         teks += formatBarisKiriKanan("Bayar TRF:", `Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}`);
         teks += GARIS;
         
-        (riwayatBayar && riwayatBayar.length > 0) {
+        if (riwayatBayar && riwayatBayar.length > 0) {
             teks += ESC_BOLD_ON + "RIWAYAT CICILAN:\n" + ESC_BOLD_OFF;
             riwayatBayar.forEach(p => {
                 let det = "";
@@ -429,15 +429,14 @@
                 
                 teks += formatBarisKiriKanan(`  ${tglIndo}`, det.trim());
             });
-                        teks += GARIS;
+            teks += GARIS;
+        } // <--- SEBELUMNYA KURUNG TUTUP INI BERADA DI BAWAH VARIABEL sisaAkhir. SEKARANG SUDAH DIPINDAH KE SINI.
+
+        // VARIABEL SISA AKHIR DIKELUARKAN AGAR SELALU TERCETAK
         let sisaAkhir = trx.sisa_akhir || 0;
         let teksSisa = sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:";
         teks += ESC_BOLD_ON + formatBarisKiriKanan(teksSisa, `Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}`) + ESC_BOLD_OFF;
         teks += GARIS;
-
-        
-
-        }
 
         teks += ESC_CENTER + ESC_BOLD_ON + "SBR PUTRA FOOD SYSTEM\n" + ESC_BOLD_OFF;
         teks += "\n\n\n"; 
