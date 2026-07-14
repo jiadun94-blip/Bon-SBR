@@ -81,14 +81,6 @@
 <div class="card">
     <h2>REKAP TRANSAKSI TERPADU SBR</h2>
 
-    <div style="text-align: center; margin-bottom: 15px; background: #2d2d2d; padding: 10px; border-radius: 6px;">
-        <label style="font-size:12px; color:#aaa; margin-right: 10px; font-weight: bold;">UKURAN KERTAS PRINTER:</label>
-        <select id="lebarKertas" style="background:#444; color:#fff; border:1px solid #555; padding:6px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">
-            <option value="32">58mm (Kecil)</option>
-            <option value="48">80mm (Besar)</option>
-        </select>
-    </div>
-
     <div class="filter-section">
         <div class="filter-group">
             <label>DARI TANGGAL</label>
@@ -131,11 +123,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3 id="modalJudul" style="margin:0; font-size:15px;">RINCIAN DATA</h3>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <button id="btnCetakGambar" onclick="cetakGambar()" style="display:none; background:#16a34a; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">📸 SIMPAN JPG</button>
-                <button id="btnCetak" onclick="cetakStrukBluetooth()" style="display:none; background:#2563eb; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">🖨️ CETAK BLUETOOTH</button>
-                <span class="close-btn" onclick="tutupModal()">&times;</span>
-            </div>
+            <span class="close-btn" onclick="tutupModal()">&times;</span>
         </div>
         <div class="modal-body" id="modalIsi"></div>
     </div>
@@ -195,8 +183,6 @@
     async function bukaPopUpDetail(noNota, tipeKlik) {
         const modalIsi = document.getElementById('modalIsi');
         document.getElementById('modalJudul').innerText = `RINCIAN ${tipeKlik.toUpperCase()} - ${noNota}`;
-        document.getElementById('btnCetak').style.display = "none"; 
-        document.getElementById('btnCetakGambar').style.display = "none";
         modalIsi.innerHTML = "<p style='text-align:center;'>Mengambil data...</p>";
         document.getElementById('modalDetail').style.display = "block";
 
@@ -216,21 +202,16 @@
         modalIsi.innerHTML = html;
     }
 
-    // FUNGSI HELPER UNTUK MENGUBAH TANGGAL MENJADI TANGGAL BULAN TAHUN
     function formatTglBulanTahun(tglStr) {
         if (!tglStr) return "";
         const [y, m, d] = tglStr.split('-');
         const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-        // Tambahkan .slice(-2) pada huruf y di baris bawah ini
         return `${d} ${namaBulan[parseInt(m)-1]} ${y.slice(-2)}`;
     }
-
 
     async function bukaStrukNota(noNota) {
         const modalIsi = document.getElementById('modalIsi');
         document.getElementById('modalJudul').innerText = `STRUK DETAIL NOTA`;
-        document.getElementById('btnCetak').style.display = "inline-block"; 
-        document.getElementById('btnCetakGambar').style.display = "inline-block";
         modalIsi.innerHTML = "<p style='text-align:center;'>Membuka struk belanja...</p>";
         document.getElementById('modalDetail').style.display = "block";
 
@@ -245,7 +226,6 @@
                 .select('tanggal, bayar_cash, bayar_transfer, keterangan')
                 .eq('no_nota_referensi', noNota);
 
-            // MENGURUTKAN RIWAYAT BAYAR DARI YANG TERLAMA KE TERBARU (Ascending)
             let riwayatBayar = rawRiwayatBayar || [];
             riwayatBayar.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
 
@@ -310,8 +290,6 @@
                     if ((p.bayar_cash || 0) > 0) detailBayar += `CASH: Rp ${p.bayar_cash.toLocaleString('id-ID')} `;
                     if ((p.bayar_transfer || 0) > 0) detailBayar += `TRF: Rp ${p.bayar_transfer.toLocaleString('id-ID')}`;
                     let ket = p.keterangan ? `<div style="font-size:11px; color:#555;">&nbsp;&nbsp;(${p.keterangan})</div>` : '';
-                    
-                    // Format Tanggal di HTML View
                     let tglIndo = formatTglBulanTahun(p.tanggal);
                     
                     s += `<div class="struk-row"><span>&nbsp;&nbsp;${tglIndo}</span><span>${detailBayar}</span></div>${ket}`;
@@ -325,8 +303,22 @@
             s += `<div class="struk-separator"></div>`;
             s += `<div class="struk-center struk-bold" style="margin-top:10px; text-align:center;">SBR PUTRA FOOD SYSTEM</div>`;
             
-            s += `</div>`;
+            s += `</div>`; // Akhir .struk-box
             
+            // TOMBOL AKSI & PILIHAN PRINTER
+            s += `<div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button id="btnCetak" onclick="cetakStrukBluetooth()" style="flex:1; background:#2563eb; color:white; padding:12px 10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">🖨️ CETAK BLUETOOTH</button>
+                    <button id="btnCetakGambar" onclick="cetakGambar()" style="flex:1; background:#16a34a; color:white; padding:12px 10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">📸 SIMPAN JPG</button>
+                  </div>`;
+                  
+            s += `<div style="margin-top: 10px; text-align: center; background: #2d2d2d; padding: 12px; border-radius: 6px; border: 1px solid #444;">
+                    <label for="lebarKertas" style="font-size: 13px; font-weight: bold; color: #ccc;">UKURAN KERTAS: </label>
+                    <select id="lebarKertas" style="padding: 6px 10px; border-radius: 4px; font-weight: bold; background: #1e1e1e; color: white; border: 1px solid #555; outline: none; cursor: pointer; margin-left: 5px;">
+                        <option value="48">80mm (Besar)</option>
+                        <option value="32">58mm (Kecil)</option>
+                    </select>
+                  </div>`;
+
             modalIsi.innerHTML = s;
         } catch (e) {
             modalIsi.innerHTML = `<p style='color:red; text-align:center;'>Gagal memuat struk: ${e.message}</p>`;
@@ -335,8 +327,6 @@
 
     function tutupModal() { 
         document.getElementById('modalDetail').style.display = "none"; 
-        document.getElementById('btnCetak').style.display = "none"; 
-        document.getElementById('btnCetakGambar').style.display = "none";
     }
     window.onclick = (e) => { if (e.target == document.getElementById('modalDetail')) tutupModal(); }
 
@@ -423,16 +413,12 @@
                 let det = "";
                 if ((p.bayar_cash || 0) > 0) det += `CSH: Rp ${p.bayar_cash.toLocaleString('id-ID')} `;
                 if ((p.bayar_transfer || 0) > 0) det += `TRF: Rp ${p.bayar_transfer.toLocaleString('id-ID')}`;
-                
-                // Format Tanggal di Struk Bluetooth
                 let tglIndo = formatTglBulanTahun(p.tanggal);
-                
                 teks += formatBarisKiriKanan(`  ${tglIndo}`, det.trim());
             });
             teks += GARIS;
-        } // <--- SEBELUMNYA KURUNG TUTUP INI BERADA DI BAWAH VARIABEL sisaAkhir. SEKARANG SUDAH DIPINDAH KE SINI.
+        }
 
-        // VARIABEL SISA AKHIR DIKELUARKAN AGAR SELALU TERCETAK
         let sisaAkhir = trx.sisa_akhir || 0;
         let teksSisa = sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:";
         teks += ESC_BOLD_ON + formatBarisKiriKanan(teksSisa, `Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}`) + ESC_BOLD_OFF;

@@ -107,9 +107,8 @@
 <script>
     const clientSupabase = supabase.createClient("https://yxcxvkairftqzmptkorr.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs");
     let listAgen = {};
-    let printDataText = ""; // Variabel global untuk menyimpan data ESC/POS
 
-    // === Fungsi Padding Teks Kiri-Kanan untuk Kertas 80mm (48 Karakter) ===
+    // === Fungsi Padding Teks Kiri-Kanan Dinamis ===
     function padLR(left, right, width = 48) {
         let spaces = width - left.length - right.length;
         if (spaces < 1) spaces = 1;
@@ -283,6 +282,9 @@
             const { data: detail } = await clientSupabase.from('transaksi_detail').select('*').eq('no_nota', noNota);
             const { data: riwayatBayar } = await clientSupabase.from('pembayaran_bon').select('tanggal, bayar_cash, bayar_transfer, keterangan').eq('no_nota_referensi', noNota);
 
+            // Simpan ke variabel global untuk diakses fungsi cetak Bluetooth
+            window.currentStrukData = { trx, detail, riwayatBayar };
+
             const [y, m, d] = trx.tanggal.split('-');
             const drvGabung = trx.driver_2 ? `${trx.driver_1} / ${trx.driver_2}` : trx.driver_1;
 
@@ -299,58 +301,31 @@
                         <div>DRV: ${drvGabung} [ ${trx.plat_nomor || '-'} ]</div>
                         <div class="struk-separator"></div>`;
 
-            // ============================================
-            // 2. MEMBUAT DATA ESC/POS (TEXT) UNTUK PRINTER BLUETOOTH (48 Karakter)
-            // ============================================
-            let txt = "\x1B\x40"; // ESC @ (Initialize printer)
-            txt += "\x1B\x61\x01"; // Center align
-            txt += "SBR PUTRA FOOD\nLembang, Bandung Barat\n";
-            txt += "\x1B\x61\x00"; // Left align
-            txt += "------------------------------------------------\n";
-            txt += padLR(`NO: ${trx.no_nota}`, `TGL: ${d}-${m}-${y}`) + "\n";
-            txt += "\x1B\x61\x01"; // Center align
-            txt += `${trx.nama_agen.toUpperCase()}\n`;
-            txt += `DRV: ${drvGabung} [ ${trx.plat_nomor || '-'} ]\n`;
-            txt += "\x1B\x61\x00"; // Left align
-            txt += "------------------------------------------------\n";
-
             const itemsKirim = detail.filter(i => i.tipe === 'Kirim');
             const itemsRetur = detail.filter(i => i.tipe === 'Retur');
 
             itemsKirim.forEach(i => {
-                // Tampilan Web
                 s += `<div>${i.nama_barang}</div>`;
                 s += `<div class="struk-row struk-item-detail">
                         <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}</span>
                         <span>${(i.subtotal || 0).toLocaleString('id-ID')}</span>
                       </div>`;
-                // Tampilan Text Bluetooth
-                txt += `${i.nama_barang}\n`;
-                txt += padLR(`  ${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}`, `${(i.subtotal || 0).toLocaleString('id-ID')}`) + "\n";
             });
+            
             s += `<div class="struk-separator"></div>`;
             s += `<div class="struk-row"><span>TOTAL KIRIM:</span><span>Rp ${(trx.total_kirim || 0).toLocaleString('id-ID')}</span></div>`;
             
-            txt += "------------------------------------------------\n";
-            txt += padLR("TOTAL KIRIM:", `Rp ${(trx.total_kirim || 0).toLocaleString('id-ID')}`) + "\n";
-
             if(itemsRetur.length > 0) {
                 s += `<br><div class="struk-bold">BARANG RETUR:</div>`;
-                txt += "\nBARANG RETUR:\n";
                 itemsRetur.forEach(i => {
                     s += `<div>[RETUR] ${i.nama_barang}</div>`;
                     s += `<div class="struk-row struk-item-detail">
                             <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}</span>
                             <span>-${(i.subtotal || 0).toLocaleString('id-ID')}</span>
                           </div>`;
-                    txt += `[RETUR] ${i.nama_barang}\n`;
-                    txt += padLR(`  ${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}`, `-${(i.subtotal || 0).toLocaleString('id-ID')}`) + "\n";
                 });
                 s += `<div class="struk-separator"></div>`;
                 s += `<div class="struk-row"><span>TOTAL RETUR:</span><span>Rp ${(trx.total_retur || 0).toLocaleString('id-ID')}</span></div>`;
-                
-                txt += "------------------------------------------------\n";
-                txt += padLR("TOTAL RETUR:", `Rp ${(trx.total_retur || 0).toLocaleString('id-ID')}`) + "\n";
             }
 
             const tagihanBersih = (trx.total_kirim || 0) - (trx.total_retur || 0) + (trx.bon_lama || 0);
@@ -365,19 +340,10 @@
             s += `<div class="struk-row"><span>Bayar TRF:</span><span>Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}</span></div>`;
             s += `<div class="struk-separator"></div>`;
 
-            txt += "\n" + padLR(labelBonLama, `Rp ${Math.abs(bonLama).toLocaleString('id-ID')}`) + "\n";
-            txt += "================================================\n";
-            txt += padLR("TOTAL TAGIHAN:", `Rp ${tagihanBersih.toLocaleString('id-ID')}`) + "\n";
-            txt += "------------------------------------------------\n";
-            txt += padLR("Bayar CASH:", `Rp ${(trx.bayar_cash || 0).toLocaleString('id-ID')}`) + "\n";
-            txt += padLR("Bayar TRF:", `Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}`) + "\n";
-            txt += "------------------------------------------------\n";
-
             if (riwayatBayar && riwayatBayar.length > 0) {
                 s += `<br><div class="struk-bold">RIWAYAT CICILAN:</div>`;
-                txt += "\nRIWAYAT CICILAN:\n";
-                riwayatBayar.sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
-                riwayatBayar.forEach(p => {
+                let riwayatSort = [...riwayatBayar].sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
+                riwayatSort.forEach(p => {
                     let detailBayar = "";
                     if ((p.bayar_cash || 0) > 0) detailBayar += `CASH: ${p.bayar_cash.toLocaleString('id-ID')} `;
                     if ((p.bayar_transfer || 0) > 0) detailBayar += `TRF: ${p.bayar_transfer.toLocaleString('id-ID')}`;
@@ -387,11 +353,8 @@
                     let tglIndoFormat = tglSplit.length === 3 ? `${tglSplit[2]} ${namaBulan[parseInt(tglSplit[1])-1]} ${tglSplit[0]}` : p.tanggal;
                     
                     s += `<div class="struk-row"><span>&nbsp;&nbsp;${tglIndoFormat}</span><span>${detailBayar}</span></div>${ket}`;
-                    txt += padLR(`  ${tglIndoFormat}`, detailBayar) + "\n";
-                    if (p.keterangan) txt += `  (${p.keterangan})\n`;
                 });
                 s += `<div class="struk-separator"></div>`;
-                txt += "------------------------------------------------\n";
             }
 
             let sisaAkhir = trx.sisa_akhir || 0;
@@ -401,18 +364,19 @@
             s += `<div class="struk-center struk-bold" style="margin-top:10px; text-align:center;">SBR PUTRA FOOD SYSTEM</div>`;
             s += `</div>`;
 
-            txt += padLR(labelSisa, `Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}`) + "\n";
-            txt += "------------------------------------------------\n";
-            txt += "\x1B\x61\x01"; // Center
-            txt += "SBR PUTRA FOOD SYSTEM\n\n\n\n";
-            txt += "\x1D\x56\x41\x03"; // Feed and cut (untuk printer yang support auto cutter)
-            
-            // Simpan teks final ke variabel global agar bisa diambil fungsi Bluetooth
-            window.printDataText = txt;
-
+            // Tombol Print & Download
             s += `<div class="action-buttons" style="display: flex; gap: 10px; margin-top: 15px;">
                     <button onclick="printStrukBluetooth()" style="flex:1; background:#2980b9; color:white; padding:10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">🖨️ PRINT BLUETOOTH</button>
                     <button onclick="downloadStrukJPG()" style="flex:1; background:#27ae60; color:white; padding:10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">📸 SAVE JPG</button>
+                  </div>`;
+            
+            // Pilihan Ukuran Kertas Termal
+            s += `<div style="margin-top: 12px; text-align: center;">
+                    <label for="printSize" style="font-size: 14px; font-weight: bold; color: #ddd;">Ukuran Kertas Printer: </label>
+                    <select id="printSize" style="padding: 6px; border-radius: 6px; font-weight: bold; background: #2d2d2d; color: white; border: 1px solid #555; outline: none; cursor: pointer;">
+                        <option value="48">80mm (48 Karakter)</option>
+                        <option value="32">58mm (32 Karakter)</option>
+                    </select>
                   </div>`;
             
             modalIsi.innerHTML = s;
@@ -425,15 +389,99 @@
     // FUNGSI BLUETOOTH API & EXPORT JPG
     // ============================================
 
-    // Fungsi Print via Web Bluetooth API (Support Chrome Android/PC)
+    // Fungsi pembuat format teks dinamis ESC/POS (berdasarkan pilihan 32 atau 48 Karakter)
+    function generateESCPOS(trx, detail, riwayatBayar, charWidth) {
+        const [y, m, d] = trx.tanggal.split('-');
+        const drvGabung = trx.driver_2 ? `${trx.driver_1} / ${trx.driver_2}` : trx.driver_1;
+        const itemsKirim = detail.filter(i => i.tipe === 'Kirim');
+        const itemsRetur = detail.filter(i => i.tipe === 'Retur');
+        const tagihanBersih = (trx.total_kirim || 0) - (trx.total_retur || 0) + (trx.bon_lama || 0);
+        let bonLama = trx.bon_lama || 0;
+        let labelBonLama = bonLama < 0 ? "DEPOSIT:" : "BON LAMA:";
+        let sisaAkhir = trx.sisa_akhir || 0;
+        let labelSisa = sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:";
+
+        let separator = "-".repeat(charWidth);
+        let doubleSeparator = "=".repeat(charWidth);
+
+        let txt = "\x1B\x40"; // ESC @ (Initialize printer)
+        txt += "\x1B\x61\x01"; // Center align
+        txt += "SBR PUTRA FOOD\nLembang, Bandung Barat\n";
+        txt += "\x1B\x61\x00"; // Left align
+        txt += separator + "\n";
+        txt += padLR(`NO: ${trx.no_nota}`, `TGL: ${d}-${m}-${y}`, charWidth) + "\n";
+        txt += "\x1B\x61\x01"; // Center align
+        txt += `${trx.nama_agen.toUpperCase()}\n`;
+        txt += `DRV: ${drvGabung} [ ${trx.plat_nomor || '-'} ]\n`;
+        txt += "\x1B\x61\x00"; // Left align
+        txt += separator + "\n";
+
+        itemsKirim.forEach(i => {
+            txt += `${i.nama_barang}\n`;
+            txt += padLR(`  ${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}`, `${(i.subtotal || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
+        });
+        txt += separator + "\n";
+        txt += padLR("TOTAL KIRIM:", `Rp ${(trx.total_kirim || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
+
+        if(itemsRetur.length > 0) {
+            txt += "\nBARANG RETUR:\n";
+            itemsRetur.forEach(i => {
+                txt += `[RETUR] ${i.nama_barang}\n`;
+                txt += padLR(`  ${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}`, `-${(i.subtotal || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
+            });
+            txt += separator + "\n";
+            txt += padLR("TOTAL RETUR:", `Rp ${(trx.total_retur || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
+        }
+
+        txt += "\n" + padLR(labelBonLama, `Rp ${Math.abs(bonLama).toLocaleString('id-ID')}`, charWidth) + "\n";
+        txt += doubleSeparator + "\n";
+        txt += padLR("TOTAL TAGIHAN:", `Rp ${tagihanBersih.toLocaleString('id-ID')}`, charWidth) + "\n";
+        txt += separator + "\n";
+        txt += padLR("Bayar CASH:", `Rp ${(trx.bayar_cash || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
+        txt += padLR("Bayar TRF:", `Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}`, charWidth) + "\n";
+        txt += separator + "\n";
+
+        if (riwayatBayar && riwayatBayar.length > 0) {
+            txt += "\nRIWAYAT CICILAN:\n";
+            let riwayatSort = [...riwayatBayar].sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
+            riwayatSort.forEach(p => {
+                let detailBayar = "";
+                if ((p.bayar_cash || 0) > 0) detailBayar += `CASH: ${p.bayar_cash.toLocaleString('id-ID')} `;
+                if ((p.bayar_transfer || 0) > 0) detailBayar += `TRF: ${p.bayar_transfer.toLocaleString('id-ID')}`;
+                
+                let tglSplit = p.tanggal.split('-');
+                let namaBulan = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+                let tglIndoFormat = tglSplit.length === 3 ? `${tglSplit[2]} ${namaBulan[parseInt(tglSplit[1])-1]} ${tglSplit[0]}` : p.tanggal;
+                
+                txt += padLR(`  ${tglIndoFormat}`, detailBayar, charWidth) + "\n";
+                if (p.keterangan) txt += `  (${p.keterangan})\n`;
+            });
+            txt += separator + "\n";
+        }
+
+        txt += padLR(labelSisa, `Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}`, charWidth) + "\n";
+        txt += separator + "\n";
+        txt += "\x1B\x61\x01"; // Center align
+        txt += "SBR PUTRA FOOD SYSTEM\n\n\n\n";
+        txt += "\x1D\x56\x41\x03"; // Auto cutter
+        
+        return txt;
+    }
+
+    // Fungsi Print via Web Bluetooth API
     async function printStrukBluetooth() {
         if (!navigator.bluetooth) {
             alert("Perangkat atau browser Anda tidak mendukung Web Bluetooth API. Pastikan menggunakan Google Chrome versi terbaru dan URL menggunakan HTTPS.");
             return;
         }
 
+        // 1. Ambil lebar karakter kertas dari select option (32 atau 48)
+        const charWidth = parseInt(document.getElementById('printSize').value) || 48;
+        
+        // 2. Generate teks yang akan dicetak sesuai pilihan
+        const textToPrint = generateESCPOS(window.currentStrukData.trx, window.currentStrukData.detail, window.currentStrukData.riwayatBayar, charWidth);
+
         try {
-            // Mencari semua device Bluetooth di sekitar (acceptAllDevices)
             const device = await navigator.bluetooth.requestDevice({
                 acceptAllDevices: true,
                 optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', '00001101-0000-1000-8000-00805f9b34fb']
@@ -446,7 +494,6 @@
             const services = await server.getPrimaryServices();
             let printCharacteristic = null;
 
-            // Looping untuk mencari characteristic yang bisa di-write (dikirim teks)
             for (let service of services) {
                 const characteristics = await service.getCharacteristics();
                 for (let characteristic of characteristics) {
@@ -462,12 +509,10 @@
                 throw new Error("Tidak menemukan karakteristik device yang bisa menerima data cetak.");
             }
 
-            // Convert String ke Uint8Array
+            // Convert String ke Uint8Array menggunakan data yang baru digenerate
             const encoder = new TextEncoder();
-            const data = encoder.encode(window.printDataText);
+            const data = encoder.encode(textToPrint);
 
-            // Printer BLE memiliki limit MTU (Maximum Transmission Unit)
-            // Jadi data harus dikirim dalam potongan kecil (chunk), biasanya aman di 100 byte
             const CHUNK_SIZE = 100; 
             for (let i = 0; i < data.length; i += CHUNK_SIZE) {
                 let chunk = data.slice(i, i + CHUNK_SIZE);
@@ -477,7 +522,6 @@
             alert("✅ Perintah cetak berhasil dikirim ke " + device.name);
         } catch (error) {
             console.error(error);
-            // Gagal biasanya karena user membatalkan (cancel popup), device offline, atau tidak ada service printer.
             alert("❌ Gagal mencetak: " + error.message);
         }
     }
