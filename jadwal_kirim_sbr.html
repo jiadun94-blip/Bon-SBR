@@ -263,7 +263,8 @@
     let masterKendaraan = []; 
     let listKirimSementara = [];   
     let bankTabunganOrder = [];
-    let cacheSupplyArmada = {}; // Menyimpan supply armada per item
+    let cacheSupplyArmada = {}; 
+    let cacheRiwayatHariIni = []; // VARIABEL BARU: Menyimpan history pada tanggal yang dipilih
     let objOrderAktif = null; 
     let masterCacheAgenDB = []; 
     let cacheRiwayatTerakhirAgen = {}; 
@@ -324,8 +325,9 @@
         await muatCacheRiwayatTerakhirSemuaAgen();
 
         renderListKirimCompact();
-        hitungTotalKebutuhanGlobal();
-        muatRiwayatJadwalSelesai();
+        
+        // Memuat History DULU baru menghitung Kebutuhan agar tergabung di Simulasi
+        await muatRiwayatJadwalSelesai(); 
     }
 
     async function muatCacheRiwayatTerakhirSemuaAgen() {
@@ -368,7 +370,7 @@
     }
 
     function sinkronisasiTanggalGlobal() {
-        muatRiwayatJadwalSelesai();
+        muatRiwayatJadwalSelesai(); // Ini otomatis akan me-refresh data Simulasi juga
     }
 
     function bukaPopupMasterOrder() {
@@ -600,6 +602,7 @@
         renderTabelSimulasi();
     }
 
+    // UPDATED LOGIC: Dropdown mengambil gabungan Item dari Antrean & History
     function hitungTotalKebutuhanGlobal() {
         const bodyOriginal = document.getElementById('bodyGlobalSummary');
         const textJumlahAgen = document.getElementById('textJumlahAgenAntrean');
@@ -607,13 +610,6 @@
         let selectedItemSimulasi = dropdownSimulasi.value;
         
         textJumlahAgen.innerText = `${listKirimSementara.length} Agen`;
-
-        if(listKirimSementara.length === 0) {
-            bodyOriginal.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #a0aec0; font-style: italic; padding-top: 20px;">List antrean kosong.</td></tr>`;
-            dropdownSimulasi.innerHTML = '<option value="">-- Pilih Item --</option>';
-            renderTabelSimulasi();
-            return;
-        }
 
         let rekapBarang = {}; 
         listKirimSementara.forEach(agen => {
@@ -626,37 +622,55 @@
             });
         });
 
-        let namaKunciBarang = Object.keys(rekapBarang).sort();
-        if(namaKunciBarang.length === 0) {
-            bodyOriginal.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #e53e3e; font-style: italic; padding-top: 20px;">Belum ada kuantiti diinput.</td></tr>`;
-            dropdownSimulasi.innerHTML = '<option value="">-- Pilih Item --</option>';
-            renderTabelSimulasi();
-            return;
+        // 1. Dapatkan daftar Item khusus Antrean (untuk tabel sebelah Kiri)
+        let namaKunciBarangAntrean = Object.keys(rekapBarang).sort();
+        if(namaKunciBarangAntrean.length === 0) {
+            bodyOriginal.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #a0aec0; font-style: italic; padding-top: 20px;">List antrean kosong.</td></tr>`;
+        } else {
+            // RENDER KARTU KIRI (GLOBAL) HANYA UNTUK ANTREAN
+            bodyOriginal.innerHTML = namaKunciBarangAntrean.map(namaBarang => `
+                <tr>
+                    <td style="color:#fff; font-size:13px;">• <strong>${namaBarang}</strong></td>
+                    <td style="text-align:center; color:#63b3ed; font-size:14px; font-weight:bold;">${rekapBarang[namaBarang].order}</td>
+                    <td style="text-align:center; color:#27ae60; font-size:14px; font-weight:bold;">${rekapBarang[namaBarang].real}</td>
+                </tr>
+            `).join('');
         }
 
-        // RENDER KARTU KIRI (GLOBAL)
-        bodyOriginal.innerHTML = namaKunciBarang.map(namaBarang => `
-            <tr>
-                <td style="color:#fff; font-size:13px;">• <strong>${namaBarang}</strong></td>
-                <td style="text-align:center; color:#63b3ed; font-size:14px; font-weight:bold;">${rekapBarang[namaBarang].order}</td>
-                <td style="text-align:center; color:#27ae60; font-size:14px; font-weight:bold;">${rekapBarang[namaBarang].real}</td>
-            </tr>
-        `).join('');
+        // 2. Kumpulkan SEMUA Item unik (Gabungan dari Antrean DAN History) untuk dropdown Simulasi
+        let setSemuaItem = new Set(Object.keys(rekapBarang));
+        if (cacheRiwayatHariIni && cacheRiwayatHariIni.length > 0) {
+            cacheRiwayatHariIni.forEach(j => {
+                if(j.jadwal_kirim_detail) {
+                    j.jadwal_kirim_detail.forEach(det => {
+                        if(det.qty_order > 0 || det.qty_real > 0) setSemuaItem.add(det.nama_barang);
+                    });
+                }
+            });
+        }
+        
+        let namaKunciBarangSemua = Array.from(setSemuaItem).sort();
 
         // UPDATE DROPDOWN KARTU KANAN (SIMULASI ITEM)
         dropdownSimulasi.innerHTML = '<option value="">-- Pilih Item --</option>';
-        namaKunciBarang.forEach(brg => {
+        if (namaKunciBarangSemua.length === 0) {
+            renderTabelSimulasi(); // Bersihkan tabel simulasi
+            return;
+        }
+
+        namaKunciBarangSemua.forEach(brg => {
             dropdownSimulasi.innerHTML += `<option value="${brg}" ${brg === selectedItemSimulasi ? 'selected' : ''}>${brg}</option>`;
         });
         
-        // Auto select pertama jika tidak ada yang dipilih
-        if(!namaKunciBarang.includes(selectedItemSimulasi) && namaKunciBarang.length > 0) {
-            dropdownSimulasi.value = namaKunciBarang[0];
+        // Auto select pertama jika tidak ada yang dipilih sebelumnya
+        if(!namaKunciBarangSemua.includes(selectedItemSimulasi) && namaKunciBarangSemua.length > 0) {
+            dropdownSimulasi.value = namaKunciBarangSemua[0];
         }
         
         renderTabelSimulasi();
     }
 
+    // UPDATED LOGIC: Simulasi mengambil gabungan dari Antrean & History Pengiriman
     function renderTabelSimulasi() {
         const container = document.getElementById('bodyStockSummary');
         let item = document.getElementById('pilihItemSimulasi').value;
@@ -666,17 +680,34 @@
              return;
         }
 
-        // Tarik data Permintaan (Agen & Dikirim) dari antrean
         let demandList = [];
+
+        // 1. Tarik Data Permintaan dari List Antrean (Sementara)
         listKirimSementara.forEach(agen => {
             let brg = agen.barang.find(b => b.nama_barang === item);
-            if(brg && brg.qty_order > 0) { // Kita patokan pada Kebutuhan/Order
-                demandList.push({ agen: agen.nama_agen, qty: brg.qty_order });
+            let jumlahDikirim = (brg && brg.qty_real > 0) ? brg.qty_real : (brg ? brg.qty_order : 0);
+            
+            if(jumlahDikirim > 0) { 
+                demandList.push({ agen: agen.nama_agen, qty: jumlahDikirim, isFixed: false });
             }
         });
 
+        // 2. Tarik Data Permintaan dari History Pengiriman (Sudah Fix) di tanggal ini
+        if (cacheRiwayatHariIni && cacheRiwayatHariIni.length > 0) {
+            cacheRiwayatHariIni.forEach(j => {
+                if(j.jadwal_kirim_detail) {
+                    let brg = j.jadwal_kirim_detail.find(det => det.nama_barang === item);
+                    let jumlahDikirim = (brg && brg.qty_real > 0) ? brg.qty_real : (brg ? brg.qty_order : 0);
+                    
+                    if (jumlahDikirim > 0) {
+                        demandList.push({ agen: j.nama_agen, qty: jumlahDikirim, isFixed: true });
+                    }
+                }
+            });
+        }
+
         // Siapkan data Pemasukan (Armada & Saldo)
-        if(!cacheSupplyArmada[item]) cacheSupplyArmada[item] = [{},{},{},{}]; // Minimal 4 baris input
+        if(!cacheSupplyArmada[item]) cacheSupplyArmada[item] = [{},{},{},{}]; 
         let supplyList = cacheSupplyArmada[item];
 
         let maxRows = Math.max(supplyList.length, demandList.length);
@@ -695,14 +726,17 @@
 
              if(dem) {
                  sisaBerjalan -= dem.qty;
+                 
+                 // Tambahkan lencana kecil penanda (FIX) jika data berasal dari History
+                 let tagFix = dem.isFixed ? `<span style="color:#27ae60; font-size:10px; margin-left:4px; font-weight:bold;">(✅ FIX)</span>` : '';
+                 
                  htmlAgen = `
-                    <td style="color:#cbd5e0; font-size:12px;">${dem.agen}</td>
-                    <td style="text-align:center; color:#63b3ed; font-weight:bold;">${dem.qty}</td>
+                    <td style="color:#cbd5e0; font-size:12px;">${dem.agen} ${tagFix}</td>
+                    <td style="text-align:center; color:#27ae60; font-weight:bold;">${dem.qty}</td>
                  `;
                  htmlSisa = `<td style="text-align:center; font-weight:900; font-size:14px; color:${sisaBerjalan < 0 ? '#e53e3e' : '#27ae60'}">${sisaBerjalan}</td>`;
              } else {
                  if(i >= demandList.length && demandList.length > 0) {
-                     // Jika baris agen habis tapi baris armada masih ada, tampilkan strip dan sisa terakhir
                      htmlAgen = `<td style="text-align:center; color:#718096;">-</td><td style="text-align:center; color:#718096;">0</td>`;
                      htmlSisa = `<td style="text-align:center; font-weight:900; font-size:14px; color:${sisaBerjalan < 0 ? '#e53e3e' : '#27ae60'}">${sisaBerjalan}</td>`;
                  } else {
@@ -933,8 +967,9 @@
             simpanKePenyimpananLokal();
             
             renderListKirimCompact();
-            hitungTotalKebutuhanGlobal();
-            muatRiwayatJadwalSelesai();
+            
+            // Muat ulang riwayat (Ini akan otomatis menyertakan data yang barusan di fix ke Simulasi)
+            await muatRiwayatJadwalSelesai();
 
         } catch(e) {
             alert("❌ Gagal Kirim Jadwal Agen: " + e.message);
@@ -942,6 +977,7 @@
         }
     }
 
+    // UPDATED LOGIC: Simpan cache riwayat ke global variable dan refresh simulasi
     async function muatRiwayatJadwalSelesai() {
         const containerLog = document.getElementById('logJadwalTerkini');
         const tglTerpilih = document.getElementById('tglKirimGlobal').value;
@@ -955,6 +991,13 @@
                 .order('id_jadwal', { ascending: false });
 
             if(error) throw error;
+            
+            // Simpan history ke variabel cache global
+            cacheRiwayatHariIni = listJadwal || [];
+            
+            // Refresh tabel simulasi agar update dengan history terbaru
+            hitungTotalKebutuhanGlobal();
+
             if(!listJadwal || listJadwal.length === 0) {
                 containerLog.innerHTML = `<span style="font-size:14px; color:#a0aec0; font-style:italic;">Belum ada history pengiriman terkonfirmasi untuk tanggal operasional ini.</span>`;
                 return;
