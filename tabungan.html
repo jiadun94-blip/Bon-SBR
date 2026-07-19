@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SBR Putra Food - Buku Tabungan</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="theme-color" content="#2c3e50">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; font-size: 16px; }
+        .container { background: white; padding: 12px; border-radius: 15px; max-width: 600px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        header h2 { margin: 0; color: #1a202c; font-size: 20px; text-transform: uppercase; font-weight: 900; }
+        .btn-back { background: #718096; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 900; cursor: pointer; text-decoration: none; font-size: 12px; display: inline-block; }
+        
+        .saldo-container { margin-bottom: 15px; }
+        .saldo-card { padding: 15px; border-radius: 10px; text-align: center; color: white; background: #27ae60; box-shadow: 0 4px 0 #1e8449; }
+        .saldo-card h4 { margin: 0; font-size: 13px; font-weight: 700; opacity: 0.9; text-transform: uppercase; }
+        .saldo-card h2 { margin: 5px 0 0; font-size: 24px; font-weight: 900; }
+
+        .form-box { background: #edf2f7; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #cbd5e0; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-weight: 900; margin-bottom: 5px; font-size: 13px; color: #4a5568; text-transform: uppercase; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 16px; font-weight: 700; outline: none; }
+        .form-group input:focus, .form-group select:focus { border-color: #3182ce; }
+        
+        .btn-save { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; color: white; background: #3182ce; font-size: 16px; text-transform: uppercase; box-shadow: 0 4px 0 #2b6cb0; margin-top: 5px; }
+        .btn-save:disabled { background: #a0aec0; box-shadow: none; cursor: not-allowed; }
+        
+        .section-label { font-size: 15px; font-weight: 900; padding: 10px; background: #1a202c; color: white; border-radius: 6px; margin: 15px 0 10px; text-transform: uppercase; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 5px; font-size: 14px; }
+        th { text-align: left; padding: 10px 5px; background: #edf2f7; border-bottom: 2px solid #cbd5e0; font-weight: 900; }
+        td { padding: 12px 5px; border-bottom: 1px solid #e2e8f0; font-weight: 700; }
+        .tr-group:hover { background: #f7fafc; }
+        .text-merah { color: #e53e3e; }
+        .text-hijau { color: #27ae60; }
+        .ket-text { font-size: 12px; font-weight: 400; color: #718096; display: block; margin-top: 4px; }
+        
+        /* Modal Popup Detail */
+        .modal { display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 450px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-header { border-bottom: 2px dashed #cbd5e0; padding-bottom: 10px; margin-bottom: 15px; text-align: center; }
+        .modal-header h3 { margin: 0; color: #1a202c; font-size: 18px; font-weight: 900; text-transform: uppercase; }
+        .modal-header p { margin: 5px 0 0; font-size: 13px; color: #4a5568; font-weight: bold; background:#edf2f7; display:inline-block; padding:4px 10px; border-radius:20px;}
+        .detail-wrapper { overflow-y: auto; flex-grow: 1; margin-bottom: 15px; }
+        
+        /* Desain Item Detail Histori */
+        .history-item { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .history-info { display: flex; flex-direction: column; gap: 3px; }
+        .history-date { font-size: 11px; font-weight: 900; color: #4a5568; }
+        .history-desc { font-size: 13px; font-weight: 700; color: #2d3748; }
+        .history-amount { font-size: 15px; font-weight: 900; text-align: right; }
+        
+        .btn-close { background: #718096; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 900; cursor: pointer; width: 100%; font-size: 15px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h2>BUKU TABUNGAN</h2>
+        <a href="javascript:history.back()" class="btn-back">⬅ KEMBALI</a>
+    </header>
+
+    <div class="saldo-container">
+        <div class="saldo-card">
+            <h4>Total Keseluruhan Saldo Karyawan</h4>
+            <h2 id="saldoTabungan">Rp 0</h2>
+        </div>
+    </div>
+
+    <div class="form-box">
+        <div class="section-label" style="margin-top:0; background:transparent; color:#2d3748; padding:0 0 10px 0; border-bottom:2px dashed #cbd5e0;">
+            ➕ INPUT TRANSAKSI MANUAL
+        </div>
+        
+        <div class="form-group">
+            <label>TANGGAL</label>
+            <input type="date" id="inputTanggal">
+        </div>
+        
+        <div class="form-group">
+            <label>NAMA KARYAWAN</label>
+            <select id="inputKaryawan">
+                <option value="">-- Pilih Karyawan --</option>
+                <!-- Opsi Karyawan akan dimuat otomatis -->
+            </select>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1;">
+                <label>JENIS TRANSAKSI</label>
+                <select id="inputJenis">
+                    <option value="Setor">Setor Tabungan</option>
+                    <option value="Tarik">Tarik Tabungan</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex: 1.5;">
+                <label>NOMINAL (Rp)</label>
+                <input type="number" id="inputNominal" placeholder="Contoh: 20000">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>KETERANGAN</label>
+            <input type="text" id="inputKeterangan" placeholder="Contoh: Tabungan tambahan">
+        </div>
+
+        <button class="btn-save" id="btnSimpan" onclick="simpanTransaksi()">SIMPAN TRANSAKSI</button>
+    </div>
+
+    <div class="section-label">
+        📜 DAFTAR SALDO KARYAWAN
+    </div>
+    
+    <table id="tabelMutasi">
+        <thead>
+            <tr>
+                <th>NAMA KARYAWAN</th>
+                <th style="text-align:right;">TOTAL SALDO</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data Karyawan akan masuk ke sini -->
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal Popup Detail Transaksi -->
+<div id="modalDetail" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitleNama">NAMA KARYAWAN</h3>
+            <p id="modalSubtitleSaldo">Sisa Saldo: Rp 0</p>
+        </div>
+        <div class="detail-wrapper" id="areaDetail">
+            <!-- Rincian histori masuk ke sini -->
+        </div>
+        <button class="btn-close" onclick="tutupDetail()">TUTUP RINCIAN</button>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let rekapKaryawanGlobal = {}; 
+    let mapNamaKaryawan = {}; 
+
+    function formatRp(angka) { return "Rp " + new Intl.NumberFormat("id-ID").format(angka); }
+    function formatTgl(tglStr) {
+        if(!tglStr) return '-';
+        let parts = tglStr.split('-');
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    document.getElementById('inputTanggal').valueAsDate = new Date();
+
+    async function muatDropdownKaryawan() {
+        const { data } = await clientSupabase.from('karyawan').select('id, nama_karyawan').order('nama_karyawan');
+        const select = document.getElementById('inputKaryawan');
+        if(data) {
+            data.forEach(k => {
+                mapNamaKaryawan[k.id] = k.nama_karyawan;
+                select.innerHTML += `<option value="${k.id}">${k.nama_karyawan}</option>`;
+            });
+        }
+    }
+
+    async function muatData() {
+        const tbody = document.querySelector('#tabelMutasi tbody');
+        tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:20px;">⏳ Memuat data...</td></tr>';
+
+        // Load Karyawan dulu
+        if (Object.keys(mapNamaKaryawan).length === 0) await muatDropdownKaryawan();
+
+        // Load semua data tabungan
+        const { data, error } = await clientSupabase
+            .from('tabungan')
+            .select('*')
+            .order('tanggal', { ascending: false })
+            .order('created_at', { ascending: false });
+
+        if (error) { 
+            tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:red;">Gagal memuat data</td></tr>';
+            return; 
+        }
+
+        let totalSaldoSemua = 0;
+        rekapKaryawanGlobal = {}; 
+
+        // Siapkan kerangka data untuk setiap karyawan yang ada di database
+        for (let idKar in mapNamaKaryawan) {
+            rekapKaryawanGlobal[idKar] = {
+                id: idKar,
+                nama: mapNamaKaryawan[idKar],
+                saldo: 0,
+                histori: []
+            };
+        }
+
+        // Hitung Saldo & Masukkan Histori
+        data.forEach(item => {
+            let nominalVal = parseInt(item.nominal) || 0;
+            let idKar = item.id_karyawan;
+
+            // Jika karyawan sudah dihapus dari tabel master, tapi datanya masih ada di tabungan
+            if (!rekapKaryawanGlobal[idKar]) {
+                rekapKaryawanGlobal[idKar] = { id: idKar, nama: "Karyawan Terhapus", saldo: 0, histori: [] };
+            }
+
+            if(item.jenis_transaksi === 'Setor') {
+                rekapKaryawanGlobal[idKar].saldo += nominalVal;
+                totalSaldoSemua += nominalVal;
+            } else if(item.jenis_transaksi === 'Tarik') {
+                rekapKaryawanGlobal[idKar].saldo -= nominalVal;
+                totalSaldoSemua -= nominalVal;
+            }
+
+            rekapKaryawanGlobal[idKar].histori.push(item);
+        });
+
+        document.getElementById('saldoTabungan').innerText = formatRp(totalSaldoSemua);
+
+        // Filter: Hanya tampilkan karyawan yang punya history tabungan atau saldonya > 0, lalu urutkan abjad
+        let arrayKaryawan = Object.values(rekapKaryawanGlobal)
+            .filter(k => k.histori.length > 0 || k.saldo > 0)
+            .sort((a, b) => a.nama.localeCompare(b.nama));
+
+        tbody.innerHTML = '';
+
+        if (arrayKaryawan.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:#718096; padding:20px;">Belum ada data tabungan karyawan</td></tr>';
+            return;
+        }
+
+        arrayKaryawan.forEach(kar => {
+            const tr = document.createElement('tr');
+            tr.className = 'tr-group';
+            
+            // Warna saldo: Merah jika minus (kasus aneh), Hijau/Hitam normal
+            let colorSaldo = kar.saldo < 0 ? '#e53e3e' : '#27ae60';
+
+            tr.innerHTML = `
+                <td onclick="bukaDetail('${kar.id}')" style="cursor:pointer;">
+                    <div style="font-size:15px; font-weight:900; color:#2c3e50;">${kar.nama}</div>
+                    <span class="ket-text" style="color:#3182ce; font-weight:700; text-decoration:underline; display:flex; align-items:center; gap:5px; margin-top:5px;">
+                        <span>📋</span> Rincian Histori (${kar.histori.length}x)
+                    </span>
+                </td>
+                <td onclick="bukaDetail('${kar.id}')" style="text-align:right; vertical-align:middle; cursor:pointer; color:${colorSaldo};">
+                    <span style="font-weight:900; font-size:16px;">${formatRp(kar.saldo)}</span>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function bukaDetail(idKar) {
+        const kar = rekapKaryawanGlobal[idKar];
+        if(!kar) return;
+
+        document.getElementById('modalTitleNama').innerText = "TABUNGAN: " + kar.nama;
+        document.getElementById('modalSubtitleSaldo').innerText = "Total Saldo: " + formatRp(kar.saldo);
+
+        let htmlDetail = '';
+
+        if(kar.histori.length === 0) {
+            htmlDetail = '<div style="text-align:center; padding:20px; color:#718096; font-weight:bold;">Belum ada riwayat</div>';
+        } else {
+            kar.histori.forEach(item => {
+                let isSetor = item.jenis_transaksi === 'Setor';
+                let textClass = isSetor ? 'text-hijau' : 'text-merah';
+                let tanda = isSetor ? '+' : '-';
+                
+                let badge = isSetor ? 
+                    '<span style="background:#c6f6d5; color:#22543d; padding:2px 6px; border-radius:4px; font-size:10px;">SETOR</span>' : 
+                    '<span style="background:#fed7d7; color:#742a2a; padding:2px 6px; border-radius:4px; font-size:10px;">TARIK</span>';
+
+                let ketText = item.keterangan ? item.keterangan : (isSetor ? 'Setoran Tabungan' : 'Penarikan Tabungan');
+
+                htmlDetail += `
+                    <div class="history-item">
+                        <div class="history-info">
+                            <span class="history-date">${formatTgl(item.tanggal)} &nbsp; ${badge}</span>
+                            <span class="history-desc">${ketText}</span>
+                        </div>
+                        <div class="history-amount ${textClass}">
+                            ${tanda} ${formatRp(item.nominal)}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        document.getElementById('areaDetail').innerHTML = htmlDetail;
+        document.getElementById('modalDetail').style.display = 'flex';
+    }
+
+    function tutupDetail() {
+        document.getElementById('modalDetail').style.display = 'none';
+    }
+
+    async function simpanTransaksi() {
+        const tanggal = document.getElementById('inputTanggal').value;
+        const idKar = document.getElementById('inputKaryawan').value;
+        const jenis = document.getElementById('inputJenis').value;
+        const nominal = document.getElementById('inputNominal').value;
+        const keterangan = document.getElementById('inputKeterangan').value.trim();
+
+        if (!tanggal || !idKar || !nominal) return alert("⚠️ Tanggal, Karyawan, dan Nominal harus diisi!");
+
+        const btn = document.getElementById('btnSimpan');
+        btn.innerText = "MENYIMPAN..."; btn.disabled = true;
+
+        const payload = { 
+            tanggal: tanggal, 
+            id_karyawan: idKar,
+            jenis_transaksi: jenis,
+            nominal: parseInt(nominal),
+            keterangan: keterangan || (jenis === 'Setor' ? 'Setoran Manual' : 'Tarik Manual')
+        };
+
+        try {
+            const { error } = await clientSupabase.from('tabungan').insert([payload]);
+            if (error) throw error;
+            
+            document.getElementById('inputNominal').value = '';
+            document.getElementById('inputKeterangan').value = '';
+            document.getElementById('inputKaryawan').value = '';
+            
+            muatData(); 
+        } catch (e) {
+            alert("❌ Gagal menyimpan data:\n" + e.message);
+        } finally {
+            btn.innerText = "SIMPAN TRANSAKSI";
+            btn.disabled = false;
+        }
+    }
+
+    window.onload = muatData;
+</script>
+
+</body>
+</html>

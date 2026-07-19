@@ -24,16 +24,20 @@
         .form-box { background: #edf2f7; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #cbd5e0; }
         .form-group { margin-bottom: 12px; }
         .form-group label { display: block; font-weight: 900; margin-bottom: 5px; font-size: 14px; color: #4a5568; }
-        .form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 17px; font-weight: 700; outline: none; }
+        .form-group input[type="text"], .form-group input[type="number"], .form-group select { width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 17px; font-weight: 700; outline: none; }
         .form-group input:focus, .form-group select:focus { border-color: #3182ce; }
         
+        .checkbox-group { background: white; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e0; margin-bottom: 12px; }
+        .checkbox-label { display: flex; align-items: center; gap: 10px; font-size: 15px !important; font-weight: 700 !important; cursor: pointer; color: #2d3748 !important; margin-bottom: 0 !important; }
+        .checkbox-label input[type="checkbox"] { width: 22px; height: 22px; accent-color: #3182ce; cursor: pointer; }
+        .mt-10 { margin-top: 10px; }
+
         .btn-save { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; color: white; background: #27ae60; font-size: 18px; text-transform: uppercase; box-shadow: 0 4px 0 #1e8449; margin-top: 5px; }
         .btn-save:disabled { background: #a0aec0; box-shadow: none; cursor: not-allowed; }
         .btn-cancel-edit { display: none; width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; color: white; background: #718096; font-size: 16px; margin-top: 10px; }
         
         .section-label { font-size: 17px; font-weight: 900; padding: 10px; background: #1a202c; color: white; border-radius: 6px; margin: 15px 0 10px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
         
-        /* Baris Pencarian & Sort */
         .tools-bar { display: grid; grid-template-columns: 1fr 120px; gap: 8px; margin-bottom: 10px; }
         .tools-bar input, .tools-bar select { padding: 10px; border: 2px solid #cbd5e0; border-radius: 8px; font-size: 14px; font-weight: 700; outline: none; box-sizing: border-box; }
         .tools-bar input:focus, .tools-bar select:focus { border-color: #3182ce; }
@@ -75,6 +79,23 @@
                 <option value="Sisrik">Sisrik</option>
             </select>
         </div>
+        
+        <!-- Ceklis Potongan -->
+        <div class="checkbox-group">
+            <label class="checkbox-label">
+                <input type="checkbox" id="inputPotonganKas"> Ikut Potongan Uang Kas
+            </label>
+            <label class="checkbox-label mt-10">
+                <input type="checkbox" id="inputPotonganListrikAir"> Ikut Potongan Listrik & Air
+            </label>
+        </div>
+
+        <!-- Input Tabungan Wajib -->
+        <div class="form-group">
+            <label>NOMINAL TABUNGAN WAJIB / MINGGU (Rp)</label>
+            <input type="number" id="inputTabunganWajib" placeholder="Contoh: 20000 (Kosongkan jika tidak ada)">
+        </div>
+
         <button class="btn-save" id="btnSimpan" onclick="simpanKaryawan()">SIMPAN KARYAWAN</button>
         <button class="btn-cancel-edit" id="btnBatalEdit" onclick="batalEdit()">BATAL EDIT</button>
     </div>
@@ -96,7 +117,7 @@
     <table id="tabelKaryawan">
         <thead>
             <tr>
-                <th>NAMA</th>
+                <th>NAMA & STATUS</th>
                 <th>BAGIAN</th>
             </tr>
         </thead>
@@ -124,7 +145,9 @@
     let editKaryawanId = null;
     let targetAksiId = null;
     let pressTimer;
-    let dataKaryawanUtama = []; // Menyimpan data master agar tidak perlu loading internet terus saat ngetik pencarian
+    let dataKaryawanUtama = []; 
+
+    const formatRp = (angka) => "Rp " + new Intl.NumberFormat("id-ID").format(angka);
 
     function startPress(id, nama, bagian) {
         pressTimer = window.setTimeout(function() { bukaAksi(id, nama, bagian); }, 600);
@@ -144,7 +167,6 @@
         targetAksiId = null;
     }
 
-    // Panggil data dari Supabase 1x saja
     async function muatData() {
         const tbody = document.querySelector('#tabelKaryawan tbody');
         tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:20px;">⏳ Memuat data...</td></tr>';
@@ -153,24 +175,21 @@
         if (error) { console.error("Error muat data:", error); return; }
 
         dataKaryawanUtama = data || [];
-        renderTabel(); // Proses pencarian & urutan lalu tampilkan
+        renderTabel(); 
     }
 
-    // Fungsi Render untuk memproses Sort & Search secara instan
     function renderTabel() {
         const kataKunci = document.getElementById('inputCari').value.toLowerCase();
         const modeUrut = document.getElementById('inputUrut').value;
         const tbody = document.querySelector('#tabelKaryawan tbody');
         tbody.innerHTML = '';
 
-        // 1. Proses Filter (Pencarian)
         let dataTampil = dataKaryawanUtama.filter(item => {
             const nama = (item.nama_karyawan || '').toLowerCase();
             const bagian = (item.bagian || '').toLowerCase();
             return nama.includes(kataKunci) || bagian.includes(kataKunci);
         });
 
-        // 2. Proses Sort (Pengurutan)
         dataTampil.sort((a, b) => {
             let valA, valB;
             if (modeUrut.startsWith('nama')) {
@@ -186,7 +205,6 @@
             return 0;
         });
 
-        // 3. Tampilkan ke Tabel HTML
         if (dataTampil.length === 0) {
             tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:#e53e3e; padding:20px;">Data tidak ditemukan</td></tr>';
             return;
@@ -195,10 +213,23 @@
         dataTampil.forEach(item => {
             const tr = document.createElement('tr');
             tr.className = "tr-tahan";
+            
             const nama = item.nama_karyawan || '-';
             const bagian = item.bagian || '-';
             
-            tr.innerHTML = `<td>${nama}</td><td>${bagian}</td>`;
+            // Tampilan label untuk potongan rutin
+            let badgePotongan = '';
+            if(item.potongan_kas || item.potongan_listrik_air) {
+                badgePotongan = `<span style="font-size:10px; background:#e2e8f0; padding:2px 5px; border-radius:4px; margin-left:5px; color:#4a5568;">Rutin</span>`;
+            }
+
+            // Tampilan label untuk tabungan wajib
+            let badgeTabungan = '';
+            if(item.tabungan_wajib > 0) {
+                badgeTabungan = `<div style="font-size:11px; color:#27ae60; font-weight:900; margin-top:3px;">Tabungan: ${formatRp(item.tabungan_wajib)}</div>`;
+            }
+
+            tr.innerHTML = `<td><div style="display:flex; align-items:center;">${nama} ${badgePotongan}</div> ${badgeTabungan}</td><td>${bagian}</td>`;
             
             tr.onmousedown = () => startPress(item.id, nama, bagian);
             tr.onmouseup = cancelPress;
@@ -212,11 +243,17 @@
     }
 
     function siapkanEdit() {
-        const nama = document.getElementById('aksiNama').innerText;
-        const bagian = document.getElementById('aksiBagian').innerText;
+        const dataKaryawan = dataKaryawanUtama.find(k => k.id === targetAksiId);
         
-        document.getElementById('inputNama').value = nama;
-        document.getElementById('inputBagian').value = bagian;
+        document.getElementById('inputNama').value = document.getElementById('aksiNama').innerText;
+        document.getElementById('inputBagian').value = document.getElementById('aksiBagian').innerText;
+        
+        if(dataKaryawan) {
+            document.getElementById('inputPotonganKas').checked = dataKaryawan.potongan_kas === true;
+            document.getElementById('inputPotonganListrikAir').checked = dataKaryawan.potongan_listrik_air === true;
+            // Isi form tabungan wajib (jika 0 atau null, biarkan kosong agar bersih)
+            document.getElementById('inputTabunganWajib').value = dataKaryawan.tabungan_wajib > 0 ? dataKaryawan.tabungan_wajib : '';
+        }
         
         editKaryawanId = targetAksiId;
         
@@ -233,6 +270,10 @@
     function batalEdit() {
         document.getElementById('inputNama').value = '';
         document.getElementById('inputBagian').value = '';
+        document.getElementById('inputPotonganKas').checked = false;
+        document.getElementById('inputPotonganListrikAir').checked = false;
+        document.getElementById('inputTabunganWajib').value = ''; // Reset input tabungan
+
         editKaryawanId = null;
         
         const btnSimpan = document.getElementById('btnSimpan');
@@ -245,25 +286,40 @@
     async function simpanKaryawan() {
         const nama = document.getElementById('inputNama').value.trim();
         const bagian = document.getElementById('inputBagian').value;
+        const kas = document.getElementById('inputPotonganKas').checked;
+        const listrikAir = document.getElementById('inputPotonganListrikAir').checked;
+        
+        // Ambil nilai tabungan wajib, ubah ke angka. Jika kosong, anggap 0.
+        const tabunganWajibInput = document.getElementById('inputTabunganWajib').value;
+        const tabunganWajib = tabunganWajibInput ? parseInt(tabunganWajibInput) : 0;
 
         if (!nama || !bagian) return alert("⚠️ Nama dan Bagian harus diisi!");
 
         const btn = document.getElementById('btnSimpan');
         btn.innerText = "MENYIMPAN..."; btn.disabled = true;
 
+        const payload = { 
+            nama_karyawan: nama, 
+            bagian: bagian,
+            potongan_kas: kas,
+            potongan_listrik_air: listrikAir,
+            tabungan_wajib: tabunganWajib // Masukkan ke payload database
+        };
+
         try {
             if (editKaryawanId) {
                 const { error } = await clientSupabase.from('karyawan')
-                    .update({ nama_karyawan: nama, bagian: bagian })
+                    .update(payload)
                     .eq('id', editKaryawanId);
                 if (error) throw error;
             } else {
+                payload.aktif = true; 
                 const { error } = await clientSupabase.from('karyawan')
-                    .insert([{ nama_karyawan: nama, bagian: bagian, aktif: true }]);
+                    .insert([payload]);
                 if (error) throw error;
             }
             batalEdit();
-            muatData(); // Tarik data ulang untuk update array memori
+            muatData(); 
         } catch (e) {
             alert("❌ Gagal menyimpan data:\n" + e.message);
             batalEdit();
@@ -284,7 +340,7 @@
             if (error) throw error;
             
             tutupAksi();
-            muatData(); // Tarik data ulang
+            muatData(); 
             batalEdit();
         } catch (e) {
             alert("❌ Gagal menghapus data:\n" + e.message);

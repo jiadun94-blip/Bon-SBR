@@ -12,10 +12,14 @@
         body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); font-size: 14px; color: #1a202c; }
         .container { background: white; padding: 15px; border-radius: 15px; max-width: 1100px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
         
-        /* Modal Preview */
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
-        .modal-content { background: white; margin: 5% auto; padding: 20px; border-radius: 15px; width: 90%; max-width: 500px; max-height: 85vh; display: flex; flex-direction: column; }
-        .preview-box { background: #f8fafc; border: 2px dashed #cbd5e0; padding: 15px; border-radius: 10px; font-family: 'Courier New', Courier, monospace; font-size: 13px; flex-grow: 1; overflow-y: auto; white-space: pre-wrap; color: #000; margin-bottom: 15px; }
+        .modal-content { background: white; margin: 3% auto; padding: 20px; border-radius: 15px; width: 95%; max-width: 500px; max-height: 90vh; display: flex; flex-direction: column; }
+        .preview-box { 
+            background: #fff; border: 2px dashed #cbd5e0; padding: 15px; border-radius: 8px; 
+            font-family: 'Courier New', Courier, monospace; font-size: 13px; line-height: 1.2;
+            flex-grow: 1; overflow-y: auto; white-space: pre-wrap; color: #000; 
+            margin: 0 auto 15px; width: 100%; max-width: 420px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
         
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         header h2 { margin: 0; color: #1a202c; font-size: 20px; text-transform: uppercase; font-weight: 900; }
@@ -33,35 +37,22 @@
         .btn-bt { width: 100%; padding: 12px; background: #e67e22; color: white; border: none; border-radius: 8px; font-weight: 900; font-size: 15px; cursor: pointer; margin-bottom: 10px; text-transform: uppercase; }
         #statusBT { font-size: 12px; font-weight: bold; display: block; color: #e53e3e; text-align: center; margin-bottom: 15px; }
         
-        /* Tabel Penyesuaian Lebar */
         .table-wrapper { overflow-x: auto; border: 1px solid #cbd5e0; border-radius: 8px; margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th, td { border-bottom: 1px solid #cbd5e0; padding: 12px 10px; vertical-align: top; }
         th { background: #1a202c; color: white; font-weight: 900; font-size: 13px; text-transform: uppercase; text-align: left; }
         
-        /* Persentase Lebar Kolom */
-        th:nth-child(1) { width: 20%; }
-        th:nth-child(2) { width: 35%; }
-        th:nth-child(3) { width: 25%; }
-        th:nth-child(4) { width: 20%; text-align: center; } /* Kolom total dibuat center */
+        th:nth-child(1) { width: 20%; } th:nth-child(2) { width: 30%; } th:nth-child(3) { width: 30%; } th:nth-child(4) { width: 20%; text-align: center; } 
         
         .detail-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px; }
         .detail-row span:last-child { font-weight: 900; }
-        
-        /* Font size Total Pendapatan & Potongan disamakan (14px) */
         .subtotal-row { border-top: 1px dashed #cbd5e0; margin-top: 6px; padding-top: 6px; font-weight: 900; color: #2b6cb0; font-size: 14px; }
-        
         .potongan-item { font-size: 13px; display: flex; justify-content: space-between; margin-bottom: 4px; color: #e53e3e; }
         .potongan-item span:last-child { font-weight: 900; }
-        
-        /* Font size Total Pendapatan & Potongan disamakan (14px) */
         .total-potongan { border-top: 1px dashed #feb2b2; margin-top: 6px; padding-top: 6px; font-weight: 900; color: #c53030; display: flex; justify-content: space-between; font-size: 14px; }
-        
-        /* Total Gaji di-tengah secara horizontal dan vertikal */
         .total-gaji { color: #27ae60; font-size: 22px; font-weight: 900; white-space: nowrap; text-align: center; vertical-align: middle; }
 
-        .btn-preview-all { background: #3182ce; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: 900; cursor: pointer; font-size: 15px; width: 100%; box-shadow: 0 4px 0 #2b6cb0; text-transform: uppercase; display: none; }
-        .btn-preview-all:active { transform: translateY(2px); box-shadow: 0 2px 0 #2b6cb0; }
+        .btn-preview-all { background: #3182ce; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: 900; cursor: pointer; font-size: 15px; width: 100%; box-shadow: 0 4px 0 #2b6cb0; text-transform: uppercase; display: none; margin-bottom:10px; }
     </style>
 </head>
 <body>
@@ -110,17 +101,30 @@
         </table>
     </div>
 
-    <button class="btn-preview-all" id="btnPreviewSemua" onclick="previewSemuaSlip()">🖨️ PREVIEW & CETAK SEMUA SLIP</button>
+    <button class="btn-preview-all" id="btnPreviewSemua" onclick="previewSemuaSlip()">🖨️ PREVIEW & CETAK SLIP</button>
 </div>
 
-<!-- MODAL PREVIEW SELURUH KARYAWAN -->
+<!-- MODAL PREVIEW -->
 <div id="modalPreview" class="modal">
     <div class="modal-content">
-        <h3 style="text-align:center; margin-top:0; color:#2c3e50;">PREVIEW SLIP GAJI</h3>
+        <h3 style="text-align:center; margin-top:0; color:#2c3e50; font-size: 16px;">PREVIEW SLIP (80mm)</h3>
         <div id="areaPreview" class="preview-box"></div>
-        <div style="display:flex; gap:10px;">
-            <button onclick="tutupPreview()" style="flex:1; padding:15px; background:#e2e8f0; color:#4a5568; border:none; border-radius:8px; font-weight:900; cursor:pointer;">BATAL</button>
-            <button onclick="finalkanCetakSemua()" id="btnCetakFinal" style="flex:2; padding:15px; background:#27ae60; color:white; border:none; border-radius:8px; font-weight:900; cursor:pointer;">✅ CETAK SEMUA</button>
+        
+        <!-- OPSI OUTPUT METODE -->
+        <div style="margin-bottom: 15px; background: #f0f4f8; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e0;">
+            <label style="font-size:12px; font-weight:900; color:#4a5568; display:block; margin-bottom:5px;">METODE OUTPUT:</label>
+            <select id="metodeOutput" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e0; font-weight:bold; font-size:14px; outline:none;">
+                <option value="bluetooth">🖨️ Ke Printer Bluetooth</option>
+                <option value="file">📄 Simpan ke File (.txt) - Untuk Test</option>
+            </select>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; gap:10px;">
+                <button onclick="tutupPreview()" style="flex:1; padding:15px; background:#e2e8f0; color:#4a5568; border:none; border-radius:8px; font-weight:900; cursor:pointer;">BATAL</button>
+                <button onclick="finalkanCetakSemua(false)" style="flex:1; padding:15px; background:#e67e22; color:white; border:none; border-radius:8px; font-weight:900; cursor:pointer;">🖨️ CETAK ULANG</button>
+            </div>
+            <button onclick="finalkanCetakSemua(true)" id="btnCetakFinal" style="width:100%; padding:15px; background:#27ae60; color:white; border:none; border-radius:8px; font-weight:900; cursor:pointer; box-shadow: 0 4px 0 #1e8449;">💾 SIMPAN & PROSES</button>
         </div>
     </div>
 </div>
@@ -131,7 +135,9 @@
     let dataKaryawanGlobal = [];
     const bagianProduksi = ["Aro", "Sisrik", "Simping", "Terigu"];
 
-    // Set Default Rentang Waktu (Sabtu - Jumat)
+    // Kertas 80mm menampung sekitar 48 karakter Font A
+    const LEBAR_KERTAS = 48; 
+
     window.onload = () => {
         let today = new Date();
         let day = today.getDay(); 
@@ -139,7 +145,6 @@
         
         let saturday = new Date(today);
         saturday.setDate(today.getDate() - daysToSubtract);
-        
         let friday = new Date(saturday);
         friday.setDate(saturday.getDate() + 6);
 
@@ -160,7 +165,7 @@
     }
 
     async function printDataToBT(text) {
-        if (!btCharacteristic) throw "Printer belum terhubung! Klik tombol oranye di atas.";
+        if (!btCharacteristic) throw "Printer belum terhubung!";
         const data = new TextEncoder().encode(text);
         for (let i = 0; i < data.length; i += 20) {
             await btCharacteristic.writeValue(data.slice(i, i + 20));
@@ -170,148 +175,190 @@
 
     function formatRp(angka) { return Number(angka).toLocaleString('id-ID'); }
 
+    const buatBarisKananKiri = (kiri, kanan) => { 
+        let spasi = LEBAR_KERTAS - String(kiri).length - String(kanan).length; 
+        if(spasi < 1) spasi = 1;
+        return kiri + " ".repeat(spasi) + kanan + "\n"; 
+    };
+
+    const buatTeksTengah = (teks) => {
+        let spasi = Math.floor((LEBAR_KERTAS - String(teks).length) / 2);
+        if (spasi < 0) spasi = 0;
+        return " ".repeat(spasi) + teks + "\n";
+    };
+
     async function hitungRekapMingguan() {
         const bag = document.getElementById('pilihBagian').value;
         const tglAwal = document.getElementById('tglDari').value;
         const tglAkhir = document.getElementById('tglSampai').value;
         const btnPreview = document.getElementById('btnPreviewSemua');
 
-        if (!bag || !tglAwal || !tglAkhir) {
-            btnPreview.style.display = 'none';
-            return;
-        }
+        if (!bag || !tglAwal || !tglAkhir) { btnPreview.style.display = 'none'; return; }
 
         const tbody = document.querySelector('#tabelGaji tbody');
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; font-weight:bold;">⏳ Menghitung & Memuat Data...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; font-weight:bold;">⏳ Menghitung & Mengambil Database...</td></tr>';
         btnPreview.style.display = 'none';
 
         const { data: absensi } = await clientSupabase.from('absensi').select('*').eq('bagian', bag).gte('tanggal', tglAwal).lte('tanggal', tglAkhir);
         const { data: dbHarga } = await clientSupabase.from('harga_produksi').select('*').eq('bagian', bag);
+        const { data: dbKaryawan } = await clientSupabase.from('karyawan').select('*').eq('bagian', bag);
+        const { data: dbKasbon } = await clientSupabase.from('kasbon').select('*');
         
         if (!absensi || absensi.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#e53e3e; font-weight:bold; padding:20px;">Belum ada data absensi/kinerja di rentang ini.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#e53e3e; font-weight:bold; padding:20px;">Belum ada data absensi di rentang ini.</td></tr>';
             return;
         }
 
         let mapHarga = {};
-        dbHarga.forEach(h => {
-            mapHarga[h.nama_karyawan] = { 
-                normal: Number(h.harga_normal) || 0, 
-                lembur: Number(h.harga_lembur) || 0, 
-                potArr: h.potongan_rutin || [] 
-            };
-        });
+        dbHarga.forEach(h => { mapHarga[h.nama_karyawan] = { normal: Number(h.harga_normal)||0, lembur: Number(h.harga_lembur)||0, potArr: h.potongan_rutin||[] }; });
+
+        let mapProfil = {};
+        if(dbKaryawan) {
+            dbKaryawan.forEach(k => {
+                let hutang = 0;
+                if(dbKasbon) { 
+                    dbKasbon.forEach(kb => { 
+                        if(kb.id_karyawan === k.id) {
+                            hutang += (kb.jenis_transaksi === 'Pinjam') ? Number(kb.nominal) : -Number(kb.nominal);
+                        } 
+                    }); 
+                }
+                
+                let cicilanTetap = Number(k.cicilan_kasbon) || 0;
+
+                mapProfil[k.nama_karyawan] = { 
+                    id: k.id, 
+                    kas: k.potongan_kas ? 5000 : 0, 
+                    listrik: k.potongan_listrik_air ? 5000 : 0, 
+                    tabWajib: k.tabungan_wajib || 0, 
+                    sisaKasbon: hutang > 0 ? hutang : 0,
+                    cicilanKasbon: cicilanTetap
+                };
+            });
+        }
 
         let rekap = {};
         absensi.forEach(row => {
             if (!rekap[row.nama_karyawan]) rekap[row.nama_karyawan] = { nama: row.nama_karyawan, bag: row.bagian, hadir: 0, prod: 0, lembur: 0 };
-            if (row.status_hadir === 'Hadir') {
-                rekap[row.nama_karyawan].hadir++;
-                rekap[row.nama_karyawan].prod += Number(row.hasil_produksi) || 0;
-                rekap[row.nama_karyawan].lembur += Number(row.jam_lembur) || 0;
-            }
+            if (row.status_hadir === 'Hadir') { rekap[row.nama_karyawan].hadir++; rekap[row.nama_karyawan].prod += Number(row.hasil_produksi) || 0; rekap[row.nama_karyawan].lembur += Number(row.jam_lembur) || 0; }
         });
 
         dataKaryawanGlobal = Object.values(rekap).sort((a,b) => a.nama.localeCompare(b.nama));
         tbody.innerHTML = '';
         
-        dataKaryawanGlobal.forEach((kar) => {
+        dataKaryawanGlobal.forEach((kar, index) => {
             let hrg = mapHarga[kar.nama] || { normal: 0, lembur: 0, potArr: [] };
+            let profil = mapProfil[kar.nama] || { id: null, kas: 0, listrik: 0, tabWajib: 0, sisaKasbon: 0, cicilanKasbon: 0 };
             let isProd = bagianProduksi.includes(bag);
             
-            // Hitung Pendapatan
             let satuan = isProd ? "Pcs" : "Hari";
             let nilaiReguler = isProd ? kar.prod : kar.hadir;
             let gajiKinerja = nilaiReguler * hrg.normal;
             let gajiLembur = kar.lembur * hrg.lembur;
             let totalPendapatan = gajiKinerja + gajiLembur;
             
-            // Hitung Potongan
-            let totalPot = 0;
-            let htmlPotongan = "";
-            if(hrg.potArr.length > 0) {
-                hrg.potArr.forEach(p => {
-                    let nom = Number(p.nominal) || 0;
-                    if(nom > 0) {
-                        totalPot += nom;
-                        let nm = p.nama || "Lainnya";
-                        htmlPotongan += `<div class="potongan-item"><span>- ${nm}</span><span>Rp ${formatRp(nom)}</span></div>`;
-                    }
-                });
+            let defaultKasbon = 0;
+            if (profil.sisaKasbon > 0) {
+                defaultKasbon = profil.cicilanKasbon;
+                if (defaultKasbon > profil.sisaKasbon) {
+                    defaultKasbon = profil.sisaKasbon;
+                }
             }
-            if(totalPot === 0) htmlPotongan = '<div style="font-size:12px; color:#a0aec0; font-style:italic;">- Tidak ada potongan -</div>';
-            
-            let totalBersih = totalPendapatan - totalPot;
 
-            // Simpan Calc ke Object
-            kar.calc = { isProd, satuan, nilaiReguler, gajiKinerja, gajiLembur, totalPendapatan, totalPot, totalBersih, tarif: hrg, potArr: hrg.potArr };
+            kar.calc = {
+                id_karyawan: profil.id, isProd, satuan, nilaiReguler, gajiKinerja, gajiLembur, totalPendapatan,
+                potKas: profil.kas, potListrik: profil.listrik, potTabWajib: profil.tabWajib, sisaKasbon: profil.sisaKasbon,
+                potKasbon: defaultKasbon, potLainnya: hrg.potArr, totalPot: 0, totalBersih: 0
+            };
 
-            // Render Baris Tabel
+            let htmlPotLain = "";
+            hrg.potArr.forEach(p => { if((Number(p.nominal)||0) > 0) htmlPotLain += `<div class="potongan-item"><span>- ${p.nama||'Lainnya'}:</span> <span>Rp ${formatRp(p.nominal)}</span></div>`; });
+
             tbody.innerHTML += `
                 <tr>
                     <td>
-                        <strong style="font-size:15px; color:#1a202c;">${kar.nama}</strong><br>
+                        <strong style="font-size:15px;">${kar.nama}</strong><br>
                         <small style="color:#718096; font-weight:bold;">${kar.bag}</small>
-                        ${!mapHarga[kar.nama] ? '<br><small style="color:#e53e3e;">⚠️ Tarif belum diisi!</small>' : ''}
                     </td>
                     <td>
                         <div class="detail-row"><span>Reguler (${nilaiReguler} ${satuan}):</span> <span>Rp ${formatRp(gajiKinerja)}</span></div>
                         <div class="detail-row"><span>Lembur (${kar.lembur} Pcs):</span> <span>Rp ${formatRp(gajiLembur)}</span></div>
-                        <div class="detail-row subtotal-row"><span>Total Pendapatan:</span> <span>Rp ${formatRp(totalPendapatan)}</span></div>
+                        <div class="detail-row subtotal-row"><span>Total:</span> <span>Rp ${formatRp(totalPendapatan)}</span></div>
                     </td>
                     <td>
-                        ${htmlPotongan}
-                        ${totalPot > 0 ? `<div class="total-potongan"><span>Total Potongan:</span> <span>-Rp ${formatRp(totalPot)}</span></div>` : ''}
+                        ${profil.kas > 0 ? `<div class="potongan-item"><span>- Uang Kas:</span> <span>Rp ${formatRp(profil.kas)}</span></div>` : ''}
+                        ${profil.listrik > 0 ? `<div class="potongan-item"><span>- Listrik/Air:</span> <span>Rp ${formatRp(profil.listrik)}</span></div>` : ''}
+                        ${profil.tabWajib > 0 ? `<div class="potongan-item"><span>- Tab. Wajib:</span> <span>Rp ${formatRp(profil.tabWajib)}</span></div>` : ''}
+                        ${kar.calc.potKasbon > 0 ? `<div class="potongan-item"><span>- Kasbon <small>(Sisa: ${formatRp(profil.sisaKasbon)})</small>:</span> <span>Rp ${formatRp(kar.calc.potKasbon)}</span></div>` : ''}
+                        ${htmlPotLain}
+                        
+                        <div class="total-potongan"><span>Total Pot:</span> <span id="txt_totpot_${index}">-Rp 0</span></div>
                     </td>
-                    <td class="total-gaji">Rp ${formatRp(totalBersih)}</td>
+                    <td class="total-gaji" id="txt_bersih_${index}">Rp 0</td>
                 </tr>
             `;
         });
 
-        if(dataKaryawanGlobal.length > 0) {
-            btnPreview.style.display = 'block';
-        }
+        if(dataKaryawanGlobal.length > 0) { btnPreview.style.display = 'block'; for(let i=0; i<dataKaryawanGlobal.length; i++) recalcRow(i); }
     }
 
-    // --- FUNGSI PREVIEW SLIP ---
+    function recalcRow(index) {
+        let c = dataKaryawanGlobal[index].calc;
+        
+        let sumLain = c.potLainnya.reduce((a, b) => a + (Number(b.nominal)||0), 0);
+        c.totalPot = c.potKas + c.potListrik + c.potTabWajib + c.potKasbon + sumLain;
+        c.totalBersih = c.totalPendapatan - c.totalPot;
+        
+        document.getElementById(`txt_totpot_${index}`).innerText = `-Rp ${formatRp(c.totalPot)}`;
+        document.getElementById(`txt_bersih_${index}`).innerText = `Rp ${formatRp(c.totalBersih)}`;
+    }
+
+    // MEMBUAT TEKS STRUK UNTUK PREVIEW WEB (SIMULASI 80MM)
     function previewSemuaSlip() {
         if (dataKaryawanGlobal.length === 0) return;
+        const tglAwal = document.getElementById('tglDari').value.split('-').reverse().join('/');
+        const tglAkhir = document.getElementById('tglSampai').value.split('-').reverse().join('/');
         
         let htmlPreview = "";
         dataKaryawanGlobal.forEach((kar) => {
             const c = kar.calc;
-            let txt = `================================\n`;
-            txt += `NAMA   : ${kar.nama.toUpperCase()}\n`;
-            txt += `BAGIAN : ${kar.bag.toUpperCase()}\n`;
-            txt += `--------------------------------\n`;
+            let txt = "";
+            txt += buatTeksTengah("SBR PUTRA FOOD");
+            txt += buatTeksTengah("SLIP GAJI KARYAWAN");
+            txt += buatTeksTengah(`Periode: ${tglAwal} - ${tglAkhir}`);
+            txt += "=".repeat(LEBAR_KERTAS) + "\n";
+            txt += buatBarisKananKiri(`NAMA:`, kar.nama.toUpperCase());
+            txt += buatBarisKananKiri(`BAGIAN:`, kar.bag.toUpperCase());
+            txt += "-".repeat(LEBAR_KERTAS) + "\n";
+            
             txt += `PENDAPATAN:\n`;
-            txt += ` Reguler (${c.nilaiReguler} ${c.satuan}) : Rp ${formatRp(c.gajiKinerja)}\n`;
-            if(c.gajiLembur > 0) {
-                txt += ` Lembur (${kar.lembur} Pcs)  : Rp ${formatRp(c.gajiLembur)}\n`;
-            }
-            txt += ` TOTAL PENDAPATAN : Rp ${formatRp(c.totalPendapatan)}\n`;
-            txt += `--------------------------------\n`;
-            txt += `POTONGAN:\n`;
+            txt += buatBarisKananKiri(`Reguler (${c.nilaiReguler} ${c.satuan})`, `Rp ${formatRp(c.gajiKinerja)}`);
+            if(c.gajiLembur > 0) txt += buatBarisKananKiri(`Lembur (${kar.lembur} Pcs)`, `Rp ${formatRp(c.gajiLembur)}`);
+            txt += "-".repeat(LEBAR_KERTAS) + "\n";
+            txt += buatBarisKananKiri(`TOTAL PENDAPATAN`, `Rp ${formatRp(c.totalPendapatan)}`);
             
             if(c.totalPot > 0) {
-                c.potArr.forEach(pot => {
+                txt += `\nPOTONGAN:\n`;
+                if(c.potKas > 0) txt += buatBarisKananKiri(`- Uang Kas`, `-Rp ${formatRp(c.potKas)}`);
+                if(c.potListrik > 0) txt += buatBarisKananKiri(`- Listrik/Air`, `-Rp ${formatRp(c.potListrik)}`);
+                if(c.potTabWajib > 0) txt += buatBarisKananKiri(`- Tabungan Wajib`, `-Rp ${formatRp(c.potTabWajib)}`);
+                if(c.potKasbon > 0) txt += buatBarisKananKiri(`- Cicil Kasbon`, `-Rp ${formatRp(c.potKasbon)}`);
+                
+                c.potLainnya.forEach(pot => {
                     let nom = Number(pot.nominal) || 0;
-                    if(nom > 0) {
-                        let nm = pot.nama ? pot.nama : "Lainnya";
-                        // Meratakan spasi
-                        let spasi = 18 - nm.length;
-                        if(spasi < 1) spasi = 1;
-                        txt += ` - ${nm}${" ".repeat(spasi)}: -Rp ${formatRp(nom)}\n`;
-                    }
+                    if(nom > 0) { let nmStr = pot.nama ? pot.nama.substring(0, 20) : "Lainnya"; txt += buatBarisKananKiri(`- ${nmStr}`, `-Rp ${formatRp(nom)}`); }
                 });
-            } else {
-                txt += ` - Tidak ada potongan -\n`;
+                txt += "-".repeat(LEBAR_KERTAS) + "\n";
+                txt += buatBarisKananKiri(`TOTAL POTONGAN`, `-Rp ${formatRp(c.totalPot)}`);
             }
-            txt += ` TOTAL POTONGAN   : -Rp ${formatRp(c.totalPot)}\n`;
-            txt += `--------------------------------\n`;
-            txt += `DITERIMA BERSIH   : Rp ${formatRp(c.totalBersih)}\n`;
-            txt += `================================\n\n`;
             
+            txt += "=".repeat(LEBAR_KERTAS) + "\n";
+            txt += buatBarisKananKiri(`DITERIMA BERSIH:`, `Rp ${formatRp(c.totalBersih)}`);
+            txt += "\n";
+            txt += buatBarisKananKiri("Diserahkan Oleh,", "Diterima Oleh,");
+            txt += "\n\n\n";
+            txt += buatBarisKananKiri("( HRD )", `( ${kar.nama} )`);
+            txt += "\n\n\n";
             htmlPreview += txt;
         });
         
@@ -319,85 +366,120 @@
         document.getElementById('modalPreview').style.display = 'block';
     }
 
-    function tutupPreview() { 
-        document.getElementById('modalPreview').style.display = 'none'; 
-    }
+    function tutupPreview() { document.getElementById('modalPreview').style.display = 'none'; }
 
-    // --- FUNGSI CETAK KE BLUETOOTH PRINTER ---
+    // MEMBUAT TEKS STRUK ASLI BLUETOOTH PRINTER (80MM, ESC/POS)
     function generateSlipBluetooth(kar) {
         const c = kar.calc;
         const tglAwal = document.getElementById('tglDari').value.split('-').reverse().join('/');
         const tglAkhir = document.getElementById('tglSampai').value.split('-').reverse().join('/');
-        let lebar = 32; 
+        const garisStrip = "-".repeat(LEBAR_KERTAS) + "\n";
+        const garisSama = "=".repeat(LEBAR_KERTAS) + "\n";
 
-        const buatBaris = (kiri, kanan) => { 
-            let spasi = lebar - String(kiri).length - String(kanan).length; 
-            return kiri + " ".repeat(Math.max(1, spasi)) + kanan + "\n"; 
-        };
-        const garisStrip = "-".repeat(lebar) + "\n";
-        const garisSama = "=".repeat(lebar) + "\n";
-
+        // HEADER
         let p = `\x1B\x40\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10SBR PUTRA FOOD\n\x1B\x21\x00\x1B\x45\x00`; 
-        p += `SLIP GAJI KARYAWAN\nPeriode: ${tglAwal} - ${tglAkhir}\n${garisSama}`;
-        
-        p += `\x1B\x61\x00`; 
-        p += buatBaris(`NAMA:`, kar.nama.toUpperCase());
-        p += buatBaris(`BAGIAN:`, kar.bag.toUpperCase());
+        p += `SLIP GAJI KARYAWAN\nPeriode: ${tglAwal} - ${tglAkhir}\n`;
+        p += `\x1B\x61\x00`; // Rata kiri
+        p += garisSama;
+        p += buatBarisKananKiri(`NAMA:`, kar.nama.toUpperCase());
+        p += buatBarisKananKiri(`BAGIAN:`, kar.bag.toUpperCase());
         p += garisStrip;
 
         // PENDAPATAN
         p += `\x1B\x45\x01PENDAPATAN:\x1B\x45\x00\n`;
-        p += buatBaris(`Reguler (${c.nilaiReguler} ${c.satuan})`, `Rp ${formatRp(c.gajiKinerja)}`);
-        if (c.gajiLembur > 0) {
-            p += buatBaris(`Lembur (${kar.lembur} Pcs)`, `Rp ${formatRp(c.gajiLembur)}`);
-        }
+        p += buatBarisKananKiri(`Reguler (${c.nilaiReguler} ${c.satuan})`, `Rp ${formatRp(c.gajiKinerja)}`);
+        if (c.gajiLembur > 0) p += buatBarisKananKiri(`Lembur (${kar.lembur} Pcs)`, `Rp ${formatRp(c.gajiLembur)}`);
         p += garisStrip;
-        p += buatBaris(`TOTAL PENDAPATAN`, `Rp ${formatRp(c.totalPendapatan)}`);
+        p += buatBarisKananKiri(`TOTAL PENDAPATAN`, `Rp ${formatRp(c.totalPendapatan)}`);
         
         // POTONGAN
         if (c.totalPot > 0) {
             p += `\n\x1B\x45\x01POTONGAN:\x1B\x45\x00\n`;
-            c.potArr.forEach(pot => {
+            if (c.potKas > 0) p += buatBarisKananKiri(`- Uang Kas`, `-Rp ${formatRp(c.potKas)}`);
+            if (c.potListrik > 0) p += buatBarisKananKiri(`- Listrik/Air`, `-Rp ${formatRp(c.potListrik)}`);
+            if (c.potTabWajib > 0) p += buatBarisKananKiri(`- Tabungan Wajib`, `-Rp ${formatRp(c.potTabWajib)}`);
+            if (c.potKasbon > 0) p += buatBarisKananKiri(`- Cicil Kasbon`, `-Rp ${formatRp(c.potKasbon)}`);
+            
+            c.potLainnya.forEach(pot => {
                 let nom = Number(pot.nominal) || 0;
                 if (nom > 0) {
-                    let nm = pot.nama ? pot.nama : "Lainnya";
-                    let nmStr = nm.length > 15 ? nm.substring(0, 15) + ".." : nm;
-                    p += buatBaris(`- ${nmStr}`, `-Rp ${formatRp(nom)}`);
+                    let nmStr = pot.nama ? pot.nama.substring(0, 20) : "Lainnya";
+                    p += buatBarisKananKiri(`- ${nmStr}`, `-Rp ${formatRp(nom)}`);
                 }
             });
             p += garisStrip;
-            p += buatBaris(`TOTAL POTONGAN`, `-Rp ${formatRp(c.totalPot)}`);
+            p += buatBarisKananKiri(`TOTAL POTONGAN`, `-Rp ${formatRp(c.totalPot)}`);
         }
         
-        // TOTAL BERSIH
+        // TOTAL BERSIH & FOOTER TTD
         p += garisSama;
-        p += `\x1B\x45\x01` + buatBaris(`DITERIMA BERSIH:`, `Rp ${formatRp(c.totalBersih)}`) + `\x1B\x45\x00`;
-        p += `\n\n\x1B\x61\x01Diterima Oleh,\n\n\n\n( ${kar.nama} )\n\n\n\n\x1D\x56\x42\x00`; 
+        p += `\x1B\x45\x01` + buatBarisKananKiri(`DITERIMA BERSIH:`, `Rp ${formatRp(c.totalBersih)}`) + `\x1B\x45\x00\n`;
+        p += buatBarisKananKiri("Diserahkan Oleh,", "Diterima Oleh,");
+        p += `\n\n\n`;
+        p += buatBarisKananKiri("( HRD )", `( ${kar.nama} )`);
+        p += `\n\n\n\x1D\x56\x42\x00`; 
 
         return p;
     }
 
-    async function finalkanCetakSemua() {
-        if (!btCharacteristic) { 
-            alert("⚠️ Printer belum terhubung! Silakan tutup preview dan klik tombol hubungkan printer di atas."); 
+    async function finalkanCetakSemua(harusSimpan) {
+        const metodeCetak = document.getElementById('metodeOutput').value;
+
+        // Cek koneksi bluetooth HANYA jika metodenya adalah bluetooth
+        if (metodeCetak === 'bluetooth' && !btCharacteristic) { 
+            alert("⚠️ Printer belum terhubung! Silakan hubungkan printer Bluetooth di atas tabel terlebih dahulu."); 
             return; 
         }
 
         const btn = document.getElementById('btnCetakFinal');
-        btn.innerText = "⏳ MENCETAK KE PRINTER..."; btn.disabled = true;
+        btn.innerText = "⏳ MEMPROSES..."; btn.disabled = true;
+        const tglSimpan = document.getElementById('tglSampai').value; 
 
         try {
-            let gabunganPrint = "";
-            for(let i = 0; i < dataKaryawanGlobal.length; i++) {
-                gabunganPrint += generateSlipBluetooth(dataKaryawanGlobal[i]);
+            if(harusSimpan) {
+                let pGaji=[], pKas=[], pKasbon=[], pTabungan=[];
+                dataKaryawanGlobal.forEach(kar => {
+                    let c = kar.calc;
+                    if(!c.id_karyawan) return; 
+                    
+                    pGaji.push({ id_karyawan: c.id_karyawan, tanggal: tglSimpan, gaji_produksi: c.gajiKinerja, uang_lembur: c.gajiLembur, potongan_kas: c.potKas, potongan_listrik: c.potListrik, potongan_tabungan: c.potTabWajib, potongan_kasbon: c.potKasbon, total_bersih: c.totalBersih });
+if(c.potKas > 0) pKas.push({ tanggal: tglSimpan, kategori: 'Uang Kas', jenis_transaksi: 'Pemasukan', nominal: c.potKas, keterangan: 'Potong gaji otomatis - ' + kar.nama });
+if(c.potListrik > 0) pKas.push({ tanggal: tglSimpan, kategori: 'Listrik & Air', jenis_transaksi: 'Pemasukan', nominal: c.potListrik, keterangan: 'Potong gaji otomatis - ' + kar.nama });
+
+                    if(c.potKasbon > 0) pKasbon.push({ id_karyawan: c.id_karyawan, tanggal: tglSimpan, jenis_transaksi: 'Bayar', nominal: c.potKasbon, keterangan: 'Cicilan potong gaji' });
+                    if(c.potTabWajib > 0) pTabungan.push({ id_karyawan: c.id_karyawan, tanggal: tglSimpan, jenis_transaksi: 'Setor', nominal: c.potTabWajib, keterangan: 'Setoran potong gaji (Tabungan Wajib)' });
+                });
+
+                if(pGaji.length > 0) await clientSupabase.from('penggajian').insert(pGaji);
+                if(pKas.length > 0) await clientSupabase.from('kas_rutin').insert(pKas);
+                if(pKasbon.length > 0) await clientSupabase.from('kasbon').insert(pKasbon);
+                if(pTabungan.length > 0) await clientSupabase.from('tabungan').insert(pTabungan);
             }
-            await printDataToBT(gabunganPrint);
+
+            if (metodeCetak === 'bluetooth') {
+                // Cetak ke Printer Fisik
+                let gabunganPrint = "";
+                for(let i = 0; i < dataKaryawanGlobal.length; i++) gabunganPrint += generateSlipBluetooth(dataKaryawanGlobal[i]);
+                await printDataToBT(gabunganPrint);
+            } else if (metodeCetak === 'file') {
+                // Simpan text struk ke File .txt untuk keperluan test
+                const plainText = document.getElementById('areaPreview').innerText;
+                const blob = new Blob([plainText], { type: 'text/plain' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `Slip_Gaji_${tglSimpan}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+            
             tutupPreview();
-            alert("✅ Seluruh slip berhasil dicetak ke Printer Bluetooth.");
+            alert(harusSimpan ? "✅ Gaji berhasil disimpan ke Semua Buku & Slip diproses!" : "✅ Slip Berhasil Diproses Ulang!");
+            
         } catch (e) {
-            alert("❌ Gagal mencetak: " + e);
+            alert("❌ Gagal memproses: " + (e.message || e));
         } finally {
-            btn.innerText = "✅ CETAK SEMUA"; btn.disabled = false;
+            btn.innerText = "💾 SIMPAN & PROSES"; btn.disabled = false;
         }
     }
 </script>

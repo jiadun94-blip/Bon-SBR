@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SBR Putra Food - Buku Kasbon</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #f4f7f9; }
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); font-size: 16px; }
+        .container { background: white; padding: 12px; border-radius: 15px; max-width: 600px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        header h2 { margin: 0; color: #1a202c; font-size: 20px; font-weight: 900; }
+        .btn-back { background: #718096; color: white; padding: 8px 12px; border-radius: 8px; font-weight: 900; text-decoration: none; font-size: 12px; }
+        .saldo-card { background: #e53e3e; padding: 15px; border-radius: 10px; text-align: center; color: white; box-shadow: 0 4px 0 #c53030; margin-bottom: 15px; }
+        .form-box { background: #edf2f7; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #cbd5e0; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-weight: 900; font-size: 13px; color: #4a5568; margin-bottom: 5px; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 16px; font-weight: 700; outline: none; }
+        .btn-save { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; color: white; background: #3182ce; font-size: 16px; box-shadow: 0 4px 0 #2b6cb0; margin-top:5px; }
+        .btn-batal { display: none; width: 100%; padding: 12px; background: #718096; color: white; border: none; border-radius: 10px; font-weight: 900; margin-top: 10px; cursor: pointer; }
+        .section-label { font-size: 15px; font-weight: 900; padding: 10px; background: #1a202c; color: white; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th { text-align: left; padding: 10px 5px; background: #edf2f7; border-bottom: 2px solid #cbd5e0; }
+        td { padding: 12px 5px; border-bottom: 1px solid #e2e8f0; font-weight: 700; }
+        .text-merah { color: #e53e3e; } .text-hijau { color: #27ae60; }
+        .tr-tahan:active { background-color: #e2e8f0; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
+        .modal-content { background: white; margin: 30% auto; padding: 20px; border-radius: 15px; width: 80%; text-align: center; }
+        .modal-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: 900; margin-bottom: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h2>BUKU KASBON</h2>
+        <a href="javascript:history.back()" class="btn-back">⬅ KEMBALI</a>
+    </header>
+
+    <div class="saldo-card">
+        <h4>Total Piutang</h4>
+        <h2 id="saldoTotal">Rp 0</h2>
+    </div>
+
+    <div class="form-box">
+        <div class="form-group"><label>TANGGAL</label><input type="date" id="inputTanggal"></div>
+        <div class="form-group"><label>KARYAWAN</label><select id="inputIdKaryawan"></select></div>
+        <div class="form-group"><label>JENIS</label><select id="inputJenis" onchange="toggleCicilan()"><option value="Pinjam">Pinjam (+ Hutang)</option><option value="Bayar">Bayar (- Hutang)</option></select></div>
+        <div class="form-group"><label>NOMINAL (Rp)</label><input type="number" id="inputNominal"></div>
+        <div class="form-group" id="grupCicilan"><label style="color:#c53030;">CICILAN/MINGGU (Rp)</label><input type="number" id="inputCicilan"></div>
+        <div class="form-group"><label>KETERANGAN</label><input type="text" id="inputKeterangan"></div>
+        <button class="btn-save" id="btnSimpan" onclick="simpanTransaksi()">CATAT KASBON</button>
+        <button class="btn-batal" id="btnBatal" onclick="batalEdit()">BATAL EDIT</button>
+    </div>
+
+    <div class="section-label">📜 HISTORI <span>(Tahan Baris=Edit/Hapus)</span></div>
+    <table id="tabelMutasi">
+        <thead><tr><th>KARYAWAN & TGL</th><th style="text-align:right;">NOMINAL</th></tr></thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<div id="modalAksi" class="modal">
+    <div class="modal-content">
+        <button class="modal-btn" style="background:#3182ce; color:white;" onclick="siapkanEdit()">✏️ EDIT</button>
+        <button class="modal-btn" style="background:#e53e3e; color:white;" onclick="prosesHapus()">🗑️ HAPUS</button>
+        <button class="modal-btn" style="background:#edf2f7;" onclick="tutupAksi()">BATAL</button>
+    </div>
+</div>
+
+<script>
+    const clientSupabase = supabase.createClient("https://yxcxvkairftqzmptkorr.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs");
+    let editId = null, targetId = null, pressTimer, dataGlobal = [];
+
+    window.onload = () => { muatKaryawan(); muatData(); document.getElementById('inputTanggal').valueAsDate = new Date(); };
+    function toggleCicilan() { document.getElementById('grupCicilan').style.display = (document.getElementById('inputJenis').value === 'Pinjam') ? 'block' : 'none'; }
+
+    async function muatKaryawan() {
+        const { data } = await clientSupabase.from('karyawan').select('id, nama_karyawan').order('nama_karyawan');
+        let html = '<option value="">-- Pilih --</option>';
+        data.forEach(k => html += `<option value="${k.id}">${k.nama_karyawan}</option>`);
+        document.getElementById('inputIdKaryawan').innerHTML = html;
+    }
+
+    async function muatData() {
+        const { data } = await clientSupabase.from('kasbon').select('*, karyawan(nama_karyawan)').order('created_at', { ascending: false });
+        dataGlobal = data;
+        let tbody = document.querySelector('#tabelMutasi tbody'); tbody.innerHTML = '';
+        let total = 0;
+        data.forEach(item => {
+            let nom = parseInt(item.nominal) || 0;
+            total += (item.jenis_transaksi === 'Pinjam') ? nom : -nom;
+            let row = tbody.insertRow(); row.className = 'tr-tahan';
+            row.innerHTML = `<td style="padding:10px;"><b>${item.karyawan?.nama_karyawan || '-'}</b><br><small>${item.tanggal} | ${item.keterangan}</small></td>
+                             <td style="text-align:right;" class="${item.jenis_transaksi === 'Pinjam' ? 'text-merah' : 'text-hijau'}">${item.jenis_transaksi === 'Pinjam' ? '+' : '-'} Rp ${nom.toLocaleString()}</td>`;
+            row.onmousedown = () => pressTimer = setTimeout(() => { targetId = item.id; document.getElementById('modalAksi').style.display = 'block'; }, 600);
+            row.onmouseup = () => clearTimeout(pressTimer);
+            row.ontouchstart = () => pressTimer = setTimeout(() => { targetId = item.id; document.getElementById('modalAksi').style.display = 'block'; }, 600);
+            row.ontouchend = () => clearTimeout(pressTimer);
+        });
+        document.getElementById('saldoTotal').innerText = "Rp " + total.toLocaleString();
+    }
+
+    function tutupAksi() { document.getElementById('modalAksi').style.display = 'none'; }
+
+    function siapkanEdit() {
+        let item = dataGlobal.find(x => x.id === targetId);
+        editId = item.id;
+        document.getElementById('inputTanggal').value = item.tanggal;
+        document.getElementById('inputIdKaryawan').value = item.id_karyawan;
+        document.getElementById('inputJenis').value = item.jenis_transaksi;
+        document.getElementById('inputNominal').value = item.nominal;
+        document.getElementById('inputKeterangan').value = item.keterangan;
+        document.getElementById('btnSimpan').innerText = "UPDATE TRANSAKSI";
+        document.getElementById('btnBatal').style.display = "block";
+        tutupAksi();
+    }
+
+    function batalEdit() { editId = null; document.getElementById('btnSimpan').innerText = "CATAT KASBON"; document.getElementById('btnBatal').style.display = "none"; }
+
+    async function simpanTransaksi() {
+        const payload = { id_karyawan: document.getElementById('inputIdKaryawan').value, tanggal: document.getElementById('inputTanggal').value, jenis_transaksi: document.getElementById('inputJenis').value, nominal: parseInt(document.getElementById('inputNominal').value), keterangan: document.getElementById('inputKeterangan').value };
+        const cicilan = parseInt(document.getElementById('inputCicilan').value) || 0;
+
+        if (editId) await clientSupabase.from('kasbon').update(payload).eq('id', editId);
+        else await clientSupabase.from('kasbon').insert([payload]);
+        
+        if (payload.jenis_transaksi === 'Pinjam' && cicilan > 0) await clientSupabase.from('karyawan').update({ cicilan_kasbon: cicilan }).eq('id', payload.id_karyawan);
+        
+        batalEdit(); muatData();
+    }
+
+    async function prosesHapus() {
+        await clientSupabase.from('kasbon').delete().eq('id', targetId);
+        tutupAksi(); muatData();
+    }
+</script>
+</body>
+</html>

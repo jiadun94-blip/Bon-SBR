@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SBR Putra Food - Buku Kas & Rutin</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="theme-color" content="#2c3e50">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; font-size: 16px; }
+        .container { background: white; padding: 12px; border-radius: 15px; max-width: 600px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        header h2 { margin: 0; color: #1a202c; font-size: 20px; text-transform: uppercase; font-weight: 900; }
+        .btn-back { background: #718096; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 900; cursor: pointer; text-decoration: none; font-size: 12px; display: inline-block; }
+        
+        /* Kartu Saldo */
+        .saldo-container { display: flex; gap: 10px; margin-bottom: 15px; }
+        .saldo-card { flex: 1; padding: 15px; border-radius: 10px; text-align: center; color: white; }
+        .card-kas { background: #3182ce; box-shadow: 0 4px 0 #2b6cb0; }
+        .card-listrik { background: #d69e2e; box-shadow: 0 4px 0 #b7791f; }
+        .saldo-card h4 { margin: 0; font-size: 13px; font-weight: 700; opacity: 0.9; text-transform: uppercase; }
+        .saldo-card h2 { margin: 5px 0 0; font-size: 22px; font-weight: 900; }
+
+        .form-box { background: #edf2f7; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #cbd5e0; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-weight: 900; margin-bottom: 5px; font-size: 13px; color: #4a5568; text-transform: uppercase; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 16px; font-weight: 700; outline: none; }
+        .form-group input:focus, .form-group select:focus { border-color: #3182ce; }
+        
+        .btn-save { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; color: white; background: #e53e3e; font-size: 16px; text-transform: uppercase; box-shadow: 0 4px 0 #c53030; margin-top: 5px; }
+        .btn-save:disabled { background: #a0aec0; box-shadow: none; cursor: not-allowed; }
+        
+        .section-label { font-size: 15px; font-weight: 900; padding: 10px; background: #1a202c; color: white; border-radius: 6px; margin: 15px 0 10px; text-transform: uppercase; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 5px; font-size: 14px; }
+        th { text-align: left; padding: 10px 5px; background: #edf2f7; border-bottom: 2px solid #cbd5e0; font-weight: 900; }
+        td { padding: 12px 5px; border-bottom: 1px solid #e2e8f0; font-weight: 700; }
+        .tr-group:hover { background: #f7fafc; }
+        .text-merah { color: #e53e3e; }
+        .text-hijau { color: #27ae60; }
+        .ket-text { font-size: 12px; font-weight: 400; color: #718096; display: block; margin-top: 4px; }
+        
+        /* Modal Popup Detail */
+        .modal { display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 450px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-header { border-bottom: 2px dashed #cbd5e0; padding-bottom: 10px; margin-bottom: 15px; text-align: center; }
+        .modal-header h3 { margin: 0; color: #1a202c; font-size: 18px; font-weight: 900; text-transform: uppercase; }
+        .modal-header p { margin: 5px 0 0; font-size: 13px; color: #4a5568; font-weight: bold; }
+        .detail-wrapper { overflow-y: auto; flex-grow: 1; margin-bottom: 15px; }
+        .detail-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #edf2f7; font-size: 14px; align-items: center; }
+        .detail-item span:first-child { font-weight: 700; color: #2d3748; }
+        .detail-item span:last-child { font-weight: 900; }
+        .btn-close { background: #718096; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 900; cursor: pointer; width: 100%; font-size: 15px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h2>BUKU KAS & RUTIN</h2>
+        <a href="javascript:history.back()" class="btn-back">⬅ KEMBALI</a>
+    </header>
+
+    <!-- Informasi Saldo -->
+    <div class="saldo-container">
+        <div class="saldo-card card-kas">
+            <h4>Saldo Uang Kas</h4>
+            <h2 id="saldoKas">Rp 0</h2>
+        </div>
+        <div class="saldo-card card-listrik">
+            <h4>Saldo Listrik/Air</h4>
+            <h2 id="saldoListrik">Rp 0</h2>
+        </div>
+    </div>
+
+    <!-- Form Input Manual (Untuk Pengeluaran) -->
+    <div class="form-box">
+        <div class="section-label" style="margin-top:0; background:transparent; color:#2d3748; padding:0 0 10px 0; border-bottom:2px dashed #cbd5e0;">
+            ➕ INPUT PENGELUARAN DANA
+        </div>
+        
+        <div class="form-group">
+            <label>TANGGAL</label>
+            <input type="date" id="inputTanggal">
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1;">
+                <label>KATEGORI DANA</label>
+                <select id="inputKategori">
+                    <option value="Uang Kas">Uang Kas</option>
+                    <option value="Listrik & Air">Listrik & Air</option>
+                </select>
+            </div>
+            <input type="hidden" id="inputJenis" value="Pengeluaran">
+        </div>
+
+        <div class="form-group">
+            <label>NOMINAL PENGELUARAN (Rp)</label>
+            <input type="number" id="inputNominal" placeholder="Contoh: 50000">
+        </div>
+        
+        <div class="form-group">
+            <label>KETERANGAN</label>
+            <input type="text" id="inputKeterangan" placeholder="Contoh: Bayar token listrik pabrik">
+        </div>
+
+        <button class="btn-save" id="btnSimpan" onclick="simpanTransaksi()">CATAT PENGELUARAN</button>
+    </div>
+
+    <div class="section-label">
+        📜 HISTORI TRANSAKSI (TOTAL HARIAN)
+    </div>
+    
+    <table id="tabelMutasi">
+        <thead>
+            <tr>
+                <th>TANGGAL & KET.</th>
+                <th style="text-align:right;">TOTAL NOMINAL</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data grup akan masuk ke sini -->
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal Popup Detail Transaksi -->
+<div id="modalDetail" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>DETAIL TRANSAKSI</h3>
+            <p id="modalSubtitle">Tanggal - Kategori</p>
+        </div>
+        <div class="detail-wrapper" id="areaDetail">
+            <!-- Rincian masuk ke sini -->
+        </div>
+        <button class="btn-close" onclick="tutupDetail()">TUTUP DETAIL</button>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let dataKasGlobal = {}; // Untuk menyimpan data yang sudah dikelompokkan
+
+    // Format Rupiah
+    function formatRp(angka) {
+        return "Rp " + new Intl.NumberFormat("id-ID").format(angka);
+    }
+
+    // Format Tanggal (YYYY-MM-DD ke DD/MM/YYYY)
+    function formatTgl(tglStr) {
+        if(!tglStr) return '-';
+        let parts = tglStr.split('-');
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    document.getElementById('inputTanggal').valueAsDate = new Date();
+
+    async function muatData() {
+        const tbody = document.querySelector('#tabelMutasi tbody');
+        tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:20px;">⏳ Memuat data...</td></tr>';
+
+        const { data, error } = await clientSupabase
+            .from('kas_rutin')
+            .select('*')
+            .order('tanggal', { ascending: false })
+            .order('created_at', { ascending: false });
+
+        if (error) { 
+            tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:red;">Gagal memuat data</td></tr>';
+            return; 
+        }
+
+        let totalKas = 0;
+        let totalListrik = 0;
+        dataKasGlobal = {}; // Reset global data
+
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:#718096; padding:20px;">Belum ada riwayat transaksi</td></tr>';
+            document.getElementById('saldoKas').innerText = formatRp(0);
+            document.getElementById('saldoListrik').innerText = formatRp(0);
+            return;
+        }
+
+        // Proses pengelompokan (Grouping) berdasarkan Tanggal + Kategori + Jenis Transaksi
+        data.forEach(item => {
+            let nominalVal = parseInt(item.nominal) || 0;
+            
+            // Hitung Saldo Global
+            if(item.kategori === 'Uang Kas') {
+                if(item.jenis_transaksi === 'Pemasukan') totalKas += nominalVal;
+                else if(item.jenis_transaksi === 'Pengeluaran') totalKas -= nominalVal;
+            } else if (item.kategori === 'Listrik & Air') {
+                if(item.jenis_transaksi === 'Pemasukan') totalListrik += nominalVal;
+                else if(item.jenis_transaksi === 'Pengeluaran') totalListrik -= nominalVal;
+            }
+
+            // Buat Kunci Grup (Contoh: "2026-07-19_Uang Kas_Pemasukan")
+            let keyGroup = `${item.tanggal}_${item.kategori}_${item.jenis_transaksi}`;
+            
+            if(!dataKasGlobal[keyGroup]) {
+                dataKasGlobal[keyGroup] = {
+                    tanggal: item.tanggal,
+                    kategori: item.kategori,
+                    jenis_transaksi: item.jenis_transaksi,
+                    total_nominal: 0,
+                    details: []
+                };
+            }
+            
+            dataKasGlobal[keyGroup].total_nominal += nominalVal;
+            dataKasGlobal[keyGroup].details.push(item);
+        });
+
+        document.getElementById('saldoKas').innerText = formatRp(totalKas);
+        document.getElementById('saldoListrik').innerText = formatRp(totalListrik);
+
+        // Ubah Objek menjadi Array agar bisa di-urutkan (Sort) berdasarkan tanggal terbaru
+        let arrayGroup = Object.keys(dataKasGlobal).map(key => ({
+            keyId: key,
+            ...dataKasGlobal[key]
+        })).sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+        tbody.innerHTML = '';
+
+        // Tampilkan Grup ke dalam Tabel
+        arrayGroup.forEach(group => {
+            const tr = document.createElement('tr');
+            tr.className = 'tr-group';
+            
+            let textClass = group.jenis_transaksi === 'Pemasukan' ? 'text-hijau' : 'text-merah';
+            let tanda = group.jenis_transaksi === 'Pemasukan' ? '+' : '-';
+            
+            let badgeKat = group.kategori === 'Uang Kas' ? 
+                '<span style="background:#3182ce;color:white;padding:2px 5px;border-radius:4px;font-size:10px;">KAS</span>' : 
+                '<span style="background:#d69e2e;color:white;padding:2px 5px;border-radius:4px;font-size:10px;">LISTRIK</span>';
+
+            // Klik baris mana saja akan membuka detail (Popup)
+            tr.innerHTML = `
+                <td onclick="bukaDetail('${group.keyId}')" style="cursor:pointer;">
+                    <div style="font-size:12px; font-weight:900; color:#2c3e50;">${formatTgl(group.tanggal)} ${badgeKat}</div>
+                    <span class="ket-text" style="color:#3182ce; font-weight:700; text-decoration:underline;">
+                        🔍 Lihat Detail (${group.details.length} Data)
+                    </span>
+                </td>
+                <td onclick="bukaDetail('${group.keyId}')" style="text-align:right; cursor:pointer;" class="${textClass}">
+                    <span style="text-decoration:underline; font-weight:900;">${tanda} ${formatRp(group.total_nominal)}</span>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Fungsi Menampilkan Modal Detail
+    function bukaDetail(keyId) {
+        const group = dataKasGlobal[keyId];
+        if(!group) return;
+
+        let subtitle = `${formatTgl(group.tanggal)} | ${group.kategori} | ${group.jenis_transaksi}`;
+        document.getElementById('modalSubtitle').innerText = subtitle;
+
+        let htmlDetail = '';
+        let textClass = group.jenis_transaksi === 'Pemasukan' ? 'text-hijau' : 'text-merah';
+
+        group.details.forEach(item => {
+            // Teks Keterangan akan menampilkan nama karyawan jika format dari Penggajian disesuaikan
+            let teksKet = item.keterangan || '-';
+            let nominalStr = formatRp(item.nominal || 0);
+
+            htmlDetail += `
+                <div class="detail-item">
+                    <span>${teksKet}</span>
+                    <span class="${textClass}">${nominalStr}</span>
+                </div>
+            `;
+        });
+
+        // Tambahkan baris total di akhir rincian
+        htmlDetail += `
+            <div class="detail-item" style="border-top:2px dashed #cbd5e0; margin-top:10px; padding-top:15px;">
+                <span style="font-size:15px; color:#1a202c;">TOTAL KESELURUHAN:</span>
+                <span class="${textClass}" style="font-size:16px;">${formatRp(group.total_nominal)}</span>
+            </div>
+        `;
+
+        document.getElementById('areaDetail').innerHTML = htmlDetail;
+        document.getElementById('modalDetail').style.display = 'flex';
+    }
+
+    function tutupDetail() {
+        document.getElementById('modalDetail').style.display = 'none';
+    }
+
+    async function simpanTransaksi() {
+        const tanggal = document.getElementById('inputTanggal').value;
+        const kategori = document.getElementById('inputKategori').value;
+        const jenis = document.getElementById('inputJenis').value;
+        const nominal = document.getElementById('inputNominal').value;
+        const keterangan = document.getElementById('inputKeterangan').value.trim();
+
+        if (!tanggal || !nominal) return alert("⚠️ Tanggal dan Nominal harus diisi!");
+
+        const btn = document.getElementById('btnSimpan');
+        btn.innerText = "MENYIMPAN..."; btn.disabled = true;
+
+        const payload = { 
+            tanggal: tanggal, 
+            kategori: kategori,
+            jenis_transaksi: jenis,
+            nominal: parseInt(nominal),
+            keterangan: keterangan
+        };
+
+        try {
+            const { error } = await clientSupabase.from('kas_rutin').insert([payload]);
+            if (error) throw error;
+            
+            document.getElementById('inputNominal').value = '';
+            document.getElementById('inputKeterangan').value = '';
+            
+            muatData(); 
+        } catch (e) {
+            alert("❌ Gagal menyimpan data:\n" + e.message);
+        } finally {
+            btn.innerText = "CATAT PENGELUARAN";
+            btn.disabled = false;
+        }
+    }
+
+    window.onload = muatData;
+</script>
+
+</body>
+</html>
