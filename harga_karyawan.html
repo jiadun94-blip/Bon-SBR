@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SBR Putra Food - Harga & Potongan Karyawan</title>
+    <title>SBR Putra Food - Harga Karyawan</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -30,12 +30,6 @@
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         
-        /* Style Khusus Potongan */
-        .potongan-header { font-size: 13px; font-weight: 900; color: #e53e3e; text-transform: uppercase; margin-top: 15px; margin-bottom: 5px; border-bottom: 2px solid #feb2b2; padding-bottom: 5px; }
-        .potongan-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
-        .potongan-row input { padding: 10px; font-size: 14px; border-color: #feb2b2; }
-        .potongan-row input:focus { border-color: #e53e3e; }
-        
         .btn-save { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; color: white; background: #27ae60; font-size: 18px; text-transform: uppercase; box-shadow: 0 4px 0 #1e8449; margin-top: 10px; }
         .btn-save:disabled { background: #a0aec0; box-shadow: none; cursor: not-allowed; }
         .btn-cancel-edit { display: none; width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; color: white; background: #718096; font-size: 16px; margin-top: 10px; }
@@ -44,7 +38,7 @@
         .search-bar { width: 100%; padding: 10px; border: 2px solid #cbd5e0; border-radius: 8px; font-size: 14px; font-weight: 700; outline: none; margin-bottom: 10px; box-sizing: border-box; }
         
         .table-wrapper { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 5px; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 5px; min-width: 500px; }
         th { font-size: 11px; text-align: left; padding: 10px 5px; background: #edf2f7; border-bottom: 2px solid #cbd5e0; font-weight: 900; text-transform: uppercase; }
         td { padding: 10px 5px; border-bottom: 1px solid #e2e8f0; font-size: 14px; font-weight: 700; vertical-align: top; }
         
@@ -60,7 +54,7 @@
 
 <div class="container">
     <header>
-        <h2>HARGA & POTONGAN</h2>
+        <h2>HARGA KARYAWAN</h2>
         <a href="javascript:history.back()" class="btn-back">⬅ KEMBALI</a>
     </header>
 
@@ -91,37 +85,12 @@
             </div>
         </div>
 
-        <!-- AREA POTONGAN (SIMPAN KE SUPABASE JSON) -->
-        <div class="potongan-header">💸 RUTINAN / POTONGAN KARYAWAN</div>
-        <small style="color:#718096; display:block; margin-bottom:10px; font-size:11px; line-height:1.4;">Data ini tersimpan ke Database. Ketik nama potongan dan nominalnya. Kosongkan jika tidak ada.</small>
-        
-        <div class="potongan-row">
-            <input type="text" id="namaPot1" placeholder="Nama Potongan 1">
-            <input type="number" id="nomPot1" placeholder="Nominal (Rp)">
-        </div>
-        <div class="potongan-row">
-            <input type="text" id="namaPot2" placeholder="Nama Potongan 2">
-            <input type="number" id="nomPot2" placeholder="Nominal (Rp)">
-        </div>
-        <div class="potongan-row">
-            <input type="text" id="namaPot3" placeholder="Nama Potongan 3">
-            <input type="number" id="nomPot3" placeholder="Nominal (Rp)">
-        </div>
-        <div class="potongan-row">
-            <input type="text" id="namaPot4" placeholder="Nama Potongan 4">
-            <input type="number" id="nomPot4" placeholder="Nominal (Rp)">
-        </div>
-        <div class="potongan-row">
-            <input type="text" id="namaPot5" placeholder="Nama Potongan 5">
-            <input type="number" id="nomPot5" placeholder="Nominal (Rp)">
-        </div>
-
         <button class="btn-save" id="btnSimpan" onclick="simpanHarga()">SIMPAN DATA</button>
         <button class="btn-cancel-edit" id="btnBatalEdit" onclick="batalEdit()">BATAL EDIT</button>
     </div>
 
     <div class="section-label">
-        <span>📋 DAFTAR HARGA & POTONGAN</span>
+        <span>📋 DAFTAR HARGA KARYAWAN</span>
         <small style="font-size:10px; font-weight:normal; color:#cbd5e0;">(Tahan = Edit)</small>
     </div>
     
@@ -134,7 +103,6 @@
                     <th>NAMA & BAGIAN</th>
                     <th>HARGA NORMAL</th>
                     <th>HARGA LEMBUR</th>
-                    <th>POTONGAN (TOTAL & RINCIAN)</th>
                 </tr>
             </thead>
             <tbody>
@@ -186,7 +154,7 @@
 
     async function muatDataHarga() {
         const tbody = document.querySelector('#tabelHarga tbody');
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">⏳ Memuat data...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">⏳ Memuat data...</td></tr>';
 
         const { data, error } = await clientSupabase.from('harga_produksi').select('*').order('nama_karyawan');
         if (error) { console.error("Error:", error); return; }
@@ -226,15 +194,6 @@
             document.getElementById('inputNormal').value = hargaExist.harga_normal || "";
             document.getElementById('inputLembur').value = hargaExist.harga_lembur || "";
             
-            // Ambil data potongan_rutin (JSON) dari database
-            let potKar = hargaExist.potongan_rutin || [];
-            
-            // Isi form Potongan
-            for (let i = 0; i < 5; i++) {
-                document.getElementById('namaPot'+(i+1)).value = potKar[i]?.nama || "";
-                document.getElementById('nomPot'+(i+1)).value = potKar[i]?.nominal || "";
-            }
-            
             const btnSimpan = document.getElementById('btnSimpan');
             btnSimpan.innerText = "UPDATE DATA";
             btnSimpan.style.background = "#3182ce";
@@ -244,10 +203,6 @@
             document.getElementById('editIdData').value = "";
             document.getElementById('inputNormal').value = "";
             document.getElementById('inputLembur').value = "";
-            for(let i=1; i<=5; i++){
-                document.getElementById('namaPot'+i).value = "";
-                document.getElementById('nomPot'+i).value = "";
-            }
             
             const btnSimpan = document.getElementById('btnSimpan');
             btnSimpan.innerText = "SIMPAN DATA";
@@ -269,7 +224,7 @@
         let dataTampil = dataHarga.filter(item => item.nama_karyawan.toLowerCase().includes(kataKunci));
 
         if (dataTampil.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#e53e3e; padding: 20px;">Belum ada data harga</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#e53e3e; padding: 20px;">Belum ada data harga</td></tr>';
             return;
         }
 
@@ -277,35 +232,10 @@
             const tr = document.createElement('tr');
             tr.className = "tr-tahan";
             
-            // Mengambil & Memproses JSON Potongan
-            let potKar = item.potongan_rutin || [];
-            let totPot = 0;
-            let rincianHtml = "";
-            
-            potKar.forEach(p => { 
-                let nom = Number(p.nominal) || 0;
-                if (nom > 0) {
-                    totPot += nom;
-                    let namaPotongan = p.nama ? p.nama : "Lainnya";
-                    rincianHtml += `<div>- ${namaPotongan}: Rp ${formatRp(nom)}</div>`;
-                }
-            });
-            
-            let tampilanPotongan = "-";
-            if (totPot > 0) {
-                tampilanPotongan = `
-                    <div style="font-weight:900;">-Rp ${formatRp(totPot)}</div>
-                    <div style="font-size:11px; color:#718096; margin-top:4px; line-height:1.4;">
-                        ${rincianHtml}
-                    </div>
-                `;
-            }
-            
             tr.innerHTML = `
                 <td>${item.nama_karyawan}<br><small style="color:#718096;">${item.bagian}</small></td>
                 <td style="color:#27ae60;">Rp ${formatRp(item.harga_normal)}</td>
                 <td style="color:#d69e2e;">Rp ${formatRp(item.harga_lembur || 0)}</td>
-                <td style="color:#e53e3e;">${tampilanPotongan}</td>
             `;
             
             const itemDataJson = JSON.stringify(item).replace(/"/g, '&quot;');
@@ -356,11 +286,6 @@
         document.getElementById('labelNormal').innerText = 'Harga Normal (Rp)';
         document.getElementById('labelLembur').innerText = 'Harga Lembur (Rp)';
         
-        for(let i=1; i<=5; i++){
-            document.getElementById('namaPot'+i).value = "";
-            document.getElementById('nomPot'+i).value = "";
-        }
-        
         const btnSimpan = document.getElementById('btnSimpan');
         btnSimpan.innerText = "SIMPAN DATA";
         btnSimpan.style.background = "#27ae60";
@@ -380,21 +305,11 @@
         const btn = document.getElementById('btnSimpan');
         btn.innerText = "MENYIMPAN..."; btn.disabled = true;
 
-        // Siapkan Array Potongan untuk JSON
-        let arrPotongan = [];
-        for (let i = 1; i <= 5; i++) {
-            arrPotongan.push({
-                nama: document.getElementById('namaPot'+i).value,
-                nominal: parseFloat(document.getElementById('nomPot'+i).value) || 0
-            });
-        }
-
         const payload = {
             nama_karyawan: nama,
             bagian: bagian,
             harga_normal: normal,
-            harga_lembur: lembur,
-            potongan_rutin: arrPotongan // Simpan array ke kolom JSON
+            harga_lembur: lembur
         };
 
         try {
@@ -408,9 +323,9 @@
             
             batalEdit();
             await muatDataHarga(); 
-            alert("✅ Data Harga & Potongan berhasil disimpan!");
+            alert("✅ Data Harga berhasil disimpan!");
         } catch (e) {
-            alert("❌ Gagal menyimpan data:\n" + e.message + "\n\nPASTIKAN Anda sudah menambahkan kolom 'potongan_rutin' (tipe JSONB) di tabel harga_produksi!");
+            alert("❌ Gagal menyimpan data:\n" + e.message);
             batalEdit();
         } finally {
             btn.disabled = false;
@@ -418,7 +333,7 @@
     }
 
     async function prosesHapus() {
-        if (!confirm(`Apakah Anda yakin ingin menghapus data harga & potongan untuk ${targetAksiData.nama_karyawan}?`)) return;
+        if (!confirm(`Apakah Anda yakin ingin menghapus data harga untuk ${targetAksiData.nama_karyawan}?`)) return;
         
         tutupAksi();
         try {

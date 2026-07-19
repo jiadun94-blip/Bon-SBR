@@ -4,137 +4,354 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBR Putra Food - Buku Kasbon</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="theme-color" content="#2c3e50">
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    
     <style>
-        :root { --bg: #f4f7f9; }
-        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); font-size: 16px; }
+        :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; font-size: 16px; }
         .container { background: white; padding: 12px; border-radius: 15px; max-width: 600px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        header h2 { margin: 0; color: #1a202c; font-size: 20px; font-weight: 900; }
-        .btn-back { background: #718096; color: white; padding: 8px 12px; border-radius: 8px; font-weight: 900; text-decoration: none; font-size: 12px; }
-        .saldo-card { background: #e53e3e; padding: 15px; border-radius: 10px; text-align: center; color: white; box-shadow: 0 4px 0 #c53030; margin-bottom: 15px; }
+        header h2 { margin: 0; color: #1a202c; font-size: 20px; text-transform: uppercase; font-weight: 900; }
+        .btn-back { background: #718096; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 900; cursor: pointer; text-decoration: none; font-size: 12px; display: inline-block; }
+        
+        .saldo-container { margin-bottom: 15px; }
+        .saldo-card { padding: 15px; border-radius: 10px; text-align: center; color: white; background: #e67e22; box-shadow: 0 4px 0 #d35400; }
+        .saldo-card h4 { margin: 0; font-size: 13px; font-weight: 700; opacity: 0.9; text-transform: uppercase; }
+        .saldo-card h2 { margin: 5px 0 0; font-size: 24px; font-weight: 900; }
+
         .form-box { background: #edf2f7; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #cbd5e0; }
         .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; font-weight: 900; font-size: 13px; color: #4a5568; margin-bottom: 5px; }
+        .form-group label { display: block; font-weight: 900; margin-bottom: 5px; font-size: 13px; color: #4a5568; text-transform: uppercase; }
         .form-group input, .form-group select { width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 16px; font-weight: 700; outline: none; }
-        .btn-save { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; color: white; background: #3182ce; font-size: 16px; box-shadow: 0 4px 0 #2b6cb0; margin-top:5px; }
-        .btn-batal { display: none; width: 100%; padding: 12px; background: #718096; color: white; border: none; border-radius: 10px; font-weight: 900; margin-top: 10px; cursor: pointer; }
-        .section-label { font-size: 15px; font-weight: 900; padding: 10px; background: #1a202c; color: white; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th { text-align: left; padding: 10px 5px; background: #edf2f7; border-bottom: 2px solid #cbd5e0; }
+        .form-group input:focus, .form-group select:focus { border-color: #3182ce; }
+        
+        .btn-save { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; color: white; background: #3182ce; font-size: 16px; text-transform: uppercase; box-shadow: 0 4px 0 #2b6cb0; margin-top: 5px; }
+        .btn-save:disabled { background: #a0aec0; box-shadow: none; cursor: not-allowed; }
+        
+        .section-label { font-size: 15px; font-weight: 900; padding: 10px; background: #1a202c; color: white; border-radius: 6px; margin: 15px 0 10px; text-transform: uppercase; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 5px; font-size: 14px; }
+        th { text-align: left; padding: 10px 5px; background: #edf2f7; border-bottom: 2px solid #cbd5e0; font-weight: 900; }
         td { padding: 12px 5px; border-bottom: 1px solid #e2e8f0; font-weight: 700; }
-        .text-merah { color: #e53e3e; } .text-hijau { color: #27ae60; }
-        .tr-tahan:active { background-color: #e2e8f0; }
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
-        .modal-content { background: white; margin: 30% auto; padding: 20px; border-radius: 15px; width: 80%; text-align: center; }
-        .modal-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: 900; margin-bottom: 10px; cursor: pointer; }
+        .tr-group:hover { background: #f7fafc; }
+        .text-merah { color: #e53e3e; }
+        .text-hijau { color: #27ae60; }
+        .ket-text { font-size: 12px; font-weight: 400; color: #718096; display: block; margin-top: 4px; }
+        
+        /* Modal Popup Detail */
+        .modal { display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 450px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-header { border-bottom: 2px dashed #cbd5e0; padding-bottom: 10px; margin-bottom: 15px; text-align: center; }
+        .modal-header h3 { margin: 0; color: #1a202c; font-size: 18px; font-weight: 900; text-transform: uppercase; }
+        .modal-header p { margin: 5px 0 0; font-size: 13px; color: #4a5568; font-weight: bold; background:#edf2f7; display:inline-block; padding:4px 10px; border-radius:20px;}
+        .detail-wrapper { overflow-y: auto; flex-grow: 1; margin-bottom: 15px; }
+        
+        /* Desain Item Detail Histori */
+        .history-item { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .history-info { display: flex; flex-direction: column; gap: 3px; }
+        .history-date { font-size: 11px; font-weight: 900; color: #4a5568; }
+        .history-desc { font-size: 13px; font-weight: 700; color: #2d3748; }
+        .history-amount { font-size: 15px; font-weight: 900; text-align: right; }
+        
+        .btn-close { background: #718096; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 900; cursor: pointer; width: 100%; font-size: 15px; text-transform: uppercase; }
     </style>
 </head>
 <body>
+
 <div class="container">
     <header>
         <h2>BUKU KASBON</h2>
         <a href="javascript:history.back()" class="btn-back">⬅ KEMBALI</a>
     </header>
 
-    <div class="saldo-card">
-        <h4>Total Piutang</h4>
-        <h2 id="saldoTotal">Rp 0</h2>
+    <div class="saldo-container">
+        <div class="saldo-card">
+            <h4>Total Keseluruhan Sisa Kasbon</h4>
+            <h2 id="saldoKasbon">Rp 0</h2>
+        </div>
     </div>
 
     <div class="form-box">
-        <div class="form-group"><label>TANGGAL</label><input type="date" id="inputTanggal"></div>
-        <div class="form-group"><label>KARYAWAN</label><select id="inputIdKaryawan"></select></div>
-        <div class="form-group"><label>JENIS</label><select id="inputJenis" onchange="toggleCicilan()"><option value="Pinjam">Pinjam (+ Hutang)</option><option value="Bayar">Bayar (- Hutang)</option></select></div>
-        <div class="form-group"><label>NOMINAL (Rp)</label><input type="number" id="inputNominal"></div>
-        <div class="form-group" id="grupCicilan"><label style="color:#c53030;">CICILAN/MINGGU (Rp)</label><input type="number" id="inputCicilan"></div>
-        <div class="form-group"><label>KETERANGAN</label><input type="text" id="inputKeterangan"></div>
-        <button class="btn-save" id="btnSimpan" onclick="simpanTransaksi()">CATAT KASBON</button>
-        <button class="btn-batal" id="btnBatal" onclick="batalEdit()">BATAL EDIT</button>
+        <div class="section-label" style="margin-top:0; background:transparent; color:#2d3748; padding:0 0 10px 0; border-bottom:2px dashed #cbd5e0;">
+            ➕ INPUT TRANSAKSI MANUAL
+        </div>
+        
+        <div class="form-group">
+            <label>TANGGAL</label>
+            <input type="date" id="inputTanggal">
+        </div>
+        
+        <div class="form-group">
+            <label>NAMA KARYAWAN</label>
+            <select id="inputKaryawan">
+                <option value="">-- Pilih Karyawan --</option>
+                <!-- Opsi Karyawan akan dimuat otomatis -->
+            </select>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1;">
+                <label>JENIS TRANSAKSI</label>
+                <select id="inputJenis">
+                    <option value="Pinjam">Pinjam Kasbon</option>
+                    <option value="Bayar">Bayar/Cicil Kasbon</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex: 1.5;">
+                <label>NOMINAL (Rp)</label>
+                <input type="number" id="inputNominal" placeholder="Contoh: 50000">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>KETERANGAN</label>
+            <input type="text" id="inputKeterangan" placeholder="Contoh: Pinjam untuk kebutuhan keluarga">
+        </div>
+
+        <button class="btn-save" id="btnSimpan" onclick="simpanTransaksi()">SIMPAN TRANSAKSI</button>
     </div>
 
-    <div class="section-label">📜 HISTORI <span>(Tahan Baris=Edit/Hapus)</span></div>
+    <div class="section-label">
+        📜 DAFTAR SISA HUTANG KARYAWAN
+    </div>
+    
     <table id="tabelMutasi">
-        <thead><tr><th>KARYAWAN & TGL</th><th style="text-align:right;">NOMINAL</th></tr></thead>
-        <tbody></tbody>
+        <thead>
+            <tr>
+                <th>NAMA KARYAWAN</th>
+                <th style="text-align:right;">SISA KASBON</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data Karyawan akan masuk ke sini -->
+        </tbody>
     </table>
 </div>
 
-<div id="modalAksi" class="modal">
+<!-- Modal Popup Detail Transaksi -->
+<div id="modalDetail" class="modal">
     <div class="modal-content">
-        <button class="modal-btn" style="background:#3182ce; color:white;" onclick="siapkanEdit()">✏️ EDIT</button>
-        <button class="modal-btn" style="background:#e53e3e; color:white;" onclick="prosesHapus()">🗑️ HAPUS</button>
-        <button class="modal-btn" style="background:#edf2f7;" onclick="tutupAksi()">BATAL</button>
+        <div class="modal-header">
+            <h3 id="modalTitleNama">NAMA KARYAWAN</h3>
+            <p id="modalSubtitleSaldo">Sisa Hutang: Rp 0</p>
+        </div>
+        <div class="detail-wrapper" id="areaDetail">
+            <!-- Rincian histori masuk ke sini -->
+        </div>
+        <button class="btn-close" onclick="tutupDetail()">TUTUP RINCIAN</button>
     </div>
 </div>
 
 <script>
-    const clientSupabase = supabase.createClient("https://yxcxvkairftqzmptkorr.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs");
-    let editId = null, targetId = null, pressTimer, dataGlobal = [];
+    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    window.onload = () => { muatKaryawan(); muatData(); document.getElementById('inputTanggal').valueAsDate = new Date(); };
-    function toggleCicilan() { document.getElementById('grupCicilan').style.display = (document.getElementById('inputJenis').value === 'Pinjam') ? 'block' : 'none'; }
+    let rekapKaryawanGlobal = {}; 
+    let mapNamaKaryawan = {}; 
 
-    async function muatKaryawan() {
+    function formatRp(angka) { return "Rp " + new Intl.NumberFormat("id-ID").format(angka); }
+    function formatTgl(tglStr) {
+        if(!tglStr) return '-';
+        let parts = tglStr.split('-');
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    document.getElementById('inputTanggal').valueAsDate = new Date();
+
+    async function muatDropdownKaryawan() {
         const { data } = await clientSupabase.from('karyawan').select('id, nama_karyawan').order('nama_karyawan');
-        let html = '<option value="">-- Pilih --</option>';
-        data.forEach(k => html += `<option value="${k.id}">${k.nama_karyawan}</option>`);
-        document.getElementById('inputIdKaryawan').innerHTML = html;
+        const select = document.getElementById('inputKaryawan');
+        if(data) {
+            data.forEach(k => {
+                mapNamaKaryawan[k.id] = k.nama_karyawan;
+                select.innerHTML += `<option value="${k.id}">${k.nama_karyawan}</option>`;
+            });
+        }
     }
 
     async function muatData() {
-        const { data } = await clientSupabase.from('kasbon').select('*, karyawan(nama_karyawan)').order('created_at', { ascending: false });
-        dataGlobal = data;
-        let tbody = document.querySelector('#tabelMutasi tbody'); tbody.innerHTML = '';
-        let total = 0;
+        const tbody = document.querySelector('#tabelMutasi tbody');
+        tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:20px;">⏳ Memuat data...</td></tr>';
+
+        // Load Karyawan dulu
+        if (Object.keys(mapNamaKaryawan).length === 0) await muatDropdownKaryawan();
+
+        // Load semua data kasbon
+        const { data, error } = await clientSupabase
+            .from('kasbon')
+            .select('*')
+            .order('tanggal', { ascending: false })
+            .order('created_at', { ascending: false });
+
+        if (error) { 
+            tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:red;">Gagal memuat data</td></tr>';
+            return; 
+        }
+
+        let totalSisaKasbon = 0;
+        rekapKaryawanGlobal = {}; 
+
+        // Siapkan kerangka data untuk setiap karyawan yang ada di database
+        for (let idKar in mapNamaKaryawan) {
+            rekapKaryawanGlobal[idKar] = {
+                id: idKar,
+                nama: mapNamaKaryawan[idKar],
+                saldoHutang: 0,
+                histori: []
+            };
+        }
+
+        // Hitung Saldo Hutang & Masukkan Histori
         data.forEach(item => {
-            let nom = parseInt(item.nominal) || 0;
-            total += (item.jenis_transaksi === 'Pinjam') ? nom : -nom;
-            let row = tbody.insertRow(); row.className = 'tr-tahan';
-            row.innerHTML = `<td style="padding:10px;"><b>${item.karyawan?.nama_karyawan || '-'}</b><br><small>${item.tanggal} | ${item.keterangan}</small></td>
-                             <td style="text-align:right;" class="${item.jenis_transaksi === 'Pinjam' ? 'text-merah' : 'text-hijau'}">${item.jenis_transaksi === 'Pinjam' ? '+' : '-'} Rp ${nom.toLocaleString()}</td>`;
-            row.onmousedown = () => pressTimer = setTimeout(() => { targetId = item.id; document.getElementById('modalAksi').style.display = 'block'; }, 600);
-            row.onmouseup = () => clearTimeout(pressTimer);
-            row.ontouchstart = () => pressTimer = setTimeout(() => { targetId = item.id; document.getElementById('modalAksi').style.display = 'block'; }, 600);
-            row.ontouchend = () => clearTimeout(pressTimer);
+            let nominalVal = parseInt(item.nominal) || 0;
+            let idKar = item.id_karyawan;
+
+            // Jika karyawan sudah dihapus dari tabel master, tapi datanya masih ada di kasbon
+            if (!rekapKaryawanGlobal[idKar]) {
+                rekapKaryawanGlobal[idKar] = { id: idKar, nama: "Karyawan Terhapus", saldoHutang: 0, histori: [] };
+            }
+
+            // Logika Kasbon: Pinjam = nambah hutang (+), Bayar = ngurangin hutang (-)
+            if(item.jenis_transaksi === 'Pinjam') {
+                rekapKaryawanGlobal[idKar].saldoHutang += nominalVal;
+                totalSisaKasbon += nominalVal;
+            } else if(item.jenis_transaksi === 'Bayar') {
+                rekapKaryawanGlobal[idKar].saldoHutang -= nominalVal;
+                totalSisaKasbon -= nominalVal;
+            }
+
+            rekapKaryawanGlobal[idKar].histori.push(item);
         });
-        document.getElementById('saldoTotal').innerText = "Rp " + total.toLocaleString();
+
+        document.getElementById('saldoKasbon').innerText = formatRp(totalSisaKasbon);
+
+        // Filter: Hanya tampilkan karyawan yang punya history kasbon atau sisa hutangnya > 0, lalu urutkan abjad
+        let arrayKaryawan = Object.values(rekapKaryawanGlobal)
+            .filter(k => k.histori.length > 0 || k.saldoHutang > 0)
+            .sort((a, b) => a.nama.localeCompare(b.nama));
+
+        tbody.innerHTML = '';
+
+        if (arrayKaryawan.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:#718096; padding:20px;">Belum ada data kasbon karyawan</td></tr>';
+            return;
+        }
+
+        arrayKaryawan.forEach(kar => {
+            const tr = document.createElement('tr');
+            tr.className = 'tr-group';
+            
+            // Warna saldo: Merah jika punya hutang, Hijau jika lunas/0
+            let colorSaldo = kar.saldoHutang > 0 ? '#e53e3e' : '#27ae60';
+
+            tr.innerHTML = `
+                <td onclick="bukaDetail('${kar.id}')" style="cursor:pointer;">
+                    <div style="font-size:15px; font-weight:900; color:#2c3e50;">${kar.nama}</div>
+                    <span class="ket-text" style="color:#3182ce; font-weight:700; text-decoration:underline; display:flex; align-items:center; gap:5px; margin-top:5px;">
+                        <span>📋</span> Rincian Histori (${kar.histori.length}x)
+                    </span>
+                </td>
+                <td onclick="bukaDetail('${kar.id}')" style="text-align:right; vertical-align:middle; cursor:pointer; color:${colorSaldo};">
+                    <span style="font-weight:900; font-size:16px;">${formatRp(kar.saldoHutang)}</span>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
 
-    function tutupAksi() { document.getElementById('modalAksi').style.display = 'none'; }
+    function bukaDetail(idKar) {
+        const kar = rekapKaryawanGlobal[idKar];
+        if(!kar) return;
 
-    function siapkanEdit() {
-        let item = dataGlobal.find(x => x.id === targetId);
-        editId = item.id;
-        document.getElementById('inputTanggal').value = item.tanggal;
-        document.getElementById('inputIdKaryawan').value = item.id_karyawan;
-        document.getElementById('inputJenis').value = item.jenis_transaksi;
-        document.getElementById('inputNominal').value = item.nominal;
-        document.getElementById('inputKeterangan').value = item.keterangan;
-        document.getElementById('btnSimpan').innerText = "UPDATE TRANSAKSI";
-        document.getElementById('btnBatal').style.display = "block";
-        tutupAksi();
+        document.getElementById('modalTitleNama').innerText = "KASBON: " + kar.nama;
+        document.getElementById('modalSubtitleSaldo').innerText = "Sisa Hutang: " + formatRp(kar.saldoHutang);
+
+        let htmlDetail = '';
+
+        if(kar.histori.length === 0) {
+            htmlDetail = '<div style="text-align:center; padding:20px; color:#718096; font-weight:bold;">Belum ada riwayat</div>';
+        } else {
+            kar.histori.forEach(item => {
+                let isPinjam = item.jenis_transaksi === 'Pinjam';
+                // Jika Pinjam warna merah (hutang nambah), Jika Bayar warna hijau (hutang berkurang)
+                let textClass = isPinjam ? 'text-merah' : 'text-hijau';
+                let tanda = isPinjam ? '+' : '-';
+                
+                let badge = isPinjam ? 
+                    '<span style="background:#fed7d7; color:#742a2a; padding:2px 6px; border-radius:4px; font-size:10px;">PINJAM</span>' : 
+                    '<span style="background:#c6f6d5; color:#22543d; padding:2px 6px; border-radius:4px; font-size:10px;">BAYAR</span>';
+
+                let ketText = item.keterangan ? item.keterangan : (isPinjam ? 'Pinjam Kasbon' : 'Bayar/Cicil Kasbon');
+
+                htmlDetail += `
+                    <div class="history-item">
+                        <div class="history-info">
+                            <span class="history-date">${formatTgl(item.tanggal)} &nbsp; ${badge}</span>
+                            <span class="history-desc">${ketText}</span>
+                        </div>
+                        <div class="history-amount ${textClass}">
+                            ${tanda} ${formatRp(item.nominal)}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        document.getElementById('areaDetail').innerHTML = htmlDetail;
+        document.getElementById('modalDetail').style.display = 'flex';
     }
 
-    function batalEdit() { editId = null; document.getElementById('btnSimpan').innerText = "CATAT KASBON"; document.getElementById('btnBatal').style.display = "none"; }
+    function tutupDetail() {
+        document.getElementById('modalDetail').style.display = 'none';
+    }
 
     async function simpanTransaksi() {
-        const payload = { id_karyawan: document.getElementById('inputIdKaryawan').value, tanggal: document.getElementById('inputTanggal').value, jenis_transaksi: document.getElementById('inputJenis').value, nominal: parseInt(document.getElementById('inputNominal').value), keterangan: document.getElementById('inputKeterangan').value };
-        const cicilan = parseInt(document.getElementById('inputCicilan').value) || 0;
+        const tanggal = document.getElementById('inputTanggal').value;
+        const idKar = document.getElementById('inputKaryawan').value;
+        const jenis = document.getElementById('inputJenis').value;
+        const nominal = document.getElementById('inputNominal').value;
+        const keterangan = document.getElementById('inputKeterangan').value.trim();
 
-        if (editId) await clientSupabase.from('kasbon').update(payload).eq('id', editId);
-        else await clientSupabase.from('kasbon').insert([payload]);
-        
-        if (payload.jenis_transaksi === 'Pinjam' && cicilan > 0) await clientSupabase.from('karyawan').update({ cicilan_kasbon: cicilan }).eq('id', payload.id_karyawan);
-        
-        batalEdit(); muatData();
+        if (!tanggal || !idKar || !nominal) return alert("⚠️ Tanggal, Karyawan, dan Nominal harus diisi!");
+
+        const btn = document.getElementById('btnSimpan');
+        btn.innerText = "MENYIMPAN..."; btn.disabled = true;
+
+        const payload = { 
+            tanggal: tanggal, 
+            id_karyawan: idKar,
+            jenis_transaksi: jenis,
+            nominal: parseInt(nominal),
+            keterangan: keterangan || (jenis === 'Pinjam' ? 'Pinjam Manual' : 'Bayar Manual')
+        };
+
+        try {
+            const { error } = await clientSupabase.from('kasbon').insert([payload]);
+            if (error) throw error;
+            
+            document.getElementById('inputNominal').value = '';
+            document.getElementById('inputKeterangan').value = '';
+            document.getElementById('inputKaryawan').value = '';
+            
+            muatData(); 
+        } catch (e) {
+            alert("❌ Gagal menyimpan data:\n" + e.message);
+        } finally {
+            btn.innerText = "SIMPAN TRANSAKSI";
+            btn.disabled = false;
+        }
     }
 
-    async function prosesHapus() {
-        await clientSupabase.from('kasbon').delete().eq('id', targetId);
-        tutupAksi(); muatData();
-    }
+    window.onload = muatData;
 </script>
+
 </body>
 </html>
