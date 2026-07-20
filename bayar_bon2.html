@@ -27,7 +27,6 @@
         th { font-size: 12px; padding: 8px; background: #f1f2f6; border-bottom: 2px solid #ddd; text-transform: uppercase; }
         td { padding: 8px; border-bottom: 1px solid #edf2f7; font-size: 13px; font-weight: bold; }
         
-        /* CSS Baru untuk Box Detail & Modal */
         .detail-kirim-box { background: #fff5f5; border: 1px solid #fc8181; border-radius: 8px; padding: 10px; margin: 10px 0; display: none; }
         .detail-kirim-title { color: #c53030; font-weight: bold; font-size: 13px; margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
         .detail-kirim-divider { border-top: 1px dashed #fc8181; margin: 8px 0; }
@@ -35,16 +34,24 @@
         .detail-kirim-val { font-weight: bold; color: #2d3748; text-align: right; }
         .link-nota { color: #2b6cb0; text-decoration: underline; cursor: pointer; font-weight: bold; }
         
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); }
-        .modal-content { background-color: #fff; margin: 10vh auto; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; position: relative; }
-        .close-modal { position: absolute; right: 15px; top: 10px; font-size: 24px; font-weight: bold; color: #888; cursor: pointer; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); overflow-y: auto; }
+        .modal-content { background-color: #222; margin: 5vh auto; padding: 15px; border-radius: 10px; width: 95%; max-width: 450px; position: relative; }
+        .close-modal { position: absolute; right: 15px; top: 10px; font-size: 24px; font-weight: bold; color: #fff; cursor: pointer; }
         .input-manual { width: 100%; padding: 10px; border: 1px solid #1e272e; border-radius: 6px; font-weight: bold; text-align: right; box-sizing: border-box; font-size: 20px; }
         
-        /* CSS Struk */
-        .struk-container { background: white; padding: 15px; font-family: monospace; font-size: 14px; color: #000; }
-        .struk-header { text-align: center; font-weight: bold; margin-bottom: 10px; font-size: 16px; }
-        .struk-divider { border-top: 1px dashed #000; margin: 8px 0; }
-        .struk-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        /* CSS Struk Mirip Gambar */
+        .struk-container { background: white; padding: 15px; font-family: 'Courier New', Courier, monospace; font-size: 13px; color: #000; border-radius: 5px; margin-bottom: 15px; line-height: 1.4; }
+        .struk-header { text-align: center; font-weight: bold; margin-bottom: 5px; font-size: 15px; }
+        .struk-divider { border-top: 1px dashed #000; margin: 6px 0; }
+        .struk-divider-thick { border-top: 2px solid #000; margin: 6px 0; }
+        .struk-row { display: flex; justify-content: space-between; }
+        .struk-item-name { margin-top: 4px; }
+        .struk-item-detail { display: flex; justify-content: space-between; padding-left: 10px; }
+        
+        .btn-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        .btn-print { flex: 1; background: #2980b9; color: white; border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .btn-save { flex: 1; background: #27ae60; color: white; border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .select-printer { width: 100%; padding: 8px; background: #333; color: white; border: 1px solid #555; border-radius: 5px; }
     </style>
 </head>
 <body>
@@ -60,7 +67,6 @@
     <div class="display-box" style="margin-bottom: 15px;">
         <div class="display-row"><span>Bon Saat Ini:</span><span id="txtBonLama">Rp 0</span></div>
         
-        <!-- Box Detail Pengiriman -->
         <div id="boxDetailKirim" class="detail-kirim-box">
             <div class="detail-kirim-title">⚠️ DETAIL PENGIRIMAN TERAKHIR:</div>
             <div class="detail-kirim-divider"></div>
@@ -85,8 +91,8 @@
 
 <!-- Modal Catat Dana Masuk -->
 <div id="modalCatatDana" class="modal">
-    <div class="modal-content">
-        <span class="close-modal" onclick="tutupModalCatat()">&times;</span>
+    <div class="modal-content" style="background: white;">
+        <span class="close-modal" style="color:#000;" onclick="tutupModalCatat()">&times;</span>
         <h3 style="margin-top:0; text-align:center; color: #1e272e;">INPUT DANA MASUK</h3>
         <div class="form-group">
             <label>Metode</label>
@@ -109,35 +115,63 @@
 
 <!-- Modal Struk Detail Nota -->
 <div id="modalStruk" class="modal">
-    <div class="modal-content" style="background: #222; padding: 5px;">
-        <div style="background: white; border-radius: 5px; padding-bottom: 10px;">
-            <div style="padding: 10px; background: #333; color: white; border-top-left-radius: 5px; border-top-right-radius: 5px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <b style="font-size: 14px;">STRUK DETAIL NOTA</b>
-                <span style="font-size: 20px; cursor: pointer; color: #fff;" onclick="tutupModalStruk()">&times;</span>
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; color: white;">
+            <b style="font-size: 14px;">STRUK DETAIL NOTA</b>
+            <span style="font-size: 20px; cursor: pointer;" onclick="tutupModalStruk()">&times;</span>
+        </div>
+        
+        <!-- Bagian Kertas Putih -->
+        <div class="struk-container" id="areaCetakStruk">
+            <div class="struk-header">
+                SBR PUTRA FOOD<br>
+                <span style="font-weight: normal; font-size: 11px;">Lembang, Bandung Barat</span>
+            </div>
+            <div class="struk-divider"></div>
+            <div class="struk-row"><span>NO: <span id="strukNoNota">-</span></span><span>TGL: <span id="strukTgl">-</span></span></div>
+            <div style="text-align: center; font-weight: bold; margin: 5px 0; font-size: 15px;" id="strukAgen">-</div>
+            <div>DRV: <span id="strukDriver">-</span></div>
+            <div class="struk-divider"></div>
+            
+            <!-- List Rincian Barang -->
+            <div id="strukListBarang">
+                <!-- Data akan dimuat dari JS -->
             </div>
             
-            <div class="struk-container">
-                <div class="struk-header">
-                    SBR PUTRA FOOD<br>
-                    <span style="font-weight: normal; font-size: 12px;">Lembang, Bandung Barat</span>
-                </div>
-                <div class="struk-divider"></div>
-                <div class="struk-row"><span>NO: <span id="strukNoNota">-</span></span><span>TGL: <span id="strukTgl">-</span></span></div>
-                <div style="text-align: center; font-weight: bold; margin: 10px 0; font-size: 16px;" id="strukAgen">-</div>
-                <div>DRV: <span id="strukDriver">-</span></div>
-                <div class="struk-divider"></div>
-                <div id="strukItem">-</div>
-                <div class="struk-divider"></div>
-                <div class="struk-row"><span>TOTAL KIRIM:</span><span id="strukTotalTagihanKirim">-</span></div>
-                <br>
-                <div class="struk-row"><span>BON LAMA:</span><span id="strukBonLama">-</span></div>
-                <div class="struk-divider"></div>
-                <div class="struk-row"><span style="font-weight:bold;">TOTAL TAGIHAN:</span><span id="strukTotalTagihan" style="font-weight:bold;">-</span></div>
-                <div class="struk-divider"></div>
-                <div class="struk-row" style="color: red; font-weight: bold;"><span>SISA BON:</span><span id="strukSisaBon">-</span></div>
-                <div class="struk-divider"></div>
-                <div style="text-align: center; margin-top: 10px; font-size: 12px;">SBR PUTRA FOOD SYSTEM</div>
+            <div class="struk-divider"></div>
+            <div class="struk-row"><span>TOTAL KIRIM:</span><span id="strukTotalTagihanKirim">-</span></div>
+            <br>
+            <div class="struk-row"><span>BON LAMA:</span><span id="strukBonLama">-</span></div>
+            <div class="struk-divider-thick"></div>
+            <div class="struk-row"><span style="font-weight:bold;">TOTAL TAGIHAN:</span><span id="strukTotalTagihan" style="font-weight:bold;">-</span></div>
+            <div class="struk-divider"></div>
+            
+            <div class="struk-row"><span>Bayar CASH:</span><span id="strukDP">-</span></div>
+            <div class="struk-row"><span>Bayar TRF:</span><span id="strukDPTrf">-</span></div>
+            
+            <div class="struk-divider"></div>
+            <div style="font-weight: bold; margin-bottom: 4px;">RIWAYAT CICILAN:</div>
+            <div id="strukRiwayatCicilan">
+                <!-- Data cicilan akan dimuat dari JS -->
             </div>
+            
+            <div class="struk-divider"></div>
+            <div class="struk-row" style="color: red; font-weight: bold;"><span>SISA BON:</span><span id="strukSisaBon">-</span></div>
+            <div class="struk-divider"></div>
+            <div style="text-align: center; margin-top: 10px; font-size: 11px; font-weight: bold;">SBR PUTRA FOOD SYSTEM</div>
+        </div>
+
+        <!-- Tombol Aksi di Luar Struk -->
+        <div class="btn-group">
+            <button class="btn-print">🖨️ PRINT BLUETOOTH</button>
+            <button class="btn-save">📸 SAVE JPG</button>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; color: white; font-size: 13px;">
+            <label>Ukuran Kertas Printer:</label>
+            <select class="select-printer" style="width: auto;">
+                <option>80mm (48 Karakter)</option>
+                <option>58mm (32 Karakter)</option>
+            </select>
         </div>
     </div>
 </div>
@@ -148,7 +182,6 @@
 
     async function initHalaman() {
         document.getElementById('tglBayar').valueAsDate = new Date();
-        
         const { data: agen } = await clientSupabase.from('agen').select('*');
         const selAgen = document.getElementById('pilihAgen');
         selAgen.innerHTML = '<option value="">-- PILIH AGEN KHUSUS --</option>';
@@ -156,12 +189,9 @@
 
         if (agen) {
             const agenKhusus = agen.filter(a => a.type_agen === 'KHUSUS');
-            
             agenKhusus.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen)).forEach(a => {
                 const saldo = a.saldo_bon || 0;
-                // Tambahkan tanda (!) jika ada saldo bon/hutang
                 const displayName = saldo > 0 ? `${a.nama_agen} (!)` : a.nama_agen;
-                
                 selAgen.options.add(new Option(displayName, a.nama_agen));
                 listAgen[a.nama_agen] = saldo;
             });
@@ -175,7 +205,7 @@
         tbody.innerHTML = '';
         if (riwayat) {
             riwayat.forEach(r => {
-                const noNotaLink = r.no_nota_referensi ? `<a class="link-nota" onclick="lihatNotaDetail(event, '${r.no_nota_referensi}')">${r.no_nota_referensi}</a>` : '-';
+                const noNotaLink = r.no_nota_referensi && r.no_nota_referensi !== 'NON-NOTA' ? `<a class="link-nota" onclick="lihatNotaDetail(event, '${r.no_nota_referensi}')">${r.no_nota_referensi}</a>` : (r.no_nota_referensi || '-');
                 tbody.innerHTML += `<tr>
                     <td>${r.tanggal}<br><small>${noNotaLink}</small></td>
                     <td>${r.nama_agen}</td>
@@ -189,23 +219,16 @@
 
     function clearZero(el) { if (el.value === "0" || el.value === 0) el.value = ""; }
     function restoreZero(el) { if (el.value === "") el.value = "0"; }
-
     function formatRupiah(el) { 
         let cursorPosition = el.selectionStart;
         let originalLength = el.value.length;
-
         let v = el.value.replace(/[^0-9]/g, '');
-        if (v === "") {
-            el.value = "0";
-        } else {
-            el.value = Number(v).toLocaleString('id-ID');
-        }
-
+        if (v === "") el.value = "0";
+        else el.value = Number(v).toLocaleString('id-ID');
         let newLength = el.value.length;
         cursorPosition = cursorPosition + (newLength - originalLength);
         el.setSelectionRange(cursorPosition, cursorPosition);
     }
-    
     function getAngka(id) { return parseFloat(document.getElementById(id).value.replace(/[^0-9]/g, '')) || 0; }
 
     async function loadDataAgen() {
@@ -217,24 +240,28 @@
         const boxDetail = document.getElementById('boxDetailKirim');
         if (bon > 0) {
             boxDetail.style.display = 'block';
-            document.getElementById('txtNoNota').innerText = "Memuat...";
+            const linkNota = document.getElementById('txtNoNota');
+            linkNota.innerText = "Memuat...";
             document.getElementById('txtTglKirim').innerText = "...";
             document.getElementById('txtDriver').innerText = "...";
 
-            // Cari nota terakhir yang bersisa untuk agen ini
             const { data: nota, error } = await clientSupabase.from('transaksi_dp')
-                .select('no_nota, tanggal, nama_supir')
-                .eq('nama_agen', ag)
+                .select('*') 
+                .ilike('nama_agen', `%${ag.trim()}%`) 
                 .gt('sisa_akhir', 0)
                 .order('id', { ascending: false })
                 .limit(1);
 
             if (nota && nota.length > 0) {
-                document.getElementById('txtNoNota').innerText = nota[0].no_nota || '-';
+                linkNota.innerText = nota[0].no_nota || '-';
+                linkNota.style.pointerEvents = 'auto';
+                linkNota.style.textDecoration = 'underline'; 
                 document.getElementById('txtTglKirim').innerText = nota[0].tanggal || '-';
-                document.getElementById('txtDriver').innerText = nota[0].nama_supir || '-';
+                document.getElementById('txtDriver').innerText = nota[0].nama_supir || nota[0].supir || '-'; 
             } else {
-                document.getElementById('txtNoNota').innerText = 'TIDAK DITEMUKAN';
+                linkNota.innerText = 'DATA TIDAK COCOK / KOSONG';
+                linkNota.style.pointerEvents = 'none'; 
+                linkNota.style.textDecoration = 'none'; 
                 document.getElementById('txtTglKirim').innerText = '-';
                 document.getElementById('txtDriver').innerText = '-';
             }
@@ -243,7 +270,6 @@
         }
     }
 
-    // Fungsi Buka/Tutup Modal
     function bukaModalCatat() {
         const ag = document.getElementById('pilihAgen').value;
         if (!ag) return alert("Pilih agen terlebih dahulu!");
@@ -267,16 +293,10 @@
         const bonLama = listAgen[ag] || 0;
         const sisaAkhir = bonLama - cash - trf;
         
-        const { data: nota, error: errCariNota } = await clientSupabase.from('transaksi_dp')
-            .select('no_nota, id')
-            .eq('nama_agen', ag)
-            .gt('sisa_akhir', 0)
-            .order('id', { ascending: false })
-            .limit(1);
+        const { data: nota } = await clientSupabase.from('transaksi_dp')
+            .select('*').ilike('nama_agen', `%${ag.trim()}%`).gt('sisa_akhir', 0).order('id', { ascending: false }).limit(1);
             
-        if (errCariNota) return alert("Gagal mencari nota di transaksi_dp: " + errCariNota.message);
         const noNotaRef = (nota && nota.length > 0) ? nota[0].no_nota : "NON-NOTA";
-
         const btn = document.getElementById('btnSimpanModal');
         btn.disabled = true;
         btn.innerText = "MEMPROSES...";
@@ -293,68 +313,122 @@
                 sisa_bon_akhir: sisaAkhir,
                 keterangan: catatan
             }]);
-            
-            if (errPay) throw new Error("Gagal simpan pembayaran_bon2: " + errPay.message);
+            if (errPay) throw new Error(errPay.message);
 
             const { error: errAgen } = await clientSupabase.from('agen').update({ saldo_bon: sisaAkhir }).eq('nama_agen', ag);
-            if (errAgen) throw new Error("Gagal update tabel agen: " + errAgen.message);
+            if (errAgen) throw new Error(errAgen.message);
             
             if (nota && nota.length > 0) {
-                const { error: errTrx } = await clientSupabase.from('transaksi_dp').update({ sisa_akhir: sisaAkhir }).eq('id', nota[0].id);
-                if (errTrx) throw new Error("Gagal update transaksi_dp: " + errTrx.message);
+                await clientSupabase.from('transaksi_dp').update({ sisa_akhir: sisaAkhir }).eq('id', nota[0].id);
             }
 
-            alert("✅ Sukses Melakukan Pembayaran! Nota Ref: " + noNotaRef);
-            
+            alert("✅ Sukses Melakukan Pembayaran!");
             tutupModalCatat();
             document.getElementById('mdlNominal').value = "0";
             document.getElementById('mdlCatatan').value = "";
-            btn.disabled = false; 
-            btn.innerText = "SIMPAN DATA";
-            
+            btn.disabled = false; btn.innerText = "SIMPAN DATA";
             await initHalaman();
             document.getElementById('pilihAgen').value = "";
-            document.getElementById('txtBonLama').innerText = "Rp 0";
-            document.getElementById('txtTotalTagihan').innerText = "Rp 0";
             document.getElementById('boxDetailKirim').style.display = 'none';
         } catch (e) { 
-            alert("❌ SISTEM DATABASE ERROR:\n\n" + e.message); 
-            btn.disabled = false; 
-            btn.innerText = "SIMPAN DATA";
+            alert("❌ ERROR:\n" + e.message); 
+            btn.disabled = false; btn.innerText = "SIMPAN DATA";
         }
     }
 
     async function lihatNotaDetail(e, noNota) {
         if(e) e.preventDefault();
-        if(!noNota || noNota === '-' || noNota === 'NON-NOTA' || noNota === 'TIDAK DITEMUKAN') return;
+        if(!noNota || noNota === '-' || noNota === 'NON-NOTA' || noNota === 'DATA TIDAK COCOK / KOSONG') return;
         
         document.getElementById('modalStruk').style.display = 'block';
         document.getElementById('strukNoNota').innerText = noNota;
         document.getElementById('strukTgl').innerText = "...";
-        document.getElementById('strukAgen').innerText = "MEMUAT...";
+        document.getElementById('strukAgen').innerText = "MEMUAT DATA...";
         document.getElementById('strukDriver').innerText = "...";
-        document.getElementById('strukItem').innerHTML = "Memuat data dari server...";
+        document.getElementById('strukListBarang').innerHTML = "<div style='text-align:center;'>Mencari rincian barang...</div>";
+        document.getElementById('strukRiwayatCicilan').innerHTML = "<div style='text-align:center;'>Mencari riwayat...</div>";
         
-        const { data: nota, error } = await clientSupabase.from('transaksi_dp').select('*').eq('no_nota', noNota).limit(1);
+        // 1. Ambil Header Nota
+        const { data: nota } = await clientSupabase.from('transaksi_dp').select('*').eq('no_nota', noNota).limit(1);
+        let t = null;
+        if (nota && nota.length > 0) t = nota[0];
 
-        if (nota && nota.length > 0) {
-            const t = nota[0];
+        // 2. Ambil Detail Barang
+        const { data: detail } = await clientSupabase.from('transaksi_detaildp').select('*').eq('no_nota', noNota);
+        let htmlBarang = '';
+        let calcTotalKirim = 0; // Variabel penampung hasil jumlah otomatis
+
+        if (detail && detail.length > 0) {
+            detail.forEach(d => {
+                let namaItem = d.nama_barang || d.nama_produk || '-';
+                let qty = parseFloat(d.qty || d.jumlah || 0);
+                let satuan = d.satuan || 'Ball';
+                let harga = parseFloat(d.harga_satuan || d.harga || 0);
+                let subtotal = parseFloat(d.subtotal || d.total_harga || (qty * harga));
+
+                calcTotalKirim += subtotal; // Menjumlahkan subtotal setiap barang
+
+                htmlBarang += `
+                    <div class="struk-item-name">${namaItem}</div>
+                    <div class="struk-item-detail">
+                        <span>${qty} ${satuan} x ${(harga).toLocaleString('id-ID')}</span>
+                        <span>${(subtotal).toLocaleString('id-ID')}</span>
+                    </div>
+                `;
+            });
+            document.getElementById('strukListBarang').innerHTML = htmlBarang;
+        } else {
+            document.getElementById('strukListBarang').innerHTML = "<div style='text-align:center; font-style:italic;'>Tidak ada rincian barang di database.</div>";
+        }
+
+        // Tampilkan Data & Kalkulasi ke UI Struk
+        if (t) {
             document.getElementById('strukTgl').innerText = t.tanggal || '-';
             document.getElementById('strukAgen').innerText = (t.nama_agen || '-').toUpperCase();
-            document.getElementById('strukDriver').innerText = t.nama_supir || '-';
+            document.getElementById('strukDriver').innerText = t.nama_supir || t.supir || '-';
             
-            // Format item struk standar karena data spesifik item mungkin tidak di-join (Asumsi menggunakan total_tagihan)
-            document.getElementById('strukItem').innerHTML = `
-                <div class="struk-row"><span>Rincian Pengiriman:</span><span>${(t.total_tagihan || 0).toLocaleString('id-ID')}</span></div>
-            `;
+            const sisaAkhir = parseFloat(t.sisa_akhir || 0);
+            const bonLama = parseFloat(t.bon_lama || 0);
+            const dpCash = parseFloat(t.bayar_cash || 0);
+            const dpTrf = parseFloat(t.bayar_transfer || 0);
             
-            document.getElementById('strukTotalTagihanKirim').innerText = "Rp " + (t.total_tagihan || 0).toLocaleString('id-ID');
-            document.getElementById('strukBonLama').innerText = "Rp " + (t.bon_lama || 0).toLocaleString('id-ID');
-            const totalSemua = (t.total_tagihan || 0) + (t.bon_lama || 0);
+            // Ambil dari header, tapi JIKA 0 gunakan hasil kalkulasi dari rincian barang (calcTotalKirim)
+            let totalKirim = parseFloat(t.total_tagihan || t.total_belanja || 0);
+            if (totalKirim === 0 && calcTotalKirim > 0) {
+                totalKirim = calcTotalKirim;
+            } else if (totalKirim === 0 && sisaAkhir > 0) {
+                // Kalkulasi mundur (Reverse Math) jika tabel detail juga kosong
+                totalKirim = sisaAkhir - bonLama + dpCash + dpTrf;
+            }
+            
+            const totalSemua = totalKirim + bonLama;
+
+            document.getElementById('strukTotalTagihanKirim').innerText = "Rp " + totalKirim.toLocaleString('id-ID');
+            document.getElementById('strukBonLama').innerText = "Rp " + bonLama.toLocaleString('id-ID');
             document.getElementById('strukTotalTagihan').innerText = "Rp " + totalSemua.toLocaleString('id-ID');
-            document.getElementById('strukSisaBon').innerText = "Rp " + (t.sisa_akhir || 0).toLocaleString('id-ID');
+            document.getElementById('strukDP').innerText = "Rp " + dpCash.toLocaleString('id-ID');
+            document.getElementById('strukDPTrf').innerText = "Rp " + dpTrf.toLocaleString('id-ID');
+            document.getElementById('strukSisaBon').innerText = "Rp " + sisaAkhir.toLocaleString('id-ID');
+        }
+
+        // 3. Ambil Riwayat Cicilan
+        const { data: cicilan } = await clientSupabase.from('pembayaran_bon2').select('*').eq('no_nota_referensi', noNota).order('id', { ascending: true });
+        let htmlCicilan = '';
+        if (cicilan && cicilan.length > 0) {
+            cicilan.forEach(c => {
+                let nominal = c.bayar_cash > 0 ? `CASH: ${c.bayar_cash.toLocaleString('id-ID')}` : `TRF: ${c.bayar_transfer.toLocaleString('id-ID')}`;
+                let catatan = c.keterangan ? `(${c.keterangan})` : '';
+                htmlCicilan += `
+                    <div class="struk-row" style="margin-top: 4px; padding-left: 10px;">
+                        <span>${c.tanggal || '-'}</span>
+                        <span>${nominal}</span>
+                    </div>
+                    <div style="font-size: 11px; padding-left: 10px; color: #555;">${catatan}</div>
+                `;
+            });
+            document.getElementById('strukRiwayatCicilan').innerHTML = htmlCicilan;
         } else {
-            document.getElementById('strukItem').innerHTML = "Detail tidak ditemukan di database.";
+            document.getElementById('strukRiwayatCicilan').innerHTML = "<div style='text-align:center; font-style:italic; padding-top:5px;'>Belum ada riwayat cicilan.</div>";
         }
     }
 
