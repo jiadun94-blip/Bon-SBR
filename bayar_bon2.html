@@ -20,13 +20,31 @@
         .display-box { background: #f8f9fa; padding: 12px; border-radius: 8px; border: 1px dashed #cbd5e0; margin-bottom: 12px; }
         .display-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 15px; font-weight: bold; }
         .display-row.highlight { font-size: 18px; color: #d63031; border-top: 1px solid #ddd; padding-top: 5px; }
-        .input-manual { width: 100%; padding: 10px; border: 1px solid #1e272e; border-radius: 6px; font-weight: bold; text-align: right; box-sizing: border-box; font-size: 20px; }
         .btn-submit { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; color: white; background: #1e272e; font-size: 16px; text-transform: uppercase; }
         .btn-submit:disabled { background: #a0aec0; }
         .table-responsive { width: 100%; overflow-x: auto; border: 1px solid #ddd; border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; min-width: 500px; }
         th { font-size: 12px; padding: 8px; background: #f1f2f6; border-bottom: 2px solid #ddd; text-transform: uppercase; }
         td { padding: 8px; border-bottom: 1px solid #edf2f7; font-size: 13px; font-weight: bold; }
+        
+        /* CSS Baru untuk Box Detail & Modal */
+        .detail-kirim-box { background: #fff5f5; border: 1px solid #fc8181; border-radius: 8px; padding: 10px; margin: 10px 0; display: none; }
+        .detail-kirim-title { color: #c53030; font-weight: bold; font-size: 13px; margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
+        .detail-kirim-divider { border-top: 1px dashed #fc8181; margin: 8px 0; }
+        .detail-kirim-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 4px; color: #e53e3e; }
+        .detail-kirim-val { font-weight: bold; color: #2d3748; text-align: right; }
+        .link-nota { color: #2b6cb0; text-decoration: underline; cursor: pointer; font-weight: bold; }
+        
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); }
+        .modal-content { background-color: #fff; margin: 10vh auto; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; position: relative; }
+        .close-modal { position: absolute; right: 15px; top: 10px; font-size: 24px; font-weight: bold; color: #888; cursor: pointer; }
+        .input-manual { width: 100%; padding: 10px; border: 1px solid #1e272e; border-radius: 6px; font-weight: bold; text-align: right; box-sizing: border-box; font-size: 20px; }
+        
+        /* CSS Struk */
+        .struk-container { background: white; padding: 15px; font-family: monospace; font-size: 14px; color: #000; }
+        .struk-header { text-align: center; font-weight: bold; margin-bottom: 10px; font-size: 16px; }
+        .struk-divider { border-top: 1px dashed #000; margin: 8px 0; }
+        .struk-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
     </style>
 </head>
 <body>
@@ -39,27 +57,88 @@
         <div class="form-group"><label>Nama Agen</label><select id="pilihAgen" onchange="loadDataAgen()"><option value="">-- PILIH AGEN KHUSUS --</option></select></div>
     </div>
 
-    <div class="display-box">
+    <div class="display-box" style="margin-bottom: 15px;">
         <div class="display-row"><span>Bon Saat Ini:</span><span id="txtBonLama">Rp 0</span></div>
+        
+        <!-- Box Detail Pengiriman -->
+        <div id="boxDetailKirim" class="detail-kirim-box">
+            <div class="detail-kirim-title">⚠️ DETAIL PENGIRIMAN TERAKHIR:</div>
+            <div class="detail-kirim-divider"></div>
+            <div class="detail-kirim-row"><span>No. Nota:</span><a class="link-nota" id="txtNoNota" onclick="lihatNotaDetail(event, this.innerText)">-</a></div>
+            <div class="detail-kirim-row"><span>Tgl Kirim:</span><span class="detail-kirim-val" id="txtTglKirim">-</span></div>
+            <div class="detail-kirim-row"><span>Driver:</span><span class="detail-kirim-val" id="txtDriver">-</span></div>
+        </div>
+        
         <div class="display-row highlight"><span>Total Tagihan:</span><span id="txtTotalTagihan">Rp 0</span></div>
     </div>
 
-    <div class="row-flex" style="margin-bottom: 5px;">
-        <div class="form-group"><label>CASH</label><input type="text" id="inputCash" class="input-manual" value="0" oninput="formatRupiah(this); hitungSisa()" onfocus="clearZero(this)" onblur="restoreZero(this)"></div>
-        <div class="form-group"><label>TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungSisa()" onfocus="clearZero(this)" onblur="restoreZero(this)"></div>
-    </div>
+    <button class="btn-submit" id="btnBukaModal" onclick="bukaModalCatat()" style="background: #27ae60;">Catat Dana Masuk</button>
 
-    <div class="form-group"><label>Catatan</label><input type="text" id="inputKeterangan"></div>
-    <div class="display-box"><div class="display-row" style="color: #27ae60;"><span>Sisa Bon Akhir:</span><span id="txtSisaAkhir">Rp 0</span></div></div>
-
-    <button class="btn-submit" id="btnSimpan" onclick="simpanPembayaran()">Simpan Pembayaran</button>
-
-    <div style="font-size: 14px; font-weight: bold; padding: 6px; background: #1e272e; color: white; border-radius: 5px; margin: 15px 0 8px;">📋 RIWAYAT PEMBAYARAN</div>
+    <div style="font-size: 14px; font-weight: bold; padding: 6px; background: #1e272e; color: white; border-radius: 5px; margin: 20px 0 8px;">📋 RIWAYAT PEMBAYARAN</div>
     <div class="table-responsive">
         <table id="tabelRiwayatBayar">
             <thead><tr><th>TGL/NOTA</th><th>AGEN</th><th>CASH/TRF</th><th>SISA</th><th>KET</th></tr></thead>
             <tbody></tbody>
         </table>
+    </div>
+</div>
+
+<!-- Modal Catat Dana Masuk -->
+<div id="modalCatatDana" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="tutupModalCatat()">&times;</span>
+        <h3 style="margin-top:0; text-align:center; color: #1e272e;">INPUT DANA MASUK</h3>
+        <div class="form-group">
+            <label>Metode</label>
+            <select id="mdlMetode">
+                <option value="CASH">CASH</option>
+                <option value="TRANSFER">TRANSFER</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Nominal Pembayaran</label>
+            <input type="text" id="mdlNominal" class="input-manual" value="0" oninput="formatRupiah(this)" onfocus="clearZero(this)" onblur="restoreZero(this)">
+        </div>
+        <div class="form-group">
+            <label>Catatan</label>
+            <input type="text" id="mdlCatatan" placeholder="Contoh: Titip ke supir...">
+        </div>
+        <button class="btn-submit" id="btnSimpanModal" onclick="simpanPembayaran()">SIMPAN DATA</button>
+    </div>
+</div>
+
+<!-- Modal Struk Detail Nota -->
+<div id="modalStruk" class="modal">
+    <div class="modal-content" style="background: #222; padding: 5px;">
+        <div style="background: white; border-radius: 5px; padding-bottom: 10px;">
+            <div style="padding: 10px; background: #333; color: white; border-top-left-radius: 5px; border-top-right-radius: 5px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <b style="font-size: 14px;">STRUK DETAIL NOTA</b>
+                <span style="font-size: 20px; cursor: pointer; color: #fff;" onclick="tutupModalStruk()">&times;</span>
+            </div>
+            
+            <div class="struk-container">
+                <div class="struk-header">
+                    SBR PUTRA FOOD<br>
+                    <span style="font-weight: normal; font-size: 12px;">Lembang, Bandung Barat</span>
+                </div>
+                <div class="struk-divider"></div>
+                <div class="struk-row"><span>NO: <span id="strukNoNota">-</span></span><span>TGL: <span id="strukTgl">-</span></span></div>
+                <div style="text-align: center; font-weight: bold; margin: 10px 0; font-size: 16px;" id="strukAgen">-</div>
+                <div>DRV: <span id="strukDriver">-</span></div>
+                <div class="struk-divider"></div>
+                <div id="strukItem">-</div>
+                <div class="struk-divider"></div>
+                <div class="struk-row"><span>TOTAL KIRIM:</span><span id="strukTotalTagihanKirim">-</span></div>
+                <br>
+                <div class="struk-row"><span>BON LAMA:</span><span id="strukBonLama">-</span></div>
+                <div class="struk-divider"></div>
+                <div class="struk-row"><span style="font-weight:bold;">TOTAL TAGIHAN:</span><span id="strukTotalTagihan" style="font-weight:bold;">-</span></div>
+                <div class="struk-divider"></div>
+                <div class="struk-row" style="color: red; font-weight: bold;"><span>SISA BON:</span><span id="strukSisaBon">-</span></div>
+                <div class="struk-divider"></div>
+                <div style="text-align: center; margin-top: 10px; font-size: 12px;">SBR PUTRA FOOD SYSTEM</div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -76,26 +155,29 @@
         listAgen = {};
 
         if (agen) {
-            // FILTER: Hanya agen dengan type_agen 'KHUSUS'
             const agenKhusus = agen.filter(a => a.type_agen === 'KHUSUS');
             
             agenKhusus.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen)).forEach(a => {
-                selAgen.options.add(new Option(a.nama_agen, a.nama_agen));
-                listAgen[a.nama_agen] = a.saldo_bon || 0;
+                const saldo = a.saldo_bon || 0;
+                // Tambahkan tanda (!) jika ada saldo bon/hutang
+                const displayName = saldo > 0 ? `${a.nama_agen} (!)` : a.nama_agen;
+                
+                selAgen.options.add(new Option(displayName, a.nama_agen));
+                listAgen[a.nama_agen] = saldo;
             });
         }
         loadTabelRiwayat();
     }
 
     async function loadTabelRiwayat() {
-        // TAMPILKAN DARI pembayaran_bon2
         const { data: riwayat } = await clientSupabase.from('pembayaran_bon2').select('*').order('id', { ascending: false }).limit(10);
         const tbody = document.querySelector('#tabelRiwayatBayar tbody');
         tbody.innerHTML = '';
         if (riwayat) {
             riwayat.forEach(r => {
+                const noNotaLink = r.no_nota_referensi ? `<a class="link-nota" onclick="lihatNotaDetail(event, '${r.no_nota_referensi}')">${r.no_nota_referensi}</a>` : '-';
                 tbody.innerHTML += `<tr>
-                    <td>${r.tanggal}<br><small style="color:#666;">${r.no_nota_referensi || '-'}</small></td>
+                    <td>${r.tanggal}<br><small>${noNotaLink}</small></td>
                     <td>${r.nama_agen}</td>
                     <td>${r.bayar_cash.toLocaleString()}<br><span style="color:#2980b9;">${r.bayar_transfer.toLocaleString()}</span></td>
                     <td>${r.sisa_bon_akhir.toLocaleString()}</td>
@@ -105,16 +187,8 @@
         }
     }
 
-    function clearZero(el) { 
-        if (el.value === "0" || el.value === 0) el.value = ""; 
-    }
-
-    function restoreZero(el) { 
-        if (el.value === "") {
-            el.value = "0";
-            hitungSisa();
-        }
-    }
+    function clearZero(el) { if (el.value === "0" || el.value === 0) el.value = ""; }
+    function restoreZero(el) { if (el.value === "") el.value = "0"; }
 
     function formatRupiah(el) { 
         let cursorPosition = el.selectionStart;
@@ -132,54 +206,67 @@
         el.setSelectionRange(cursorPosition, cursorPosition);
     }
     
-    function getAngka(id) { 
-        return parseFloat(document.getElementById(id).value.replace(/[^0-9]/g, '')) || 0; 
-    }
+    function getAngka(id) { return parseFloat(document.getElementById(id).value.replace(/[^0-9]/g, '')) || 0; }
 
-    function loadDataAgen() {
+    async function loadDataAgen() {
         const ag = document.getElementById('pilihAgen').value;
         const bon = listAgen[ag] || 0;
         document.getElementById('txtBonLama').innerText = "Rp " + bon.toLocaleString('id-ID');
         document.getElementById('txtTotalTagihan').innerText = "Rp " + bon.toLocaleString('id-ID');
-        hitungSisa();
+
+        const boxDetail = document.getElementById('boxDetailKirim');
+        if (bon > 0) {
+            boxDetail.style.display = 'block';
+            document.getElementById('txtNoNota').innerText = "Memuat...";
+            document.getElementById('txtTglKirim').innerText = "...";
+            document.getElementById('txtDriver').innerText = "...";
+
+            // Cari nota terakhir yang bersisa untuk agen ini
+            const { data: nota, error } = await clientSupabase.from('transaksi_dp')
+                .select('no_nota, tanggal, nama_supir')
+                .eq('nama_agen', ag)
+                .gt('sisa_akhir', 0)
+                .order('id', { ascending: false })
+                .limit(1);
+
+            if (nota && nota.length > 0) {
+                document.getElementById('txtNoNota').innerText = nota[0].no_nota || '-';
+                document.getElementById('txtTglKirim').innerText = nota[0].tanggal || '-';
+                document.getElementById('txtDriver').innerText = nota[0].nama_supir || '-';
+            } else {
+                document.getElementById('txtNoNota').innerText = 'TIDAK DITEMUKAN';
+                document.getElementById('txtTglKirim').innerText = '-';
+                document.getElementById('txtDriver').innerText = '-';
+            }
+        } else {
+            boxDetail.style.display = 'none';
+        }
     }
 
-    function hitungSisa() {
+    // Fungsi Buka/Tutup Modal
+    function bukaModalCatat() {
         const ag = document.getElementById('pilihAgen').value;
-        const sisa = (listAgen[ag] || 0) - getAngka('inputCash') - getAngka('inputTrf');
-        document.getElementById('txtSisaAkhir').innerText = "Rp " + sisa.toLocaleString('id-ID');
+        if (!ag) return alert("Pilih agen terlebih dahulu!");
+        document.getElementById('modalCatatDana').style.display = 'block';
     }
-
-    function resetForm() {
-        document.getElementById('tglBayar').valueAsDate = new Date();
-        document.getElementById('pilihAgen').value = "";
-        document.getElementById('inputCash').value = "0";
-        document.getElementById('inputTrf').value = "0";
-        document.getElementById('inputKeterangan').value = "";
-        document.getElementById('txtBonLama').innerText = "Rp 0";
-        document.getElementById('txtTotalTagihan').innerText = "Rp 0";
-        document.getElementById('txtSisaAkhir').innerText = "Rp 0";
-        
-        const btn = document.getElementById('btnSimpan');
-        btn.disabled = false;
-        btn.innerText = "Simpan Pembayaran";
-    }
+    function tutupModalCatat() { document.getElementById('modalCatatDana').style.display = 'none'; }
+    function tutupModalStruk() { document.getElementById('modalStruk').style.display = 'none'; }
 
     async function simpanPembayaran() {
         const ag = document.getElementById('pilihAgen').value;
-        if (!ag) return alert("Pilih agen!");
+        const metode = document.getElementById('mdlMetode').value;
+        const nominal = getAngka('mdlNominal');
+        const catatan = document.getElementById('mdlCatatan').value;
         
-        const cash = getAngka('inputCash');
-        const trf = getAngka('inputTrf');
-        
-        if (cash === 0 && trf === 0) {
-            return alert("Isi nominal pembayaran CASH atau TRANSFER terlebih dahulu!");
-        }
+        if (nominal === 0) return alert("Isi nominal pembayaran terlebih dahulu!");
+
+        let cash = 0, trf = 0;
+        if (metode === 'CASH') cash = nominal;
+        else trf = nominal;
 
         const bonLama = listAgen[ag] || 0;
         const sisaAkhir = bonLama - cash - trf;
         
-        // AMBIL NOTA DARI transaksi_dp
         const { data: nota, error: errCariNota } = await clientSupabase.from('transaksi_dp')
             .select('no_nota, id')
             .eq('nama_agen', ag)
@@ -190,12 +277,11 @@
         if (errCariNota) return alert("Gagal mencari nota di transaksi_dp: " + errCariNota.message);
         const noNotaRef = (nota && nota.length > 0) ? nota[0].no_nota : "NON-NOTA";
 
-        const btn = document.getElementById('btnSimpan');
+        const btn = document.getElementById('btnSimpanModal');
         btn.disabled = true;
         btn.innerText = "MEMPROSES...";
 
         try {
-            // 1. SIMPAN KE PEMBAYARAN BON 2 (Tabel Khusus)
             const { error: errPay } = await clientSupabase.from('pembayaran_bon2').insert([{
                 no_kuitansi: "KWT-" + Date.now().toString().slice(-6),
                 no_nota_referensi: noNotaRef, 
@@ -205,16 +291,14 @@
                 bayar_cash: cash,
                 bayar_transfer: trf,
                 sisa_bon_akhir: sisaAkhir,
-                keterangan: document.getElementById('inputKeterangan').value
+                keterangan: catatan
             }]);
             
             if (errPay) throw new Error("Gagal simpan pembayaran_bon2: " + errPay.message);
 
-            // 2. UPDATE TABEL AGEN
             const { error: errAgen } = await clientSupabase.from('agen').update({ saldo_bon: sisaAkhir }).eq('nama_agen', ag);
             if (errAgen) throw new Error("Gagal update tabel agen: " + errAgen.message);
             
-            // 3. UPDATE TABEL TRANSAKSI DP
             if (nota && nota.length > 0) {
                 const { error: errTrx } = await clientSupabase.from('transaksi_dp').update({ sisa_akhir: sisaAkhir }).eq('id', nota[0].id);
                 if (errTrx) throw new Error("Gagal update transaksi_dp: " + errTrx.message);
@@ -222,12 +306,55 @@
 
             alert("✅ Sukses Melakukan Pembayaran! Nota Ref: " + noNotaRef);
             
-            resetForm();
+            tutupModalCatat();
+            document.getElementById('mdlNominal').value = "0";
+            document.getElementById('mdlCatatan').value = "";
+            btn.disabled = false; 
+            btn.innerText = "SIMPAN DATA";
+            
             await initHalaman();
+            document.getElementById('pilihAgen').value = "";
+            document.getElementById('txtBonLama').innerText = "Rp 0";
+            document.getElementById('txtTotalTagihan').innerText = "Rp 0";
+            document.getElementById('boxDetailKirim').style.display = 'none';
         } catch (e) { 
             alert("❌ SISTEM DATABASE ERROR:\n\n" + e.message); 
             btn.disabled = false; 
-            btn.innerText = "Simpan Pembayaran";
+            btn.innerText = "SIMPAN DATA";
+        }
+    }
+
+    async function lihatNotaDetail(e, noNota) {
+        if(e) e.preventDefault();
+        if(!noNota || noNota === '-' || noNota === 'NON-NOTA' || noNota === 'TIDAK DITEMUKAN') return;
+        
+        document.getElementById('modalStruk').style.display = 'block';
+        document.getElementById('strukNoNota').innerText = noNota;
+        document.getElementById('strukTgl').innerText = "...";
+        document.getElementById('strukAgen').innerText = "MEMUAT...";
+        document.getElementById('strukDriver').innerText = "...";
+        document.getElementById('strukItem').innerHTML = "Memuat data dari server...";
+        
+        const { data: nota, error } = await clientSupabase.from('transaksi_dp').select('*').eq('no_nota', noNota).limit(1);
+
+        if (nota && nota.length > 0) {
+            const t = nota[0];
+            document.getElementById('strukTgl').innerText = t.tanggal || '-';
+            document.getElementById('strukAgen').innerText = (t.nama_agen || '-').toUpperCase();
+            document.getElementById('strukDriver').innerText = t.nama_supir || '-';
+            
+            // Format item struk standar karena data spesifik item mungkin tidak di-join (Asumsi menggunakan total_tagihan)
+            document.getElementById('strukItem').innerHTML = `
+                <div class="struk-row"><span>Rincian Pengiriman:</span><span>${(t.total_tagihan || 0).toLocaleString('id-ID')}</span></div>
+            `;
+            
+            document.getElementById('strukTotalTagihanKirim').innerText = "Rp " + (t.total_tagihan || 0).toLocaleString('id-ID');
+            document.getElementById('strukBonLama').innerText = "Rp " + (t.bon_lama || 0).toLocaleString('id-ID');
+            const totalSemua = (t.total_tagihan || 0) + (t.bon_lama || 0);
+            document.getElementById('strukTotalTagihan').innerText = "Rp " + totalSemua.toLocaleString('id-ID');
+            document.getElementById('strukSisaBon').innerText = "Rp " + (t.sisa_akhir || 0).toLocaleString('id-ID');
+        } else {
+            document.getElementById('strukItem').innerHTML = "Detail tidak ditemukan di database.";
         }
     }
 
