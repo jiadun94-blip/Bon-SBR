@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SBR Putra Food - Pembayaran Bon Khusus</title>
+    <!-- Library untuk Database -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Library untuk Save to PNG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --p-color: #1e272e; --s-color: #72a339; --bg: #f1f2f6; }
@@ -52,6 +56,11 @@
         .btn-print { flex: 1; background: #2980b9; color: white; border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer; }
         .btn-save { flex: 1; background: #27ae60; color: white; border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer; }
         .select-printer { width: 100%; padding: 8px; background: #333; color: white; border: 1px solid #555; border-radius: 5px; }
+
+        /* Loader Overlay CSS */
+        #loaderOverlay { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); flex-direction: column; justify-content: center; align-items: center; color: white; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -72,7 +81,7 @@
             <div class="detail-kirim-divider"></div>
             <div class="detail-kirim-row"><span>No. Nota:</span><a class="link-nota" id="txtNoNota" onclick="lihatNotaDetail(event, this.innerText)">-</a></div>
             <div class="detail-kirim-row"><span>Tgl Kirim:</span><span class="detail-kirim-val" id="txtTglKirim">-</span></div>
-            <div class="detail-kirim-row"><span>Driver:</span><span class="detail-kirim-val" id="txtDriver">-</span></div>
+            <div class="detail-kirim-row"><span>Ket:</span><span class="detail-kirim-val" id="txtKet" style="text-align: right; font-size: 12px;">-</span></div>
         </div>
         
         <div class="display-row highlight"><span>Total Tagihan:</span><span id="txtTotalTagihan">Rp 0</span></div>
@@ -130,7 +139,7 @@
             <div class="struk-divider"></div>
             <div class="struk-row"><span>NO: <span id="strukNoNota">-</span></span><span>TGL: <span id="strukTgl">-</span></span></div>
             <div style="text-align: center; font-weight: bold; margin: 5px 0; font-size: 15px;" id="strukAgen">-</div>
-            <div>DRV: <span id="strukDriver">-</span></div>
+            <div style="font-size: 11px;">KET: <span id="strukKet">-</span></div>
             <div class="struk-divider"></div>
             
             <!-- List Rincian Barang -->
@@ -163,17 +172,23 @@
 
         <!-- Tombol Aksi di Luar Struk -->
         <div class="btn-group">
-            <button class="btn-print">🖨️ PRINT BLUETOOTH</button>
-            <button class="btn-save">📸 SAVE JPG</button>
+            <button class="btn-print" onclick="cetakBluetooth()">🖨️ PRINT BLUETOOTH</button>
+            <button class="btn-save" onclick="simpanGambarPNG()">📸 SAVE PNG</button>
         </div>
         <div style="display: flex; align-items: center; justify-content: center; gap: 10px; color: white; font-size: 13px;">
             <label>Ukuran Kertas Printer:</label>
-            <select class="select-printer" style="width: auto;">
-                <option>80mm (48 Karakter)</option>
-                <option>58mm (32 Karakter)</option>
+            <select id="pilihanKertas" class="select-printer" style="width: auto;">
+                <option value="80">80mm (48 Karakter)</option>
+                <option value="58">58mm (32 Karakter)</option>
             </select>
         </div>
     </div>
+</div>
+
+<!-- Loader / Status Dialog (Untuk Print & Save PNG) -->
+<div id="loaderOverlay">
+    <div id="spinnerIkon" class="spinner"></div>
+    <div id="loaderText" style="font-weight:bold; font-size:16px;">Memproses...</div>
 </div>
 
 <script>
@@ -243,7 +258,7 @@
             const linkNota = document.getElementById('txtNoNota');
             linkNota.innerText = "Memuat...";
             document.getElementById('txtTglKirim').innerText = "...";
-            document.getElementById('txtDriver').innerText = "...";
+            document.getElementById('txtKet').innerText = "...";
 
             const { data: nota, error } = await clientSupabase.from('transaksi_dp')
                 .select('*') 
@@ -257,13 +272,18 @@
                 linkNota.style.pointerEvents = 'auto';
                 linkNota.style.textDecoration = 'underline'; 
                 document.getElementById('txtTglKirim').innerText = nota[0].tanggal || '-';
-                document.getElementById('txtDriver').innerText = nota[0].nama_supir || nota[0].supir || '-'; 
+                
+                // Mengambil nilai dari kolom driver_1, driver_2, plat_nomor
+                let driver1 = nota[0].driver_1 || '-';
+                let driver2 = nota[0].driver_2 || '-';
+                let mobil = nota[0].plat_nomor || '-';
+                document.getElementById('txtKet').innerText = `${driver1} / ${driver2} [${mobil}]`;
             } else {
                 linkNota.innerText = 'DATA TIDAK COCOK / KOSONG';
                 linkNota.style.pointerEvents = 'none'; 
                 linkNota.style.textDecoration = 'none'; 
                 document.getElementById('txtTglKirim').innerText = '-';
-                document.getElementById('txtDriver').innerText = '-';
+                document.getElementById('txtKet').innerText = '-';
             }
         } else {
             boxDetail.style.display = 'none';
@@ -277,6 +297,12 @@
     }
     function tutupModalCatat() { document.getElementById('modalCatatDana').style.display = 'none'; }
     function tutupModalStruk() { document.getElementById('modalStruk').style.display = 'none'; }
+    function tampilkanLoader(pesan, putarIcon = true) {
+        document.getElementById('loaderOverlay').style.display = 'flex';
+        document.getElementById('loaderText').innerText = pesan;
+        document.getElementById('spinnerIkon').style.display = putarIcon ? 'block' : 'none';
+    }
+    function sembunyikanLoader() { document.getElementById('loaderOverlay').style.display = 'none'; }
 
     async function simpanPembayaran() {
         const ag = document.getElementById('pilihAgen').value;
@@ -344,19 +370,17 @@
         document.getElementById('strukNoNota').innerText = noNota;
         document.getElementById('strukTgl').innerText = "...";
         document.getElementById('strukAgen').innerText = "MEMUAT DATA...";
-        document.getElementById('strukDriver').innerText = "...";
+        document.getElementById('strukKet').innerText = "...";
         document.getElementById('strukListBarang').innerHTML = "<div style='text-align:center;'>Mencari rincian barang...</div>";
         document.getElementById('strukRiwayatCicilan').innerHTML = "<div style='text-align:center;'>Mencari riwayat...</div>";
         
-        // 1. Ambil Header Nota
         const { data: nota } = await clientSupabase.from('transaksi_dp').select('*').eq('no_nota', noNota).limit(1);
         let t = null;
         if (nota && nota.length > 0) t = nota[0];
 
-        // 2. Ambil Detail Barang
         const { data: detail } = await clientSupabase.from('transaksi_detaildp').select('*').eq('no_nota', noNota);
         let htmlBarang = '';
-        let calcTotalKirim = 0; // Variabel penampung hasil jumlah otomatis
+        let calcTotalKirim = 0; 
 
         if (detail && detail.length > 0) {
             detail.forEach(d => {
@@ -366,7 +390,7 @@
                 let harga = parseFloat(d.harga_satuan || d.harga || 0);
                 let subtotal = parseFloat(d.subtotal || d.total_harga || (qty * harga));
 
-                calcTotalKirim += subtotal; // Menjumlahkan subtotal setiap barang
+                calcTotalKirim += subtotal; 
 
                 htmlBarang += `
                     <div class="struk-item-name">${namaItem}</div>
@@ -381,25 +405,24 @@
             document.getElementById('strukListBarang').innerHTML = "<div style='text-align:center; font-style:italic;'>Tidak ada rincian barang di database.</div>";
         }
 
-        // Tampilkan Data & Kalkulasi ke UI Struk
         if (t) {
             document.getElementById('strukTgl').innerText = t.tanggal || '-';
             document.getElementById('strukAgen').innerText = (t.nama_agen || '-').toUpperCase();
-            document.getElementById('strukDriver').innerText = t.nama_supir || t.supir || '-';
+            
+            // Mengambil nilai dari kolom driver_1, driver_2, plat_nomor
+            let driver1 = t.driver_1 || '-';
+            let driver2 = t.driver_2 || '-';
+            let mobil = t.plat_nomor || '-';
+            document.getElementById('strukKet').innerText = `${driver1} / ${driver2} [${mobil}]`;
             
             const sisaAkhir = parseFloat(t.sisa_akhir || 0);
             const bonLama = parseFloat(t.bon_lama || 0);
             const dpCash = parseFloat(t.bayar_cash || 0);
             const dpTrf = parseFloat(t.bayar_transfer || 0);
             
-            // Ambil dari header, tapi JIKA 0 gunakan hasil kalkulasi dari rincian barang (calcTotalKirim)
             let totalKirim = parseFloat(t.total_tagihan || t.total_belanja || 0);
-            if (totalKirim === 0 && calcTotalKirim > 0) {
-                totalKirim = calcTotalKirim;
-            } else if (totalKirim === 0 && sisaAkhir > 0) {
-                // Kalkulasi mundur (Reverse Math) jika tabel detail juga kosong
-                totalKirim = sisaAkhir - bonLama + dpCash + dpTrf;
-            }
+            if (totalKirim === 0 && calcTotalKirim > 0) totalKirim = calcTotalKirim;
+            else if (totalKirim === 0 && sisaAkhir > 0) totalKirim = sisaAkhir - bonLama + dpCash + dpTrf;
             
             const totalSemua = totalKirim + bonLama;
 
@@ -411,7 +434,6 @@
             document.getElementById('strukSisaBon').innerText = "Rp " + sisaAkhir.toLocaleString('id-ID');
         }
 
-        // 3. Ambil Riwayat Cicilan
         const { data: cicilan } = await clientSupabase.from('pembayaran_bon2').select('*').eq('no_nota_referensi', noNota).order('id', { ascending: true });
         let htmlCicilan = '';
         if (cicilan && cicilan.length > 0) {
@@ -430,6 +452,154 @@
         } else {
             document.getElementById('strukRiwayatCicilan').innerHTML = "<div style='text-align:center; font-style:italic; padding-top:5px;'>Belum ada riwayat cicilan.</div>";
         }
+    }
+
+    // --- FUNGSI SAVE PNG ---
+    async function simpanGambarPNG() {
+        tampilkanLoader("Menyiapkan dan Menyimpan Gambar...");
+        try {
+            const elemenStruk = document.getElementById('areaCetakStruk');
+            const canvas = await html2canvas(elemenStruk, { scale: 2 });
+            const dataURL = canvas.toDataURL('image/png');
+            
+            const link = document.createElement('a');
+            link.download = `Struk_Pembayaran_${document.getElementById('strukNoNota').innerText}.png`;
+            link.href = dataURL;
+            link.click();
+
+            tampilkanLoader("✅ Berhasil Disimpan!", false);
+            setTimeout(sembunyikanLoader, 1500);
+        } catch (err) {
+            console.error(err);
+            tampilkanLoader("❌ Gagal Menyimpan!", false);
+            setTimeout(sembunyikanLoader, 2000);
+        }
+    }
+
+    // --- FUNGSI PRINT BLUETOOTH ESC/POS ---
+    async function cetakBluetooth() {
+        if (!navigator.bluetooth) {
+            alert('Web Bluetooth API tidak didukung pada browser ini. (Gunakan Chrome/Edge versi terbaru)');
+            return;
+        }
+
+        let maxKarakter = parseInt(document.getElementById('pilihanKertas').value) === 80 ? 48 : 32;
+
+        try {
+            tampilkanLoader("Menghubungkan ke Perangkat Printer...");
+            
+            const device = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2']
+            });
+            
+            const server = await device.gatt.connect();
+            let selectedCharacteristic;
+            
+            const services = await server.getPrimaryServices();
+            for (const s of services) {
+                const characteristics = await s.getCharacteristics();
+                for (const c of characteristics) {
+                    if (c.properties.write || c.properties.writeWithoutResponse) {
+                        selectedCharacteristic = c;
+                        break;
+                    }
+                }
+                if (selectedCharacteristic) break;
+            }
+
+            if (!selectedCharacteristic) {
+                throw new Error("Karakteristik Write tidak ditemukan pada printer yang dipilih.");
+            }
+
+            tampilkanLoader("Memproses Pencetakan...");
+
+            const printDataString = buatDataESC(maxKarakter);
+            const encoder = new TextEncoder();
+            const dataBytes = encoder.encode(printDataString);
+            
+            // Pengiriman via chunks (batas limit BLE umumnya)
+            const CHUNK_SIZE = 100;
+            for (let i = 0; i < dataBytes.length; i += CHUNK_SIZE) {
+                const chunk = dataBytes.slice(i, i + CHUNK_SIZE);
+                await selectedCharacteristic.writeValue(chunk);
+            }
+
+            tampilkanLoader("✅ Berhasil Dicetak!", false);
+            setTimeout(sembunyikanLoader, 2000);
+            
+        } catch (error) {
+            console.error(error);
+            tampilkanLoader("❌ Gagal Terhubung: " + error.message, false);
+            setTimeout(sembunyikanLoader, 3000);
+        }
+    }
+
+    function buatDataESC(maxChar) {
+        let text = '\x1B\x40\n'; // Init printer ESC/POS
+        
+        const alignCenter = (str) => {
+            let padding = Math.max(0, Math.floor((maxChar - str.length) / 2));
+            return " ".repeat(padding) + str + "\n";
+        };
+        const alignSplit = (left, right) => {
+            let spc = maxChar - left.length - right.length;
+            if(spc < 1) spc = 1;
+            return left + " ".repeat(spc) + right + "\n";
+        };
+        const garisPutus = "-".repeat(maxChar) + "\n";
+        const garisTebal = "=".repeat(maxChar) + "\n";
+
+        text += alignCenter("SBR PUTRA FOOD");
+        text += alignCenter("Lembang, Bandung Barat");
+        text += garisPutus;
+        text += alignSplit("NO: " + document.getElementById('strukNoNota').innerText, "TGL: " + document.getElementById('strukTgl').innerText);
+        text += alignCenter(document.getElementById('strukAgen').innerText);
+        
+        // --- Bagian Keterangan Dipadatkan ---
+        text += "KET: " + document.getElementById('strukKet').innerText + "\n";
+        text += garisPutus;
+
+        // Loop Barang
+        let items = document.querySelectorAll('#strukListBarang .struk-item-name');
+        let details = document.querySelectorAll('#strukListBarang .struk-item-detail');
+        for(let i = 0; i < items.length; i++) {
+            text += items[i].innerText + "\n";
+            let spanDt = details[i].querySelectorAll('span');
+            text += alignSplit("  " + spanDt[0].innerText, spanDt[1].innerText);
+        }
+        if(items.length === 0) text += alignCenter("Tidak ada rincian barang.");
+
+        text += garisPutus;
+        text += alignSplit("TOTAL KIRIM:", document.getElementById('strukTotalTagihanKirim').innerText);
+        text += "\n";
+        text += alignSplit("BON LAMA:", document.getElementById('strukBonLama').innerText);
+        text += garisTebal;
+        text += alignSplit("TOTAL TAGIHAN:", document.getElementById('strukTotalTagihan').innerText);
+        text += garisPutus;
+        
+        text += alignSplit("Bayar CASH:", document.getElementById('strukDP').innerText);
+        text += alignSplit("Bayar TRF:", document.getElementById('strukDPTrf').innerText);
+        text += garisPutus;
+        
+        text += "RIWAYAT CICILAN:\n";
+        let history = document.querySelectorAll('#strukRiwayatCicilan .struk-row');
+        if (history.length > 0) {
+            history.forEach(row => {
+                let s = row.querySelectorAll('span');
+                if(s.length === 2) text += alignSplit("  " + s[0].innerText, s[1].innerText);
+            });
+        } else {
+            text += alignCenter("Belum ada riwayat cicilan.");
+        }
+        
+        text += garisPutus;
+        text += alignSplit("SISA BON:", document.getElementById('strukSisaBon').innerText);
+        text += garisPutus;
+        text += alignCenter("SBR PUTRA FOOD SYSTEM");
+        text += "\n\n\n"; // Feed paper supaya mudah disobek
+        
+        return text;
     }
 
     window.onload = initHalaman;
