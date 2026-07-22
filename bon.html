@@ -39,17 +39,17 @@
         .btn-action { background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 900; }
         
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
-.modal-content { 
-    background: white; 
-    margin: 5% auto; /* Ubah margin atas dari 15% menjadi 5% agar lebih luas di layar HP */
-    padding: 20px; 
-    border-radius: 15px; 
-    width: 85%; 
-    max-width: 400px; 
-    box-shadow: 0 5px 30px rgba(0,0,0,0.3);
-    max-height: 85vh; /* Membatasi tinggi maksimal kotak sebesar 85% dari layar */
-    overflow-y: auto; /* Memunculkan scroll bar vertikal jika konten melebihi kotak */
-}
+        .modal-content { 
+            background: white; 
+            margin: 5% auto; 
+            padding: 20px; 
+            border-radius: 15px; 
+            width: 85%; 
+            max-width: 400px; 
+            box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+            max-height: 85vh; 
+            overflow-y: auto; 
+        }
 
         .form-group label { display: block; font-weight: 900; margin-bottom: 5px; font-size: 16px; }
         .form-group select, .form-group input { width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 19px; font-weight: 700; }
@@ -70,7 +70,6 @@
         .btn-reprint:disabled { background: #cbd5e0; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
         .btn-clear { padding: 15px; background: #718096; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #4a5568; text-transform: uppercase; }
         
-        /* Gaya untuk area cetak gambar tersembunyi */
         .struk-visual-container { position: absolute; left: -9999px; top: 0; width: 400px; }
         .struk-visual { background: #fff; padding: 25px; color: #000; font-family: 'Courier New', Courier, monospace; font-size: 14px; border: 1px solid #ccc; line-height: 1.4; }
         .struk-visual .garis { border-top: 1px dashed #000; margin: 8px 0; }
@@ -262,20 +261,34 @@
                 });
             }
 
-            const { data: karyawan, error: errorKaryawan } = await clientSupabase.from('karyawan').select('*').eq('aktif', true);
+            // FILTER BERDASARKAN KOLOM 'bagian' DAN NILAI 'Driver'
+            const { data: karyawan, error: errorKaryawan } = await clientSupabase
+                .from('karyawan')
+                .select('*')
+                .eq('aktif', true)
+                .eq('bagian', 'Driver'); // <-- Diubah menggunakan kolom 'bagian' dan nilai 'Driver'
+                
             if (errorKaryawan) throw new Error("Gagal muat DRIVER: " + errorKaryawan.message);
             
             const d1 = document.getElementById('driver1');
             const d2 = document.getElementById('driver2');
+            
+            // Driver 1 otomatis user login
+            d1.innerHTML = '';
+            if(userAktif) {
+                d1.options.add(new Option(userAktif, userAktif));
+                d1.value = userAktif;
+            } else {
+                d1.options.add(new Option("-- BELUM LOGIN --", ""));
+            }
+
+            // Driver 2 diisi dengan list karyawan yang bagiannya Driver
+            d2.innerHTML = '<option value="">-- DRIVER 2 --</option>';
             if(karyawan) {
-                d1.innerHTML = '<option value="">-- DRIVER 1 --</option>';
-                d2.innerHTML = '<option value="">-- DRIVER 2 --</option>';
                 karyawan.forEach(k => {
-                    d1.options.add(new Option(k.nama_karyawan, k.nama_karyawan));
                     d2.options.add(new Option(k.nama_karyawan, k.nama_karyawan));
                 });
             }
-            if(userAktif) d1.value = userAktif;
 
             const { data: mobil, error: errorMobil } = await clientSupabase.from('kendaraan').select('*');
             if (errorMobil) throw new Error("Gagal muat MOBIL: " + errorMobil.message);
@@ -475,7 +488,6 @@
         } catch(e) { alert("Reprint Gagal: " + e); }
     }
 
-    // FUNGSI UNTUK MERENDER HTML KE GAMBAR (HTML2CANVAS)
     async function buatGambarLaporan(dataStruk) {
         const area = document.getElementById('areaCetakGambar');
         
@@ -547,15 +559,12 @@
 
         area.innerHTML = htmlContent;
 
-        // Render to canvas
         const canvas = await html2canvas(area, { scale: 2, backgroundColor: "#ffffff", logging: false });
         const imgUrl = canvas.toDataURL("image/jpeg", 0.9);
         
-        // Munculkan di modal
         document.getElementById('imgPreviewLaporan').src = imgUrl;
         document.getElementById('modalPreviewLaporan').style.display = 'block';
 
-        // Auto Download
         const downloadLink = document.createElement("a");
         downloadLink.href = imgUrl;
         downloadLink.download = `Laporan_SBR_${dataStruk.noNota}.jpg`;
@@ -577,7 +586,6 @@
         if (!ag) errorList.push("- Agen belum dipilih");
         if (!drv1) errorList.push("- Driver 1 belum ditentukan/kosong");
         if (!mobil) errorList.push("- Mobil/Plat Nomor belum dipilih");
-        if (!drv2) errorList.push("- Driver 2 belum dipilih");
         if (itemsKirim.length === 0 && itemsRetur.length === 0) {
             errorList.push("- Belum ada item (Kirim atau Retur) yang dimasukkan");
         }
@@ -661,7 +669,7 @@
         try {
             await clientSupabase.from('transaksi').insert([{
                 no_nota: noNota, nama_agen: ag, tanggal: tglInput,
-                driver_1: drv1, driver_2: drv2, plat_nomor: mobil, 
+                driver_1: drv1, driver_2: drv2 || null, plat_nomor: mobil, 
                 total_kirim: tk, total_retur: tr, bon_lama: bl_actual, 
                 ongkir: ongkir, 
                 bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
@@ -674,7 +682,6 @@
             await clientSupabase.from('transaksi_detail').insert(details);
             await clientSupabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
 
-            // Trigger Cetak Bluetooth (Jika Tersambung)
             if (btCharacteristic) {
                 btn.innerText = "MENCETAK CUSTOMER...";
                 let cetakCustomer = p.replace('[JENIS_CETAKAN]', '=== LEMBAR CUSTOMER ===');
@@ -691,7 +698,6 @@
             lastPrintText = p;
             document.getElementById('btnReprint').disabled = false;
             
-            // Proses generate gambar digital
             btn.innerText = "MEMBUAT LAPORAN DIGITAL...";
             await buatGambarLaporan({
                 noNota, tglIndo, ag, drvGabung, mobil,
