@@ -6,15 +6,60 @@
     <title>SBR Putra Food - Matriks Rencana Kirim</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #121214; }
-        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #fff; font-size: 16px; }
-        .container { background: #1e1e24; padding: 12px; border-radius: 15px; max-width: 950px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
-        header { margin-bottom: 15px; border-bottom: 3px solid #3182ce; padding-bottom: 8px; }
+        :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #121214; --text-color: #333333; }
+        body { font-family: 'Roboto Condensed', Tahoma, sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #fff; font-size: 16px; transition: background 0.3s, color 0.3s; }
+        
+        .container { background: #1e1e24; padding: 12px; border-radius: 15px; max-width: 950px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.5); transition: background 0.3s; }
+        
+        header { margin-bottom: 15px; border-bottom: 3px solid #3182ce; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;}
         header h2 { margin: 0; color: #fff; font-size: 22px; text-transform: uppercase; font-weight: 900; }
         .subtitle { font-size: 12px; color: #a0aec0; font-weight: bold; }
+
+        /* TEMA TERANG (LIGHT THEME) OVERRIDES - SEMUA FONT HITAM */
+        body.light-theme { --bg: #f4f6f8; background: var(--bg); color: #000000; }
+        body.light-theme .container { background: #ffffff; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        body.light-theme header h2 { color: #000000; }
+        body.light-theme .subtitle { color: #333333; }
+        body.light-theme .summary-card { background: #edf2f7; border-color: #3182ce; color: #000000; }
+        body.light-theme .summary-header { color: #000000 !important; }
+        body.light-theme .summary-card.stock .summary-header { color: #000000 !important; }
+        body.light-theme #textJumlahAgenAntrean, body.light-theme #textTotalTabungan { color: #000000 !important; }
+        body.light-theme .bottom-control-panel { background: #e2e8f0; border-color: #cbd5e0; }
+        body.light-theme .bottom-control-panel label { color: #000000; }
+        body.light-theme .bottom-control-panel input { background: #fff; color: #000000; border-color: #a0aec0; }
+        body.light-theme .table-muatan th { background: #e2e8f0; color: #000000; border-color: #cbd5e0; }
+        body.light-theme .table-muatan td { color: #000000; border-color: #e2e8f0; }
+        body.light-theme .table-muatan td strong { color: #000000; }
+        body.light-theme .compact-list-card, body.light-theme .history-card { background: #f7fafc; border-color: #cbd5e0; color: #000000; }
+        body.light-theme .history-card { background: #edf2f7; border-color: #e2e8f0; color: #000000; }
+        body.light-theme .card-right-muatan { background: #fff; border-color: #cbd5e0; }
+        body.light-theme .logistik-grid { background: #edf2f7; border-color: #cbd5e0; }
+        body.light-theme .logistik-grid select, body.light-theme .logistik-grid input { background: #fff; color: #000000; border-color: #a0aec0; }
+        body.light-theme .logistik-grid label { color: #000000; }
+        body.light-theme .modal-sbr-content { background: #ffffff; border-color: #cbd5e0; color: #000000;}
+        body.light-theme .modal-sbr-header h3 { color: #000000; }
+        body.light-theme .modal-left-box { background: #edf2f7; border-color: #cbd5e0; color: #000000; }
+        body.light-theme .modal-right-box { background: #f7fafc; border-color: #cbd5e0; color: #000000; }
+        body.light-theme .input-sim-armada { background: #fff; color: #000000; }
+        body.light-theme .input-sim-saldo { background: #edf2f7; color: #000000; }
+        body.light-theme .item-tabungan-ceklis { background: #edf2f7; border-color: #cbd5e0; color: #000000; }
+        body.light-theme .item-tabungan-ceklis .label-sisi-kiri { color: #000000; }
+        body.light-theme .input-qty { background: #fff; color: #000000; border-color: #a0aec0; }
+        body.light-theme select { background: #fff; color: #000000; border-color: #a0aec0; }
+        body.light-theme table.table-input th { background: #e2e8f0; color: #000000; border-bottom: 2px solid #cbd5e0; }
+        body.light-theme table.table-input td { border-bottom: 1px solid #cbd5e0; color: #000000; }
+        body.light-theme table.table-input td strong { color: #000000; }
+        body.light-theme .box-scroll-barang { background: #fff; border-color: #cbd5e0; color: #000000; }
+        body.light-theme #pilihItemSimulasi { color: #000000; background: #fff;}
+        body.light-theme .info-track-kirim { color: #444444 !important; }
+        body.light-theme span, body.light-theme label, body.light-theme div { color: inherit; }
+
+        /* TOMBOL TEMA */
+        .btn-theme { background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 900; }
+        body.light-theme .btn-theme { background: #e2e8f0; color: #000000; border: 1px solid #cbd5e0; }
 
         /* DUA CARD REKAP SEJAJAR DI ATAS */
         .top-summary-grid { display: flex; gap: 15px; margin-bottom: 15px; align-items: stretch; width: 100%; }
@@ -22,16 +67,16 @@
             flex: 1; width: calc(50% - 7.5px); min-width: 0; background: #2d3748; border: 2px solid #3182ce;
             border-radius: 12px; padding: 12px; display: flex; flex-direction: column; box-sizing: border-box;
         }
-        .summary-card.stock { border-color: #ecc94b; flex: 1.3; } /* Card kanan lebih lebar sedikit */
+        .summary-card.stock { border-color: #ecc94b; flex: 1.3; }
         
-        .summary-header { font-size: 12px; font-weight: 900; color: #63b3ed; text-transform: uppercase; border-bottom: 2px solid #4a5568; padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .summary-card.stock .summary-header { color: #f6e05e; }
+        .summary-header { font-size: 13px; font-weight: 900; color: black; text-transform: uppercase; border-bottom: 2px solid #4a5568; padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .summary-card.stock .summary-header { color: black; }
 
         /* BARIS KONTROL (TANGGAL & TOMBOL) DI BAWAH CARD REKAP */
         .bottom-control-panel { display: flex; gap: 15px; background: #1a202c; padding: 15px; border-radius: 12px; border: 2px solid #4a5568; align-items: flex-end; margin-bottom: 15px; }
         .control-group { display: flex; flex-direction: column; gap: 6px; }
-        .control-group label { font-size: 11px; font-weight: 900; color: #cbd5e0; text-transform: uppercase; letter-spacing: 0.5px; }
-        .control-group input[type="date"] { padding: 10px; border-radius: 6px; border: 2px solid #4a5568; font-size: 14px; font-weight: 700; background: #2d3748; color: white; width: 100%; box-sizing: border-box; }
+        .control-group label { font-size: 12px; font-weight: 900; color: #cbd5e0; text-transform: uppercase; letter-spacing: 0.5px; }
+        .control-group input[type="date"] { padding: 10px; border-radius: 6px; border: 2px solid #4a5568; font-size: 15px; font-weight: 700; background: #2d3748; color: white; width: 100%; box-sizing: border-box; font-family: 'Roboto Condensed', Tahoma, sans-serif; }
 
         @media (max-width: 768px) {
             .top-summary-grid { flex-direction: column; }
@@ -40,29 +85,29 @@
             .bottom-control-panel .btn-primary-blue { margin-top: 5px; }
         }
 
-        .section-label { font-size: 15px; font-weight: 900; padding: 8px; background: #2b6cb0; color: white; border-radius: 6px; margin: 15px 0 8px; text-transform: uppercase; }
+        .section-label { font-size: 16px; font-weight: 900; padding: 8px; background: #2b6cb0; color: white; border-radius: 6px; margin: 15px 0 8px; text-transform: uppercase; }
         .section-label.database { background: #d35400; }
 
         /* TABLE MUATAN DAN SIMULASI */
         .table-muatan { width: 100%; border-collapse: collapse; }
-        .table-muatan th { background: #1a202c; color: #a0aec0; font-size: 11px; font-weight: 900; padding: 6px; border-bottom: 1px solid #4a5568; text-transform: uppercase; }
-        .table-muatan td { padding: 6px; border-bottom: 1px solid #2d2d2d; font-size: 12px; color: #cbd5e0; font-weight: 700; }
-        .table-muatan td.num-col { text-align: center; width: 60px; font-size: 13px; }
+        .table-muatan th { background: #1a202c; color: #a0aec0; font-size: 12px; font-weight: 900; padding: 6px; border-bottom: 1px solid #4a5568; text-transform: uppercase; }
+        .table-muatan td { padding: 6px; border-bottom: 1px solid #2d2d2d; font-size: 13px; color: #cbd5e0; font-weight: 700; }
+        .table-muatan td.num-col { text-align: center; width: 60px; font-size: 14px; }
 
         .table-simulasi th { background: #744210; color: #fefcbf; border-bottom: 1px solid #b7791f; }
         .table-simulasi td { border-bottom: 1px solid #4a5568; padding: 4px; }
-        .input-sim-armada { width: 100%; box-sizing: border-box; background: #121214; border: 1px solid #4a5568; color: #cbd5e0; padding: 5px; border-radius: 4px; font-size: 12px; }
-        .input-sim-saldo { width: 100%; box-sizing: border-box; background: #1a202c; border: 1px solid #4a5568; color: #fff; padding: 5px; border-radius: 4px; font-size: 13px; text-align: center; font-weight: bold; }
+        .input-sim-armada { width: 100%; box-sizing: border-box; background: #121214; border: 1px solid #4a5568; color: #cbd5e0; padding: 5px; border-radius: 4px; font-size: 13px; font-family: 'Roboto Condensed', Tahoma, sans-serif;}
+        .input-sim-saldo { width: 100%; box-sizing: border-box; background: #1a202c; border: 1px solid #4a5568; color: #fff; padding: 5px; border-radius: 4px; font-size: 14px; text-align: center; font-weight: bold; font-family: 'Roboto Condensed', Tahoma, sans-serif;}
 
         /* TABLE INPUT DI POPUP */
         table.table-input { width: 100%; border-collapse: collapse; margin: 5px 0; }
-        table.table-input th { font-size: 11px; text-align: left; padding: 6px; background: #1a202c; border-bottom: 2px solid #4a5568; font-weight: 900; color: #cbd5e0; text-transform: uppercase; }
-        table.table-input td { padding: 6px; border-bottom: 1px solid #4a5568; font-size: 14px; font-weight: 700; }
-        .input-qty { width: 65px; padding: 5px; border: 2px solid #4a5568; border-radius: 6px; text-align: center; font-weight: 700; font-size: 14px; background: #1a202c; color: white; }
-        .selector-row select { width: 100%; padding: 8px; font-size: 13px; font-weight: 700; border: 2px solid #4a5568; border-radius: 6px; background: #2d3748; color: white; }
+        table.table-input th { font-size: 12px; text-align: left; padding: 6px; background: #1a202c; border-bottom: 2px solid #4a5568; font-weight: 900; color: #cbd5e0; text-transform: uppercase; }
+        table.table-input td { padding: 6px; border-bottom: 1px solid #4a5568; font-size: 15px; font-weight: 700; }
+        .input-qty { width: 65px; padding: 5px; border: 2px solid #4a5568; border-radius: 6px; text-align: center; font-weight: 700; font-size: 15px; background: #1a202c; color: white; font-family: 'Roboto Condensed', Tahoma, sans-serif;}
+        .selector-row select { width: 100%; padding: 8px; font-size: 14px; font-weight: 700; border: 2px solid #4a5568; border-radius: 6px; background: #2d3748; color: white; font-family: 'Roboto Condensed', Tahoma, sans-serif;}
 
         /* LAYOUTING LIST ANTREAN UTAMA */
-        .compact-list-card, .history-card { background: #2d3748; padding: 12px; border-radius: 10px; margin-top: 10px; font-size: 14px; border: 2px solid #4a5568; display: flex; flex-direction: column; gap: 8px; }
+        .compact-list-card, .history-card { background: #2d3748; padding: 12px; border-radius: 10px; margin-top: 10px; font-size: 15px; border: 2px solid #4a5568; display: flex; flex-direction: column; gap: 8px; }
         .history-card { background: #1a202c; border-color: #2d3748; }
         .card-top-info { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a5568; padding-bottom: 6px; }
         
@@ -73,28 +118,28 @@
         /* GRID LOGISTIK */
         .logistik-grid { display: grid; grid-template-rows: auto auto; gap: 10px; background: #1a202c; padding: 10px; border-radius: 8px; border: 1px solid #3182ce; }
         .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .logistik-grid select, .logistik-grid input[type="date"] { width: 100%; padding: 8px 6px; font-size: 13px; font-weight: 700; border: 2px solid #4a5568; border-radius: 6px; background: #2d3748; color: white; box-sizing: border-box; }
-        .logistik-grid label { font-size: 11px; font-weight: 900; color: #cbd5e0; display: block; margin-bottom: 4px; text-transform: uppercase; }
+        .logistik-grid select, .logistik-grid input[type="date"] { width: 100%; padding: 8px 6px; font-size: 14px; font-weight: 700; border: 2px solid #4a5568; border-radius: 6px; background: #2d3748; color: white; box-sizing: border-box; font-family: 'Roboto Condensed', Tahoma, sans-serif;}
+        .logistik-grid label { font-size: 12px; font-weight: 900; color: #cbd5e0; display: block; margin-bottom: 4px; text-transform: uppercase; }
 
         /* BUTTONS */
-        .btn-action { border: none; border-radius: 8px; font-weight: 900; cursor: pointer; text-transform: uppercase; }
-        .btn-del-item { background: #742a2a; color: #feb2b2; border: 1px solid #9b2c2c; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-weight: 900; font-size: 12px; }
-        .btn-comp-edit { background: #dd6b20; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-weight: 900; font-size: 11px; cursor: pointer; text-transform: uppercase; }
-        .btn-comp-del { background: #e53e3e; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-weight: 900; font-size: 11px; cursor: pointer; text-transform: uppercase; }
-        .btn-primary-blue { background: #3182ce; color: white; width: 100%; border: none; font-weight: 900; text-transform: uppercase; border-radius: 8px; cursor: pointer; padding: 14px; font-size: 13px; letter-spacing: 0.5px; }
-        .btn-card-save { background: #27ae60; color: white; width: 100%; padding: 10px; font-size: 14px; border-radius: 8px; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer; margin-top: 8px; }
+        .btn-action { border: none; border-radius: 8px; font-weight: 900; cursor: pointer; text-transform: uppercase; font-family: 'Roboto Condensed', Tahoma, sans-serif;}
+        .btn-del-item { background: #742a2a; color: #feb2b2; border: 1px solid #9b2c2c; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-weight: 900; font-size: 13px; font-family: 'Roboto Condensed', Tahoma, sans-serif;}
+        .btn-comp-edit { background: #dd6b20; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-weight: 900; font-size: 12px; cursor: pointer; text-transform: uppercase; font-family: 'Roboto Condensed', Tahoma, sans-serif;}
+        .btn-comp-del { background: #e53e3e; color: white; padding: 6px 12px; border: none; border-radius: 6px; font-weight: 900; font-size: 12px; cursor: pointer; text-transform: uppercase; font-family: 'Roboto Condensed', Tahoma, sans-serif;}
+        .btn-primary-blue { background: #3182ce; color: white; width: 100%; border: none; font-weight: 900; text-transform: uppercase; border-radius: 8px; cursor: pointer; padding: 14px; font-size: 14px; letter-spacing: 0.5px; font-family: 'Roboto Condensed', Tahoma, sans-serif;}
+        .btn-card-save { background: #27ae60; color: white; width: 100%; padding: 10px; font-size: 15px; border-radius: 8px; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer; margin-top: 8px; font-family: 'Roboto Condensed', Tahoma, sans-serif;}
         .btn-card-save:disabled { background: #718096; cursor: not-allowed; }
 
-        .badge-shift { padding: 4px 8px; border-radius: 5px; color: white; font-size: 11px; font-weight: 900; text-transform: uppercase; display: inline-block; }
+        .badge-shift { padding: 4px 8px; border-radius: 5px; color: white; font-size: 12px; font-weight: 900; text-transform: uppercase; display: inline-block; }
         .SUBUH { background: #e67e22; } .SIANG { background: #3498db; } .MALAM { background: #9b59b6; }
-        .badge-tgl { background: #4a5568; padding: 4px 8px; border-radius: 5px; color: #cbd5e0; font-size: 11px; font-weight: 700; display: inline-block; }
-        .badge-armada { background: #2b6cb0; padding: 4px 8px; border-radius: 5px; color: #fff; font-size: 11px; font-weight: 900; display: inline-block; border: 1px solid #4299e1; }
+        .badge-tgl { background: #4a5568; padding: 4px 8px; border-radius: 5px; color: #cbd5e0; font-size: 12px; font-weight: 700; display: inline-block; }
+        .badge-armada { background: #2b6cb0; padding: 4px 8px; border-radius: 5px; color: #fff; font-size: 12px; font-weight: 900; display: inline-block; border: 1px solid #4299e1; }
 
         /* STYLING POPUP MODAL DUA TAHAP */
         .modal-sbr { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
-        .modal-sbr-content { background: #1e1e24; margin: 1% auto; padding: 18px; border: 2px solid #4a5568; width: 95%; max-width: 900px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
+        .modal-sbr-content { background: #1e1e24; margin: 5% auto; padding: 18px; border: 2px solid #4a5568; width: 95%; max-width: 900px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
         .modal-sbr-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3182ce; padding-bottom: 8px; margin-bottom: 12px; }
-        .modal-sbr-header h3 { margin: 0; font-size: 18px; text-transform: uppercase; font-weight: 900; color: #63b3ed; }
+        .modal-sbr-header h3 { margin: 0; font-size: 19px; text-transform: uppercase; font-weight: 900; color: #63b3ed; }
         .close-sbr-modal { color: #a0aec0; font-size: 26px; font-weight: bold; cursor: pointer; }
         .close-sbr-modal:hover { color: #fff; }
         
@@ -110,10 +155,10 @@
         .box-scroll-barang::-webkit-scrollbar-thumb, .box-scroll-tabungan::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 3px; }
 
         .item-tabungan-ceklis { display: flex; justify-content: space-between; align-items: center; background: #1a202c; padding: 8px 10px; border-radius: 6px; border: 1px solid #4a5568; margin-bottom: 6px; }
-        .label-sisi-kiri { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: bold; cursor: pointer; }
+        .label-sisi-kiri { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: bold; cursor: pointer; }
         .label-sisi-kiri input[type="checkbox"] { width: 18px; height: 18px; accent-color: #27ae60; cursor: pointer; }
 
-        .info-track-kirim { font-size: 10.5px; color: #a0aec0; margin-top: 3px; font-style: italic; display: block; line-height: 1.3; }
+        .info-track-kirim { font-size: 11.5px; color: #a0aec0; margin-top: 3px; font-style: italic; display: block; line-height: 1.3; }
         .info-track-antrean { padding-left: 0px; }
         .info-track-tabungan { padding-left: 28px; }
     </style>
@@ -122,8 +167,11 @@
 
 <div class="container">
     <header>
-        <h2>SBR PUTRA FOOD</h2>
-        <div class="subtitle">MATRIKS PLANNING & PENYUSUNAN JADWAL KIRIM AGEN</div>
+        <div>
+            <h2>SBR PUTRA FOOD</h2>
+            <div class="subtitle">MATRIKS PLANNING & PENYUSUNAN JADWAL KIRIM AGEN</div>
+        </div>
+        <button onclick="toggleTheme()" id="btnTheme" class="btn-theme">🌞 Mode Terang</button>
     </header>
 
     <!-- 2 CARD REKAP SEJAJAR DI ATAS -->
@@ -144,7 +192,7 @@
                         </tr>
                     </thead>
                     <tbody id="bodyGlobalSummary">
-                        <tr><td colspan="3" style="text-align: center; color: #a0aec0; font-style: italic; padding-top: 20px;">List antrean kosong.</td></tr>
+                        <tr><td colspan="3" style="text-align: center; color: inherit; font-style: italic; padding-top: 20px;">List antrean kosong.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -154,7 +202,7 @@
         <div class="summary-card stock">
             <div class="summary-header" style="flex-wrap: wrap; gap: 5px;">
                 <span style="display:flex; align-items:center;">📦 SIMULASI ALOKASI ITEM</span>
-                <select id="pilihItemSimulasi" onchange="renderTabelSimulasi()" style="padding:4px; border-radius:4px; background:#1a202c; color:#fff; border:1px solid #4a5568; font-size:12px; font-weight:bold; min-width:120px;">
+                <select id="pilihItemSimulasi" onchange="renderTabelSimulasi()" style="padding:4px; border-radius:4px; background:#1a202c; color:#fff; border:1px solid #4a5568; font-size:13px; font-weight:bold; min-width:120px; font-family: 'Roboto Condensed', Tahoma, sans-serif;">
                     <option value="">-- Pilih Item --</option>
                 </select>
             </div>
@@ -170,7 +218,7 @@
                         </tr>
                     </thead>
                     <tbody id="bodyStockSummary">
-                        <tr><td colspan="5" style="text-align: center; color: #a0aec0; font-style: italic; padding-top: 20px;">Pilih item di atas.</td></tr>
+                        <tr><td colspan="5" style="text-align: center; color: inherit; font-style: italic; padding-top: 20px;">Pilih item di atas.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -190,14 +238,14 @@
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0 8px;">
         <div class="section-label" style="margin: 0; flex: 1;">📋 LIST ANTREAN KIRIM (PENGATURAN LOGISTIK & ARMADA MASSAL)</div>
-        <button class="btn-action" style="background: #25D366; color: white; padding: 10px 15px; margin-left: 10px; font-size: 13px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);" onclick="exportKeWA()">
+        <button class="btn-action" style="background: #25D366; color: white; padding: 10px 15px; margin-left: 10px; font-size: 14px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);" onclick="exportKeWA()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
             SHARE KE WA GROUP
         </button>
     </div>
     
     <div id="containerListKirim">
-        <div style="text-align:center; color:#a0aec0; font-style:italic; padding:20px; background:#2d3748; border:2px dashed #4a5568; border-radius:12px;">
+        <div style="text-align:center; color:inherit; font-style:italic; padding:20px; background:#2d3748; border:2px dashed #4a5568; border-radius:12px;">
             Belum ada agen yang dimasukkan ke list kirim sementara.
         </div>
     </div>
@@ -215,7 +263,7 @@
         
         <div class="modal-split-grid">
             <div class="modal-left-box">
-                <div style="font-size:12px; font-weight:900; color:#63b3ed; border-bottom:1px solid #4a5568; padding-bottom:4px;">TAHAP 1: INPUT ORDER AGEN</div>
+                <div style="font-size:13px; font-weight:900; color:#63b3ed; border-bottom:1px solid #4a5568; padding-bottom:4px;">TAHAP 1: INPUT ORDER AGEN</div>
                 <div class="control-group">
                     <label>Pilih Nama Agen :</label>
                     <div class="selector-row">
@@ -228,7 +276,7 @@
                     <table class="table-input" style="margin:0;">
                         <thead><tr><th>Nama Item</th><th style="width:65px;">Order</th><th style="width:65px;">Pemen.</th></tr></thead>
                         <tbody id="bodyInputBarangPopup">
-                            <tr><td colspan="3" style="text-align:center; color:#666; padding:20px; font-style:italic;">Silakan pilih nama agen di atas.</td></tr>
+                            <tr><td colspan="3" style="text-align:center; color:inherit; padding:20px; font-style:italic;">Silakan pilih nama agen di atas.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -236,12 +284,12 @@
             </div>
 
             <div class="modal-right-box">
-                <div style="font-size:12px; font-weight:900; color:#f6ad55; border-bottom:1px solid #4a5568; padding-bottom:4px; margin-bottom:10px; display:flex; justify-content:between; width:100%;">
+                <div style="font-size:13px; font-weight:900; color:#f6ad55; border-bottom:1px solid #4a5568; padding-bottom:4px; margin-bottom:10px; display:flex; justify-content:between; width:100%;">
                     <span>TAHAP 2: DAFTAR ORDERAN SIAP CEKLIS &amp; KIRIM</span>
-                    <span id="textTotalTabungan" style="color:#fff; margin-left:auto;">0 Order Terbuka</span>
+                    <span id="textTotalTabungan" style="color:inherit; margin-left:auto;">0 Order Terbuka</span>
                 </div>
                 <div class="box-scroll-tabungan" id="containerTabunganOrderCeklis">
-                    <div style="text-align:center; color:#a0aec0; font-style:italic; padding-top:40px;">Belum ada tabungan orderan masuk.</div>
+                    <div style="text-align:center; color:inherit; font-style:italic; padding-top:40px;">Belum ada tabungan orderan masuk.</div>
                 </div>
                 <button type="button" class="btn-primary-blue" style="margin-top:auto;" onclick="lemparCeklisKeListKirimUtama()">⚡ MASUKKAN AGEN TERPILIH KE LIST KIRIM UTAMA</button>
                 <button type="button" class="btn-action" style="background: #25D366; color: white; padding: 10px; margin-top: 10px; font-weight: 900; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="exportTabunganKeWA()">
@@ -250,6 +298,26 @@
                 </button>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- POPUP KHUSUS UNTUK EDIT MUATAN DI LIST ANTREAN -->
+<div id="modalEditAntrean" class="modal-sbr">
+    <div class="modal-sbr-content" style="max-width: 500px;">
+        <div class="modal-sbr-header">
+            <h3>✏️ EDIT ORDER &amp; PEMENUHAN MUATAN</h3>
+            <span class="close-sbr-modal" onclick="tutupPopupEditAntrean()">&times;</span>
+        </div>
+        <div id="judulAgenEditPopup" style="font-size: 14px; font-weight: 900; color: #63b3ed; margin-bottom: 8px; text-transform: uppercase;"></div>
+        <div class="box-scroll-barang">
+            <table class="table-input" style="margin:0;">
+                <thead><tr><th>Nama Item</th><th style="width:65px;">Order</th><th style="width:65px;">Pemen.</th></tr></thead>
+                <tbody id="bodyEditBarangAntrean">
+                    <!-- Dinamis diisi JS -->
+                </tbody>
+            </table>
+        </div>
+        <button type="button" class="btn-primary-blue" style="margin-top:15px;" onclick="simpanEditAntrean()">💾 SIMPAN PERUBAHAN</button>
     </div>
 </div>
 
@@ -264,12 +332,18 @@
     let listKirimSementara = [];   
     let bankTabunganOrder = [];
     let cacheSupplyArmada = {}; 
-    let cacheRiwayatHariIni = []; // VARIABEL BARU: Menyimpan history pada tanggal yang dipilih
+    let cacheRiwayatHariIni = []; 
     let objOrderAktif = null; 
     let masterCacheAgenDB = []; 
     let cacheRiwayatTerakhirAgen = {}; 
+    let indexEditAntreanAktif = -1; 
 
     async function initAplikasi() {
+        if(localStorage.getItem('sbr_theme') === 'light') {
+            document.body.classList.add('light-theme');
+            document.getElementById('btnTheme').innerText = "🌙 Mode Gelap";
+        }
+
         document.getElementById('tglKirimGlobal').valueAsDate = new Date();
 
         const simpananLokal = localStorage.getItem('sbr_list_kirim_sementara');
@@ -309,7 +383,16 @@
 
         try {
             const { data: karyawan } = await clientSupabase.from('karyawan').select('*').eq('aktif', true);
-            if (karyawan) masterKaryawan = karyawan.map(k => k.nama_karyawan).filter(Boolean).sort();
+            if (karyawan) {
+                masterKaryawan = karyawan
+                    .filter(k => {
+                        const bagian_karyawan = (k.bagian || "").toLowerCase();
+                        return bagian_karyawan.includes('driver') || bagian_karyawan.includes('sopir');
+                    })
+                    .map(k => k.nama_karyawan)
+                    .filter(Boolean)
+                    .sort();
+            }
         } catch(e) { console.error(e); }
 
         try {
@@ -323,11 +406,15 @@
         } catch(e) { console.error(e); }
 
         await muatCacheRiwayatTerakhirSemuaAgen();
-
         renderListKirimCompact();
-        
-        // Memuat History DULU baru menghitung Kebutuhan agar tergabung di Simulasi
         await muatRiwayatJadwalSelesai(); 
+    }
+
+    function toggleTheme() {
+        document.body.classList.toggle('light-theme');
+        let isLight = document.body.classList.contains('light-theme');
+        localStorage.setItem('sbr_theme', isLight ? 'light' : 'dark');
+        document.getElementById('btnTheme').innerText = isLight ? "🌙 Mode Gelap" : "🌞 Mode Terang";
     }
 
     async function muatCacheRiwayatTerakhirSemuaAgen() {
@@ -370,7 +457,7 @@
     }
 
     function sinkronisasiTanggalGlobal() {
-        muatRiwayatJadwalSelesai(); // Ini otomatis akan me-refresh data Simulasi juga
+        muatRiwayatJadwalSelesai();
     }
 
     function bukaPopupMasterOrder() {
@@ -388,7 +475,7 @@
             dropdown.innerHTML = htmlOptions;
         }
 
-        document.getElementById('bodyInputBarangPopup').innerHTML = `<tr><td colspan="3" style="text-align:center; color:#666; padding:20px; font-style:italic;">Silakan pilih nama agen di atas.</td></tr>`;
+        document.getElementById('bodyInputBarangPopup').innerHTML = `<tr><td colspan="3" style="text-align:center; color:inherit; padding:20px; font-style:italic;">Silakan pilih nama agen di atas.</td></tr>`;
         objOrderAktif = null;
         
         renderDaftarTabunganKanan();
@@ -402,7 +489,7 @@
     function pilihAgenUntukInputOrder() {
         const ag = document.getElementById('dropdownPilihAgen').value;
         const tbody = document.getElementById('bodyInputBarangPopup');
-        if(!ag) { tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#666; padding:20px; font-style:italic;">Silakan pilih nama agen di atas.</td></tr>`; return; }
+        if(!ag) { tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:inherit; padding:20px; font-style:italic;">Silakan pilih nama agen di atas.</td></tr>`; return; }
 
         let cekEksis = bankTabunganOrder.find(x => x.nama_agen === ag);
         if(cekEksis) {
@@ -457,7 +544,7 @@
         alert(`Order ${objOrderAktif.nama_agen.toUpperCase()} sukses disimpan ke daftar tabungan!`);
         
         document.getElementById('dropdownPilihAgen').value = "";
-        document.getElementById('bodyInputBarangPopup').innerHTML = `<tr><td colspan="3" style="text-align:center; color:#666; padding:20px; font-style:italic;">Silakan pilih nama agen di atas.</td></tr>`;
+        document.getElementById('bodyInputBarangPopup').innerHTML = `<tr><td colspan="3" style="text-align:center; color:inherit; padding:20px; font-style:italic;">Silakan pilih nama agen di atas.</td></tr>`;
         objOrderAktif = null;
 
         renderDaftarTabunganKanan();
@@ -468,7 +555,7 @@
         document.getElementById('textTotalTabungan').innerText = `${bankTabunganOrder.length} Order Terbuka`;
 
         if(bankTabunganOrder.length === 0) {
-            container.innerHTML = `<div style="text-align:center; color:#a0aec0; font-style:italic; padding:top:40px;">Belum ada tabungan orderan masuk.</div>`;
+            container.innerHTML = `<div style="text-align:center; color:inherit; font-style:italic; padding-top:40px;">Belum ada tabungan orderan masuk.</div>`;
             return;
         }
 
@@ -478,14 +565,14 @@
                 if(b.qty_order > 0 || b.qty_real > 0) {
                     detailItemsHTML += `
                         <tr>
-                            <td style="padding:2px 0; color:#cbd5e0;">• ${b.nama_barang}</td>
-                            <td style="padding:2px 0; text-align:right; color:#63b3ed; font-weight:bold; width:40px;">${b.qty_order}</td>
+                            <td style="padding:2px 0; color:inherit;">• ${b.nama_barang}</td>
+                            <td style="padding:2px 0; text-align:right; font-weight:bold; width:40px;">${b.qty_order}</td>
                         </tr>
                     `;
                 }
             });
             
-            if(!detailItemsHTML) detailItemsHTML = `<tr><td style="color:#e53e3e; font-style:italic; font-size:11px;">Belum ada kuantiti diinput</td></tr>`;
+            if(!detailItemsHTML) detailItemsHTML = `<tr><td style="color:#e53e3e; font-style:italic; font-size:12px;">Belum ada kuantiti diinput</td></tr>`;
 
             const agKey = item.nama_agen.toLowerCase().trim();
             const rwtTerakhir = cacheRiwayatTerakhirAgen[agKey];
@@ -510,9 +597,9 @@
                             </label>
                             ${infoRiwayatKirimHTML}
                         </div>
-                        <button type="button" class="btn-del-item" style="padding:2px 6px; font-size:11px;" onclick="hapusTabunganOrderSaja(${idx})">BATAL</button>
+                        <button type="button" class="btn-del-item" style="padding:2px 6px; font-size:12px;" onclick="hapusTabunganOrderSaja(${idx})">BATAL</button>
                     </div>
-                    <div style="background:#121214; padding:6px 10px; border-radius:6px; border:1px solid #2d3748; font-size:11px; margin-top:4px;">
+                    <div style="background:inherit; padding:6px 10px; border-radius:6px; border:1px solid #2d3748; font-size:12px; margin-top:4px;">
                         <table style="width:100%; border-collapse:collapse;">
                             ${detailItemsHTML}
                         </table>
@@ -560,20 +647,39 @@
     }
 
     function tarikKembaliUntukEdit(index) {
-        let dataTarik = listKirimSementara[index];
-        listKirimSementara.splice(index, 1);
+        indexEditAntreanAktif = index;
+        let dataEdit = listKirimSementara[index];
         
-        let cekEksis = bankTabunganOrder.findIndex(x => x.nama_agen === dataTarik.nama_agen);
-        if(cekEksis !== -1) bankTabunganOrder[cekEksis] = dataTarik;
-        else bankTabunganOrder.push(dataTarik);
+        document.getElementById('judulAgenEditPopup').innerText = `🏢 AGEN: ${dataEdit.nama_agen.toUpperCase()}`;
 
+        const tbody = document.getElementById('bodyEditBarangAntrean');
+        tbody.innerHTML = dataEdit.barang.map((b, idxB) => `
+            <tr>
+                <td><strong>${b.nama_barang}</strong></td>
+                <td><input type="number" class="input-qty" value="${b.qty_order}" onchange="ubahQtyEdit(${idxB}, 'qty_order', this.value)" onfocus="if(this.value=='0')this.value=''"></td>
+                <td><input type="number" class="input-qty" value="${b.qty_real}" onchange="ubahQtyEdit(${idxB}, 'qty_real', this.value)" onfocus="if(this.value=='0')this.value=''"></td>
+            </tr>
+        `).join('');
+        
+        document.getElementById('modalEditAntrean').style.display = 'block';
+    }
+
+    function ubahQtyEdit(idxB, kolom, nilai) {
+        if(indexEditAntreanAktif !== -1) {
+            listKirimSementara[indexEditAntreanAktif].barang[idxB][kolom] = parseInt(nilai) || 0;
+        }
+    }
+
+    function simpanEditAntrean() {
         simpanKePenyimpananLokal();
         renderListKirimCompact();
         hitungTotalKebutuhanGlobal();
+        tutupPopupEditAntrean();
+    }
 
-        bukaPopupMasterOrder();
-        document.getElementById('dropdownPilihAgen').value = dataTarik.nama_agen;
-        pilihAgenUntukInputOrder();
+    function tutupPopupEditAntrean() {
+        document.getElementById('modalEditAntrean').style.display = 'none';
+        indexEditAntreanAktif = -1;
     }
 
     function hapusDariListSementara(index) {
@@ -585,14 +691,12 @@
         }
     }
 
-    // UPDATE SUPPLY ARMADA DI TABEL SIMULASI
     function updateSupplyItem(item, index, field, value) {
         if(!cacheSupplyArmada[item]) cacheSupplyArmada[item] = [];
         while(cacheSupplyArmada[item].length <= index) cacheSupplyArmada[item].push({});
         
         cacheSupplyArmada[item][index][field] = value;
         
-        // Auto tambah baris kosong di bawah jika baris terakhir diisi
         let lastRow = cacheSupplyArmada[item][cacheSupplyArmada[item].length - 1];
         if(lastRow.armada || lastRow.qty) {
             cacheSupplyArmada[item].push({});
@@ -602,7 +706,6 @@
         renderTabelSimulasi();
     }
 
-    // UPDATED LOGIC: Dropdown mengambil gabungan Item dari Antrean & History
     function hitungTotalKebutuhanGlobal() {
         const bodyOriginal = document.getElementById('bodyGlobalSummary');
         const textJumlahAgen = document.getElementById('textJumlahAgenAntrean');
@@ -622,22 +725,19 @@
             });
         });
 
-        // 1. Dapatkan daftar Item khusus Antrean (untuk tabel sebelah Kiri)
         let namaKunciBarangAntrean = Object.keys(rekapBarang).sort();
         if(namaKunciBarangAntrean.length === 0) {
-            bodyOriginal.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #a0aec0; font-style: italic; padding-top: 20px;">List antrean kosong.</td></tr>`;
+            bodyOriginal.innerHTML = `<tr><td colspan="3" style="text-align: center; color: inherit; font-style: italic; padding-top: 20px;">List antrean kosong.</td></tr>`;
         } else {
-            // RENDER KARTU KIRI (GLOBAL) HANYA UNTUK ANTREAN
             bodyOriginal.innerHTML = namaKunciBarangAntrean.map(namaBarang => `
                 <tr>
-                    <td style="color:#fff; font-size:13px;">• <strong>${namaBarang}</strong></td>
-                    <td style="text-align:center; color:#63b3ed; font-size:14px; font-weight:bold;">${rekapBarang[namaBarang].order}</td>
-                    <td style="text-align:center; color:#27ae60; font-size:14px; font-weight:bold;">${rekapBarang[namaBarang].real}</td>
+                    <td style="font-size:14px;">• <strong>${namaBarang}</strong></td>
+                    <td style="text-align:center; font-size:15px; font-weight:bold;">${rekapBarang[namaBarang].order}</td>
+                    <td style="text-align:center; font-size:15px; font-weight:bold;">${rekapBarang[namaBarang].real}</td>
                 </tr>
             `).join('');
         }
 
-        // 2. Kumpulkan SEMUA Item unik (Gabungan dari Antrean DAN History) untuk dropdown Simulasi
         let setSemuaItem = new Set(Object.keys(rekapBarang));
         if (cacheRiwayatHariIni && cacheRiwayatHariIni.length > 0) {
             cacheRiwayatHariIni.forEach(j => {
@@ -651,10 +751,9 @@
         
         let namaKunciBarangSemua = Array.from(setSemuaItem).sort();
 
-        // UPDATE DROPDOWN KARTU KANAN (SIMULASI ITEM)
         dropdownSimulasi.innerHTML = '<option value="">-- Pilih Item --</option>';
         if (namaKunciBarangSemua.length === 0) {
-            renderTabelSimulasi(); // Bersihkan tabel simulasi
+            renderTabelSimulasi();
             return;
         }
 
@@ -662,7 +761,6 @@
             dropdownSimulasi.innerHTML += `<option value="${brg}" ${brg === selectedItemSimulasi ? 'selected' : ''}>${brg}</option>`;
         });
         
-        // Auto select pertama jika tidak ada yang dipilih sebelumnya
         if(!namaKunciBarangSemua.includes(selectedItemSimulasi) && namaKunciBarangSemua.length > 0) {
             dropdownSimulasi.value = namaKunciBarangSemua[0];
         }
@@ -670,19 +768,17 @@
         renderTabelSimulasi();
     }
 
-    // UPDATED LOGIC: Simulasi mengambil gabungan dari Antrean & History Pengiriman
     function renderTabelSimulasi() {
         const container = document.getElementById('bodyStockSummary');
         let item = document.getElementById('pilihItemSimulasi').value;
         
         if(!item) {
-             container.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #a0aec0; font-style: italic; padding: 30px;">Silakan pilih item di atas untuk mulai simulasi.</td></tr>`;
+             container.innerHTML = `<tr><td colspan="5" style="text-align: center; color: inherit; font-style: italic; padding: 30px;">Silakan pilih item di atas untuk mulai simulasi.</td></tr>`;
              return;
         }
 
         let demandList = [];
 
-        // 1. Tarik Data Permintaan dari List Antrean (Sementara)
         listKirimSementara.forEach(agen => {
             let brg = agen.barang.find(b => b.nama_barang === item);
             let jumlahDikirim = (brg && brg.qty_real > 0) ? brg.qty_real : (brg ? brg.qty_order : 0);
@@ -692,7 +788,6 @@
             }
         });
 
-        // 2. Tarik Data Permintaan dari History Pengiriman (Sudah Fix) di tanggal ini
         if (cacheRiwayatHariIni && cacheRiwayatHariIni.length > 0) {
             cacheRiwayatHariIni.forEach(j => {
                 if(j.jadwal_kirim_detail) {
@@ -706,7 +801,6 @@
             });
         }
 
-        // Siapkan data Pemasukan (Armada & Saldo)
         if(!cacheSupplyArmada[item]) cacheSupplyArmada[item] = [{},{},{},{}]; 
         let supplyList = cacheSupplyArmada[item];
 
@@ -727,18 +821,17 @@
              if(dem) {
                  sisaBerjalan -= dem.qty;
                  
-                 // Tambahkan lencana kecil penanda (FIX) jika data berasal dari History
-                 let tagFix = dem.isFixed ? `<span style="color:#27ae60; font-size:10px; margin-left:4px; font-weight:bold;">(✅ FIX)</span>` : '';
+                 let tagFix = dem.isFixed ? `<span style="color:#27ae60; font-size:11px; margin-left:4px; font-weight:bold;">(✅ FIX)</span>` : '';
                  
                  htmlAgen = `
-                    <td style="color:#cbd5e0; font-size:12px;">${dem.agen} ${tagFix}</td>
-                    <td style="text-align:center; color:#27ae60; font-weight:bold;">${dem.qty}</td>
+                    <td style="font-size:13px;">${dem.agen} ${tagFix}</td>
+                    <td style="text-align:center; font-weight:bold;">${dem.qty}</td>
                  `;
-                 htmlSisa = `<td style="text-align:center; font-weight:900; font-size:14px; color:${sisaBerjalan < 0 ? '#e53e3e' : '#27ae60'}">${sisaBerjalan}</td>`;
+                 htmlSisa = `<td style="text-align:center; font-weight:900; font-size:15px; color:${sisaBerjalan < 0 ? '#e53e3e' : 'inherit'}">${sisaBerjalan}</td>`;
              } else {
                  if(i >= demandList.length && demandList.length > 0) {
-                     htmlAgen = `<td style="text-align:center; color:#718096;">-</td><td style="text-align:center; color:#718096;">0</td>`;
-                     htmlSisa = `<td style="text-align:center; font-weight:900; font-size:14px; color:${sisaBerjalan < 0 ? '#e53e3e' : '#27ae60'}">${sisaBerjalan}</td>`;
+                     htmlAgen = `<td style="text-align:center;">-</td><td style="text-align:center;">0</td>`;
+                     htmlSisa = `<td style="text-align:center; font-weight:900; font-size:15px; color:${sisaBerjalan < 0 ? '#e53e3e' : 'inherit'}">${sisaBerjalan}</td>`;
                  } else {
                      htmlAgen = `<td></td><td></td>`;
                      htmlSisa = `<td></td>`;
@@ -753,10 +846,9 @@
              </tr>`;
         }
 
-        // Tambahkan baris Total Kiriman di paling bawah
         html += `<tr>
-            <td style="text-align:right; font-weight:900; color:#f6ad55; font-size:13px; padding-top:10px;">Total Kiriman :</td>
-            <td style="text-align:center; font-weight:900; color:#f6ad55; font-size:15px; padding-top:10px;">${totalSupply}</td>
+            <td style="text-align:right; font-weight:900; font-size:14px; padding-top:10px;">Total Kiriman :</td>
+            <td style="text-align:center; font-weight:900; font-size:16px; padding-top:10px;">${totalSupply}</td>
             <td colspan="3"></td>
         </tr>`;
 
@@ -766,7 +858,7 @@
     function renderListKirimCompact() {
         const container = document.getElementById('containerListKirim');
         if(listKirimSementara.length === 0) {
-            container.innerHTML = `<div style="text-align:center; color:#a0aec0; font-style:italic; padding:20px; background:#2d3748; border:2px dashed #4a5568; border-radius:12px;">Belum ada agen yang dimasukkan ke list kirim sementara.</div>`;
+            container.innerHTML = `<div style="text-align:center; color:inherit; font-style:italic; padding:20px; background:#2d3748; border:2px dashed #4a5568; border-radius:12px;">Belum ada agen yang dimasukkan ke list kirim sementara.</div>`;
             return;
         }
 
@@ -792,7 +884,7 @@
 
             let tableRowsHTML = item.barang.map(b => {
                 if(b.qty_order > 0 || b.qty_real > 0) {
-                    return `<tr><td>• ${b.nama_barang}</td><td class="num-col">${b.qty_order}</td><td class="num-col" style="color:#27ae60; font-weight:bold;">${b.qty_real}</td></tr>`;
+                    return `<tr><td>• ${b.nama_barang}</td><td class="num-col">${b.qty_order}</td><td class="num-col" style="font-weight:bold;">${b.qty_real}</td></tr>`;
                 }
                 return '';
             }).join('');
@@ -815,15 +907,15 @@
                 <div class="card-top-info" style="align-items: start;">
                     <div style="display:flex; flex-direction:column; gap:2px;">
                         <div>
-                            🏢 Agen: <strong style="color:#63b3ed; font-size:16px;">${item.nama_agen.toUpperCase()}</strong>
+                            🏢 Agen: <strong style="font-size:17px;">${item.nama_agen.toUpperCase()}</strong>
                         </div>
                         ${infoRiwayatKirimHTML}
                     </div>
                     <div style="display:flex; gap:6px; align-items:center;">
                         <span class="badge-tgl">📅 ${item.tanggal_berangkat}</span>
                         <span class="badge-shift ${item.shift}">${item.shift}</span>
-                        <button type="button" class="btn-comp-edit" onclick="tarikKembaliUntukEdit(${index})">✏️ EDIT</button>
-                        <button type="button" class="btn-comp-del" onclick="hapusDariListSementara(${index})">❌ HAPUS </button>
+                        <button type="button" class="btn-comp-edit" onclick="tarikKembaliUntukEdit(${index})">✏️ EDIT MUATAN</button>
+                        <button type="button" class="btn-comp-del" onclick="hapusDariListSementara(${index})">❌ HAPUS</button>
                     </div>
                 </div>
                 
@@ -967,8 +1059,6 @@
             simpanKePenyimpananLokal();
             
             renderListKirimCompact();
-            
-            // Muat ulang riwayat (Ini akan otomatis menyertakan data yang barusan di fix ke Simulasi)
             await muatRiwayatJadwalSelesai();
 
         } catch(e) {
@@ -977,11 +1067,10 @@
         }
     }
 
-    // UPDATED LOGIC: Simpan cache riwayat ke global variable dan refresh simulasi
     async function muatRiwayatJadwalSelesai() {
         const containerLog = document.getElementById('logJadwalTerkini');
         const tglTerpilih = document.getElementById('tglKirimGlobal').value;
-        containerLog.innerHTML = `<span style="font-size:14px; color:#cbd5e0;">Memuat data...</span>`;
+        containerLog.innerHTML = `<span style="font-size:15px; color:inherit;">Memuat data...</span>`;
 
         try {
             const { data: listJadwal, error } = await clientSupabase
@@ -992,14 +1081,11 @@
 
             if(error) throw error;
             
-            // Simpan history ke variabel cache global
             cacheRiwayatHariIni = listJadwal || [];
-            
-            // Refresh tabel simulasi agar update dengan history terbaru
             hitungTotalKebutuhanGlobal();
 
             if(!listJadwal || listJadwal.length === 0) {
-                containerLog.innerHTML = `<span style="font-size:14px; color:#a0aec0; font-style:italic;">Belum ada history pengiriman terkonfirmasi untuk tanggal operasional ini.</span>`;
+                containerLog.innerHTML = `<span style="font-size:15px; color:inherit; font-style:italic;">Belum ada history pengiriman terkonfirmasi untuk tanggal operasional ini.</span>`;
                 return;
             }
 
@@ -1019,7 +1105,7 @@
                 div.innerHTML = `
                     <div class="card-top-info">
                         <div style="display:flex; align-items:center; gap:8px;">
-                            🏢 Agen: <strong style="color:#27ae60; font-size:16px;">${j.nama_agen.toUpperCase()}</strong>
+                            🏢 Agen: <strong style="font-size:17px;">${j.nama_agen.toUpperCase()}</strong>
                             <span class="badge-armada">🚚 ${namaUnitHistori}</span>
                         </div>
                         <div style="display:flex; gap:6px;">
@@ -1031,16 +1117,16 @@
                         <div class="card-left-inputs">
                             <div class="logistik-grid" style="border-color: #4a5568;">
                                 <div class="grid-row">
-                                    <div><label>Tgl Jalan</label><input type="text" value="${j.tanggal_kirim}" disabled style="background:#2d3748; color:#cbd5e0; border:1px solid #4a5568; padding:8px; width:100%; box-sizing:border-box; border-radius:6px; font-weight:bold; font-size:13px;"></div>
-                                    <div><label>Shift</label><input type="text" value="${j.shift}" disabled style="background:#2d3748; color:#cbd5e0; border:1px solid #4a5568; padding:8px; width:100%; box-sizing:border-box; border-radius:6px; font-weight:bold; font-size:13px;"></div>
+                                    <div><label>Tgl Jalan</label><input type="text" value="${j.tanggal_kirim}" disabled style="background:#2d3748; color:inherit; border:1px solid #4a5568; padding:8px; width:100%; box-sizing:border-box; border-radius:6px; font-weight:bold; font-size:14px; font-family: 'Roboto Condensed', Tahoma, sans-serif;"></div>
+                                    <div><label>Shift</label><input type="text" value="${j.shift}" disabled style="background:#2d3748; color:inherit; border:1px solid #4a5568; padding:8px; width:100%; box-sizing:border-box; border-radius:6px; font-weight:bold; font-size:14px; font-family: 'Roboto Condensed', Tahoma, sans-serif;"></div>
                                 </div>
                                 <div class="grid-row">
-                                    <div><label>Armada Mobil</label><input type="text" value="${namaUnitHistori}" disabled style="background:#2d3748; color:#cbd5e0; border:1px solid #4a5568; padding:8px; width:100%; box-sizing:border-box; border-radius:6px; font-weight:bold; font-size:13px;"></div>
-                                    <div><label>Driver Couple</label><input type="text" value="${j.driver}" disabled style="background:#2d3748; color:#cbd5e0; border:1px solid #4a5568; padding:8px; width:100%; box-sizing:border-box; border-radius:6px; font-weight:bold; font-size:13px;"></div>
+                                    <div><label>Armada Mobil</label><input type="text" value="${namaUnitHistori}" disabled style="background:#2d3748; color:inherit; border:1px solid #4a5568; padding:8px; width:100%; box-sizing:border-box; border-radius:6px; font-weight:bold; font-size:14px; font-family: 'Roboto Condensed', Tahoma, sans-serif;"></div>
+                                    <div><label>Driver Couple</label><input type="text" value="${j.driver}" disabled style="background:#2d3748; color:inherit; border:1px solid #4a5568; padding:8px; width:100%; box-sizing:border-box; border-radius:6px; font-weight:bold; font-size:14px; font-family: 'Roboto Condensed', Tahoma, sans-serif;"></div>
                                 </div>
                             </div>
                         </div>
-                        <div class="card-right-muatan" style="background: #2d3748;">
+                        <div class="card-right-muatan" style="background: inherit;">
                             <table class="table-muatan">
                                 <thead><tr><th style="text-align: left;">Muatan Barang</th><th>Order</th><th>Pemen.</th></tr></thead>
                                 <tbody>${tableRowsHistoryHTML}</tbody>
