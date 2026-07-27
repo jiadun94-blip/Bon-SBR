@@ -18,7 +18,7 @@
         header h2 { margin: 0; color: #fff; font-size: 22px; text-transform: uppercase; font-weight: 900; }
         .subtitle { font-size: 12px; color: #a0aec0; font-weight: bold; }
 
-        /* TEMA TERANG (LIGHT THEME) OVERRIDES - SEMUA FONT HITAM */
+        /* TEMA TERANG (LIGHT THEME) OVERRIDES */
         body.light-theme { --bg: #f4f6f8; background: var(--bg); color: #000000; }
         body.light-theme .container { background: #ffffff; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
         body.light-theme header h2 { color: #000000; }
@@ -72,7 +72,7 @@
         .summary-header { font-size: 13px; font-weight: 900; color: black; text-transform: uppercase; border-bottom: 2px solid #4a5568; padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
         .summary-card.stock .summary-header { color: black; }
 
-        /* BARIS KONTROL (TANGGAL & TOMBOL) DI BAWAH CARD REKAP */
+        /* BARIS KONTROL */
         .bottom-control-panel { display: flex; gap: 15px; background: #1a202c; padding: 15px; border-radius: 12px; border: 2px solid #4a5568; align-items: flex-end; margin-bottom: 15px; }
         .control-group { display: flex; flex-direction: column; gap: 6px; }
         .control-group label { font-size: 12px; font-weight: 900; color: #cbd5e0; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -115,6 +115,9 @@
         .card-left-inputs { flex: 60; min-width: 0; }
         .card-right-muatan { flex: 40; background: #121214; padding: 1px; border-radius: 8px; border: 1px solid #4a5568; min-width: 0; display: flex; flex-direction: column; }
 
+        /* INPUT NOMOR URUT KEBERANGKATAN */
+        .input-no-urut { width: 50px; padding: 4px; text-align: center; font-size: 14px; font-weight: 900; background: #3182ce; color: #fff; border: 1px solid #63b3ed; border-radius: 6px; font-family: 'Roboto Condensed', Tahoma, sans-serif; }
+
         /* GRID LOGISTIK */
         .logistik-grid { display: grid; grid-template-rows: auto auto; gap: 10px; background: #1a202c; padding: 10px; border-radius: 8px; border: 1px solid #3182ce; }
         .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -135,7 +138,7 @@
         .badge-tgl { background: grey; padding: 4px 8px; border-radius: 5px; color: #cbd5e0; font-size: 12px; font-weight: 700; display: inline-block; }
         .badge-armada { background: grey; padding: 4px 8px; border-radius: 5px; color: #fff; font-size: 12px; font-weight: 900; display: inline-block; border: 1px solid #4299e1; }
 
-        /* STYLING POPUP MODAL DUA TAHAP */
+        /* STYLING POPUP MODAL */
         .modal-sbr { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
         .modal-sbr-content { background: #1e1e24; margin: 5% auto; padding: 18px; border: 2px solid #4a5568; width: 95%; max-width: 900px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
         .modal-sbr-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3182ce; padding-bottom: 8px; margin-bottom: 12px; }
@@ -225,7 +228,7 @@
         </div>
     </div>
 
-    <!-- PANEL TANGGAL DAN TOMBOL DI BAWAH CARD (DIBUAT 50:50) -->
+    <!-- PANEL TANGGAL DAN TOMBOL DI BAWAH CARD -->
     <div class="bottom-control-panel">
         <div class="control-group" style="flex: 1;">
             <label>📅 TGL OPERASIONAL JALAN :</label>
@@ -312,9 +315,7 @@
         <div class="box-scroll-barang">
             <table class="table-input" style="margin:0;">
                 <thead><tr><th>Nama Item</th><th style="width:65px;">Order</th><th style="width:65px;">Pemen.</th></tr></thead>
-                <tbody id="bodyEditBarangAntrean">
-                    <!-- Dinamis diisi JS -->
-                </tbody>
+                <tbody id="bodyEditBarangAntrean"></tbody>
             </table>
         </div>
         <button type="button" class="btn-primary-blue" style="margin-top:15px;" onclick="simpanEditAntrean()">💾 SIMPAN PERUBAHAN</button>
@@ -646,6 +647,23 @@
         simpanKePenyimpananLokal();
     }
 
+    // FUNGSI MENGATUR URUTAN KEBERANGKATAN DENGAN GESER OTOMATIS (+1)
+    function ubahNomorUrut(currentIndex, nilaiBaru) {
+        let targetNo = parseInt(nilaiBaru);
+        if(isNaN(targetNo) || targetNo < 1) return;
+        if(targetNo > listKirimSementara.length) targetNo = listKirimSementara.length;
+
+        // Ambil elemen yang dipindah
+        let itemDihapus = listKirimSementara.splice(currentIndex, 1)[0];
+        
+        // Masukkan ke posisi indeks baru (targetNo - 1 karena array mulai dari 0)
+        listKirimSementara.splice(targetNo - 1, 0, itemDihapus);
+
+        simpanKePenyimpananLokal();
+        renderListKirimCompact();
+        hitungTotalKebutuhanGlobal();
+    }
+
     function tarikKembaliUntukEdit(index) {
         indexEditAntreanAktif = index;
         let dataEdit = listKirimSementara[index];
@@ -905,11 +923,14 @@
 
             card.innerHTML = `
                 <div class="card-top-info" style="align-items: start;">
-                    <div style="display:flex; flex-direction:column; gap:2px;">
-                        <div>
-                            🏢 Agen: <strong style="font-size:17px;">${item.nama_agen.toUpperCase()}</strong>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <input type="number" class="input-no-urut" value="${index + 1}" min="1" max="${listKirimSementara.length}" onchange="ubahNomorUrut(${index}, this.value)" title="Nomor Urut Keberangkatan">
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            <div>
+                                🏢 Agen: <strong style="font-size:17px;">${item.nama_agen.toUpperCase()}</strong>
+                            </div>
+                            ${infoRiwayatKirimHTML}
                         </div>
-                        ${infoRiwayatKirimHTML}
                     </div>
                     <div style="display:flex; gap:6px; align-items:center;">
                         <span class="badge-tgl">📅 ${item.tanggal_berangkat}</span>
@@ -1151,8 +1172,8 @@
         teksWA += `📅 Tgl Operasional: *${tglGlobal}*\n\n`;
         teksWA += `==========================\n\n`;
 
-        listKirimSementara.forEach((item) => {
-            teksWA += `🏢 *AGEN: ${item.nama_agen.toUpperCase()}*\n`;
+        listKirimSementara.forEach((item, index) => {
+            teksWA += `*${index + 1}.* 🏢 *AGEN: ${item.nama_agen.toUpperCase()}*\n`;
             teksWA += `📅 Tgl Kirim: ${item.tanggal_berangkat || '-'}\n`;
             teksWA += `⏰ Shift: *${item.shift || '-'}*\n`;
             
