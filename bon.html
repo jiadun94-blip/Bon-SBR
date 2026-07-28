@@ -85,14 +85,7 @@
         <button class="btn-logout" onclick="logout()">LOGOUT</button>
     </header>
 
-    <div class="bt-panel">
-        <button id="btnConnect" onclick="connectBT()">🔗 HUBUNGKAN PRINTER</button>
-        <select id="ukuranKertas" onchange="simpanUkuranKertas()">
-            <option value="48">Kertas 80mm (Besar - 48 Karakter)</option>
-            <option value="32">Kertas 58mm (Kecil - 32 Karakter)</option>
-        </select>
-        <small id="statusBT">Status: Terputus</small>
-    </div>
+
 
     <div id="notifBon">⚠️ AGEN INI PUNYA BON LAMA!</div>
 
@@ -151,6 +144,15 @@
         <div><label style="font-size:14px; font-weight:900;">TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
     </div>
 
+    <div class="bt-panel">
+        <button id="btnConnect" onclick="connectBT()">🔗 HUBUNGKAN PRINTER</button>
+        <select id="ukuranKertas" onchange="simpanUkuranKertas()">
+            <option value="48">Kertas 80mm (Besar - 48 Karakter)</option>
+            <option value="32">Kertas 58mm (Kecil - 32 Karakter)</option>
+        </select>
+        <small id="statusBT">Status: Terputus</small>
+    </div>
+    
     <button class="btn-save" id="btnSimpan" onclick="simpanDanPrint()">SIMPAN & PRINT</button>
 
     <div class="action-group">
