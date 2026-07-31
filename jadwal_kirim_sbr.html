@@ -134,7 +134,7 @@
         .btn-card-save:disabled { background: #718096; cursor: not-allowed; }
 
         .badge-shift { padding: 4px 8px; border-radius: 5px; color: white; font-size: 12px; font-weight: 900; text-transform: uppercase; display: inline-block; }
-        .SUBUH { background: #e67e22; } .SIANG { background: #3498db; } .MALAM { background: #9b59b6; }
+        .SUBUH { background: #e67e22; } .SIANG { background: #3498db; } .MALAM { background: #9b59b6; } .DIAMBIL { background: #27ae60; }
         .badge-tgl { background: grey; padding: 4px 8px; border-radius: 5px; color: #cbd5e0; font-size: 12px; font-weight: 700; display: inline-block; }
         .badge-armada { background: grey; padding: 4px 8px; border-radius: 5px; color: #fff; font-size: 12px; font-weight: 900; display: inline-block; border: 1px solid #4299e1; }
 
@@ -171,10 +171,15 @@
 <div class="container">
     <header>
         <div>
+            <img src="blacklogo.png" alt="SBRdigital Lembang Bandung Barat" style="height: 55px; width: auto;" onerror="this.src='logo.png'">
+        </div>
+        <div style="text-align: right; flex: 1; margin-left: 15px;">
             <h2>SBR PUTRA FOOD</h2>
             <div class="subtitle">MATRIKS PLANNING & PENYUSUNAN JADWAL KIRIM AGEN</div>
         </div>
-        <button onclick="toggleTheme()" id="btnTheme" class="btn-theme">🌞 Mode Terang</button>
+ <div style="margin-left: 15px;">
+            <button onclick="toggleTheme()" id="btnTheme" class="btn-theme">🌞 Mode Terang</button>
+        </div>
     </header>
 
     <!-- 2 CARD REKAP SEJAJAR DI ATAS -->
@@ -647,16 +652,30 @@
         simpanKePenyimpananLokal();
     }
 
-    // FUNGSI MENGATUR URUTAN KEBERANGKATAN DENGAN GESER OTOMATIS (+1)
+    function cekStatusDiambil(index, nilaiShift) {
+        let item = listKirimSementara[index];
+        if (!item) return;
+
+        if (nilaiShift === "Diambil") {
+            item.plat_nomor = "-";
+            item.driver_1 = "-";
+            item.driver_2 = "-";
+        } else {
+            if (item.plat_nomor === "-") item.plat_nomor = "";
+            if (item.driver_1 === "-") item.driver_1 = "";
+            if (item.driver_2 === "-") item.driver_2 = "";
+        }
+        
+        simpanKePenyimpananLokal();
+        renderListKirimCompact();
+    }
+
     function ubahNomorUrut(currentIndex, nilaiBaru) {
         let targetNo = parseInt(nilaiBaru);
         if(isNaN(targetNo) || targetNo < 1) return;
         if(targetNo > listKirimSementara.length) targetNo = listKirimSementara.length;
 
-        // Ambil elemen yang dipindah
         let itemDihapus = listKirimSementara.splice(currentIndex, 1)[0];
-        
-        // Masukkan ke posisi indeks baru (targetNo - 1 karena array mulai dari 0)
         listKirimSementara.splice(targetNo - 1, 0, itemDihapus);
 
         simpanKePenyimpananLokal();
@@ -885,6 +904,9 @@
             const card = document.createElement('div');
             card.className = 'compact-list-card';
 
+            let isDisabled = item.shift === "Diambil";
+            let styleDisabled = isDisabled ? "background: #4a5568; cursor: not-allowed;" : "";
+
             let optMobil = `<option value="">-- Pilih Mobil --</option>`;
             if (masterKendaraan && masterKendaraan.length > 0) {
                 masterKendaraan.forEach(m => {
@@ -935,7 +957,7 @@
                     <div style="display:flex; gap:6px; align-items:center;">
                         <span class="badge-tgl">📅 ${item.tanggal_berangkat}</span>
                         <span class="badge-shift ${item.shift}">${item.shift}</span>
-                        <button type="button" class="btn-comp-edit" onclick="tarikKembaliUntukEdit(${index})">✏️ EDIT MUATAN</button>
+                        <button type="button" class="btn-comp-edit" onclick="tarikKembaliForEdit(${index})">✏️ EDIT MUATAN</button>
                         <button type="button" class="btn-comp-del" onclick="hapusDariListSementara(${index})">❌ HAPUS</button>
                     </div>
                 </div>
@@ -950,23 +972,24 @@
                                 </div>
                                 <div>
                                     <label>Dikirim</label>
-                                    <select onchange="ubahLogistikDiList(${index}, 'shift', this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'shift');">
+                                    <select onchange="ubahLogistikDiList(${index}, 'shift', this.value); cekStatusDiambil(${index}, this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'shift');">
                                         <option value="SUBUH" ${item.shift === "SUBUH" ? "selected" : ""}>SUBUH</option>
                                         <option value="SIANG" ${item.shift === "SIANG" ? "selected" : ""}>SIANG</option>
                                         <option value="MALAM" ${item.shift === "MALAM" ? "selected" : ""}>MALAM</option>
+                                        <option value="Diambil" ${item.shift === "Diambil" ? "selected" : ""}>DIAMBIL</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="grid-row">
                                 <div>
                                     <label>Armada</label>
-                                    <select onchange="ubahLogistikDiList(${index}, 'plat_nomor', this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'plat_nomor');">${optMobil}</select>
+                                    <select ${isDisabled ? 'disabled' : ''} style="${styleDisabled}" onchange="ubahLogistikDiList(${index}, 'plat_nomor', this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'plat_nomor');">${optMobil}</select>
                                 </div>
                                 <div>
                                     <label>Driver Couple</label>
                                     <div style="display:flex; gap:4px;">
-                                        <select onchange="ubahLogistikDiList(${index}, 'driver_1', this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'driver_1');">${optDriver1}</select>
-                                        <select onchange="ubahLogistikDiList(${index}, 'driver_2', this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'driver_2');">${optDriver2}</select>
+                                        <select ${isDisabled ? 'disabled' : ''} style="${styleDisabled}" onchange="ubahLogistikDiList(${index}, 'driver_1', this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'driver_1');">${optDriver1}</select>
+                                        <select ${isDisabled ? 'disabled' : ''} style="${styleDisabled}" onchange="ubahLogistikDiList(${index}, 'driver_2', this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'driver_2');">${optDriver2}</select>
                                     </div>
                                 </div>
                             </div>
@@ -992,16 +1015,16 @@
 
         for (let i = 0; i < listKirimSementara.length; i++) {
             let data = listKirimSementara[i];
-            if (!data.tanggal_berangkat) continue;
+            if (!data.tanggal_berangkat || data.shift === "Diambil") continue;
 
             let keyMobil = `${data.tanggal_berangkat}_${data.shift}_${data.plat_nomor}`;
-            if (data.plat_nomor) hitungMobil[keyMobil] = (hitungMobil[keyMobil] || 0) + 1;
+            if (data.plat_nomor && data.plat_nomor !== "-") hitungMobil[keyMobil] = (hitungMobil[keyMobil] || 0) + 1;
 
             let keyD1 = `${data.tanggal_berangkat}_${data.driver_1}`;
             let keyD2 = `${data.tanggal_berangkat}_${data.driver_2}`;
 
-            if (data.driver_1) hitungDriverGlobal[keyD1] = (hitungDriverGlobal[keyD1] || 0) + 1;
-            if (data.driver_2) hitungDriverGlobal[keyD2] = (hitungDriverGlobal[keyD2] || 0) + 1;
+            if (data.driver_1 && data.driver_1 !== "-") hitungDriverGlobal[keyD1] = (hitungDriverGlobal[keyD1] || 0) + 1;
+            if (data.driver_2 && data.driver_2 !== "-") hitungDriverGlobal[keyD2] = (hitungDriverGlobal[keyD2] || 0) + 1;
 
             if (hitungMobil[keyMobil] > 2) {
                 let mobilObj = masterKendaraan.find(m => m.plat === data.plat_nomor);
@@ -1036,21 +1059,24 @@
         let namaAg = data.nama_agen.toUpperCase();
 
         if(!data.tanggal_berangkat) return alert(`[Validasi Gagal] Tanggal berangkat untuk Agen ${namaAg} kosong!`);
-        if(!data.plat_nomor) return alert(`[Validasi Gagal] Armada Mobil untuk Agen ${namaAg} belum dipilih!`);
-        if(!data.driver_1 || !data.driver_2) return alert(`[Validasi Gagal] Driver Couple untuk Agen ${namaAg} belum lengkap!`);
-        if(data.driver_1 === data.driver_2) return alert(`[Validasi Gagal] Driver 1 dan Driver 2 untuk Agen ${namaAg} tidak boleh sama!`);
+        if(data.shift !== "Diambil") {
+            if(!data.plat_nomor) return alert(`[Validasi Gagal] Armada Mobil untuk Agen ${namaAg} belum dipilih!`);
+            if(!data.driver_1 || !data.driver_2) return alert(`[Validasi Gagal] Driver Couple untuk Agen ${namaAg} belum lengkap!`);
+            if(data.driver_1 === data.driver_2) return alert(`[Validasi Gagal] Driver 1 dan Driver 2 untuk Agen ${namaAg} tidak boleh sama!`);
+        }
 
         const btnCard = document.getElementById(`btnSimpan_${index}`);
         if(btnCard) { btnCard.disabled = true; btnCard.innerText = "SEDANG FIX DATA..."; }
 
         try {
-            const coupleDriver = `${data.driver_1} / ${data.driver_2}`;
+            const coupleDriver = data.shift === "Diambil" ? "Diambil Sendiri" : `${data.driver_1} / ${data.driver_2}`;
+            const platMobilSimpan = data.shift === "Diambil" ? "-" : data.plat_nomor;
 
             const { data: resJadwal, error: errMaster } = await clientSupabase
                 .from('jadwal_kirim')
                 .insert([{
                     tanggal_kirim: data.tanggal_berangkat, shift: data.shift,
-                    nama_agen: data.nama_agen, plat_nomor: data.plat_nomor, driver: coupleDriver
+                    nama_agen: data.nama_agen, plat_nomor: platMobilSimpan, driver: coupleDriver
                 }])
                 .select();
 
@@ -1122,6 +1148,7 @@
 
                 let unitHistori = masterKendaraan.find(m => m.plat === j.plat_nomor);
                 let namaUnitHistori = unitHistori ? (unitHistori.nama_unit ? unitHistori.nama_unit : unitHistori.plat) : j.plat_nomor;
+                if(j.shift === "Diambil") namaUnitHistori = "Diambil Sendiri";
 
                 div.innerHTML = `
                     <div class="card-top-info">
@@ -1180,9 +1207,14 @@
             let namaMobil = item.plat_nomor;
             let unitMobil = masterKendaraan.find(m => m.plat === item.plat_nomor);
             if(unitMobil && unitMobil.nama_unit) namaMobil = `${unitMobil.nama_unit} (${item.plat_nomor})`;
+            if(item.shift === "Diambil") namaMobil = "Diambil Sendiri";
 
             teksWA += `🚚 Armada: ${namaMobil || 'Belum dipilih'}\n`;
-            teksWA += `👤 Sopir: ${item.driver_1 || '-'} & ${item.driver_2 || '-'}\n\n`;
+            if(item.shift === "Diambil") {
+                teksWA += `👤 Pengambil: Diambil Sendiri\n\n`;
+            } else {
+                teksWA += `👤 Sopir: ${item.driver_1 || '-'} & ${item.driver_2 || '-'}\n\n`;
+            }
             teksWA += `📦 *MUATAN:*\n`;
             
             let adaMuatan = false;
