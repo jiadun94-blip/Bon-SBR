@@ -340,7 +340,7 @@
             <span>Selamat Datang, <strong>Hadi ( Admin )</strong></span>
             <button onclick="toggleTema()" style="background: #333; color: #fff; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;" title="Ganti Tema">🌓 Tema</button>
             
-            <!-- Tombol Logout Aktif dengan Ikon SVG Keluar -->
+            <!-- Tombol Logout Aktif dengan Ikon SVG Keluar & Redirect ke index.html -->
             <button class="logout-btn" onclick="prosesLogout()" title="Keluar / Logout">
                 <svg viewBox="0 0 24 24">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -905,15 +905,11 @@
             }
         }
 
-        // Fungsi Logout Aktif
+        // Fungsi Logout Aktif: Mengarahkan kembali ke index.html untuk login
         function prosesLogout() {
-            if (confirm("Apakah Anda yakin ingin keluar (logout) dari sistem SBR Digital?")) {
-                // Hapus sesi lokal jika ada (misal: token login, tema tetap disimpan atau dibersihkan sesuai kebutuhan)
+            if (confirm("Apakah Anda yakin ingin keluar (logout)?")) {
                 localStorage.removeItem('sbr_user_session');
-                
-                // Redirect ke halaman login atau reload/kosongkan tampilan
-                alert("Anda telah berhasil keluar.");
-                window.location.reload(); // Atau arahkan ke file login.html jika ada
+                window.location.href = "index.html";
             }
         }
 
