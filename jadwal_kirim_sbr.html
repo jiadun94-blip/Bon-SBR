@@ -18,6 +18,9 @@
         header h2 { margin: 0; color: #fff; font-size: 22px; text-transform: uppercase; font-weight: 900; }
         .subtitle { font-size: 12px; color: #a0aec0; font-weight: bold; }
 
+        .logo-section { display: flex; align-items: center; gap: 15px; }
+        .logo-section img { width: 60px; height: auto; }
+
         /* TEMA TERANG (LIGHT THEME) OVERRIDES */
         body.light-theme { --bg: #f4f6f8; background: var(--bg); color: #000000; }
         body.light-theme .container { background: #ffffff; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
@@ -170,14 +173,14 @@
 
 <div class="container">
     <header>
-        <div>
-            <img src="blacklogo.png" alt="SBRdigital Lembang Bandung Barat" style="height: 55px; width: auto;" onerror="this.src='logo.png'">
+        <div class="logo-section">
+            <img id="logoBrand" src="blacklogo.png" alt="SBRdigital Lembang Bandung Barat" style="height: 55px; width: auto;" onerror="this.src='logo.png'">
         </div>
         <div style="text-align: right; flex: 1; margin-left: 15px;">
             <h2>SBR PUTRA FOOD</h2>
             <div class="subtitle">MATRIKS PLANNING & PENYUSUNAN JADWAL KIRIM AGEN</div>
         </div>
- <div style="margin-left: 15px;">
+        <div style="margin-left: 15px;">
             <button onclick="toggleTheme()" id="btnTheme" class="btn-theme">🌞 Mode Terang</button>
         </div>
     </header>
@@ -345,9 +348,18 @@
     let indexEditAntreanAktif = -1; 
 
     async function initAplikasi() {
-        if(localStorage.getItem('sbr_theme') === 'light') {
+        // Terapkan Tema & Logo Saat Halaman Dimuat
+        const savedTheme = localStorage.getItem('sbr_theme');
+        const logoImg = document.getElementById('logoBrand');
+        
+        if (savedTheme === 'light') {
             document.body.classList.add('light-theme');
             document.getElementById('btnTheme').innerText = "🌙 Mode Gelap";
+            if(logoImg) logoImg.src = "logo.png";      
+        } else {
+            document.body.classList.remove('light-theme');
+            document.getElementById('btnTheme').innerText = "🌞 Mode Terang";
+            if(logoImg) logoImg.src = "blacklogo.png"; 
         }
 
         document.getElementById('tglKirimGlobal').valueAsDate = new Date();
@@ -417,10 +429,16 @@
     }
 
     function toggleTheme() {
+        const logoImg = document.getElementById('logoBrand');
         document.body.classList.toggle('light-theme');
         let isLight = document.body.classList.contains('light-theme');
+        
         localStorage.setItem('sbr_theme', isLight ? 'light' : 'dark');
         document.getElementById('btnTheme').innerText = isLight ? "🌙 Mode Gelap" : "🌞 Mode Terang";
+        
+        if(logoImg) {
+            logoImg.src = isLight ? "logo.png" : "blacklogo.png";
+        }
     }
 
     async function muatCacheRiwayatTerakhirSemuaAgen() {
@@ -957,7 +975,7 @@
                     <div style="display:flex; gap:6px; align-items:center;">
                         <span class="badge-tgl">📅 ${item.tanggal_berangkat}</span>
                         <span class="badge-shift ${item.shift}">${item.shift}</span>
-                        <button type="button" class="btn-comp-edit" onclick="tarikKembaliForEdit(${index})">✏️ EDIT MUATAN</button>
+                        <button type="button" class="btn-comp-edit" onclick="tarikKembaliUntukEdit(${index})">✏️ EDIT MUATAN</button>
                         <button type="button" class="btn-comp-del" onclick="hapusDariListSementara(${index})">❌ HAPUS</button>
                     </div>
                 </div>
