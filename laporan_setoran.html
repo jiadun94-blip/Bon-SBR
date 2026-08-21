@@ -240,7 +240,8 @@
         const stringNamaAgen = calc.detail.map(d => d.agen).join(', ');
 
         try {
-            const { error: errorInsert } = await _sb.from('rekap_laporan_driver').insert([{
+            // Menggunakan upsert dengan patokan kolom 'no_nota' untuk otomatis replace jika nota sama
+            const { error: errorInsert } = await _sb.from('rekap_laporan_driver').upsert([{
                 no_nota: stringNoNota,
                 nama_agen: stringNamaAgen,
                 nama_driver: calc.drv1,
@@ -253,7 +254,7 @@
                 lain_lain: nomLain,
                 ket_lain_lain: ketLain,
                 sumber_agen: pilihanAgen 
-            }]);
+            }], { onConflict: 'no_nota' });
 
             if (errorInsert) {
                 alert("❌ SUPABASE MENOLAK DATA!\n\nKode: " + errorInsert.code + "\nPesan: " + errorInsert.message);
@@ -265,7 +266,7 @@
                 .eq('plat_nomor', plat);
 
             const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-            let pesan = "*LAPORAN SETORAN DRIVER*\n";
+            let pesan = "*LAPORAN SETORAN DRIVER (REVISI)*\n";
             pesan += "----------------------------\n";
             pesan += "- *Tgl:* " + tgl + "\n";
             pesan += "- *Driver 1:* " + calc.drv1 + "\n";
@@ -289,7 +290,7 @@
             pesan += "----------------------------\n";
             pesan += "- *Total Biaya:* Rp " + totalExp.toLocaleString('id-ID') + "\n";
             pesan += "- *SISA SETOR:* Rp " + sisaBersih.toLocaleString('id-ID') + "\n\n";
-            pesan += "_Data sukses mengunci ke Supabase SBR_";
+            pesan += "_Data sukses diperbarui (replace) ke Supabase SBR_";
 
             window.open("https://wa.me/?text=" + encodeURIComponent(pesan), '_blank');
             
