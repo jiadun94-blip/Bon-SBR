@@ -5,174 +5,235 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitoring Pengiriman</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Load Supabase JS Client dari CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        body {
+            background-color: #f4f7f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-bottom: 90px;
+        }
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .card-header {
+            border-radius: 16px 16px 0 0 !important;
+            padding: 12px 20px;
+        }
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 10px 15px;
+        }
+        .btn-tambah {
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .btn-hapus {
+            border-radius: 10px;
+            width: 45px;
+        }
+        .sticky-bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 15px 20px;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.08);
+            z-index: 1030;
+            border-radius: 20px 20px 0 0;
+        }
+        .selisih-box {
+            border-radius: 16px;
+        }
+    </style>
 </head>
-<body class="bg-light">
+<body>
 
-<div class="container mt-4 mb-5">
-    <h3 class="text-center text-uppercase">Monitoring Pengiriman</h3>
-    <p class="text-center fw-bold text-secondary" id="tanggalHariIni"></p>
+<div class="container mt-4">
+    <h4 class="text-center fw-bold text-uppercase mb-1">Monitoring Pengiriman</h4>
+    <p class="text-center fw-semibold text-secondary small mb-4" id="tanggalHariIni"></p>
 
-    <div class="card mb-4 shadow-sm">
+    <!-- CARD ARMADA -->
+    <div class="card mb-4">
         <div class="card-header bg-primary text-white fw-bold">
-            Data Armada & Total Bawaan
+            🚗 Data Armada & Total Bawaan
         </div>
         <div class="card-body" id="containerArmada">
-            <label class="form-label">Daftar Armada & Total Kiriman Dibawa</label>
+            <label class="form-label text-muted small fw-bold">Daftar Armada & Kiriman Dibawa</label>
             
-            <div class="row mb-2 baris-armada">
-                <div class="col-8">
+            <div class="row mb-3 baris-armada">
+                <div class="col-8 pe-1">
                     <select class="form-select select-armada">
                         <option value="">-- Pilih Kendaraan --</option>
-                        <option value="D 1621 PH ( GM Mini )">D 1621 PH ( GM Mini ) - GM minibus</option>
-                        <option value="D 8740 UI ( GM Van 03 )">D 8740 UI ( GM Van 03 ) - GM Van 03</option>
-                        <option value="D 8976 FR ( GM Box 1 )">D 8976 FR ( GM Box 1 ) - GM Box 1</option>
-                        <option value="AE 8340 KE ( Traga Van )">AE 8340 KE ( Traga Van ) - Traga Van</option>
-                        <option value="D 8607 FN ( Traga Box )">D 8607 FN ( Traga Box ) - Traga Box</option>
-                        <option value="D 8132 TP ( GM box 2 )">D 8132 TP ( GM box 2 ) - GM Box 2</option>
+                        <option value="D 1621 PH ( GM Mini )">D 1621 PH ( GM Mini )</option>
+                        <option value="D 8740 UI ( GM Van 03 )">D 8740 UI ( GM Van 03 )</option>
+                        <option value="D 8976 FR ( GM Box 1 )">D 8976 FR ( GM Box 1 )</option>
+                        <option value="AE 8340 KE ( Traga Van )">AE 8340 KE ( Traga Van )</option>
+                        <option value="D 8607 FN ( Traga Box )">D 8607 FN ( Traga Box )</option>
+                        <option value="D 8132 TP ( GM box 2 )">D 8132 TP ( GM box 2 )</option>
                         <option value="D 1234 S ( free )">D 1234 SBR ( free ) - Pick up</option>
-                        <option value="D 4444 SBR ( BALLEN )">D 4444 SBR ( BALLEN ) - Ballen</option>
-                        <option value="D 5555 SBR ( ANGGARA )">D 5555 SBR ( ANGGARA ) - Anggara</option>
+                        <option value="D 4444 SBR ( BALLEN )">D 4444 SBR ( BALLEN )</option>
+                        <option value="D 5555 SBR ( ANGGARA )">D 5555 SBR ( ANGGARA )</option>
                         <option value="SUSULAN">SUSULAN</option>
                     </select>
                 </div>
-                <div class="col-4">
-                    <input type="number" class="form-control input-qty-bawa" placeholder="Total Bawa">
+                <div class="col-4 ps-1">
+                    <input type="number" class="form-control input-qty-bawa" placeholder="Bawa">
                 </div>
             </div>
             
-            <button class="btn btn-sm btn-outline-primary mt-2" id="btnTambahArmada">+ Tambah Baris Armada</button>
+            <button class="btn btn-sm btn-outline-primary w-100 btn-tambah" id="btnTambahArmada">+ Tambah Armada</button>
         </div>
-        <div class="card-footer text-end bg-white">
-            <span class="fw-bold">Total Armada Membawa: </span>
+        <div class="card-footer text-end bg-white border-0 pb-3 rounded-bottom">
+            <span class="fw-bold text-secondary">Total Bawaan: </span>
             <span class="fw-bold fs-5 text-primary" id="displayTotalBawa">0</span>
         </div>
     </div>
 
-    <div class="card mb-4 shadow-sm">
+    <!-- CARD AGEN / NOTA -->
+    <div class="card mb-4">
         <div class="card-header bg-success text-white fw-bold">
-            Distribusi Data Agen
+            📦 Distribusi Data Berdasarkan Nota
         </div>
         <div class="card-body" id="containerAgen">
-            <label class="form-label">Daftar Agen & Jumlah Kiriman</label>
             
-            <div class="row mb-2 baris-agen">
-                <div class="col-8">
-                    <select class="form-select select-agen">
-                        <option value="">-- Pilih Agen --</option>
-                        <option value="Abdul Gani">Abdul Gani</option>
-                        <option value="Abdurahman">Abdurahman</option>
-                        <option value="Abdurahman (AMBIL)">Abdurahman (AMBIL)</option>
-                        <option value="Aef Putra">Aef Putra</option>
-                        <option value="Armind">Armind</option>
-                        <option value="Asyari">Asyari</option>
-                        <option value="Berkah Mulya">Berkah Mulya</option>
-                        <option value="Bos emon">Bos emon</option>
-                        <option value="Bos Jacklin">Bos Jacklin</option>
-                        <option value="Bu Gito">Bu Gito</option>
-                        <option value="H.Iwan">H.Iwan</option>
-                        <option value="H.Unjani">H.Unjani</option>
-                        <option value="Isma">Isma</option>
-                        <option value="Kang Azis">Kang Azis</option>
-                        <option value="Kedoya">Kedoya</option>
-                        <option value="Koh Beni">Koh Beni</option>
-                        <option value="Kondang Jaya">Kondang Jaya</option>
-                        <option value="Misbah">Misbah</option>
-                        <option value="Ngadimin">Ngadimin</option>
-                        <option value="Ngatimin">Ngatimin</option>
-                        <option value="Paidi">Paidi</option>
-                        <option value="Pak Maman">Pak Maman</option>
-                        <option value="Rasyid Unus">Rasyid Unus</option>
-                        <option value="Rian">Rian</option>
-                        <option value="H. Iman">H. Iman</option>
-                        <option value="Soleh">Soleh</option>
-                        <option value="Sugiman">Sugiman</option>
-                        <option value="Wido">Wido</option>
-                        <option value="Arya">Arya</option>
-                        <option value="Yusril">Yusril</option>
-                        <option value="Milidi snack">Sumedang</option>
-                        <option value="Jojo">Jojo</option>
-                        <option value="Bogor Baru">Bogor Baru</option>
-                        <option value="Depok Baru">Depok baru</option>
-                        <option value="Rosso">Rosso</option>
-                        <option value="GUDANG">GUDANG</option>
+            <!-- INPUT ACUAN NAMA BARANG DI ATAS -->
+            <div class="mb-3 p-3 bg-light rounded-3 border">
+                <label for="inputAcuanBarang" class="form-label text-success fw-bold small mb-1">🏷️ Acuan Nama Barang yang Dicari:</label>
+                <input type="text" class="form-control form-control-sm bg-white" id="inputAcuanBarang" value="Makroni 2000" placeholder="Masukkan nama barang...">
+            </div>
+
+            <!-- TAMBAHAN KOLOM GUDANG -->
+            <label class="form-label text-muted small fw-bold">Alokasi Gudang</label>
+            <div class="row mb-3">
+                <div class="col-8 pe-1">
+                    <input type="text" class="form-control bg-light fw-bold text-secondary" value="GUDANG" readonly>
+                </div>
+                <div class="col-4 ps-1">
+                    <input type="number" class="form-control" id="inputQtyGudang" placeholder="Qty">
+                </div>
+            </div>
+            
+            <hr class="text-muted opacity-25">
+
+            <label class="form-label text-muted small fw-bold">Pilih No Nota (Nama Agen & Qty Muncul Otomatis)</label>
+            
+            <div class="row mb-3 baris-agen">
+                <div class="col-8 pe-1">
+                    <select class="form-select select-nota">
+                        <option value="">-- Pilih No Nota & Agen --</option>
+                        <!-- Opsi akan dimuat otomatis dari database -->
                     </select>
                 </div>
-                <div class="col-4">
+                <div class="col-4 ps-1">
                     <input type="number" class="form-control input-qty-agen" placeholder="Qty">
                 </div>
             </div>
             
-            <button class="btn btn-sm btn-outline-success mt-2" id="btnTambahAgen">+ Tambah Baris Agen</button>
+            <button class="btn btn-sm btn-outline-success w-100 btn-tambah" id="btnTambahAgen">+ Tambah Baris Nota</button>
         </div>
-        <div class="card-footer text-end bg-white">
-            <span class="fw-bold">Total Distribusi Agen: </span>
+        <div class="card-footer text-end bg-white border-0 pb-3 rounded-bottom">
+            <span class="fw-bold text-secondary">Total Distribusi: </span>
             <span class="fw-bold fs-5 text-success" id="displayTotalAgen">0</span>
         </div>
     </div>
 
-    <div class="card mb-4 shadow-sm border-warning">
-        <div class="card-body bg-warning bg-opacity-25 d-flex justify-content-between align-items-center">
-            <span class="fw-bold fs-5">Selisih (Bawaan - Distribusi):</span>
-            <span class="fw-bold fs-4 text-danger" id="displaySelisih">0</span>
+    <!-- SELISIH -->
+    <div class="card mb-4 border-0 selisih-box" style="background-color: #fff3cd;">
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-warning-emphasis">Selisih (Distribusi - Bawaan):</span>
+            <span class="fw-bold fs-3 text-danger" id="displaySelisih">0</span>
         </div>
-    </div>
-
-    <div class="d-grid gap-2">
-        <button class="btn btn-success btn-lg fw-bold" id="btnKirimWA">
-            Kirim Rekap via WhatsApp
-        </button>
     </div>
 
 </div>
 
+<!-- TOMBOL WA -->
+<div class="sticky-bottom-bar">
+    <button class="btn btn-success btn-lg w-100 fw-bold shadow-sm" id="btnKirimWA">
+        Kirim Rekap via WhatsApp
+    </button>
+</div>
+
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", async function() {
         
-        // 1. Set Tanggal Hari Ini
+        // 1. INISIALISASI SUPABASE MENGGUNAKAN KEY YANG BARU
+        let supabaseClient = null;
+        try {
+            const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+            const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+            
+            if (typeof window.supabase !== 'undefined') {
+                supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
+            }
+        } catch (error) {
+            console.error("Gagal menghubungkan ke database:", error);
+        }
+
+        // 2. SET TANGGAL HARI INI
         const elTanggal = document.getElementById("tanggalHariIni");
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         elTanggal.textContent = new Date().toLocaleDateString('id-ID', options);
 
-        // Elemen Display Total
-        const displayTotalBawa = document.getElementById("displayTotalBawa");
-        const displayTotalAgen = document.getElementById("displayTotalAgen");
-        const displaySelisih = document.getElementById("displaySelisih");
+        // 3. AMBIL DATA NOTA DARI SUPABASE
+        let notaOptionsHTML = `<option value="">-- Pilih No Nota & Agen --</option>`;
+        
+        if (supabaseClient) {
+            try {
+                // Gunakan tanggal sesuai sistem
+                const tglHariIni = new Date().toISOString().split('T')[0];
+                
+                const tglKemarinDate = new Date();
+                tglKemarinDate.setDate(tglKemarinDate.getDate() - 1);
+                const tglKemarin = tglKemarinDate.toISOString().split('T')[0];
 
-        // FUNGSI HITUNG SELISIH
-        function hitungSelisih() {
-            const bawa = parseFloat(displayTotalBawa.textContent) || 0;
-            const agen = parseFloat(displayTotalAgen.textContent) || 0;
-            const selisih = bawa - agen;
-            
-            displaySelisih.textContent = selisih;
-            
-            // Ubah warna teks jika selisihnya tidak 0 (bisa disesuaikan)
-            if (selisih !== 0) {
-                displaySelisih.className = "fw-bold fs-4 text-danger";
-            } else {
-                displaySelisih.className = "fw-bold fs-4 text-success";
+                const { data: dataNota, error } = await supabaseClient
+                    .from('transaksi')
+                    .select('no_nota, nama_agen, tanggal')
+                    .gte('tanggal', tglKemarin)
+                    .lte('tanggal', tglHariIni)
+                    .order('id', { ascending: false });
+
+                if (!error && dataNota) {
+                    dataNota.forEach(item => {
+                        // PERUBAHAN: Menambahkan data-agen agar mudah dipanggil saat kirim WA
+                        notaOptionsHTML += `<option value="${item.no_nota}" data-agen="${item.nama_agen}">${item.no_nota} - ${item.nama_agen} (${item.tanggal})</option>`;
+                    });
+                }
+            } catch (err) {
+                console.error("Gagal memuat daftar nota:", err);
             }
         }
 
-        // ==========================================
-        // LOGIKA CARD ARMADA
-        // ==========================================
-        const containerArmada = document.getElementById("containerArmada");
-        const btnTambahArmada = document.getElementById("btnTambahArmada");
+        const dropdownNotaPertama = document.querySelector(".select-nota");
+        if (dropdownNotaPertama) {
+            dropdownNotaPertama.innerHTML = notaOptionsHTML;
+        }
 
-        const armadaOptionsHTML = `
-            <option value="">-- Pilih Kendaraan --</option>
-            <option value="D 1621 PH ( GM Mini )">D 1621 PH ( GM Mini ) - GM minibus</option>
-            <option value="D 8740 UI ( GM Van 03 )">D 8740 UI ( GM Van 03 ) - GM Van 03</option>
-            <option value="D 8976 FR ( GM Box 1 )">D 8976 FR ( GM Box 1 ) - GM Box 1</option>
-            <option value="AE 8340 KE ( Traga Van )">AE 8340 KE ( Traga Van ) - Traga Van</option>
-            <option value="D 8607 FN ( Traga Box )">D 8607 FN ( Traga Box ) - Traga Box</option>
-            <option value="D 8132 TP ( GM box 2 )">D 8132 TP ( GM box 2 ) - GM Box 2</option>
-            <option value="D 1234 S ( free )">D 1234 SBR ( free ) - Pick up</option>
-            <option value="D 4444 SBR ( BALLEN )">D 4444 SBR ( BALLEN ) - Ballen</option>
-            <option value="D 5555 SBR ( ANGGARA )">D 5555 SBR ( ANGGARA ) - Anggara</option>
-            <option value="SUSULAN">SUSULAN</option>
-        `;
+        // 4. HITUNG SELISIH DAN TOTAL
+        const displayTotalBawa = document.getElementById("displayTotalBawa");
+        const displayTotalAgen = document.getElementById("displayTotalAgen");
+        const displaySelisih = document.getElementById("displaySelisih");
+        const inputAcuanBarang = document.getElementById("inputAcuanBarang");
+        const inputQtyGudang = document.getElementById("inputQtyGudang");
+
+        function hitungSelisih() {
+            const bawa = parseFloat(displayTotalBawa.textContent) || 0;
+            const agen = parseFloat(displayTotalAgen.textContent) || 0;
+            const selisih = agen - bawa; 
+            
+            displaySelisih.textContent = selisih;
+            if (selisih !== 0) {
+                displaySelisih.className = "fw-bold fs-3 text-danger";
+            } else {
+                displaySelisih.className = "fw-bold fs-3 text-success";
+            }
+        }
 
         function hitungTotalBawa() {
             let total = 0;
@@ -181,132 +242,157 @@
                 if (!isNaN(val)) total += val;
             });
             displayTotalBawa.textContent = total;
-            hitungSelisih(); // Update selisih tiap ada perubahan
+            hitungSelisih();
         }
 
-        // Event listener input armada pertama
-        document.querySelectorAll(".input-qty-bawa").forEach(input => {
-            input.addEventListener("input", hitungTotalBawa);
+        function hitungTotalAgen() {
+            let total = 0;
+            
+            // Tambahkan Qty Gudang
+            const qtyGudang = parseFloat(inputQtyGudang.value);
+            if (!isNaN(qtyGudang)) {
+                total += qtyGudang;
+            }
+
+            // Tambahkan Qty dari baris-baris Nota
+            document.querySelectorAll(".input-qty-agen").forEach(input => {
+                const val = parseFloat(input.value);
+                if (!isNaN(val)) total += val;
+            });
+
+            displayTotalAgen.textContent = total;
+            hitungSelisih();
+        }
+
+        // Event listener Gudang
+        inputQtyGudang.addEventListener("input", hitungTotalAgen);
+
+        // FUNGSI TARIK QTY BERDASARKAN NOTA YANG DIPILIH
+        async function tarikQtyBerdasarkanNota(row) {
+            const selectNota = row.querySelector(".select-nota");
+            const inputQty = row.querySelector(".input-qty-agen");
+            const noNotaCari = selectNota.value;
+
+            if (noNotaCari !== "" && supabaseClient) {
+                inputQty.placeholder = "Tunggu...";
+                inputQty.value = "";
+
+                try {
+                    const namaBarangAcuan = inputAcuanBarang.value.trim();
+                    const { data: dataDetail, error: errDetail } = await supabaseClient
+                        .from('transaksi_detail')
+                        .select('qty')
+                        .eq('no_nota', noNotaCari)
+                        .eq('nama_barang', namaBarangAcuan)
+                        .limit(1);
+
+                    if (errDetail) throw errDetail;
+
+                    if (dataDetail && dataDetail.length > 0) {
+                        inputQty.value = dataDetail[0].qty;
+                    } else {
+                        inputQty.value = 0;
+                    }
+                } catch (err) {
+                    console.error("Gagal menarik qty detail:", err);
+                    inputQty.value = "";
+                } finally {
+                    inputQty.placeholder = "Qty";
+                    hitungTotalAgen();
+                }
+            } else {
+                inputQty.value = "";
+                hitungTotalAgen();
+            }
+        }
+
+        function pasangEventNota(row) {
+            const selectNota = row.querySelector(".select-nota");
+            const inputQty = row.querySelector(".input-qty-agen");
+
+            selectNota.addEventListener("change", function() {
+                tarikQtyBerdasarkanNota(row);
+            });
+
+            inputQty.addEventListener("input", hitungTotalAgen);
+        }
+
+        inputAcuanBarang.addEventListener("input", function() {
+            document.querySelectorAll(".baris-agen").forEach(baris => {
+                const selectNota = baris.querySelector(".select-nota");
+                if (selectNota.value !== "") {
+                    tarikQtyBerdasarkanNota(baris);
+                }
+            });
         });
 
-        // Tambah baris armada
+        // Pasang event awal
+        document.querySelectorAll(".input-qty-bawa").forEach(input => input.addEventListener("input", hitungTotalBawa));
+        pasangEventNota(document.querySelector(".baris-agen"));
+
+        // 6. TAMBAH/HAPUS BARIS ARMADA
+        const containerArmada = document.getElementById("containerArmada");
+        const btnTambahArmada = document.getElementById("btnTambahArmada");
+
         btnTambahArmada.addEventListener("click", function() {
             const row = document.createElement("div");
-            row.className = "row mb-2 baris-armada";
+            row.className = "row mb-3 baris-armada";
             row.innerHTML = `
-                <div class="col-8">
+                <div class="col-8 pe-1">
                     <select class="form-select select-armada">
-                        ${armadaOptionsHTML}
+                        ${document.querySelector(".select-armada").innerHTML}
                     </select>
                 </div>
-                <div class="col-4 d-flex gap-2">
-                    <input type="number" class="form-control input-qty-bawa" placeholder="Total Bawa">
-                    <button class="btn btn-danger btn-sm btn-hapus-armada">X</button>
+                <div class="col-4 ps-1 d-flex gap-1">
+                    <input type="number" class="form-control input-qty-bawa" placeholder="Bawa">
+                    <button class="btn btn-danger btn-hapus fw-bold">X</button>
                 </div>
             `;
             containerArmada.insertBefore(row, btnTambahArmada);
 
             row.querySelector(".input-qty-bawa").addEventListener("input", hitungTotalBawa);
-            row.querySelector(".btn-hapus-armada").addEventListener("click", function() {
+            row.querySelector(".btn-hapus").addEventListener("click", function() {
                 row.remove();
                 hitungTotalBawa();
             });
         });
 
-        // ==========================================
-        // LOGIKA CARD AGEN
-        // ==========================================
+        // 7. TAMBAH/HAPUS BARIS NOTA
         const containerAgen = document.getElementById("containerAgen");
         const btnTambahAgen = document.getElementById("btnTambahAgen");
 
-        const agenOptionsHTML = `
-            <option value="">-- Pilih Agen --</option>
-            <option value="Abdul Gani">Abdul Gani</option>
-            <option value="Abdurahman">Abdurahman</option>
-            <option value="Abdurahman (AMBIL)">Abdurahman (AMBIL)</option>
-            <option value="Aef Putra">Aef Putra</option>
-            <option value="Armind">Armind</option>
-            <option value="Asyari">Asyari</option>
-            <option value="Berkah Mulya">Berkah Mulya</option>
-            <option value="Bos emon">Bos emon</option>
-            <option value="Bos Jacklin">Bos Jacklin</option>
-            <option value="Bu Gito">Bu Gito</option>
-            <option value="H.Iwan">H.Iwan</option>
-            <option value="H.Unjani">H.Unjani</option>
-            <option value="Isma">Isma</option>
-            <option value="Kang Azis">Kang Azis</option>
-            <option value="Kedoya">Kedoya</option>
-            <option value="Koh Beni">Koh Beni</option>
-            <option value="Kondang Jaya">Kondang Jaya</option>
-            <option value="Misbah">Misbah</option>
-            <option value="Ngadimin">Ngadimin</option>
-            <option value="Ngatimin">Ngatimin</option>
-            <option value="Paidi">Paidi</option>
-            <option value="Pak Maman">Pak Maman</option>
-            <option value="Rasyid Unus">Rasyid Unus</option>
-            <option value="Rian">Rian</option>
-            <option value="H. Iman">H. Iman</option>
-            <option value="Soleh">Soleh</option>
-            <option value="Sugiman">Sugiman</option>
-            <option value="Wido">Wido</option>
-            <option value="Arya">Arya</option>
-            <option value="Yusril">Yusril</option>
-            <option value="milidi snack">Sumedang</option>
-            <option value="jojo">Jojo</option>
-            <option value="Depok Baru">Depok Baru</option>
-            <option value="Rosso">Rosso</option>
-            <option value="GUDANG">GUDANG</option>
-        `;
-
-        function hitungTotalAgen() {
-            let total = 0;
-            document.querySelectorAll(".input-qty-agen").forEach(input => {
-                const val = parseFloat(input.value);
-                if (!isNaN(val)) total += val;
-            });
-            displayTotalAgen.textContent = total;
-            hitungSelisih(); // Update selisih tiap ada perubahan
-        }
-
-        // Event listener input agen pertama
-        document.querySelectorAll(".input-qty-agen").forEach(input => {
-            input.addEventListener("input", hitungTotalAgen);
-        });
-
-        // Tambah baris agen
         btnTambahAgen.addEventListener("click", function() {
             const row = document.createElement("div");
-            row.className = "row mb-2 baris-agen";
+            row.className = "row mb-3 baris-agen";
             row.innerHTML = `
-                <div class="col-8">
-                    <select class="form-select select-agen">
-                        ${agenOptionsHTML}
+                <div class="col-8 pe-1">
+                    <select class="form-select select-nota">
+                        ${notaOptionsHTML}
                     </select>
                 </div>
-                <div class="col-4 d-flex gap-2">
+                <div class="col-4 ps-1 d-flex gap-1">
                     <input type="number" class="form-control input-qty-agen" placeholder="Qty">
-                    <button class="btn btn-danger btn-sm btn-hapus-agen">X</button>
+                    <button class="btn btn-danger btn-hapus fw-bold">X</button>
                 </div>
             `;
             containerAgen.insertBefore(row, btnTambahAgen);
 
-            row.querySelector(".input-qty-agen").addEventListener("input", hitungTotalAgen);
-            row.querySelector(".btn-hapus-agen").addEventListener("click", function() {
+            pasangEventNota(row);
+            
+            row.querySelector(".btn-hapus").addEventListener("click", function() {
                 row.remove();
                 hitungTotalAgen();
             });
         });
 
-        // ==========================================
-        // LOGIKA KIRIM WHATSAPP
-        // ==========================================
+        // 8. KIRIM WHATSAPP
         const btnKirimWA = document.getElementById("btnKirimWA");
         
         btnKirimWA.addEventListener("click", function() {
             let teksWA = `*MONITORING PENGIRIMAN*\n`;
-            teksWA += `Tanggal: ${elTanggal.textContent}\n\n`;
+            teksWA += `Tanggal: ${elTanggal.textContent}\n`;
+            teksWA += `Barang Acuan: *${inputAcuanBarang.value}*\n\n`;
 
-            // Rekap Armada
             teksWA += `*🚗 DATA ARMADA & BAWAAN*\n`;
             let adaArmada = false;
             document.querySelectorAll(".baris-armada").forEach(baris => {
@@ -317,31 +403,40 @@
                     adaArmada = true;
                 }
             });
-            if (!adaArmada) teksWA += `- Belum ada data diinput\n`;
+            if (!adaArmada) teksWA += `- Belum ada data\n`;
             teksWA += `*Total Bawa:* ${displayTotalBawa.textContent}\n\n`;
 
-            // Rekap Agen
-            teksWA += `*📦 DISTRIBUSI AGEN*\n`;
-            let adaAgen = false;
+            teksWA += `*📦 DISTRIBUSI BARANG*\n`;
+            
+            // Rekap Gudang
+            const valGudang = inputQtyGudang.value;
+            if (valGudang && valGudang > 0) {
+                teksWA += `- GUDANG : ${valGudang}\n`;
+            }
+
+            // Rekap Nota
+            let adaNota = false;
             document.querySelectorAll(".baris-agen").forEach(baris => {
-                const agen = baris.querySelector(".select-agen").value;
+                const selectNota = baris.querySelector(".select-nota");
+                const selectedOption = selectNota.options[selectNota.selectedIndex];
                 const qty = baris.querySelector(".input-qty-agen").value;
-                if (agen && qty) {
-                    teksWA += `- ${agen} : ${qty}\n`;
-                    adaAgen = true;
+                
+                if (selectNota.value && qty) {
+                    // PERUBAHAN: Hanya menarik nama agen dari atribut data-agen yang disisipkan tadi
+                    const namaAgen = selectedOption.getAttribute('data-agen');
+                    teksWA += `- ${namaAgen} : ${qty}\n`;
+                    adaNota = true;
                 }
             });
-            if (!adaAgen) teksWA += `- Belum ada data diinput\n`;
+            if (!adaNota && !valGudang) teksWA += `- Belum ada data\n`;
+            
             teksWA += `*Total Distribusi:* ${displayTotalAgen.textContent}\n\n`;
 
-            // Rekap Selisih
-            teksWA += `*⚖️ SELISIH (Bawaan - Distribusi): ${displaySelisih.textContent}*`;
+            teksWA += `*⚖️ SELISIH (Distribusi - Bawaan): ${displaySelisih.textContent}*`;
 
-            // Proses Kirim via URL WhatsApp (Buka tab baru)
             const encodedText = encodeURIComponent(teksWA);
             window.open(`https://wa.me/?text=${encodedText}`, '_blank');
         });
-
     });
 </script>
 </body>
