@@ -143,7 +143,6 @@
         </select>
         <small id="statusBT">Status: Terputus</small>
         
-        <!-- FITUR BARU: CEKLIS TANPA PRINTER -->
         <div style="margin-top: 15px; padding: 10px; background: #fff5f5; border: 2px dashed #fc8181; border-radius: 8px;">
             <label style="display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 15px; color: #c53030; cursor: pointer;">
                 <input type="checkbox" id="cbTanpaPrinter" style="width: 20px; height: 20px; margin-right: 10px; cursor: pointer;">
@@ -304,7 +303,13 @@
     }
 
     function resetForm() {
-        document.getElementById('tglNota').valueAsDate = new Date();
+        // Menggunakan tanggal perangkat secara real-time (YYYY-MM-DD)
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        document.getElementById('tglNota').value = `${year}-${month}-${day}`;
+
         document.getElementById('noNota').value = "SBR-" + Date.now().toString().slice(-6);
         document.getElementById('pilihAgen').value = "";
         document.getElementById('pilihMobil').value = "";
@@ -314,7 +319,7 @@
         document.getElementById('inputBonLama').value = "0";
         document.getElementById('inputOngkir').value = "0";
         document.getElementById('cbTidakTitip').checked = false;
-        document.getElementById('cbTanpaPrinter').checked = false; // Reset ceklis printer
+        document.getElementById('cbTanpaPrinter').checked = false;
         togglePembayaran();
         document.getElementById('notifBon').style.display = "none";
         isDeposit = false;
@@ -581,7 +586,6 @@
         const cash = getAngka('inputCash');
         const trf = getAngka('inputTrf');
 
-        // === VALIDASI INPUT ===
         if (!ag) errorList.push("- Agen belum dipilih");
         if (!drv1) errorList.push("- Driver 1 belum ditentukan/kosong");
         if (!drv2) errorList.push("- Driver 2 belum ditentukan/kosong");
@@ -596,13 +600,11 @@
             errorList.push("- Pembayaran belum diisi (Pilih centang 'TIDAK TITIP UANG' jika memang Bon Full)");
         }
 
-        // FITUR BARU: Validasi Printer
         const isTanpaPrinter = document.getElementById('cbTanpaPrinter').checked;
         if (!btCharacteristic && !isTanpaPrinter) {
             errorList.push("- Printer belum terhubung (Centang 'TANPA PRINTER' jika memang sedang tidak bawa alatnya)");
         }
 
-        // Cegah eksekusi jika ada error
         if (errorList.length > 0) {
             alert("⚠️ DATA BELUM LENGKAP:\n\n" + errorList.join("\n") + "\n\nSilakan lengkapi terlebih dahulu!");
             return; 
@@ -690,7 +692,6 @@
             await clientSupabase.from('transaksi_detail').insert(details);
             await clientSupabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
 
-            // Jika printer terhubung (atau tidak ceklis "Tanpa Printer" dan untungnya lolos validasi)
             if (btCharacteristic) {
                 btn.innerText = "MENCETAK CUSTOMER...";
                 let cetakCustomer = p.replace('[JENIS_CETAKAN]', '=== LEMBAR CUSTOMER ===');
