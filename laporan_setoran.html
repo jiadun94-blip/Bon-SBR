@@ -10,15 +10,23 @@
         :root { --bg: #f4f6f8; --card: #ffffff; --accent: #27ae60; --text: #333333; --input-bg: #ffffff; --border: #cbd5e0; }
         body { font-family: 'Roboto Condensed', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; padding-bottom: 100px; }
         
-        /* HEADER DENGAN LOGO DI KIRI & JUDUL DI KANAN */
         .header { display: flex; align-items: center; justify-content: space-between; background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .logo-box img { height: 45px; width: auto; display: block; }
         .header-text { text-align: right; }
         .header-text h2 { font-size: 18px; color: var(--accent); margin: 0; text-transform: uppercase; font-weight: 700; }
         .header-text h2 span { color: #2980b9; }
         .header-text p { font-size: 11px; color: #666; margin: 3px 0 0 0; }
-
-        .section-title { font-size: 12px; color: var(--accent); font-weight: bold; text-transform: uppercase; margin: 20px 0 10px 5px; letter-spacing: 1px; }
+        .section-title { 
+		font-size: 12px; 
+		color: var(--accent); 
+		font-weight: bold; 
+		text-transform: uppercase; 
+		margin: 20px 5px 10px 5px; 
+		letter-spacing: 1px; 
+		display: flex; /* Mengaktifkan mode flexbox */
+		justify-content: space-between; /* Mendorong satu elemen ke ujung kiri dan satu ke ujung kanan */
+		align-items: center; /* Memastikan kedua teks sejajar lurus secara vertikal */
+		}
         .card-form { background: var(--card); padding: 18px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         
         label { display: block; font-size: 15px; margin-bottom: 8px; color: var(--text); font-weight: bold; text-transform: uppercase; }
@@ -46,12 +54,16 @@
         <img id="logoBrand" src="logo.png" alt="SBRdigital Lembang Bandung Barat" onerror="this.src='logo.png'">
     </div>
     <div class="header-text">
-        <h2>LAPORAN SETORAN</h2>
-        <p>Halo, Admin / Driver SBR</p>
+        <h2 id="welcomeNama">HALO, DRIVER!</h2>
+        <p>LAPORAN SETORAN</p>
     </div>
 </div>
 
-<div class="section-title">📦 PILIH ARMADA & NOTA</div>
+<div class="section-title"></div>
+<div class="section-title">
+    <span>📦 PILIH ARMADA & NOTA</span>
+    <span><a href="dashboard_driver.html">Kembali ke dashboard</a></span>
+</div>
 <div class="card-form">
     <label>UNIT ARMADA</label>
     <select id="selMobil" onchange="cariNotaAktif()"><option value="">-- Pilih Armada --</option></select>
@@ -96,6 +108,11 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+window.onload = () => {
+        document.getElementById('welcomeNama').innerText = "HALO, " + userLogin.toUpperCase() + "!";
+        loadRiwayat();
+    };
+	
     let dataNotaTerakhir = [];
 
     function formatRibuan(elemen) {
@@ -191,7 +208,7 @@
                 totalCash += parseInt(item.bayar_cash || 0);
                 detailBundel.push({ agen: item.nama_agen || "Tanpa Agen", nota: item.no_nota, cash: item.bayar_cash });
                 
-                let d1 = item.nama_driver || item.driver_1 || item.driver || "";
+                let d1 = item.driver_1 || item.nama_driver || item.driver || "";
                 let d2 = item.driver_2 || "";
                 
                 if(d1) driver1_Set.add(d1);
@@ -240,7 +257,19 @@
         const stringNamaAgen = calc.detail.map(d => d.agen).join(', ');
 
         try {
-            // Menggunakan upsert dengan patokan kolom 'no_nota' untuk otomatis replace jika nota sama
+            // 1. CEK DATA DATABASE: Memakai .limit(1) agar pencarian fokus pada nota tersebut saja
+            const { data: cekData, error: errCek } = await _sb
+                .from('rekap_laporan_driver')
+                .select('no_nota')
+                .eq('no_nota', stringNoNota)
+                .limit(1);
+
+            if (errCek) throw errCek;
+            
+            // Jika data sudah ada di database = REVISI
+            const isRevisi = (cekData && cekData.length > 0);
+
+            // 2. SIMPAN / UPDATE DATA KE SUPABASE
             const { error: errorInsert } = await _sb.from('rekap_laporan_driver').upsert([{
                 no_nota: stringNoNota,
                 nama_agen: stringNamaAgen,
@@ -266,7 +295,12 @@
                 .eq('plat_nomor', plat);
 
             const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-            let pesan = "*LAPORAN SETORAN DRIVER (REVISI)*\n";
+            
+            // 3. JUDUL WHATSAPP & FOOTER BERDASARKAN HASIL CEK 
+            let judulHeader = isRevisi ? "*LAPORAN SETORAN DRIVER (REVISI)*" : "*LAPORAN SETORAN DRIVER*";
+            let footerPesan = isRevisi ? "_Data sukses diperbarui (replace) ke Supabase SBR_" : "_Data sudah sukses masuk ke database SBR_";
+            
+            let pesan = judulHeader + "\n";
             pesan += "----------------------------\n";
             pesan += "- *Tgl:* " + tgl + "\n";
             pesan += "- *Driver 1:* " + calc.drv1 + "\n";
@@ -290,7 +324,7 @@
             pesan += "----------------------------\n";
             pesan += "- *Total Biaya:* Rp " + totalExp.toLocaleString('id-ID') + "\n";
             pesan += "- *SISA SETOR:* Rp " + sisaBersih.toLocaleString('id-ID') + "\n\n";
-            pesan += "_Data sukses diperbarui (replace) ke Supabase SBR_";
+            pesan += footerPesan;
 
             window.open("https://wa.me/?text=" + encodeURIComponent(pesan), '_blank');
             
