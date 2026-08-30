@@ -10,7 +10,8 @@
     
     <style>
         :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #121214; --text-color: #333333; }
-        body { font-family: 'Roboto Condensed', Tahoma, sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #fff; font-size: 16px; transition: background 0.3s, color 0.3s; }
+        /* TAMBAHAN: overscroll-behavior-y: none untuk mencegah pull-to-refresh bawaan browser HP */
+        body { font-family: 'Roboto Condensed', Tahoma, sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #fff; font-size: 16px; transition: background 0.3s, color 0.3s; overscroll-behavior-y: none; }
         
         .container { background: #1e1e24; padding: 12px; border-radius: 15px; max-width: 950px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.5); transition: background 0.3s; }
         
@@ -155,10 +156,13 @@
         .modal-left-box { background: #1a202c; border: 1px solid #4a5568; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
         .modal-right-box { background: #2d3748; border: 1px solid #3182ce; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; }
         
-        .box-scroll-barang { max-height: 250px; overflow-y: auto; background: #121214; padding: 5px; border-radius: 6px; border: 1px solid #4a5568; }
-        .box-scroll-tabungan { max-height: 380px; overflow-y: auto; padding-right: 3px; }
-        .box-scroll-barang::-webkit-scrollbar, .box-scroll-tabungan::-webkit-scrollbar { width: 5px; }
-        .box-scroll-barang::-webkit-scrollbar-thumb, .box-scroll-tabungan::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 3px; }
+        /* TAMBAHAN: overscroll-behavior-y: contain untuk area yang di-scroll */
+        .box-scroll-barang { max-height: 250px; overflow-y: auto; background: #121214; padding: 5px; border-radius: 6px; border: 1px solid #4a5568; overscroll-behavior-y: contain; }
+        .box-scroll-tabungan { max-height: 380px; overflow-y: auto; padding-right: 3px; overscroll-behavior-y: contain; }
+        .scroll-y { overflow-y: auto; max-height: 250px; overscroll-behavior-y: contain; }
+
+        .box-scroll-barang::-webkit-scrollbar, .box-scroll-tabungan::-webkit-scrollbar, .scroll-y::-webkit-scrollbar { width: 5px; }
+        .box-scroll-barang::-webkit-scrollbar-thumb, .box-scroll-tabungan::-webkit-scrollbar-thumb, .scroll-y::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 3px; }
 
         .item-tabungan-ceklis { display: flex; justify-content: space-between; align-items: center; background: #1a202c; padding: 8px 10px; border-radius: 6px; border: 1px solid #4a5568; margin-bottom: 6px; }
         .label-sisi-kiri { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: bold; cursor: pointer; }
@@ -193,7 +197,8 @@
                 <span>📊 Ttl Kebutuhan (Antrean)</span>
                 <span id="textJumlahAgenAntrean" style="color:#fff;">0 Agen</span>
             </div>
-            <div style="flex: 1; overflow-y: auto; max-height: 250px;">
+            <!-- TAMBAHAN: class="scroll-y" untuk mengaktifkan overscroll -->
+            <div class="scroll-y" style="flex: 1;">
                 <table class="table-muatan">
                     <thead>
                         <tr>
@@ -217,7 +222,8 @@
                     <option value="">-- Pilih Item --</option>
                 </select>
             </div>
-            <div style="flex: 1; overflow-y: auto; max-height: 250px;">
+            <!-- TAMBAHAN: class="scroll-y" untuk mengaktifkan overscroll -->
+            <div class="scroll-y" style="flex: 1;">
                 <table class="table-muatan table-simulasi">
                     <thead>
                         <tr>
@@ -855,6 +861,10 @@
                 }
             });
         }
+
+        // TAMBAHAN PENTING: Urutkan demandList secara alfabetis
+        // Supaya saat agen berpindah dari Antrean (Active) ke History (Fixed), posisinya di tabel simulasi tetap sama dan hitungan saldo tetap selaras.
+        demandList.sort((a, b) => a.agen.localeCompare(b.agen));
 
         if(!cacheSupplyArmada[item]) cacheSupplyArmada[item] = [{},{},{},{}]; 
         let supplyList = cacheSupplyArmada[item];
