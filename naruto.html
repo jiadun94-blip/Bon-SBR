@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Load Supabase JS Client dari CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
+
     <style>
         body {
             background-color: #f4f7f6;
@@ -64,7 +64,7 @@
         </div>
         <div class="card-body" id="containerArmada">
             <label class="form-label text-muted small fw-bold">Daftar Armada & Kiriman Dibawa</label>
-            
+
             <div class="row mb-3 baris-armada">
                 <div class="col-8 pe-1">
                     <select class="form-select select-armada">
@@ -85,7 +85,7 @@
                     <input type="number" class="form-control input-qty-bawa" placeholder="Bawa">
                 </div>
             </div>
-            
+
             <button class="btn btn-sm btn-outline-primary w-100 btn-tambah" id="btnTambahArmada">+ Tambah Armada</button>
         </div>
         <div class="card-footer text-end bg-white border-0 pb-3 rounded-bottom">
@@ -100,7 +100,7 @@
             📦 Distribusi Data Berdasarkan Nota
         </div>
         <div class="card-body" id="containerAgen">
-            
+
             <!-- INPUT ACUAN NAMA BARANG DI ATAS -->
             <div class="mb-3 p-3 bg-light rounded-3 border">
                 <label for="inputAcuanBarang" class="form-label text-success fw-bold small mb-1">🏷️ Acuan Nama Barang yang Dicari:</label>
@@ -117,11 +117,11 @@
                     <input type="number" class="form-control" id="inputQtyGudang" placeholder="Qty">
                 </div>
             </div>
-            
+
             <hr class="text-muted opacity-25">
 
             <label class="form-label text-muted small fw-bold">Pilih No Nota (Nama Agen & Qty Muncul Otomatis)</label>
-            
+
             <div class="row mb-3 baris-agen">
                 <div class="col-8 pe-1">
                     <select class="form-select select-nota">
@@ -133,7 +133,7 @@
                     <input type="number" class="form-control input-qty-agen" placeholder="Qty">
                 </div>
             </div>
-            
+
             <button class="btn btn-sm btn-outline-success w-100 btn-tambah" id="btnTambahAgen">+ Tambah Baris Nota</button>
         </div>
         <div class="card-footer text-end bg-white border-0 pb-3 rounded-bottom">
@@ -161,13 +161,13 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", async function() {
-        
+
         // 1. INISIALISASI SUPABASE MENGGUNAKAN KEY YANG BARU
         let supabaseClient = null;
         try {
             const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
             const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
-            
+
             if (typeof window.supabase !== 'undefined') {
                 supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
             }
@@ -180,14 +180,13 @@
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         elTanggal.textContent = new Date().toLocaleDateString('id-ID', options);
 
-        // 3. AMBIL DATA NOTA DARI SUPABASE
+        // 3. AMBIL DATA NOTA DARI SUPABASE (Tanpa Filter yang Bikin Error)
         let notaOptionsHTML = `<option value="">-- Pilih No Nota & Agen --</option>`;
-        
+
         if (supabaseClient) {
             try {
-                // Gunakan tanggal sesuai sistem
                 const tglHariIni = new Date().toISOString().split('T')[0];
-                
+
                 const tglKemarinDate = new Date();
                 tglKemarinDate.setDate(tglKemarinDate.getDate() - 1);
                 const tglKemarin = tglKemarinDate.toISOString().split('T')[0];
@@ -201,7 +200,6 @@
 
                 if (!error && dataNota) {
                     dataNota.forEach(item => {
-                        // PERUBAHAN: Menambahkan data-agen agar mudah dipanggil saat kirim WA
                         notaOptionsHTML += `<option value="${item.no_nota}" data-agen="${item.nama_agen}">${item.no_nota} - ${item.nama_agen} (${item.tanggal})</option>`;
                     });
                 }
@@ -226,7 +224,7 @@
             const bawa = parseFloat(displayTotalBawa.textContent) || 0;
             const agen = parseFloat(displayTotalAgen.textContent) || 0;
             const selisih = agen - bawa; 
-            
+
             displaySelisih.textContent = selisih;
             if (selisih !== 0) {
                 displaySelisih.className = "fw-bold fs-3 text-danger";
@@ -247,14 +245,12 @@
 
         function hitungTotalAgen() {
             let total = 0;
-            
-            // Tambahkan Qty Gudang
+
             const qtyGudang = parseFloat(inputQtyGudang.value);
             if (!isNaN(qtyGudang)) {
                 total += qtyGudang;
             }
 
-            // Tambahkan Qty dari baris-baris Nota
             document.querySelectorAll(".input-qty-agen").forEach(input => {
                 const val = parseFloat(input.value);
                 if (!isNaN(val)) total += val;
@@ -264,7 +260,6 @@
             hitungSelisih();
         }
 
-        // Event listener Gudang
         inputQtyGudang.addEventListener("input", hitungTotalAgen);
 
         // FUNGSI TARIK QTY BERDASARKAN NOTA YANG DIPILIH
@@ -284,6 +279,7 @@
                         .select('qty')
                         .eq('no_nota', noNotaCari)
                         .eq('nama_barang', namaBarangAcuan)
+                        .eq('tipe', 'Kirim') // PERBAIKAN: Di sinilah filter 'Kirim' bekerja berdasarkan tabel transaksi_detail!
                         .limit(1);
 
                     if (errDetail) throw errDetail;
@@ -326,7 +322,6 @@
             });
         });
 
-        // Pasang event awal
         document.querySelectorAll(".input-qty-bawa").forEach(input => input.addEventListener("input", hitungTotalBawa));
         pasangEventNota(document.querySelector(".baris-agen"));
 
@@ -378,7 +373,7 @@
             containerAgen.insertBefore(row, btnTambahAgen);
 
             pasangEventNota(row);
-            
+
             row.querySelector(".btn-hapus").addEventListener("click", function() {
                 row.remove();
                 hitungTotalAgen();
@@ -387,7 +382,7 @@
 
         // 8. KIRIM WHATSAPP
         const btnKirimWA = document.getElementById("btnKirimWA");
-        
+
         btnKirimWA.addEventListener("click", function() {
             let teksWA = `*MONITORING PENGIRIMAN*\n`;
             teksWA += `Tanggal: ${elTanggal.textContent}\n`;
@@ -407,29 +402,26 @@
             teksWA += `*Total Bawa:* ${displayTotalBawa.textContent}\n\n`;
 
             teksWA += `*📦 DISTRIBUSI BARANG*\n`;
-            
-            // Rekap Gudang
+
             const valGudang = inputQtyGudang.value;
             if (valGudang && valGudang > 0) {
                 teksWA += `- GUDANG : ${valGudang}\n`;
             }
 
-            // Rekap Nota
             let adaNota = false;
             document.querySelectorAll(".baris-agen").forEach(baris => {
                 const selectNota = baris.querySelector(".select-nota");
                 const selectedOption = selectNota.options[selectNota.selectedIndex];
                 const qty = baris.querySelector(".input-qty-agen").value;
-                
+
                 if (selectNota.value && qty) {
-                    // PERUBAHAN: Hanya menarik nama agen dari atribut data-agen yang disisipkan tadi
                     const namaAgen = selectedOption.getAttribute('data-agen');
                     teksWA += `- ${namaAgen} : ${qty}\n`;
                     adaNota = true;
                 }
             });
             if (!adaNota && !valGudang) teksWA += `- Belum ada data\n`;
-            
+
             teksWA += `*Total Distribusi:* ${displayTotalAgen.textContent}\n\n`;
 
             teksWA += `*⚖️ SELISIH (Distribusi - Bawaan): ${displaySelisih.textContent}*`;
