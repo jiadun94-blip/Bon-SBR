@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SBR Putra Food - Input Nota</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="SBR Nota">
+    <meta name="apple-mobile-web-app-title" content="SBR Nota">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 10px; background: var(--bg); color: #000; font-size: 17px; }
+        .container { background: white; padding: 12px; border-radius: 15px; max-width: 600px; margin: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        header h2 { margin: 0; color: #1a202c; font-size: 22px; text-transform: uppercase; font-weight: 900; }
+        .btn-logout { background: #e53e3e; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 900; cursor: pointer; font-size: 12px; }
+        
+        .bt-panel { margin-bottom: 10px; text-align: center; background: #edf2f7; padding: 10px; border-radius: 10px; border: 1px solid #cbd5e0; }
+        #btnConnect { width: 100%; padding: 12px; background: #3182ce; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; }
+        #ukuranKertas { width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: 2px solid #cbd5e0; font-size: 16px; font-weight: 900; color: #2d3748; background: white; outline: none; }
+        #statusBT { font-size: 12px; font-weight: bold; margin-top: 5px; display: block; color: #e53e3e; }
+        
+        #notifEditMode { display: none; background: #fffaf0; color: #dd6b20; padding: 12px; border-radius: 10px; border: 2px solid #ed8936; text-align: center; font-weight: 900; margin-bottom: 10px; font-size: 14px; }
+        #notifBon { display: none; background: #fff5f5; color: #c53030; padding: 12px; border-radius: 10px; border: 2px solid #feb2b2; text-align: center; font-weight: 900; margin-bottom: 15px; animation: blinker 1s linear infinite; font-size: 18px; }
+        @keyframes blinker { 50% { opacity: 0.3; border-color: transparent; } }
+
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .info-grid select, .info-grid input { width: 100%; padding: 12px 8px; border: 2px solid #cbd5e0; border-radius: 10px; font-size: 17px; box-sizing: border-box; outline: none; font-weight: 700; color: #000; }
+        .section-label { font-size: 17px; font-weight: 900; padding: 10px; background: #1a202c; color: white; border-radius: 6px; margin: 15px 0 8px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
+        th { font-size: 14px; text-align: left; padding: 8px 5px; background: #edf2f7; border-bottom: 2px solid #cbd5e0; font-weight: 900; }
+        td { padding: 8px 5px; border-bottom: 1px solid #e2e8f0; font-size: 16px; font-weight: 700; }
+        .btn-action { background: #4a5568; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 900; }
+        
+        .btn-delete-x { background: #e53e3e; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 14px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+        
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
+        .modal-content { background: white; margin: 5% auto; padding: 15px; border-radius: 15px; width: 95%; max-width: 520px; box-shadow: 0 5px 30px rgba(0,0,0,0.3); max-height: 85vh; overflow-y: auto; }
+
+        .btn-add-row-modal { background: #fffaf0; color: #dd6b20; border: 2px dashed #ed8936; width: 100%; padding: 12px; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 15px; margin: 15px 0; text-align: center; }
+        
+        .sub-display { background: #f8fafc; padding: 10px; font-size: 17px; font-weight: 900; text-align: right; border: 2px solid #cbd5e0; border-top: none; display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #e2e8f0; padding: 12px; border-radius: 10px; margin-top: 10px; }
+        .input-manual { width: 100%; padding: 12px; border: 2px solid #4a5568; border-radius: 8px; font-weight: 900; text-align: right; box-sizing: border-box; font-size: 22px; background: #fff; }
+        
+        .summary-box { background: #1a202c; padding: 18px; border-radius: 12px; margin-top: 15px; color: white; }
+        .sum-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 18px; }
+        .grand-total { border-top: 2px dashed #4a5568; margin-top: 12px; padding-top: 12px; font-weight: 900; color: #fc8181; font-size: 22px; }
+        
+        .btn-save { width: 100%; padding: 20px; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; color: white; background: #27ae60; margin-top: 20px; font-size: 21px; text-transform: uppercase; box-shadow: 0 5px 0 #1e8449; }
+        .btn-save:disabled { background: #a0aec0; box-shadow: none; cursor: not-allowed; }
+        
+        .action-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn-reprint { padding: 15px; background: #e67e22; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #b35d15; text-transform: uppercase; }
+        .btn-reprint:disabled { background: #cbd5e0; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
+        .btn-clear { padding: 15px; background: #718096; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #4a5568; text-transform: uppercase; }
+        
+        .struk-visual-container { position: absolute; left: -9999px; top: 0; width: 400px; }
+        .struk-visual { background: #fff; padding: 25px; color: #000; font-family: 'Courier New', Courier, monospace; font-size: 14px; border: 1px solid #ccc; line-height: 1.4; }
+        .struk-visual .garis { border-top: 1px dashed #000; margin: 8px 0; }
+        .struk-visual .garis-tebal { border-top: 2px dashed #000; margin: 8px 0; }
+        .struk-visual .flex-row { display: flex; justify-content: space-between; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h2><img id="logoBrand" src="logo.png" alt="SBRdigital" style="height: 55px; width: auto;" onerror="this.src='logo.png'"></h2>
+        <button class="btn-logout" onclick="logout()">LOGOUT</button>
+    </header>
+
+    <div id="notifEditMode">⚠️ MODE EDIT NOTA LAMA - Perubahan akan menimpa data terdahulu!</div>
+    <div id="notifBon">⚠️ AGEN INI PUNYA BON LAMA!</div>
+
+    <div class="info-grid">
+        <div style="grid-column: span 2; display: flex; gap: 8px;">
+            <select id="selectNoNota" style="flex: 1; padding: 12px 8px; border: 2px solid #cbd5e0; border-radius: 10px; font-size: 17px; font-weight: 700; outline: none; background: #fff;">
+                <option value="BARU">-- NOTA BARU --</option>
+            </select>
+            <button id="btnAmbilNota" onclick="muatDataNotaTerpilih()" style="background: #3182ce; color: white; border: none; border-radius: 10px; padding: 0 15px; font-weight: 900; font-size: 14px; cursor: pointer;">✏️ AMBIL DATA</button>
+        </div>
+
+        <input type="date" id="tglNota">
+        <select id="pilihAgen" onchange="updateBon()"><option value="">-- AGEN --</option></select>
+        <select id="driver1" disabled style="background:#edf2f7; color:#4a5568;"><option value="">-- DRIVER 1 --</option></select>
+        <select id="pilihMobil"><option value="">-- MOBIL --</option></select>
+        <select id="driver2" style="grid-column: span 2;"><option value="">-- DRIVER 2 --</option></select>
+    </div>
+
+    <div>
+        <div class="section-label"><span>📦 DIKIRIM :</span><button class="btn-action" style="background:#27ae60" onclick="openModal('Kirim')">+ ITEM</button></div>
+        <table id="tabelKirim"><thead><tr><th>BARANG</th><th>QTY</th><th>TOTAL</th><th style="width: 40px; text-align: center;">#</th></tr></thead><tbody></tbody></table>
+        <div class="sub-display"><span>SUBTOTAL:</span><span id="subKirim">Rp 0</span></div>
+
+        <div class="section-label"><span>🔄 RETUR :</span><button class="btn-action" style="background:#e67e22" onclick="openModal('Retur')">+ ITEM</button></div>
+        <table id="tabelRetur"><thead><tr><th>BARANG</th><th>QTY</th><th>TOTAL</th><th style="width: 40px; text-align: center;">#</th></tr></thead><tbody></tbody></table>
+        <div class="sub-display"><span>SUBTOTAL:</span><span id="subRetur">Rp 0</span></div>
+        
+        <div id="boxBonLama" style="display:none;">
+            <div class="section-label" id="labelBonUI">📄 BON LAMA :</div>
+            <div style="background:#fffaf0; padding:10px; border-radius:10px; border:2px solid #ed8936;">
+                <input type="text" id="inputBonLama" class="input-manual" style="background:transparent; border:none; height:auto;" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
+            </div>
+        </div>
+
+        <div id="boxOngkir" style="display:none;">
+            <div class="section-label">🚚 ONGKIR :</div>
+            <div style="background:#f0f7ff; padding:10px; border-radius:10px; border:2px solid #3182ce;">
+                <input type="text" id="inputOngkir" class="input-manual" style="background:transparent; border:none; height:auto;" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)">
+            </div>
+        </div>
+    </div>
+
+    <div class="summary-box">
+        <div class="sum-row"><span>Kirim:</span><span id="txtKirim">Rp 0</span></div>
+        <div class="sum-row"><span>Retur:</span><span id="txtRetur">Rp 0</span></div>
+        <div class="sum-row" id="rowTxtOngkir" style="display:none;"><span>Ongkir:</span><span id="txtOngkir">Rp 0</span></div>
+        <div class="sum-row"><span id="labelSumBon">Bon Lama:</span><span id="txtBon">Rp 0</span></div>
+        <div class="sum-row grand-total"><span>SISA AKHIR:</span><span id="txtGrand">Rp 0</span></div>
+    </div>
+
+    <div class="section-label">💵 PEMBAYARAN :</div>
+    
+    <div style="margin-top: 10px; padding: 10px; background: #fffaf0; border: 2px solid #ed8936; border-radius: 10px;">
+        <label style="display: flex; align-items: center; font-weight: 900; font-size: 16px; color: #dd6b20; cursor: pointer;">
+            <input type="checkbox" id="cbTidakTitip" style="width: 22px; height: 22px; margin-right: 12px; cursor: pointer;" onchange="togglePembayaran()">
+            TIDAK TITIP UANG (BON FULL)
+        </label>
+    </div>
+
+    <div class="pay-row" id="areaPembayaran">
+        <div><label style="font-size:14px; font-weight:900;">CASH</label><input type="text" id="inputCash" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
+        <div><label style="font-size:14px; font-weight:900;">TRANSFER</label><input type="text" id="inputTrf" class="input-manual" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)"></div>
+    </div>
+
+    <div class="bt-panel">
+        <button id="btnConnect" onclick="connectBT()">🔗 HUBUNGKAN PRINTER</button>
+        <select id="ukuranKertas" onchange="simpanUkuranKertas()">
+            <option value="32">Kertas 58mm (Kecil - 32 Karakter)</option>
+            <option value="48">Kertas 80mm (Besar - 48 Karakter)</option>
+        </select>
+        <small id="statusBT">Status: Terputus</small>
+        
+        <div style="margin-top: 15px; padding: 10px; background: #fff5f5; border: 2px dashed #fc8181; border-radius: 8px;">
+            <label style="display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 15px; color: #c53030; cursor: pointer;">
+                <input type="checkbox" id="cbTanpaPrinter" style="width: 20px; height: 20px; margin-right: 10px; cursor: pointer;">
+                TANPA PRINTER (HANYA SIMPAN)
+            </label>
+        </div>
+    </div>
+    
+    <button class="btn-save" id="btnSimpan" onclick="simpanDanPrint()">SIMPAN & PRINT</button>
+
+    <div class="action-group">
+        <button class="btn-reprint" id="btnReprint" onclick="reprintLast()" disabled>🔄 REPRINT</button>
+        <button class="btn-clear" onclick="resetFormForNewNota()">➕ NOTA BARU</button>
+    </div>
+</div>
+
+<!-- Modal Input Item -->
+<div id="modalInput" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle" style="margin-top:0; text-transform:uppercase;">Daftar Barang</h3>
+        
+        <table style="width: 100%; margin-bottom: 5px;">
+            <thead>
+                <tr>
+                    <th>NAMA BARANG</th>
+                    <th style="width: 90px; text-align: center;">SATUAN</th>
+                    <th style="width: 65px; text-align: center;">QTY</th>
+                    <th style="width: 35px; text-align: center;">#</th>
+                </tr>
+            </thead>
+            <tbody id="listModalBarang"></tbody>
+        </table>
+
+        <button type="button" class="btn-add-row-modal" onclick="tambahBarisModal()">+ Tambah Baris Barang</button>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top: 15px;">
+            <button onclick="closeModal()" style="padding:12px; border-radius:8px; border:1px solid #ccc; font-weight:900;">BATAL</button>
+            <button onclick="addAllItems()" style="background:#27ae60; color:white; border:none; border-radius:8px; font-weight:900;">SIMPAN</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Preview Laporan -->
+<div id="modalPreviewLaporan" class="modal">
+    <div class="modal-content" style="text-align: center;">
+        <h3 style="margin-top:0; color:#27ae60;">✅ Struk Laporan Digital Siap!</h3>
+        <p style="font-size:14px; color:#4a5568;">Gambar sudah otomatis terunduh ke Galeri/Download HP Anda. Siap dikirim ke Admin.</p>
+        <img id="imgPreviewLaporan" style="width:100%; border:1px solid #cbd5e0; border-radius:8px; margin-bottom:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1);" />
+        <button onclick="document.getElementById('modalPreviewLaporan').style.display='none'" style="width:100%; padding:15px; background:#3182ce; color:white; border:none; border-radius:10px; font-weight:900; font-size:16px; cursor:pointer;">TUTUP</button>
+    </div>
+</div>
+
+<div class="struk-visual-container">
+    <div id="areaCetakGambar" class="struk-visual"></div>
+</div>
+
+<script>
+    const userAktif = localStorage.getItem("userNama");
+    let btCharacteristic = null;
+    let connectedDeviceId = null; 
+
+    function logout() { localStorage.clear(); window.location.href = "index.html"; }
+
+    const SUPABASE_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
+    const clientSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let database = { harga: {}, barang: [] };
+    let itemsKirim = []; let itemsRetur = []; let currentMode = 'Kirim';
+    let lastPrintText = ""; 
+    let isDeposit = false;
+    let listBarangTersediaGlobal = [];
+
+    // --- VARIABEL UNTUK FITUR EDIT ---
+    let isEditMode = false;
+    let originalNotaData = null;
+
+    function clearZero(el) { if(el.value === "0" || el.value === 0) el.value = ""; }
+    function restoreZero(el) { if(el.value === "") el.value = "0"; }
+
+    function togglePembayaran() {
+        const isChecked = document.getElementById('cbTidakTitip').checked;
+        const inputCash = document.getElementById('inputCash');
+        const inputTrf = document.getElementById('inputTrf');
+
+        if (isChecked) {
+            inputCash.value = "0";
+            inputTrf.value = "0";
+            inputCash.disabled = true;
+            inputTrf.disabled = true;
+            inputCash.style.backgroundColor = "#edf2f7"; 
+            inputTrf.style.backgroundColor = "#edf2f7";
+        } else {
+            inputCash.disabled = false;
+            inputTrf.disabled = false;
+            inputCash.style.backgroundColor = "#fff";
+            inputTrf.style.backgroundColor = "#fff";
+        }
+        hitungTotal();
+    }
+
+    function simpanUkuranKertas() {
+        const val = document.getElementById('ukuranKertas').value;
+        if (connectedDeviceId) {
+            localStorage.setItem('printerSize_' + connectedDeviceId, val);
+        }
+    }
+
+    async function init() {
+        try {
+            // 1. Muat Agen
+            const { data: agen, error: errorAgen } = await clientSupabase.from('agen').select('*');
+            if (errorAgen) throw new Error("Gagal muat AGEN: " + errorAgen.message);
+            
+            if(agen) {
+                const agenNormal = agen.filter(a => a.type_agen !== 'KHUSUS');
+                agenNormal.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen));
+                const selAgen = document.getElementById('pilihAgen');
+                selAgen.innerHTML = '<option value="">-- AGEN --</option>';
+                agenNormal.forEach(a => {
+                    const labelBon = a.saldo_bon > 0 ? ` (!)` : "";
+                    selAgen.options.add(new Option(a.nama_agen + labelBon, a.nama_agen));
+                    database.harga[a.nama_agen] = { "bon": a.saldo_bon || 0 };
+                });
+            }
+
+            // 2. Muat Harga
+            const { data: harga, error: errorHarga } = await clientSupabase.from('harga').select('*');
+            if (errorHarga) throw new Error("Gagal muat HARGA: " + errorHarga.message);
+            
+            if(harga) {
+                harga.forEach(h => {
+                    if(!database.harga[h.nama_agen]) database.harga[h.nama_agen] = {};
+                    database.harga[h.nama_agen][`${h.nama_barang}_${h.satuan}`] = h.harga_jual;
+                });
+            }
+
+            // 3. Muat Karyawan
+            const { data: karyawan, error: errorKaryawan } = await clientSupabase
+                .from('karyawan')
+                .select('*')
+                .eq('aktif', true)
+                .eq('bagian', 'Driver'); 
+                
+            if (errorKaryawan) throw new Error("Gagal muat DRIVER: " + errorKaryawan.message);
+            
+            const d1 = document.getElementById('driver1');
+            const d2 = document.getElementById('driver2');
+            
+            d1.innerHTML = '';
+            if(userAktif) {
+                d1.options.add(new Option(userAktif, userAktif));
+                d1.value = userAktif;
+            } else {
+                d1.options.add(new Option("-- BELUM LOGIN --", ""));
+            }
+
+            d2.innerHTML = '<option value="">-- DRIVER 2 --</option>';
+            if(karyawan) {
+                karyawan.forEach(k => {
+                    d2.options.add(new Option(k.nama_karyawan, k.nama_karyawan));
+                });
+            }
+
+            // 4. Muat Mobil
+            const { data: mobil, error: errorMobil } = await clientSupabase.from('kendaraan').select('*');
+            if (errorMobil) throw new Error("Gagal muat MOBIL: " + errorMobil.message);
+            
+            const selMobil = document.getElementById('pilihMobil');
+            if(mobil) {
+                selMobil.innerHTML = '<option value="">-- MOBIL --</option>';
+                mobil.forEach(m => selMobil.options.add(new Option(m.plat_nomor, m.plat_nomor)));
+            }
+
+            // 5. Muat Dropdown Nota Terakhir
+            try {
+                const selectNota = document.getElementById('selectNoNota');
+                selectNota.innerHTML = '<option value="BARU">-- NOTA BARU --</option>';
+
+                const { data: listNota, error: errNota } = await clientSupabase
+                    .from('transaksi')
+                    .select('id, no_nota, nama_agen, tanggal')
+                    .order('id', { ascending: false })
+                    .limit(8);
+
+                if (errNota) {
+                    console.error("Gagal muat nota:", errNota.message);
+                } else if (listNota && listNota.length > 0) {
+                    listNota.forEach(n => {
+                        const nama = n.nama_agen ? n.nama_agen : "Tanpa Agen";
+                        selectNota.options.add(new Option(`✏️ ${n.no_nota} - ${nama}`, n.no_nota));
+                    });
+                }
+            } catch (err) {
+                console.error("Error Dropdown Nota:", err);
+            }
+
+            resetForm();
+        } catch(e) { 
+            alert("🚨 KONEKSI DATABASE ERROR:\n" + e.message); 
+            console.error("Init Error:", e); 
+        }
+    }
+
+    function resetForm() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        document.getElementById('tglNota').value = `${year}-${month}-${day}`;
+
+        document.getElementById('selectNoNota').value = "BARU";
+        document.getElementById('pilihAgen').value = "";
+        document.getElementById('pilihMobil').value = "";
+        document.getElementById('driver2').value = "";
+        document.getElementById('inputCash').value = "0";
+        document.getElementById('inputTrf').value = "0";
+        document.getElementById('inputBonLama').value = "0";
+        document.getElementById('inputOngkir').value = "0";
+        document.getElementById('cbTidakTitip').checked = false;
+        document.getElementById('cbTanpaPrinter').checked = false;
+        
+        // Bersihkan state edit
+        isEditMode = false;
+        originalNotaData = null;
+        document.getElementById('notifEditMode').style.display = "none";
+        
+        togglePembayaran();
+        document.getElementById('notifBon').style.display = "none";
+        isDeposit = false;
+        itemsKirim = []; itemsRetur = []; render(); hitungTotal();
+    }
+
+    function resetFormForNewNota() {
+        resetForm();
+        const btn = document.getElementById('btnSimpan');
+        btn.disabled = false;
+        btn.innerText = "SIMPAN & PRINT";
+        document.getElementById('btnReprint').disabled = true;
+        lastPrintText = "";
+    }
+
+    async function muatDataNotaTerpilih() {
+        const selectedNo = document.getElementById('selectNoNota').value;
+        if (!selectedNo || selectedNo === "BARU") {
+            resetFormForNewNota();
+            return;
+        }
+
+        const btnAmbil = document.getElementById('btnAmbilNota');
+        btnAmbil.disabled = true;
+        btnAmbil.innerText = "LOADING...";
+
+        try {
+            const { data: tx, error: errTx } = await clientSupabase.from('transaksi').select('*').eq('no_nota', selectedNo).single();
+            if (errTx || !tx) throw new Error("Data nota tidak ditemukan!");
+
+            const { data: details, error: errDet } = await clientSupabase.from('transaksi_detail').select('*').eq('no_nota', selectedNo);
+            if (errDet) throw new Error("Gagal ambil detail nota: " + errDet.message);
+
+            isEditMode = true;
+            originalNotaData = { tx, details };
+            
+            document.getElementById('notifEditMode').style.display = "block";
+            document.getElementById('tglNota').value = tx.tanggal;
+            
+            document.getElementById('pilihAgen').value = tx.nama_agen || "";
+            document.getElementById('pilihMobil').value = tx.plat_nomor || "";
+            
+            let d1 = document.getElementById('driver1');
+            let foundD1 = false;
+            for(let i=0; i<d1.options.length; i++) { 
+                if(d1.options[i].value === tx.driver_1) foundD1 = true; 
+            }
+            if(!foundD1) d1.options.add(new Option(tx.driver_1, tx.driver_1));
+            d1.value = tx.driver_1 || "";
+
+            document.getElementById('driver2').value = tx.driver_2 || "";
+
+            itemsKirim = [];
+            itemsRetur = [];
+            if (details) {
+                details.forEach(d => {
+                    const itemObj = {
+                        barang: d.nama_barang,
+                        satuan: d.satuan,
+                        qty: d.qty,
+                        harga: d.harga_satuan,
+                        total: d.subtotal
+                    };
+                    if (d.tipe === 'Kirim') itemsKirim.push(itemObj);
+                    else if (d.tipe === 'Retur') itemsRetur.push(itemObj);
+                });
+            }
+
+            document.getElementById('inputCash').value = Number(tx.bayar_cash || 0).toLocaleString('id-ID');
+            document.getElementById('inputTrf').value = Number(tx.bayar_transfer || 0).toLocaleString('id-ID');
+            document.getElementById('inputOngkir').value = Number(tx.ongkir || 0).toLocaleString('id-ID');
+
+            if (tx.bayar_cash === 0 && tx.bayar_transfer === 0) {
+                document.getElementById('cbTidakTitip').checked = true;
+            } else {
+                document.getElementById('cbTidakTitip').checked = false;
+            }
+
+            togglePembayaran();
+            updateBon();
+            render();
+
+            alert(`✅ Nota ${selectedNo} berhasil dimuat. Silakan ubah QTY atau Nominal uang, lalu klik SIMPAN & PRINT untuk menimpa data.`);
+        } catch (e) {
+            alert("❌ Gagal memuat nota: " + e.message);
+        } finally {
+            btnAmbil.disabled = false;
+            btnAmbil.innerText = "✏️ AMBIL DATA";
+        }
+    }
+
+    function updateBon() {
+        const ag = document.getElementById('pilihAgen').value;
+        if(!ag) {
+            document.getElementById('boxBonLama').style.display = "none";
+            document.getElementById('boxOngkir').style.display = "none";
+            return;
+        }
+
+        let saldoBon = database.harga[ag]?.bon || 0;
+        
+        if (isEditMode && originalNotaData && originalNotaData.tx.nama_agen === ag) {
+            const txLama = originalNotaData.tx;
+            saldoBon = saldoBon - txLama.sisa_akhir;
+        }
+
+        const agenPakeOngkir = ["Jawa Timur", "Catur", "Dajo Snack", "Edi", "Rizky", "Wanto"]; 
+        const isOngkir = agenPakeOngkir.includes(ag);
+        isDeposit = saldoBon < 0;
+
+        document.getElementById('boxBonLama').style.display = saldoBon !== 0 ? "block" : "none";
+        document.getElementById('boxOngkir').style.display = isOngkir ? "block" : "none";
+        document.getElementById('rowTxtOngkir').style.display = isOngkir ? "flex" : "none";
+        document.getElementById('labelBonUI').innerText = isDeposit ? "📄 DEPOSIT :" : "📄 BON LAMA :";
+        document.getElementById('labelSumBon').innerText = isDeposit ? "Deposit:" : "Bon Lama:";
+        document.getElementById('inputBonLama').value = Math.abs(saldoBon).toLocaleString('id-ID');
+        
+        const notif = document.getElementById('notifBon');
+        if (saldoBon > 0) {
+            notif.innerText = "⚠️ AGEN INI PUNYA BON LAMA!";
+            notif.style.display = "block";
+            notif.style.color = "#c53030";
+            notif.style.backgroundColor = "#fff5f5";
+            notif.style.borderColor = "#feb2b2";
+        } else if (saldoBon < 0) {
+            notif.innerText = "✅ AGEN INI PUNYA DEPOSIT!";
+            notif.style.display = "block";
+            notif.style.color = "#27ae60";
+            notif.style.backgroundColor = "#e8f8f5";
+            notif.style.borderColor = "#a3e4d7";
+        } else {
+            notif.style.display = "none";
+        }
+        hitungTotal();
+    }
+
+    function openModal(mode) { 
+        const ag = document.getElementById('pilihAgen').value;
+        if(!ag) return alert("Pilih Agen terlebih dahulu!");
+        currentMode = mode; 
+        document.getElementById('modalTitle').innerText = "Daftar Barang " + mode;
+        
+        const daftarHargaAgen = database.harga[ag];
+        listBarangTersediaGlobal = [];
+        for (let key in daftarHargaAgen) {
+            if (key !== "bon") {
+                const namaB = key.split('_')[0];
+                if (!listBarangTersediaGlobal.includes(namaB)) listBarangTersediaGlobal.push(namaB);
+            }
+        }
+        listBarangTersediaGlobal.sort();
+
+        const tbody = document.getElementById('listModalBarang');
+        tbody.innerHTML = '';
+        
+        tambahBarisModal();
+        tambahBarisModal();
+
+        document.getElementById('modalInput').style.display = "block"; 
+    }
+
+    function tambahBarisModal() {
+        const tbody = document.getElementById('listModalBarang');
+        let optionsBarang = '<option value="">-- Pilih Barang --</option>';
+        listBarangTersediaGlobal.forEach(b => {
+            optionsBarang += `<option value="${b}">${b}</option>`;
+        });
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="padding: 6px 3px;">
+                <select class="modal-barang" onchange="updateRowUnits(this)" style="width:100%; padding:10px 5px; border:1px solid #cbd5e0; border-radius:6px; font-weight:700; font-size:14px;">
+                    ${optionsBarang}
+                </select>
+            </td>
+            <td style="padding: 6px 3px;">
+                <select class="modal-satuan" style="width:100%; padding:10px 5px; border:1px solid #cbd5e0; border-radius:6px; font-weight:700; font-size:14px;">
+                    <option value="Ball">Ball</option>
+                    <option value="Pack">Pack</option>
+                    <option value="Pcs">Pcs</option>
+                </select>
+            </td>
+            <td style="padding: 6px 3px;">
+                <input type="number" class="modal-qty" value="0" onfocus="clearZero(this)" onblur="restoreZero(this)" style="width:100%; padding:10px 5px; border:1px solid #cbd5e0; border-radius:6px; font-weight:900; font-size:16px; text-align:center; box-sizing:border-box;">
+            </td>
+            <td style="padding: 6px 3px; text-align: center;">
+                <button type="button" class="btn-delete-x" onclick="this.closest('tr').remove()">×</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    function updateRowUnits(selectBarangEl) {
+        const ag = document.getElementById('pilihAgen').value;
+        const b = selectBarangEl.value;
+        const row = selectBarangEl.closest('tr');
+        const selectSatuan = row.querySelector('.modal-satuan');
+        
+        selectSatuan.innerHTML = '';
+        if (!b || !database.harga[ag]) {
+            selectSatuan.innerHTML = '<option value="Ball">Ball</option><option value="Pack">Pack</option><option value="Pcs">Pcs</option>';
+            return;
+        }
+
+        ['Ball', 'Pack', 'Pcs'].forEach(u => {
+            if (database.harga[ag][`${b}_${u}`] !== undefined) {
+                selectSatuan.options.add(new Option(u, u));
+            }
+        });
+        if(selectSatuan.options.length === 0) {
+            selectSatuan.innerHTML = '<option value="">-</option>';
+        }
+    }
+
+    function closeModal() { document.getElementById('modalInput').style.display = "none"; }
+
+    function addAllItems() {
+        const ag = document.getElementById('pilihAgen').value;
+        const tbody = document.getElementById('listModalBarang');
+        const rows = tbody.getElementsByTagName('tr');
+        
+        let targetList = currentMode === 'Kirim' ? itemsKirim : itemsRetur;
+        let addedCount = 0;
+
+        for (let i = 0; i < rows.length; i++) {
+            const selectBarang = rows[i].querySelector('.modal-barang');
+            const selectSatuan = rows[i].querySelector('.modal-satuan');
+            const inputQty = rows[i].querySelector('.modal-qty');
+            
+            if (selectBarang && selectSatuan && inputQty) {
+                const b = selectBarang.value;
+                const s = selectSatuan.value;
+                const q = parseFloat(inputQty.value) || 0;
+
+                if (q > 0 && b && s) {
+                    const h = database.harga[ag]?.[`${b}_${s}`] || 0;
+                    
+                    const existingIndex = targetList.findIndex(item => item.barang === b && item.satuan === s);
+                    if (existingIndex > -1) {
+                        targetList[existingIndex].qty += q;
+                        targetList[existingIndex].total = targetList[existingIndex].qty * h;
+                    } else {
+                        targetList.push({ barang: b, satuan: s, qty: q, harga: h, total: q * h });
+                    }
+                    addedCount++;
+                }
+            }
+        }
+
+        if (addedCount === 0) {
+            return alert("Belum ada item valid yang diisi Qty-nya!");
+        }
+
+        render(); 
+        closeModal(); 
+        hitungTotal();
+    }
+
+    function removeItem(idx, mode) {
+        if(mode === 'Kirim') {
+            itemsKirim.splice(idx, 1);
+        } else {
+            itemsRetur.splice(idx, 1);
+        }
+        render();
+        hitungTotal();
+    }
+
+    function render() {
+        const draw = (data, id, mode) => {
+            const tb = document.getElementById(id).querySelector('tbody'); tb.innerHTML = '';
+            data.forEach((it, idx) => {
+                const r = tb.insertRow();
+                r.innerHTML = `<td>${it.barang}<br><small>${it.satuan}@${it.harga.toLocaleString()}</small></td>
+                               <td>${it.qty}</td><td>${it.total.toLocaleString()}</td>
+                               <td style="text-align: center;"><button class="btn-delete-x" onclick="removeItem(${idx},'${mode}')">×</button></td>`;
+            });
+        };
+        draw(itemsKirim, 'tabelKirim', 'Kirim'); draw(itemsRetur, 'tabelRetur', 'Retur');
+    }
+
+    function formatRupiah(el) { let v = el.value.replace(/[^0-9]/g, ''); el.value = v === "" ? "0" : Number(v).toLocaleString('id-ID'); }
+    function getAngka(id) { return parseFloat(document.getElementById(id).value.replace(/[^0-9]/g, '')) || 0; }
+
+    function hitungTotal() {
+        const tk = itemsKirim.reduce((a, b) => a + b.total, 0); 
+        const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
+        const bl_input = getAngka('inputBonLama'); 
+        const bl_actual = isDeposit ? -bl_input : bl_input; 
+        const ongkir = getAngka('inputOngkir');
+        const cs = getAngka('inputCash'); 
+        const tf = getAngka('inputTrf');
+        const sisa = (tk - tr - ongkir + bl_actual - cs - tf);
+        
+        document.getElementById('subKirim').innerText = "Rp " + tk.toLocaleString('id-ID');
+        document.getElementById('subRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
+        document.getElementById('txtKirim').innerText = "Rp " + tk.toLocaleString('id-ID');
+        document.getElementById('txtRetur').innerText = "Rp " + tr.toLocaleString('id-ID');
+        document.getElementById('txtOngkir').innerText = "Rp " + ongkir.toLocaleString('id-ID');
+        document.getElementById('txtBon').innerText = (isDeposit ? "-Rp " : "Rp ") + bl_input.toLocaleString('id-ID');
+        document.getElementById('txtGrand').innerText = "Rp " + sisa.toLocaleString('id-ID');
+    }
+
+    async function connectBT() {
+        try {
+            const device = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+            });
+            const server = await device.gatt.connect();
+            const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+            const characteristics = await service.getCharacteristics();
+            btCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
+            
+            connectedDeviceId = device.id;
+            
+            document.getElementById('statusBT').innerText = "Status: Terhubung (" + device.name + ")";
+            document.getElementById('statusBT').style.color = "#27ae60";
+
+            const savedSize = localStorage.getItem('printerSize_' + connectedDeviceId);
+            if (savedSize) {
+                document.getElementById('ukuranKertas').value = savedSize;
+            }
+
+        } catch (e) { alert("BT Gagal: " + e); }
+    }
+
+    async function printToBT(text) {
+        if (!btCharacteristic) throw "Printer belum terhubung!";
+        const data = new TextEncoder().encode(text);
+        for (let i = 0; i < data.length; i += 20) {
+            await btCharacteristic.writeValue(data.slice(i, i + 20));
+            await new Promise(r => setTimeout(r, 45)); 
+        }
+    }
+
+    async function reprintLast() {
+        if(!lastPrintText) return alert("Belum ada data cetak terakhir!");
+        if(!btCharacteristic) return alert("Printer belum terhubung!");
+        try {
+            let cetakReprint = lastPrintText.replace('[JENIS_CETAKAN]', '*** REPRINT NOTA ***');
+            await printToBT(cetakReprint);
+            alert("✅ Berhasil Reprint Nota!");
+        } catch(e) { alert("Reprint Gagal: " + e); }
+    }
+
+    async function buatGambarLaporan(dataStruk) {
+        const area = document.getElementById('areaCetakGambar');
+        
+        let htmlContent = `
+            <div style="text-align: center; margin-bottom: 10px;">
+                <h2 style="margin: 0; font-family: 'Roboto', sans-serif; font-size: 22px;">SBR PUTRA FOOD</h2>
+                <div>Lembang, Bandung Barat</div>
+                <div class="garis"></div>
+                <div style="font-weight: bold; font-size: 16px; margin: 5px 0;">*** LEMBAR ADMIN ***</div>
+                <div class="garis"></div>
+            </div>
+            <div class="flex-row"><span>NO: ${dataStruk.noNota}</span><span>TGL: ${dataStruk.tglIndo}</span></div>
+            <div style="text-align: center; font-weight: bold; font-size: 18px; margin: 10px 0;">
+                ${dataStruk.ag.toUpperCase()}
+            </div>
+            <div>DRV: ${dataStruk.drvGabung} [ ${dataStruk.mobil} ]</div>
+            <div class="garis"></div>
+        `;
+
+        if(dataStruk.itemsKirim.length > 0) {
+            dataStruk.itemsKirim.forEach(i => {
+                htmlContent += `
+                    <div style="margin-top: 4px;">${i.barang}</div>
+                    <div class="flex-row">
+                        <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${i.harga.toLocaleString('id-ID')}</span>
+                        <span>${i.total.toLocaleString('id-ID')}</span>
+                    </div>
+                `;
+            });
+            htmlContent += `<div class="garis"></div>`;
+            htmlContent += `<div class="flex-row" style="font-weight: bold;"><span>TOTAL KIRIM:</span><span>Rp ${dataStruk.tk.toLocaleString('id-ID')}</span></div>`;
+        }
+
+        if(dataStruk.itemsRetur.length > 0) {
+            htmlContent += `<div style="font-weight: bold; margin-top: 10px;">BARANG RETUR:</div>`;
+            dataStruk.itemsRetur.forEach(i => {
+                htmlContent += `
+                    <div style="margin-top: 4px;">[RETUR] ${i.barang}</div>
+                    <div class="flex-row">
+                        <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${i.harga.toLocaleString('id-ID')}</span>
+                        <span>-${i.total.toLocaleString('id-ID')}</span>
+                    </div>
+                `;
+            });
+            htmlContent += `<div class="garis"></div>`;
+            htmlContent += `<div class="flex-row" style="font-weight: bold;"><span>TOTAL RETUR:</span><span>Rp ${dataStruk.tr.toLocaleString('id-ID')}</span></div>`;
+        }
+        
+        htmlContent += `<div class="garis"></div>`;
+        if(dataStruk.ongkir > 0) {
+            htmlContent += `<div class="flex-row"><span>ONGKIR:</span><span>-Rp ${dataStruk.ongkir.toLocaleString('id-ID')}</span></div>`;
+        }
+
+        const labelBonPrint = isDeposit ? "DEPOSIT:" : "BON LAMA:";
+        const valBonPrint = isDeposit ? `-Rp ${dataStruk.bl_input.toLocaleString('id-ID')}` : `Rp ${dataStruk.bl_input.toLocaleString('id-ID')}`;
+        htmlContent += `<div class="flex-row"><span>${labelBonPrint}</span><span>${valBonPrint}</span></div>`;
+
+        htmlContent += `<div class="garis-tebal"></div>`;
+        htmlContent += `<div class="flex-row" style="font-weight: bold; font-size: 16px;"><span>TOTAL TAGIHAN:</span><span>Rp ${dataStruk.tagihanBersih.toLocaleString('id-ID')}</span></div>`;
+        htmlContent += `<div class="garis"></div>`;
+        htmlContent += `<div class="flex-row"><span>Bayar CASH:</span><span>Rp ${dataStruk.cash.toLocaleString('id-ID')}</span></div>`;
+        htmlContent += `<div class="flex-row"><span>Bayar TRF:</span><span>Rp ${dataStruk.trf.toLocaleString('id-ID')}</span></div>`;
+        htmlContent += `<div class="garis"></div>`;
+        
+        const labelSisa = dataStruk.sisa < 0 ? "DEPOSIT:" : "SISA BON:";
+        htmlContent += `<div class="flex-row" style="font-weight: bold; font-size: 16px;"><span>${labelSisa}</span><span>Rp ${Math.abs(dataStruk.sisa).toLocaleString('id-ID')}</span></div>`;
+        htmlContent += `<div class="garis"></div>`;
+        htmlContent += `<div style="text-align: center; margin-top: 30px; font-weight: bold;">SBR PUTRA FOOD SYSTEM</div>`;
+
+        area.innerHTML = htmlContent;
+
+        const canvas = await html2canvas(area, { scale: 2, backgroundColor: "#ffffff", logging: false });
+        const imgUrl = canvas.toDataURL("image/jpeg", 0.9);
+        
+        document.getElementById('imgPreviewLaporan').src = imgUrl;
+        document.getElementById('modalPreviewLaporan').style.display = 'block';
+
+        const downloadLink = document.createElement("a");
+        downloadLink.href = imgUrl;
+        downloadLink.download = `Laporan_SBR_${dataStruk.noNota}.jpg`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    }
+
+    async function simpanDanPrint() {
+        let errorList = [];
+        const ag = document.getElementById('pilihAgen').value;
+        const drv1 = document.getElementById('driver1').value;
+        const mobil = document.getElementById('pilihMobil').value;
+        const drv2 = document.getElementById('driver2').value;
+        
+        const cash = getAngka('inputCash');
+        const trf = getAngka('inputTrf');
+
+        if (!ag) errorList.push("- Agen belum dipilih");
+        if (!drv1) errorList.push("- Driver 1 belum ditentukan/kosong");
+        if (!drv2) errorList.push("- Driver 2 belum ditentukan/kosong");
+        if (!mobil) errorList.push("- Mobil/Plat Nomor belum dipilih");
+        
+        if (itemsKirim.length === 0 && itemsRetur.length === 0) {
+            errorList.push("- Belum ada item (Kirim atau Retur) yang dimasukkan");
+        }
+        
+        const isTidakTitip = document.getElementById('cbTidakTitip').checked;
+        if (cash === 0 && trf === 0 && !isTidakTitip) {
+            errorList.push("- Pembayaran belum diisi (Pilih centang 'TIDAK TITIP UANG' jika memang Bon Full)");
+        }
+
+        const isTanpaPrinter = document.getElementById('cbTanpaPrinter').checked;
+        if (!btCharacteristic && !isTanpaPrinter) {
+            errorList.push("- Printer belum terhubung (Centang 'TANPA PRINTER' jika memang sedang tidak bawa alatnya)");
+        }
+
+        if (errorList.length > 0) {
+            alert("⚠️ DATA BELUM LENGKAP:\n\n" + errorList.join("\n") + "\n\nSilakan lengkapi terlebih dahulu!");
+            return; 
+        }
+
+        const btn = document.getElementById('btnSimpan');
+        btn.innerText = "MENYIMPAN DATA..."; btn.disabled = true;
+
+        let noNota = document.getElementById('selectNoNota').value;
+        if (!isEditMode || noNota === "BARU") {
+            noNota = "SBR-" + Date.now().toString().slice(-6);
+        }
+
+        const tglInput = document.getElementById('tglNota').value;
+        const [y, m, d] = tglInput.split('-');
+        const tglIndo = `${d}-${m}-${y}`;
+        const drvGabung = drv2 ? `${drv1} / ${drv2}` : drv1;
+        
+        const tk = itemsKirim.reduce((a, b) => a + b.total, 0);
+        const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
+        const bl_input = getAngka('inputBonLama');
+        const bl_actual = isDeposit ? -bl_input : bl_input;
+        const ongkir = getAngka('inputOngkir');
+        
+        const tagihanBersih = tk - tr - ongkir + bl_actual;
+        const sisa = tagihanBersih - cash - trf;
+
+        const lebar = parseInt(document.getElementById('ukuranKertas').value); 
+        
+        const buatBaris = (l, r) => { 
+            let space = lebar - l.length - String(r).length; 
+            return l + " ".repeat(Math.max(1, space)) + r + "\n"; 
+        };
+
+        const garisStrip = "-".repeat(lebar) + "\n";
+        const garisSamaDengan = "=".repeat(lebar) + "\n";
+
+        let p = `\x1B\x40`; 
+        p += `\x1B\x61\x01\x1B\x45\x01[JENIS_CETAKAN]\n\x1B\x45\x00\n`; 
+        
+        p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10SBR PUTRA FOOD\n`; 
+        p += `\x1B\x21\x00\x1B\x45\x00Lembang, Bandung Barat\n${garisStrip}`; 
+        p += `\x1B\x61\x00` + buatBaris(`NO: ${noNota}`, `TGL: ${tglIndo}`); 
+        
+        p += `\x1B\x61\x01\x1B\x45\x01\x1B\x21\x10${ag.toUpperCase()}\n`; 
+        p += `\x1B\x21\x00\x1B\x45\x00DRV: ${drvGabung} [ ${mobil} ]\n${garisStrip}\x1B\x61\x00`;
+        
+        p += `\x1B\x21\x00`;
+        itemsKirim.forEach(i => { p += `${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, i.total.toLocaleString()); });
+        p += garisStrip + buatBaris(`TOTAL KIRIM:`, `Rp ${tk.toLocaleString()}`);
+
+        if(itemsRetur.length > 0) {
+            p += `\n\x1B\x45\x01BARANG RETUR:\x1B\x45\x00\n`;
+            itemsRetur.forEach(i => { p += `[RETUR] ${i.barang}\n` + buatBaris(`${i.qty} ${i.satuan} x ${i.harga.toLocaleString()}`, `-${i.total.toLocaleString()}`); });
+            p += garisStrip + buatBaris(`TOTAL RETUR:`, `Rp ${tr.toLocaleString()}`);
+        }
+        p += garisStrip;
+        if(ongkir > 0) p += buatBaris(`ONGKIR:`, `-Rp ${ongkir.toLocaleString()}`);
+        
+        const labelBonPrint = isDeposit ? "DEPOSIT:" : "BON LAMA:";
+        const valBonPrint = isDeposit ? `-Rp ${bl_input.toLocaleString()}` : `Rp ${bl_input.toLocaleString()}`;
+        p += buatBaris(labelBonPrint, valBonPrint);
+
+        p += garisSamaDengan;
+        p += `\x1B\x45\x01` + buatBaris(`TOTAL TAGIHAN:`, `Rp ${tagihanBersih.toLocaleString()}`) + `\x1B\x45\x00`;
+        p += garisStrip;
+        p += buatBaris(`Bayar CASH:`, `Rp ${cash.toLocaleString()}`);
+        p += buatBaris(`Bayar TRF:`, `Rp ${trf.toLocaleString()}`);
+        p += garisStrip;
+        
+        const labelSisaBluetooth = sisa < 0 ? "DEPOSIT:" : "SISA BON:";
+        p += `\x1B\x45\x01\x1B\x21\x10` + buatBaris(`${labelSisaBluetooth}`, `Rp ${Math.abs(sisa).toLocaleString()}`) + `\x1B\x45\x00\x1B\x21\x00\n\n`;
+        p += `\x1B\x61\x01\x1B\x21\x00` + `\n\n\n` + `( ............................ )\n` + garisStrip;
+        p += `\x1B\x45\x01TERIMA KASIH\x1B\x45\x00\nSBR PUTRA FOOD - Order System\n\n\n\n\n`;
+
+        try {
+            if (isEditMode && originalNotaData) {
+                // Hapus detail transaksi lama
+                await clientSupabase.from('transaksi_detail').delete().eq('no_nota', noNota);
+
+                // Update data transaksi utama
+                const { error: errUpdate } = await clientSupabase.from('transaksi').update({
+                    nama_agen: ag, tanggal: tglInput,
+                    driver_1: drv1, driver_2: drv2 || null, plat_nomor: mobil, 
+                    total_kirim: tk, total_retur: tr, bon_lama: bl_actual, 
+                    ongkir: ongkir, bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
+                }).eq('no_nota', noNota);
+                if (errUpdate) throw new Error(errUpdate.message);
+            } else {
+                // Insert nota baru
+                const { error: errTx } = await clientSupabase.from('transaksi').insert([{
+                    no_nota: noNota, nama_agen: ag, tanggal: tglInput,
+                    driver_1: drv1, driver_2: drv2 || null, plat_nomor: mobil, 
+                    total_kirim: tk, total_retur: tr, bon_lama: bl_actual, 
+                    ongkir: ongkir, 
+                    bayar_cash: cash, bayar_transfer: trf, sisa_akhir: sisa
+                }]);
+                if (errTx) throw new Error(errTx.message);
+            }
+
+            // Simpan detail data barang baru
+            const details = [
+                ...itemsKirim.map(i => ({ no_nota: noNota, nama_barang: i.barang, qty: i.qty, satuan: i.satuan, tipe: 'Kirim', harga_satuan: i.harga, subtotal: i.total })),
+                ...itemsRetur.map(i => ({ no_nota: noNota, nama_barang: i.barang, qty: i.qty, satuan: i.satuan, tipe: 'Retur', harga_satuan: i.harga, subtotal: i.total }))
+            ];
+            await clientSupabase.from('transaksi_detail').insert(details);
+            
+            // Update Master Saldo Bon Agen
+            await clientSupabase.from('agen').update({ saldo_bon: sisa }).eq('nama_agen', ag);
+
+            if (btCharacteristic) {
+                btn.innerText = "MENCETAK CUSTOMER...";
+                let cetakCustomer = p.replace('[JENIS_CETAKAN]', '=== LEMBAR CUSTOMER ===');
+                await printToBT(cetakCustomer);
+                
+                btn.innerText = "JEDA... (SIAPKAN KERTAS)";
+                await new Promise(r => setTimeout(r, 5000));
+                
+                btn.innerText = "MENCETAK ADMIN...";
+                let cetakAdmin = p.replace('[JENIS_CETAKAN]', '=== LEMBAR ADMIN ===');
+                await printToBT(cetakAdmin);
+            } 
+            
+            lastPrintText = p;
+            document.getElementById('btnReprint').disabled = false;
+            
+            btn.innerText = "MEMBUAT LAPORAN DIGITAL...";
+            await buatGambarLaporan({
+                noNota, tglIndo, ag, drvGabung, mobil,
+                itemsKirim, itemsRetur, tk, tr, ongkir,
+                bl_input, tagihanBersih, cash, trf, sisa
+            });
+
+            btn.innerText = "SUKSES DISIMPAN";
+            
+            // Update dropdown setelah berhasil simpan
+            try {
+                const selectNota = document.getElementById('selectNoNota');
+                selectNota.innerHTML = '<option value="BARU">-- NOTA BARU --</option>';
+                const { data: listNota } = await clientSupabase.from('transaksi').select('id, no_nota, nama_agen, tanggal').order('id', { ascending: false }).limit(15);
+                if (listNota) {
+                    listNota.forEach(n => {
+                        const nama = n.nama_agen ? n.nama_agen : "Tanpa Agen";
+                        selectNota.options.add(new Option(`✏️ ${n.no_nota} - ${nama}`, n.no_nota));
+                    });
+                }
+            } catch (err) {}
+            
+        } catch (e) {
+            alert("❌ DATABASE ERROR: " + (e.message || e));
+            btn.innerText = "SIMPAN & PRINT"; btn.disabled = false;
+        }
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
