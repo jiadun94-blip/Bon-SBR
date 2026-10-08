@@ -379,20 +379,8 @@
 
         document.getElementById('tglKirimGlobal').valueAsDate = new Date();
 
-        const simpananLokal = localStorage.getItem('sbr_list_kirim_sementara');
-        if(simpananLokal) {
-            try { listKirimSementara = JSON.parse(simpananLokal); } catch(e) { listKirimSementara = []; }
-        }
-
-        const tabunganLokal = localStorage.getItem('sbr_bank_tabungan_order');
-        if(tabunganLokal) {
-            try { bankTabunganOrder = JSON.parse(tabunganLokal); } catch(e) { bankTabunganOrder = []; }
-        }
-
-        const supplyLokal = localStorage.getItem('sbr_supply_armada');
-        if(supplyLokal) {
-            try { cacheSupplyArmada = JSON.parse(supplyLokal); } catch(e) { cacheSupplyArmada = {}; }
-        }
+        // Ambil data temporary dari database Supabase
+        await muatDataTemporaryDariCloud();
 
         try {
             const { data: agen, error: errAgen } = await clientSupabase.from('agen').select('*').order('nama_agen', { ascending: true });
@@ -443,6 +431,40 @@
         await muatRiwayatJadwalSelesai(); 
     }
 
+    async function muatDataTemporaryDariCloud() {
+        try {
+            const { data, error } = await clientSupabase.from('app_temporary_state').select('*');
+            if (!error && data) {
+                data.forEach(row => {
+                    if (row.key === 'sbr_list_kirim_sementara') listKirimSementara = row.data || [];
+                    if (row.key === 'sbr_bank_tabungan_order') bankTabunganOrder = row.data || [];
+                    if (row.key === 'sbr_supply_armada') cacheSupplyArmada = row.data || {};
+                });
+            }
+        } catch (e) {
+            console.error("Gagal memuat data temporary dari cloud:", e);
+        }
+    }
+
+    async function simpanKePenyimpananCloud(key, dataValue) {
+        try {
+            await clientSupabase.from('app_temporary_state').upsert({
+                key: key,
+                data: dataValue,
+                updated_at: new Date()
+            });
+        } catch (e) {
+            console.error("Gagal menyimpan ke cloud:", e);
+        }
+    }
+
+    function simpanKePenyimpananLokal() {
+        // Sinkronisasi otomatis ke Supabase Cloud agar bisa dibuka di perangkat mana saja
+        simpanKePenyimpananCloud('sbr_list_kirim_sementara', listKirimSementara);
+        simpanKePenyimpananCloud('sbr_bank_tabungan_order', bankTabunganOrder);
+        simpanKePenyimpananCloud('sbr_supply_armada', cacheSupplyArmada);
+    }
+
     function toggleTheme() {
         const logoImg = document.getElementById('logoBrand');
         document.body.classList.toggle('light-theme');
@@ -487,12 +509,6 @@
                 });
             }
         } catch(e) { console.error("Gagal ambil log dari tabel transaksi:", e); }
-    }
-
-    function simpanKePenyimpananLokal() {
-        localStorage.setItem('sbr_list_kirim_sementara', JSON.stringify(listKirimSementara));
-        localStorage.setItem('sbr_bank_tabungan_order', JSON.stringify(bankTabunganOrder));
-        localStorage.setItem('sbr_supply_armada', JSON.stringify(cacheSupplyArmada));
     }
 
     function sinkronisasiTanggalGlobal() {
