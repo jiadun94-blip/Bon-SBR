@@ -188,7 +188,7 @@
                 const tglHariIni = new Date().toISOString().split('T')[0];
 
                 const tglKemarinDate = new Date();
-                tglKemarinDate.setDate(tglKemarinDate.getDate() - 1);
+                tglKemarinDate.setDate(tglKemarinDate.getDate() - 2);
                 const tglKemarin = tglKemarinDate.toISOString().split('T')[0];
 
                 const { data: dataNota, error } = await supabaseClient
