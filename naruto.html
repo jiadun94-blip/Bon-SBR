@@ -237,7 +237,7 @@
 
         // 2. SET TANGGAL HARI INI
         const elTanggal = document.getElementById("tanggalHariIni");
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
         elTanggal.textContent = new Date().toLocaleDateString('id-ID', options);
 
         // 3. AMBIL DATA NOTA DARI SUPABASE (Tanpa Filter yang Bikin Error)
