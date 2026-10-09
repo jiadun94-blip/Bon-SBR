@@ -113,6 +113,10 @@
 
         .table-simulasi th { background: #744210; color: #fefcbf; border-bottom: 1px solid #b7791f; }
         .table-simulasi td { border-bottom: 1px solid #4a5568; padding: 4px; }
+        .table-simulasi td.sisa-sim { color: #ffffff; }
+        .table-simulasi td.sisa-sim.minus { color: #e53e3e; }
+        body.light-theme .table-simulasi td.sisa-sim { color: #000000; }
+        body.light-theme .table-simulasi td.sisa-sim.minus { color: #e53e3e; }
         .input-sim-armada { width: 100%; box-sizing: border-box; background: #121214; border: 1px solid #4a5568; color: #cbd5e0; padding: 5px; border-radius: 4px; font-size: 13px; font-family: 'Roboto Condensed', Tahoma, sans-serif;}
         .input-sim-saldo { width: 100%; box-sizing: border-box; background: #1a202c; border: 1px solid #4a5568; color: #fff; padding: 5px; border-radius: 4px; font-size: 14px; text-align: center; font-weight: bold; font-family: 'Roboto Condensed', Tahoma, sans-serif;}
 
@@ -231,6 +235,7 @@
         <div class="summary-card stock">
             <div class="summary-header" style="flex-wrap: wrap; gap: 5px;">
                 <span style="display:flex; align-items:center;">📦 SIMULASI ALOKASI ITEM</span>
+                <button onclick="downloadSimulasiPNG()" title="Download tabel simulasi sebagai PNG" style="padding:4px 10px; border-radius:4px; background:#2b6cb0; color:#fff; border:none; font-size:13px; font-weight:bold; cursor:pointer; font-family: 'Roboto Condensed', Tahoma, sans-serif;">⬇️ PNG</button>
                 <select id="pilihItemSimulasi" onchange="renderTabelSimulasi()" style="padding:4px; border-radius:4px; background:#1a202c; color:#fff; border:1px solid #4a5568; font-size:13px; font-weight:bold; min-width:120px; font-family: 'Roboto Condensed', Tahoma, sans-serif;">
                     <option value="">-- Pilih Item --</option>
                 </select>
@@ -901,6 +906,7 @@
         let sisaBerjalan = totalSupply;
 
         let html = '';
+        let simRows = [];
         for(let i = 0; i < maxRows; i++) {
              let sup = supplyList[i] || {armada:'', qty:''};
              let dem = demandList[i];
@@ -916,16 +922,25 @@
                     <td style="font-size:13px;">${dem.agen} ${tagFix}</td>
                     <td style="text-align:center; font-weight:bold;">${dem.qty}</td>
                  `;
-                 htmlSisa = `<td style="text-align:center; font-weight:900; font-size:15px; color:${sisaBerjalan < 0 ? '#e53e3e' : 'inherit'}">${sisaBerjalan}</td>`;
+                 htmlSisa = `<td class="sisa-sim${sisaBerjalan < 0 ? ' minus' : ''}" style="text-align:center; font-weight:900; font-size:15px;">${sisaBerjalan}</td>`;
              } else {
                  if(i >= demandList.length && demandList.length > 0) {
                      htmlAgen = `<td style="text-align:center;">-</td><td style="text-align:center;">0</td>`;
-                     htmlSisa = `<td style="text-align:center; font-weight:900; font-size:15px; color:${sisaBerjalan < 0 ? '#e53e3e' : 'inherit'}">${sisaBerjalan}</td>`;
+                     htmlSisa = `<td class="sisa-sim${sisaBerjalan < 0 ? ' minus' : ''}" style="text-align:center; font-weight:900; font-size:15px;">${sisaBerjalan}</td>`;
                  } else {
                      htmlAgen = `<td></td><td></td>`;
                      htmlSisa = `<td></td>`;
                  }
              }
+
+             simRows.push({
+                 armada: sup.armada || '',
+                 saldo: sup.qty || '',
+                 agen: dem ? dem.agen : (demandList.length > 0 && i >= demandList.length ? '-' : ''),
+                 fix: dem ? dem.isFixed : false,
+                 dikirim: dem ? dem.qty : (demandList.length > 0 && i >= demandList.length ? 0 : ''),
+                 sisa: (dem || (demandList.length > 0 && i >= demandList.length)) ? sisaBerjalan : ''
+             });
 
              html += `<tr>
                  <td><input type="text" class="input-sim-armada" value="${sup.armada || ''}" onchange="updateSupplyItem('${item}', ${i}, 'armada', this.value)" placeholder="Nama Armada..."></td>
@@ -941,7 +956,95 @@
             <td colspan="3"></td>
         </tr>`;
 
+        window.lastSimData = { item: item, rows: simRows, total: totalSupply };
         container.innerHTML = html;
+    }
+
+    function downloadSimulasiPNG() {
+        const d = window.lastSimData;
+        if (!d || !d.item) { alert('Pilih item simulasi terlebih dahulu.'); return; }
+
+        const scale = 2, W = 760, pad = 20, rowH = 34, headH = 40, titleH = 64;
+        const cols = [
+            { t: 'Armada', w: 190, a: 'left' },
+            { t: 'Saldo Kirim', w: 100, a: 'center' },
+            { t: 'Agen', w: 220, a: 'left' },
+            { t: 'Dikirim', w: 100, a: 'center' },
+            { t: 'Sisa', w: 110, a: 'center' }
+        ];
+        const tableW = cols.reduce((x, c) => x + c.w, 0);
+        const cw = tableW + pad * 2;
+        const rows = d.rows;
+        const ch = pad + titleH + headH + rows.length * rowH + rowH + pad;
+
+        const cv = document.createElement('canvas');
+        cv.width = cw * scale; cv.height = ch * scale;
+        const g = cv.getContext('2d');
+        g.scale(scale, scale);
+        const font = "'Roboto Condensed', Tahoma, sans-serif";
+
+        g.fillStyle = '#ffffff'; g.fillRect(0, 0, cw, ch);
+
+        // judul
+        g.fillStyle = '#1a202c'; g.textBaseline = 'middle'; g.textAlign = 'left';
+        g.font = `900 20px ${font}`;
+        g.fillText('SIMULASI ALOKASI ITEM', pad, pad + 14);
+        g.font = `bold 15px ${font}`; g.fillStyle = '#744210';
+        g.fillText('Item: ' + d.item, pad, pad + 38);
+        const tgl = (document.getElementById('tglKirimGlobal') || {}).value;
+        if (tgl) { g.textAlign = 'right'; g.fillStyle = '#718096'; g.font = `bold 13px ${font}`; g.fillText(tgl, cw - pad, pad + 38); }
+
+        const cellText = (txt, x, w, a, y) => {
+            g.textAlign = a;
+            const tx = a === 'left' ? x + 8 : x + w / 2;
+            let t = String(txt), max = w - 16;
+            while (g.measureText(t).width > max && t.length > 1) t = t.slice(0, -1);
+            if (t !== String(txt)) t = t.slice(0, -1) + '…';
+            g.fillText(t, tx, y);
+        };
+
+        // header tabel
+        let y = pad + titleH, x = pad;
+        g.fillStyle = '#744210'; g.fillRect(pad, y, tableW, headH);
+        g.fillStyle = '#fefcbf'; g.font = `900 13px ${font}`;
+        cols.forEach(c => { cellText(c.t.toUpperCase(), x, c.w, c.a, y + headH / 2); x += c.w; });
+        y += headH;
+
+        // baris
+        rows.forEach((r, i) => {
+            if (i % 2 === 1) { g.fillStyle = '#f7fafc'; g.fillRect(pad, y, tableW, rowH); }
+            g.fillStyle = '#e2e8f0'; g.fillRect(pad, y + rowH - 1, tableW, 1);
+            const vals = [r.armada, r.saldo, r.agen + (r.fix ? ' (FIX)' : ''), r.dikirim, r.sisa];
+            x = pad;
+            vals.forEach((v, ci) => {
+                let c = cols[ci];
+                g.font = (ci === 0 || ci === 2) ? `bold 14px ${font}` : `900 15px ${font}`;
+                g.fillStyle = '#2d3748';
+                if (ci === 2 && r.fix) g.fillStyle = '#27ae60';
+                if (ci === 4 && v !== '' && v < 0) g.fillStyle = '#e53e3e';
+                cellText(v, x, c.w, c.a, y + rowH / 2);
+                x += c.w;
+            });
+            y += rowH;
+        });
+
+        // total
+        g.fillStyle = '#fefcbf'; g.fillRect(pad, y, tableW, rowH);
+        g.fillStyle = '#1a202c'; g.font = `900 15px ${font}`;
+        g.textAlign = 'left'; g.fillText('Total Kiriman :', pad + 8, y + rowH / 2);
+        g.textAlign = 'center'; g.fillText(String(d.total), pad + cols[0].w + cols[1].w / 2, y + rowH / 2);
+
+        // border luar
+        g.strokeStyle = '#b7791f'; g.lineWidth = 1;
+        g.strokeRect(pad + 0.5, pad + titleH + 0.5, tableW - 1, headH + rows.length * rowH + rowH - 1);
+
+        cv.toBlob(blob => {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'Simulasi_' + d.item.replace(/[^\w\-]+/g, '_') + '_' + (tgl || '') + '.png';
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        }, 'image/png');
     }
 
     function renderListKirimCompact() {
