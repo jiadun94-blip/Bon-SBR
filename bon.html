@@ -64,7 +64,7 @@
         .btn-reprint:disabled { background: #cbd5e0; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
         .btn-clear { padding: 15px; background: #718096; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #4a5568; text-transform: uppercase; }
         
-        .struk-visual-container { position: absolute; left: -9999px; top: 0; width: 400px; }
+        .struk-visual-container { position: fixed; left: 0; top: 0; width: 380px; z-index: -9999; opacity: 0; pointer-events: none; }
         .struk-visual { background: #fff; padding: 25px; color: #000; font-family: 'Courier New', Courier, monospace; font-size: 14px; border: 1px solid #ccc; line-height: 1.4; }
         .struk-visual .garis { border-top: 1px dashed #000; margin: 8px 0; }
         .struk-visual .garis-tebal { border-top: 2px dashed #000; margin: 8px 0; }
@@ -128,20 +128,20 @@
         .wizard-search { width:100%; box-sizing:border-box; padding:13px 14px; margin-top:12px; border-radius:13px; border:1px solid rgba(120,150,195,.28); outline:none; font:700 14px inherit; color:var(--ink); background:linear-gradient(145deg,#fff,#e8f0fc); box-shadow:var(--shadow-in); }
         .wizard-search:focus { border-color:#3c9fe9; box-shadow:0 0 0 3px rgba(60,159,233,.13),var(--shadow-in); }
         .wizard-launch.completed { display:none !important; }
-        .nota-summary { display:none; margin:0 0 14px; padding:14px 16px; border-radius:16px; border:1px solid rgba(255,255,255,.9); background:linear-gradient(125deg,rgba(255,255,255,.97),rgba(226,237,252,.94) 58%,rgba(214,248,241,.94)); box-shadow:var(--shadow-out),inset 0 1px 1px #fff; color:#263b58; position:relative; font-family:'Tahoma',Courier,monospace; }
+        .nota-summary { display:none; margin:0 0 14px; padding:14px 16px; border-radius:16px; border:1px solid rgba(255,255,255,.9); background:linear-gradient(125deg,rgba(255,255,255,.97),rgba(226,237,252,.94) 58%,rgba(214,248,241,.94)); box-shadow:var(--shadow-out),inset 0 1px 1px #fff; color:#263b58; position:relative; font-family:'Courier New',Courier,monospace; }
         .nota-summary.visible { display:block; }
         .nota-summary-top { display:flex; justify-content:space-between; align-items:center; gap:10px; padding-bottom:9px; margin-bottom:9px; border-bottom:1px dashed rgba(85,112,153,.35); }
-        .nota-summary-title { font-weight:900; font-size:16px; letter-spacing:.3px; color:#2b4e82; }
+        .nota-summary-title { font-weight:900; font-size:12px; letter-spacing:.3px; color:#2b4e82; }
         .nota-summary-edit { border:0; border-radius:10px; padding:8px 11px; color:white; font:900 12px 'Roboto',sans-serif; background:linear-gradient(110deg,#3479f6,#08bda8); }
-        .receipt-meta { display:flex; justify-content:space-between; gap:12px; padding:0 0 8px; margin-bottom:8px; border-bottom:1px dashed rgba(85,112,153,.3); font-size:16px; }
+        .receipt-meta { display:flex; justify-content:space-between; gap:12px; padding:0 0 8px; margin-bottom:8px; border-bottom:1px dashed rgba(85,112,153,.3); font-size:12px; }
         .receipt-meta span { min-width:0; overflow-wrap:anywhere; }
-        .receipt-meta strong { display:inline; font:700 12px 'Tahoma',Courier,monospace; margin-left:4px; }
+        .receipt-meta strong { display:inline; font:700 12px 'Courier New',Courier,monospace; margin-left:4px; }
         .receipt-lines { display:grid; gap:7px; }
-        .receipt-line { display:flex; justify-content:center; align-items:flex-start; gap:4px; text-align:center; font:700 12px/1.4 'Tahoma',Courier,monospace; }
+        .receipt-line { display:flex; justify-content:center; align-items:flex-start; gap:4px; text-align:center; font:700 12px/1.4 'Courier New',Courier,monospace; }
         .receipt-line span { display:none; }
         .receipt-line strong { flex:1; text-align:center; overflow-wrap:anywhere; font-size:12px; }
-        .receipt-line.receipt-agent strong { font:900 20px/1.2 'Tahoma',Courier,monospace; letter-spacing:.7px; text-transform:uppercase; }
-        .receipt-line.receipt-driver strong { font:700 12px/1.5 'Tahoma',Courier,monospace; }
+        .receipt-line.receipt-agent strong { font:900 20px/1.2 'Courier New',Courier,monospace; letter-spacing:.7px; text-transform:uppercase; }
+        .receipt-line.receipt-driver strong { font:700 12px/1.5 'Courier New',Courier,monospace; }
         .receipt-separator { border-top:1px dashed rgba(85,112,153,.3); margin:8px 0 0; }
         body.dark-theme .nota-summary { background:linear-gradient(125deg,#172637,#1b2d3b 58%,#1b3338); border-color:rgba(143,174,198,.28); box-shadow:var(--shadow-out),inset 0 1px 1px rgba(173,207,230,.06); color:#e1e9ef; }
         body.dark-theme .nota-summary-title { color:#bcd3e4; }
@@ -418,7 +418,184 @@
         body.dark-theme #modalPreviewLaporan p { color:#cbd5e0; }
         .header-actions { display:flex; align-items:center; gap:8px; }
         .btn-theme { border:1px solid rgba(255,255,255,.55); border-radius:12px; padding:9px 11px; font-size:18px; line-height:1; cursor:pointer; color:#164c87; background:linear-gradient(145deg,#fff,#dceaff); box-shadow:0 4px 10px rgba(55,100,170,.16),inset 0 1px 1px #fff; }
-        body.dark-theme .btn-theme { color:#a9eeff; background:linear-gradient(145deg,#173a59,#0a2138); border-color:rgba(87,179,235,.35); box-shadow:0 4px 12px rgba(0,0,0,.3),inset 0 1px 1px rgba(255,255,255,.1); }
+        /* Save Action Modal Styles & Mobile Hitbox */
+        #saveActionModal .modal-content {
+            max-width: 420px;
+            padding: 24px 20px;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(15, 30, 65, 0.35);
+        }
+        .btn-save-action-cancel, .btn-save-action-go {
+            min-height: 52px;
+            padding: 14px 18px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 900;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            letter-spacing: .5px;
+            transition: transform .14s ease, filter .14s ease, box-shadow .14s ease;
+            touch-action: manipulation;
+            border: none;
+        }
+        .btn-save-action-cancel {
+            background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+            color: #334155;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.06), inset 0 1px 1px #fff;
+        }
+        .btn-save-action-go {
+            background: linear-gradient(110deg, #10b981 0%, #059669 50%, #0d9488 100%);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            box-shadow: 0 6px 18px rgba(16, 185, 129, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.45);
+        }
+        .btn-save-action-cancel:active, .btn-save-action-go:active {
+            transform: scale(0.97);
+        }
+        .btn-save-action-cancel:disabled, .btn-save-action-go:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none !important;
+            filter: grayscale(0.5);
+        }
+        body.dark-theme #saveActionModal .modal-content {
+            background: linear-gradient(145deg, rgba(16, 35, 58, 0.98), rgba(9, 23, 40, 0.98));
+            border-color: rgba(75, 153, 209, 0.35);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.65);
+        }
+        body.dark-theme .btn-save-action-cancel {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            color: #e2e8f0;
+            border-color: rgba(148, 163, 184, 0.28);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.06);
+        }
+        body.dark-theme .btn-save-action-go {
+            background: linear-gradient(110deg, #059669 0%, #047857 50%, #0f766e 100%);
+            border-color: rgba(52, 211, 153, 0.4);
+            box-shadow: 0 6px 18px rgba(5, 150, 105, 0.35);
+        }
+
+        /* Interactive Animation Box */
+        .save-anim-box {
+            display: none;
+            padding: 16px 14px;
+            margin: 12px 0 16px;
+            border-radius: 16px;
+            background: linear-gradient(145deg, rgba(238, 246, 255, 0.92), rgba(224, 242, 254, 0.88));
+            border: 1px solid rgba(56, 189, 248, 0.45);
+            text-align: center;
+            box-shadow: inset 0 1px 2px #fff, 0 8px 18px rgba(56, 189, 248, 0.12);
+        }
+        body.dark-theme .save-anim-box {
+            background: linear-gradient(145deg, rgba(15, 33, 55, 0.92), rgba(8, 23, 41, 0.9));
+            border-color: rgba(56, 189, 248, 0.32);
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.05), 0 8px 18px rgba(0,0,0,0.35);
+        }
+        .save-anim-box.active { display: block; animation: animBoxFade .25s ease-out; }
+        @keyframes animBoxFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .save-anim-visual {
+            width: 58px;
+            height: 58px;
+            margin: 0 auto 10px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .save-anim-spinner {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 3.5px solid rgba(14, 165, 233, 0.18);
+            border-top-color: #0284c7;
+            border-right-color: #06b6d4;
+            animation: spinRing .9s linear infinite;
+        }
+        body.dark-theme .save-anim-spinner {
+            border-top-color: #38bdf8;
+            border-right-color: #2dd4bf;
+        }
+        @keyframes spinRing { to { transform: rotate(360deg); } }
+        .save-anim-icon {
+            font-size: 24px;
+            position: relative;
+            z-index: 2;
+            animation: pulseIcon 1.3s ease-in-out infinite;
+        }
+        @keyframes pulseIcon {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(2, 132, 199, 0.5)); }
+        }
+        .save-anim-visual.is-success .save-anim-spinner {
+            border-color: #10b981;
+            animation: none;
+            box-shadow: 0 0 18px rgba(16, 185, 129, 0.5);
+        }
+        .save-anim-visual.is-success .save-anim-icon {
+            animation: checkPop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes checkPop {
+            0% { transform: scale(0.3); opacity: 0; }
+            80% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .save-anim-stage-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            padding: 3px 12px;
+            border-radius: 999px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            margin-bottom: 6px;
+            transition: all .2s ease;
+        }
+        body.dark-theme .save-anim-stage-badge {
+            background: #1e3a5f;
+            color: #93c5fd;
+        }
+        .save-anim-status-text {
+            font-size: 14px;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 10px;
+            min-height: 20px;
+        }
+        body.dark-theme .save-anim-status-text {
+            color: #f1f5f9;
+        }
+        .save-anim-progress-bar {
+            height: 9px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.28);
+            overflow: hidden;
+            position: relative;
+        }
+        .save-anim-progress-fill {
+            height: 100%;
+            width: 15%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #0284c7, #06b6d4, #10b981, #0284c7);
+            background-size: 200% 100%;
+            animation: shimmerProgress 1.4s linear infinite;
+            transition: width 0.35s ease;
+        }
+        @keyframes shimmerProgress {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        #modalPreviewLaporan {
+            z-index: 1300 !important;
+        }
+
         @media (max-width:420px) {
             body { padding:8px; font-size:15px; }
             .container { padding:11px; border-radius:21px; }
@@ -633,30 +810,47 @@
 
 <!-- Popup pilihan aksi setelah simpan -->
 <div id="saveActionModal" class="modal" style="display:none; z-index:1200;">
-    <div class="modal-content" style="max-width:380px; padding:20px;">
-        <h3 style="margin:0 0 6px;">Simpan nota</h3>
+    <div class="modal-content">
+        <h3 style="margin:0 0 10px; font-size:18px; font-weight:900;">Simpan nota</h3>
+        
         <div id="saveActionChoices">
             <label class="pay-wizard-option" id="actionCustomerRow"><input type="checkbox" id="actionCustomer" checked> Cetak lembar customer</label>
             <label class="pay-wizard-option" id="actionAdminRow"><input type="checkbox" id="actionAdmin" checked> Cetak lembar admin</label>
             <label class="pay-wizard-option"><input type="checkbox" id="actionJpg" checked> Simpan JPG</label>
         </div>
-        <div id="saveActionStatus" role="status" style="margin:12px 0; font-size:13px; font-weight:700;">Pilih aksi lanjutan.</div>
+
+        <!-- Interactive Animation Box -->
+        <div id="saveActionAnimationBox" class="save-anim-box">
+            <div id="saveAnimVisual" class="save-anim-visual">
+                <div class="save-anim-spinner"></div>
+                <div id="saveAnimIcon" class="save-anim-icon">💾</div>
+            </div>
+            <div id="saveAnimStage" class="save-anim-stage-badge">MENYIAPKAN DATA</div>
+            <div id="saveAnimStatus" class="save-anim-status-text">Sedang memproses transaksi…</div>
+            <div class="save-anim-progress-bar">
+                <div id="saveAnimProgressFill" class="save-anim-progress-fill"></div>
+            </div>
+        </div>
+
+        <div id="saveActionStatus" role="status" style="margin:12px 0 14px; font-size:13px; font-weight:700; color:var(--muted); text-align:center;">Pilih opsi penyimpanan dan cetak.</div>
         <div id="saveActionRetry" style="display:none;"></div>
-        <div style="display:flex; gap:8px;">
-            <button id="saveActionCancel" type="button" onclick="closeSaveActionModal()" style="flex:1;">BATAL</button>
-            <button id="saveActionGo" type="button" onclick="confirmSaveActions()" style="flex:1;">SIMPAN</button>
+        
+        <div style="display:flex; gap:12px;">
+            <button id="saveActionCancel" class="btn-save-action-cancel" type="button" onclick="closeSaveActionModal()" style="flex:1;">BATAL</button>
+            <button id="saveActionGo" class="btn-save-action-go" type="button" onclick="confirmSaveActions()" style="flex:1;">SIMPAN</button>
         </div>
     </div>
 </div>
 
 <!-- Modal Preview Laporan -->
 <div id="modalPreviewLaporan" class="modal">
-    <div class="modal-content" style="text-align: center;">
-        <h3 style="margin-top:0; color:#27ae60;">✅ Struk Laporan Digital Siap!</h3>
-        <p style="font-size:14px; color:#4a5568; margin-bottom: 12px;">Gambar sudah otomatis terunduh ke HP Anda. Anda juga bisa langsung membagikannya ke WhatsApp Admin.</p>
-        <img id="imgPreviewLaporan" style="width:100%; border:1px solid #cbd5e0; border-radius:8px; margin-bottom:12px; box-shadow:0 4px 6px rgba(0,0,0,0.1);" />
-        <button type="button" id="btnShareWa" onclick="bagikanKeWhatsApp()" style="width:100%; padding:14px; background:#25D366; color:white; border:none; border-radius:10px; font-weight:900; font-size:15px; cursor:pointer; margin-bottom:10px;">📲 BAGIKAN KE WHATSAPP</button>
-        <button type="button" onclick="document.getElementById('modalPreviewLaporan').style.display='none'" style="width:100%; padding:14px; background:#3182ce; color:white; border:none; border-radius:10px; font-weight:900; font-size:15px; cursor:pointer;">TUTUP</button>
+    <div class="modal-content" style="text-align: center; max-width:440px;">
+        <h3 style="margin-top:0; color:#10b981; font-weight:900; font-size:20px;">✅ Struk Laporan Digital Siap!</h3>
+        <p style="font-size:14px; margin-bottom: 14px; line-height:1.5;">Gambar otomatis diunduh ke perangkat Anda. Jika unduhan tidak berjalan otomatis, silakan ketuk tombol <b>Unduh Ulang</b> di bawah ini.</p>
+        <img id="imgPreviewLaporan" alt="Preview Struk" style="width:100%; border:1px solid rgba(148,163,184,0.3); border-radius:12px; margin-bottom:14px; box-shadow:0 6px 14px rgba(0,0,0,0.12);" />
+        <button type="button" id="btnUnduhUlang" onclick="unduhLaporanUlang()" class="btn-save-action-go" style="width:100%; margin-bottom:10px; background:linear-gradient(110deg,#0284c7,#0369a1); box-shadow:0 6px 18px rgba(2,132,199,0.35);">📥 UNDUH ULANG GAMBAR</button>
+        <button type="button" id="btnShareWa" onclick="bagikanKeWhatsApp()" style="width:100%; min-height:52px; padding:14px; background:linear-gradient(110deg,#22c55e,#16a34a); color:white; border:none; border-radius:14px; font-weight:900; font-size:15px; cursor:pointer; margin-bottom:10px; box-shadow:0 6px 18px rgba(34,197,94,0.35); display:flex; align-items:center; justify-content:center; gap:8px;">📲 BAGIKAN KE WHATSAPP</button>
+        <button type="button" onclick="document.getElementById('modalPreviewLaporan').style.display='none'" class="btn-save-action-cancel" style="width:100%;">TUTUP</button>
     </div>
 </div>
 
@@ -993,11 +1187,18 @@
         document.getElementById('actionAdmin').checked = isPrint;
         document.getElementById('actionJpg').checked = true;
         document.getElementById('saveActionChoices').style.display = savedTransactionData ? 'none' : '';
-        document.getElementById('saveActionStatus').textContent = savedTransactionData ? 'Transaksi sudah tersimpan. Lanjutkan hanya aksi yang masih gagal.' : 'Pilih aksi lanjutan.';
+        document.getElementById('saveActionStatus').textContent = savedTransactionData ? 'Transaksi sudah tersimpan. Lanjutkan hanya aksi yang masih gagal.' : 'Pilih opsi penyimpanan dan cetak:';
         document.getElementById('saveActionRetry').style.display = 'none';
-        document.getElementById('saveActionGo').textContent = savedTransactionData ? 'ULANGI AKSI GAGAL' : 'SIMPAN';
-        document.getElementById('saveActionGo').onclick = savedTransactionData ? retryFailedSaveActions : confirmSaveActions;
-        document.getElementById('saveActionGo').disabled = false;
+
+        // Reset interactive animation
+        const animBox = document.getElementById('saveActionAnimationBox');
+        if (animBox) animBox.classList.remove('active');
+        const animVisual = document.getElementById('saveAnimVisual');
+        if (animVisual) animVisual.classList.remove('is-success');
+
+        actionGo.textContent = savedTransactionData ? 'ULANGI AKSI GAGAL' : 'SIMPAN';
+        actionGo.onclick = savedTransactionData ? retryFailedSaveActions : confirmSaveActions;
+        actionGo.disabled = false;
         document.getElementById('saveActionCancel').disabled = false;
         document.getElementById('saveActionModal').style.display = 'block';
     }
@@ -1476,7 +1677,75 @@
         } catch(e) { alert("Reprint Gagal: " + (e?.message || e)); }
     }
 
+    function updateSaveAnimation(stage, statusText, percent, isDone = false, isError = false) {
+        const box = document.getElementById('saveActionAnimationBox');
+        if (!box) return;
+        box.classList.add('active');
+        
+        const badge = document.getElementById('saveAnimStage');
+        if (badge) badge.textContent = stage;
+        
+        const status = document.getElementById('saveAnimStatus');
+        if (status) status.textContent = statusText;
+        
+        const progress = document.getElementById('saveAnimProgressFill');
+        if (progress) progress.style.width = Math.min(100, Math.max(8, percent)) + '%';
+        
+        const visual = document.getElementById('saveAnimVisual');
+        const icon = document.getElementById('saveAnimIcon');
+        
+        if (isDone) {
+            if (visual) visual.classList.add('is-success');
+            if (icon) icon.textContent = '✅';
+            if (badge) {
+                badge.style.background = '#dcfce7';
+                badge.style.color = '#15803d';
+            }
+        } else if (isError) {
+            if (visual) visual.classList.remove('is-success');
+            if (icon) icon.textContent = '⚠️';
+            if (badge) {
+                badge.style.background = '#fee2e2';
+                badge.style.color = '#b91c1c';
+            }
+        } else {
+            if (visual) visual.classList.remove('is-success');
+            if (badge) {
+                badge.style.background = '';
+                badge.style.color = '';
+            }
+            if (percent < 35) {
+                if (icon) icon.textContent = '☁️';
+            } else if (percent < 65) {
+                if (icon) icon.textContent = '💳';
+            } else if (percent < 85) {
+                if (icon) icon.textContent = '🖼️';
+            } else {
+                if (icon) icon.textContent = '📥';
+            }
+        }
+    }
+
+    function unduhLaporanUlang() {
+        if (!currentLaporanBlob) {
+            alert("Gambar laporan belum siap. Silakan ulangi penyimpanan.");
+            return;
+        }
+        const noNota = document.getElementById('noNota')?.value || 'Nota';
+        const blobUrl = URL.createObjectURL(currentLaporanBlob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `Laporan_SBR_${noNota}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+            try { document.body.removeChild(link); } catch(_) {}
+            URL.revokeObjectURL(blobUrl);
+        }, 1500);
+    }
+
     async function buatGambarLaporan(dataStruk) {
+        updateSaveAnimation('MEMBUAT GAMBAR', 'Merender struk visual berkualitas tinggi...', 75);
         const area = document.getElementById('areaCetakGambar');
         let htmlContent = `
             <div style="text-align:center;margin-bottom:10px;"><h2 style="margin:0;font-family:Roboto,sans-serif;font-size:22px;">SBR PUTRA FOOD</h2><div>Lembang, Bandung Barat</div><div class="garis"></div><div style="font-weight:bold;font-size:16px;margin:5px 0;">*** LEMBAR ADMIN ***</div><div class="garis"></div></div>
@@ -1500,24 +1769,47 @@
         htmlContent += `<div class="flex-row"><span>Bayar CASH:</span><span>Rp ${dataStruk.cash.toLocaleString('id-ID')}</span></div><div class="flex-row"><span>Bayar TRF:</span><span>Rp ${dataStruk.trf.toLocaleString('id-ID')}</span></div><div class="garis"></div>`;
         htmlContent += `<div class="flex-row" style="font-weight:bold;font-size:16px;"><span>${dataStruk.sisa < 0 ? 'DEPOSIT:' : 'SISA BON:'}</span><span>Rp ${Math.abs(dataStruk.sisa).toLocaleString('id-ID')}</span></div><div class="garis"></div><div style="text-align:center;margin-top:30px;font-weight:bold;">SBR PUTRA FOOD SYSTEM</div>`;
         area.innerHTML = htmlContent;
-        const canvas = await html2canvas(area, { scale:2, backgroundColor:'#ffffff', logging:false });
-        
-        canvas.toBlob(blob => {
-            currentLaporanBlob = blob;
-        }, 'image/jpeg', 0.9);
 
-        const imgUrl = canvas.toDataURL('image/jpeg', 0.9);
+        // Beri waktu sejenak agar DOM layout stabil sebelum html2canvas mengklon
+        await new Promise(r => setTimeout(r, 80));
+
+        const canvas = await html2canvas(area, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            logging: false,
+            useCORS: true,
+            allowTaint: true,
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: 400
+        });
+
+        updateSaveAnimation('MEMBUAT FILE', 'Menyiapkan berkas JPG & preview...', 90);
+
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+        if (!blob) throw new Error("Gagal mengonversi canvas menjadi file gambar.");
+        currentLaporanBlob = blob;
+
+        const blobUrl = URL.createObjectURL(blob);
         const imgPreview = document.getElementById('imgPreviewLaporan');
-        if (imgPreview) imgPreview.src = imgUrl;
+        if (imgPreview) imgPreview.src = blobUrl;
+
+        // Trigger unduh otomatis via Object URL Blob (kompatibel penuh dengan browser mobile)
+        try {
+            const downloadLink = document.createElement('a');
+            downloadLink.href = blobUrl;
+            downloadLink.download = `Laporan_SBR_${dataStruk.noNota}.jpg`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            setTimeout(() => {
+                try { document.body.removeChild(downloadLink); } catch(_) {}
+            }, 1000);
+        } catch (downloadErr) {
+            console.warn("Auto-download tidak diizinkan browser otomatis:", downloadErr);
+        }
+
         const modalPreview = document.getElementById('modalPreviewLaporan');
         if (modalPreview) modalPreview.style.display = 'block';
-
-        const downloadLink = document.createElement('a');
-        downloadLink.href = imgUrl;
-        downloadLink.download = `Laporan_SBR_${dataStruk.noNota}.jpg`;
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
     }
 
     async function bagikanKeWhatsApp() {
@@ -1547,28 +1839,40 @@
         const status = document.getElementById('saveActionStatus');
         const failed = [];
         const jobs = [];
-        if (actions.customer) jobs.push(['customer', 'Mencetak lembar customer…', () => printToBT(p.replace('[JENIS_CETAKAN]', '=== LEMBAR CUSTOMER ==='))]);
-        if (actions.admin) jobs.push(['admin', 'Mencetak lembar admin…', async () => {
+        if (actions.customer) jobs.push(['customer', 'Mencetak lembar customer…', 65, () => printToBT(p.replace('[JENIS_CETAKAN]', '=== LEMBAR CUSTOMER ==='))]);
+        if (actions.admin) jobs.push(['admin', 'Mencetak lembar admin…', 75, async () => {
             if (actions.customer) await new Promise(r => setTimeout(r, 1500));
             await printToBT(p.replace('[JENIS_CETAKAN]', '=== LEMBAR ADMIN ==='));
         }]);
-        if (actions.jpg) jobs.push(['jpg', 'Membuat JPG dan memulai unduhan…', () => buatGambarLaporan(data)]);
-        for (const [key, message, run] of jobs) {
+        if (actions.jpg) jobs.push(['jpg', 'Membuat gambar JPG laporan…', 85, () => buatGambarLaporan(data)]);
+
+        for (const [key, message, pct, run] of jobs) {
             status.textContent = message;
-            try { await run(); status.textContent = key === 'jpg' ? 'JPG siap; unduhan telah dimulai.' : (key === 'customer' ? 'Lembar customer tercetak.' : 'Lembar admin tercetak.'); }
-            catch (e) { failed.push(key); status.textContent = `${key === 'jpg' ? 'JPG' : 'Cetak ' + key} gagal: ${e?.message || e}`; }
+            updateSaveAnimation(key === 'jpg' ? 'GAMBAR JPG' : 'CETAK PRINTER', message, pct);
+            try {
+                await run();
+                status.textContent = key === 'jpg' ? 'JPG siap; unduhan telah dimulai.' : (key === 'customer' ? 'Lembar customer tercetak.' : 'Lembar admin tercetak.');
+            } catch (e) {
+                failed.push(key);
+                status.textContent = `${key === 'jpg' ? 'JPG' : 'Cetak ' + key} gagal: ${e?.message || e}`;
+                updateSaveAnimation('PERHATIAN', `${key === 'jpg' ? 'JPG' : 'Cetak ' + key} gagal: ${e?.message || e}`, pct, false, true);
+            }
         }
         failedSaveActions = failed;
         if (failed.length) {
             status.textContent = `Nota tersimpan. Gagal: ${failed.map(k => k === 'jpg' ? 'JPG' : k).join(', ')}. Simpan tidak akan diulang.`;
+            updateSaveAnimation('SEBAGIAN GAGAL', `Beberapa aksi gagal: ${failed.join(', ')}`, 100, false, true);
             document.getElementById('saveActionGo').disabled = false;
+            document.getElementById('saveActionCancel').disabled = false;
             document.getElementById('saveActionGo').textContent = 'ULANGI YANG GAGAL';
             document.getElementById('saveActionGo').onclick = retryFailedSaveActions;
             document.getElementById('saveActionRetry').style.display = 'block';
         } else {
-            status.textContent = jobs.length ? 'Selesai. Nota tersimpan dan aksi terpilih telah diproses.' : 'Nota tersimpan. Tidak ada aksi lanjutan dipilih.';
+            status.textContent = jobs.length ? 'Selesai! Nota tersimpan dan semua aksi berhasil diproses.' : 'Nota tersimpan. Tidak ada aksi lanjutan dipilih.';
+            updateSaveAnimation('SELESAI', 'Nota tersimpan & semua proses berhasil!', 100, true);
             document.getElementById('saveActionGo').disabled = false;
-            document.getElementById('saveActionGo').textContent = 'SELESAI';
+            document.getElementById('saveActionCancel').disabled = false;
+            document.getElementById('saveActionGo').textContent = '✓ SELESAI';
             document.getElementById('saveActionGo').onclick = () => { document.getElementById('saveActionModal').style.display='none'; closePayWizardSuccess(); };
         }
     }
@@ -1580,6 +1884,7 @@
         document.getElementById('saveActionCancel').disabled = true;
         await runSelectedSaveActions(retry, savedTransactionData.data, savedTransactionData.p);
         document.getElementById('saveActionCancel').disabled = false;
+        document.getElementById('saveActionGo').disabled = false;
     }
 
     async function simpanDanPrint() {
@@ -1588,13 +1893,18 @@
         btn.disabled = true;
         document.getElementById('saveActionGo').disabled = true;
         document.getElementById('saveActionCancel').disabled = true;
-        document.getElementById('saveActionStatus').textContent = 'Menyimpan transaksi…';
+        document.getElementById('saveActionChoices').style.display = 'none';
+        
+        updateSaveAnimation('DATABASE', 'Menyimpan data transaksi nota...', 20);
+        document.getElementById('saveActionStatus').textContent = 'Menyimpan transaksi ke database…';
+
         if (savedTransactionData) {
             document.getElementById('saveActionGo').disabled = false;
             document.getElementById('saveActionCancel').disabled = false;
             await runSelectedSaveActions(activeSaveActions, savedTransactionData.data, savedTransactionData.p);
             return;
         }
+
         const ag = document.getElementById('pilihAgen').value;
         const drv1 = document.getElementById('driver1').value;
         const mobil = document.getElementById('pilihMobil').value;
@@ -1634,17 +1944,23 @@
         const data = {noNota,tglIndo,ag,drvGabung,mobil,itemsKirim:itemsKirim.map(i=>({...i})),itemsRetur:itemsRetur.map(i=>({...i})),tk,tr,ongkir,bl_input,tagihanBersih,cash,trf,sisa};
         let databaseStage = 'header';
         try {
+            updateSaveAnimation('DATABASE', 'Menyimpan header nota...', 25);
             let result = await clientSupabase.from('transaksi').insert([{no_nota:noNota,nama_agen:ag,tanggal:tglInput,driver_1:drv1,driver_2:drv2||null,plat_nomor:mobil,total_kirim:tk,total_retur:tr,bon_lama:bl_actual,ongkir,bayar_cash:cash,bayar_transfer:trf,sisa_akhir:sisa}]);
             if (result.error) throw new Error(result.error.message);
             savedTransactionData = {data,p};
             lastPrintText = p;
+            
+            updateSaveAnimation('RINCIAN', 'Menyimpan rincian barang nota...', 45);
             const details = [...itemsKirim.map(i=>({no_nota:noNota,nama_barang:i.barang,qty:i.qty,satuan:i.satuan,tipe:'Kirim',harga_satuan:i.harga,subtotal:i.total})),...itemsRetur.map(i=>({no_nota:noNota,nama_barang:i.barang,qty:i.qty,satuan:i.satuan,tipe:'Retur',harga_satuan:i.harga,subtotal:i.total}))];
             result = await clientSupabase.from('transaksi_detail').insert(details);
             if (result.error) throw new Error(result.error.message);
+            
             databaseStage = 'agent';
+            updateSaveAnimation('SALDO AGEN', 'Memperbarui saldo agen...', 60);
             result = await clientSupabase.from('agen').update({saldo_bon:sisa}).eq('nama_agen',ag);
             if (result.error) throw new Error(result.error.message);
         } catch (e) {
+            updateSaveAnimation('GAGAL', `Gagal: ${e.message || e}`, 100, false, true);
             if (savedTransactionData) {
                 document.getElementById('saveActionStatus').textContent = databaseStage === 'agent'
                     ? `Nota dan detail tersimpan, tetapi saldo agen gagal diperbarui: ${e.message || e}. Jangan simpan nota lagi.`
