@@ -409,9 +409,11 @@
           <button type="button" class="modal-close" onclick="closeReport()">✕</button>
         </div>
         <div style="max-height:58vh;overflow:auto;border-radius:10px;border:1px solid var(--line);background:#fff"><img id="reportImg" alt="Laporan belanja dan servis" style="width:100%;display:block"></div>
-        <button type="button" class="btn-wa" style="margin-top:12px" onclick="shareReport()">📤 BAGIKAN KE WHATSAPP</button>
-        <button type="button" class="btn-add-block" onclick="downloadReport()">⬇ SIMPAN PNG</button>
-        <div class="helper-note">Kalau tombol bagikan tidak membuka WhatsApp di perangkat ini, tekan SIMPAN PNG lalu lampirkan gambar dari galeri, atau tekan lama gambar di atas.</div>
+        <button type="button" class="btn-wa" style="margin-top:12px" onclick="shareReport()">📤 KIRIM KE WHATSAPP</button>
+        <div id="reportHint" class="helper-note" style="display:none"></div>
+        <label class="field-label" for="adminWa">NOMOR WA ADMIN (untuk cadangan, contoh 62812xxxx)</label>
+        <input id="adminWa" type="tel" inputmode="numeric" autocomplete="off" placeholder="62812xxxxxxx" oninput="this.value=this.value.replace(/\D/g,'');try{localStorage.setItem('sbr_admin_wa',this.value)}catch(e){}">
+        <button type="button" class="btn-add-block" onclick="downloadReport()">⬇ SIMPAN PNG MANUAL</button>
         <button type="button" class="btn-done" onclick="closeReport()">TUTUP</button>
       </div>
     </div>
@@ -1220,6 +1222,8 @@
             if(reportUrl) URL.revokeObjectURL(reportUrl);
             reportBlob=b; reportUrl=URL.createObjectURL(b);
             document.getElementById('reportImg').src=reportUrl;
+            try{ document.getElementById('adminWa').value=localStorage.getItem('sbr_admin_wa')||''; }catch(e){}
+            reportHint('');
             openEl('reportModal');
         },'image/png');
     }
@@ -1228,18 +1232,31 @@
         if(!reportUrl) return;
         const a=document.createElement('a'); a.href=reportUrl; a.download=reportName; document.body.appendChild(a); a.click(); a.remove();
     }
+    function reportHint(t){ const el=document.getElementById('reportHint'); if(!el) return; el.textContent=t; el.style.display=t?'block':'none'; }
     async function shareReport(){
         if(!reportBlob) return;
+        reportHint('');
+        const file=new File([reportBlob],reportName,{type:'image/png'});
+        // 1) Menu bagikan Android: gambar langsung terlampir, tinggal pilih WhatsApp & kontak admin
+        if(navigator.canShare && navigator.canShare({files:[file]})){
+            try{ await navigator.share({files:[file],title:'Laporan Belanja & Servis Armada'}); return; }
+            catch(e){ if(e && e.name==='AbortError') return; }
+        }
+        // 2) Cadangan: salin gambar ke clipboard lalu buka chat admin, tinggal Tempel & kirim
+        let copied=false;
         try{
-            const file=new File([reportBlob],reportName,{type:'image/png'});
-            if(navigator.canShare && navigator.canShare({files:[file]})){
-                await navigator.share({files:[file],title:'Laporan Belanja & Servis Armada'});
-                return;
+            if(navigator.clipboard && window.ClipboardItem){
+                await navigator.clipboard.write([new ClipboardItem({'image/png':reportBlob})]);
+                copied=true;
             }
-        }catch(e){ if(e && e.name==='AbortError') return; }
-        downloadReport();
-        alert('Gambar disimpan. Buka WhatsApp lalu lampirkan gambar dari galeri atau folder unduhan.');
-        window.open('https://wa.me/','_blank');
+        }catch(e){}
+        if(copied){
+            const num=(document.getElementById('adminWa').value||'').replace(/\D/g,'');
+            reportHint('✅ Gambar sudah disalin. Di chat WhatsApp, tekan lama kolom pesan lalu pilih Tempel, kemudian kirim.');
+            window.open(num?`https://wa.me/${num}`:'https://wa.me/','_blank');
+            return;
+        }
+        reportHint('Aplikasi/browser ini tidak bisa melampirkan gambar ke WhatsApp secara langsung. Buka file ini lewat Chrome (idealnya dari alamat HTTPS atau dipasang sebagai aplikasi) agar tombol ini langsung membuka WhatsApp dengan gambar terlampir.');
     }
     function toggleTheme(){
         const light=document.body.classList.toggle('light-theme');
