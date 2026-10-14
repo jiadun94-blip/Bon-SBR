@@ -382,7 +382,7 @@
           <textarea id="expenseNotes" rows="2" maxlength="240" placeholder="Catatan tambahan..."></textarea>
           <div class="modal-actions">
             <button type="submit" class="btn-save-expense">💾 SIMPAN CATATAN</button>
-            <button type="button" class="btn-wa" onclick="sendExpenseWA()">📲 KIRIM WA</button>
+            <button type="button" class="btn-wa" onclick="sendExpenseWA()">🖼️ LAPORAN GAMBAR (WA)</button>
             <button type="button" class="btn-reset" onclick="closeExpenseModal()">TUTUP</button>
           </div>
           <div class="helper-note">Alur: ✎ Atur (isi estimasi, lalu Selesai) → 📲 Ajukan anggaran via WhatsApp → setelah di-ACC tekan 💵 Realisasi untuk mulai mengisi harga sebenarnya (barang dan estimasi masih bisa ditambah atau diubah). Data versi ini tersimpan di browser perangkat ini.</div>
@@ -399,6 +399,20 @@
         <div id="repairList" class="dynamic-text-list"></div>
         <button type="button" class="btn-add-block" onclick="addTextItem('repair')">＋ TAMBAH PERBAIKAN</button>
         <button type="button" class="btn-done" onclick="closeRepairModal()">✔ SELESAI</button>
+      </div>
+    </div>
+
+    <div id="reportModal" class="expense-modal sub-modal" role="dialog" aria-modal="true">
+      <div class="expense-modal-card">
+        <div class="expense-modal-head">
+          <div><h2>🖼️ Laporan Gambar</h2><div class="expense-meta">Pratinjau sebelum dikirim ke WhatsApp</div></div>
+          <button type="button" class="modal-close" onclick="closeReport()">✕</button>
+        </div>
+        <div style="max-height:58vh;overflow:auto;border-radius:10px;border:1px solid var(--line);background:#fff"><img id="reportImg" alt="Laporan belanja dan servis" style="width:100%;display:block"></div>
+        <button type="button" class="btn-wa" style="margin-top:12px" onclick="shareReport()">📤 BAGIKAN KE WHATSAPP</button>
+        <button type="button" class="btn-add-block" onclick="downloadReport()">⬇ SIMPAN PNG</button>
+        <div class="helper-note">Kalau tombol bagikan tidak membuka WhatsApp di perangkat ini, tekan SIMPAN PNG lalu lampirkan gambar dari galeri, atau tekan lama gambar di atas.</div>
+        <button type="button" class="btn-done" onclick="closeReport()">TUTUP</button>
       </div>
     </div>
 
@@ -1086,24 +1100,146 @@
         if(!confirm('Hapus catatan belanja/servis ini?'))return;
         expenseItems=expenseItems.filter(x=>x.id!==id);localStorage.setItem(EXPENSE_STORAGE_KEY,JSON.stringify(expenseItems));renderExpenses();
     }
+    /* ===== Laporan gambar (PNG) untuk WhatsApp ===== */
+    let reportBlob=null, reportUrl='', reportName='laporan.png';
+    const BULAN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    const tglPanjang = d => { const m=String(d||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?`${Number(m[3])} ${BULAN[Number(m[2])-1]} ${m[1]}`:(d||'-'); };
+
+    function drawReport(rec,draw,ctx,W){
+        const P=28, ps=rec.purchases||[];
+        const est=ps.reduce((t,x)=>t+(Number(x.estimate)||0),0), act=ps.reduce((t,x)=>t+(Number(x.actual)||0),0);
+        const budget=Number(rec.budget)||0;
+        const DARK='#16324a', MUTED='#6b8294', TEAL='#0a8a8a', LINE='#d9e6ee', HEAD='#e8f3f9', ZEBRA='#f6fafc';
+        const F=(sz,wt='400')=>`${wt} ${sz}px Roboto, Arial, sans-serif`;
+        const T=(t,x,yy,f,c,al='left')=>{ if(!draw) return; ctx.font=f; ctx.fillStyle=c; ctx.textAlign=al; ctx.textBaseline='top'; ctx.fillText(t,x,yy); };
+        const R=(x,yy,w,h,c,r=0)=>{ if(!draw) return; ctx.fillStyle=c; ctx.beginPath();
+            ctx.moveTo(x+r,yy); ctx.lineTo(x+w-r,yy); ctx.quadraticCurveTo(x+w,yy,x+w,yy+r); ctx.lineTo(x+w,yy+h-r); ctx.quadraticCurveTo(x+w,yy+h,x+w-r,yy+h);
+            ctx.lineTo(x+r,yy+h); ctx.quadraticCurveTo(x,yy+h,x,yy+h-r); ctx.lineTo(x,yy+r); ctx.quadraticCurveTo(x,yy,x+r,yy); ctx.closePath(); ctx.fill(); };
+        const L=(yy,c=LINE)=>{ if(!draw) return; ctx.strokeStyle=c; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(P,yy+.5); ctx.lineTo(W-P,yy+.5); ctx.stroke(); };
+        const wrap=(t,maxW,f)=>{ ctx.font=f; const out=[]; let cur='';
+            String(t).split(' ').forEach(w=>{ const test=cur?cur+' '+w:w; if(ctx.measureText(test).width>maxW && cur){ out.push(cur); cur=w; } else cur=test; });
+            if(cur) out.push(cur); return out.length?out:['']; };
+        let y=0;
+
+        // Header
+        if(draw){ const g=ctx.createLinearGradient(0,0,W,96); g.addColorStop(0,'#0d3b66'); g.addColorStop(1,'#0a9494'); ctx.fillStyle=g; ctx.fillRect(0,0,W,96); }
+        T('LAPORAN BELANJA & SERVIS ARMADA',P,26,F(21,'700'),'#ffffff');
+        T('SBR FLEET CONTROL',P,58,F(12,'600'),'rgba(255,255,255,.8)');
+        y=96+22;
+
+        // Armada + tanggal
+        const vLines=wrap(rec.vehicle||'-',W-2*P-190,F(19,'700'));
+        T('ARMADA',P,y,F(11,'700'),MUTED); T('TANGGAL',W-P,y,F(11,'700'),MUTED,'right');
+        vLines.forEach((ln,i)=>T(ln,P,y+16+i*24,F(19,'700'),DARK));
+        T(tglPanjang(rec.date),W-P,y+19,F(15,'700'),DARK,'right');
+        y+=16+vLines.length*24+14; L(y); y+=16;
+
+        // Jenis perbaikan
+        if((rec.repairs||[]).length){
+            T('JENIS PERBAIKAN',P,y,F(12,'700'),TEAL); y+=22;
+            rec.repairs.forEach(r=>{
+                const ls=wrap(r,W-2*P-20,F(14));
+                T('•',P+2,y,F(14,'700'),TEAL);
+                ls.forEach((ln,i)=>T(ln,P+18,y+i*20,F(14),DARK));
+                y+=ls.length*20+4;
+            });
+            y+=10;
+        }
+
+        // Tabel belanja
+        T('RINCIAN BELANJA',P,y,F(12,'700'),TEAL); y+=22;
+        const colW=140, nameW=W-2*P-2*colW, c2=P+nameW+colW, c3=W-P;
+        R(P,y,W-2*P,30,HEAD,8);
+        T('BARANG',P+12,y+10,F(11,'700'),MUTED); T('ESTIMASI',c2-12,y+10,F(11,'700'),MUTED,'right'); T('REALISASI',c3-12,y+10,F(11,'700'),MUTED,'right');
+        y+=30;
+        ps.forEach((x,i)=>{
+            const ls=wrap(x.name||'Barang',nameW-24,F(14,'600'));
+            const h=ls.length*19+16;
+            if(i%2===1) R(P,y,W-2*P,h,ZEBRA);
+            ls.forEach((ln,k)=>T(ln,P+12,y+8+k*19,F(14,'600'),DARK));
+            T(rupiah(x.estimate),c2-12,y+8,F(14),DARK,'right');
+            if(Number(x.actual)>0) T(rupiah(x.actual),c3-12,y+8,F(14,'700'),DARK,'right'); else T('—',c3-12,y+8,F(14),MUTED,'right');
+            y+=h; L(y);
+        });
+        R(P,y+4,W-2*P,36,HEAD,8);
+        T('JUMLAH',P+12,y+14,F(13,'700'),DARK); T(rupiah(est),c2-12,y+13,F(14,'700'),DARK,'right'); T(act>0?rupiah(act):'—',c3-12,y+13,F(14,'700'),DARK,'right');
+        y+=4+36+22;
+
+        // Ringkasan
+        const rows=[];
+        if(act>0) rows.push(['Jumlah realisasi',rupiah(act),DARK,15]);
+        if(act>0 && est>0){ const d=act-est; rows.push([d<=0?'Lebih hemat dari estimasi':'Melebihi estimasi',rupiah(Math.abs(d)),d<=0?'#1c8a60':'#c62828',14]); }
+        if(budget>0) rows.push(['Uang belanja',rupiah(budget),DARK,15]);
+        let sisaRow=null;
+        if(budget>0 && act>0){ const sisa=budget-act; sisaRow=[sisa>=0?'SISA UANG':'KURANG',rupiah(Math.abs(sisa)),sisa>=0?'#1c8a60':'#c62828']; }
+        if(rows.length||sisaRow){
+            const boxH=16+rows.length*30+(sisaRow?46:0)+(rows.length&&!sisaRow?0:0)+4;
+            R(P,y,W-2*P,boxH,'#f2f8fb',12);
+            let by=y+16;
+            rows.forEach(r=>{ T(r[0],P+16,by+2,F(14),MUTED); T(r[1],W-P-16,by,F(r[3],'700'),r[2],'right'); by+=30; });
+            if(sisaRow){ L(by-2); by+=8; T(sisaRow[0],P+16,by+4,F(14,'700'),DARK); T(sisaRow[1],W-P-16,by,F(22,'700'),sisaRow[2],'right'); }
+            y+=boxH+20;
+        }
+
+        // Catatan
+        if(rec.notes){
+            T('CATATAN',P,y,F(12,'700'),TEAL); y+=22;
+            wrap(rec.notes,W-2*P,F(14)).forEach(ln=>{ T(ln,P,y,F(14),DARK); y+=20; });
+            y+=12;
+        }
+
+        // Footer
+        const now=new Date();
+        const stamp=`${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        T(`Dibuat dari SBR Fleet Control  •  ${stamp}`,W/2,y+6,F(11),MUTED,'center');
+        return y+6+11+22;
+    }
+    function renderReportCanvas(rec){
+        const W=720, S=2;
+        const H=Math.ceil(drawReport(rec,false,document.createElement('canvas').getContext('2d'),W));
+        const cv=document.createElement('canvas'); cv.width=W*S; cv.height=H*S;
+        const ctx=cv.getContext('2d'); ctx.scale(S,S);
+        ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
+        drawReport(rec,true,ctx,W);
+        return cv;
+    }
     function sendExpenseWA(id=''){
         const x=id?expenseItems.find(y=>y.id===id):null;
-        let date,vehicle,repairs,purchases,budget,notes;
-        if(x){({date,vehicle,repairs,purchases,budget,notes}=x);}
+        let rec;
+        if(x){ rec={date:x.date,vehicle:x.vehicle,repairs:x.repairs||[],purchases:x.purchases||[],budget:x.budget,notes:x.notes}; }
         else{
-          date=document.getElementById('expenseDate').value;vehicle=document.getElementById('expenseVehicle').value;
-          repairs=repairDraft.map(s=>s.trim()).filter(Boolean);
-          purchases=purchaseDraft.filter(p=>p.name.trim()||p.estimate!==''||p.actual!=='').map(p=>({...p,estimate:Number(p.estimate)||0,actual:Number(p.actual)||0}));
-          budget=parseNum(document.getElementById('expenseBudget').value)||0;notes=document.getElementById('expenseNotes').value.trim();
-          if(!vehicle||!purchases.length){alert('Pilih armada dan isi daftar belanja sebelum mengirim WA.');return;}
+          const vehicle=document.getElementById('expenseVehicle').value;
+          const purchases=purchaseDraft.filter(hasPurchase).map(p=>({name:String(p.name||'').trim(),estimate:Number(p.estimate)||0,actual:Number(p.actual)||0}));
+          if(!vehicle||!purchases.length){ alert('Pilih armada dan isi daftar belanja sebelum membuat laporan.'); return; }
+          rec={date:document.getElementById('expenseDate').value,vehicle,repairs:repairDraft.map(v=>String(v).trim()).filter(Boolean),purchases,budget:parseNum(document.getElementById('expenseBudget').value)||0,notes:document.getElementById('expenseNotes').value.trim()};
         }
-        const est=purchases.reduce((s,p)=>s+(Number(p.estimate)||0),0),act=purchases.reduce((s,p)=>s+(Number(p.actual)||0),0);
-        let msg=`*LAPORAN BELANJA & SERVIS ARMADA*%0ATanggal: ${date||'-'}%0AArmada: ${vehicle||'-'}%0A`;
-        if(repairs?.length)msg+=`%0A*Jenis perbaikan*%0A${repairs.map((r,i)=>`${i+1}. ${r}`).join('%0A')}%0A`;
-        msg+=`%0A*Daftar belanja*%0A${purchases.map((p,i)=>`${i+1}. ${p.name||'Barang'} | Estimasi ${rupiah(p.estimate)} | Realisasi ${rupiah(p.actual)}`).join('%0A')}`;
-        msg+=`%0A%0AJumlah estimasi: ${rupiah(est)}%0AJumlah realisasi: ${rupiah(act)}%0AUang belanja: ${rupiah(budget)}%0ASisa uang: ${rupiah(budget-act)}`;
-        if(notes)msg+=`%0ACatatan: ${notes}`;
-        window.open(`https://wa.me/?text=${encodeURIComponent(decodeURIComponent(msg.replace(/%0A/g,'\n')))}`,'_blank');
+        const cv=renderReportCanvas(rec);
+        reportName=`laporan-servis-${String(rec.vehicle||'armada').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'')}-${rec.date||localToday()}.png`;
+        cv.toBlob(b=>{
+            if(!b){ alert('Gagal membuat gambar laporan.'); return; }
+            if(reportUrl) URL.revokeObjectURL(reportUrl);
+            reportBlob=b; reportUrl=URL.createObjectURL(b);
+            document.getElementById('reportImg').src=reportUrl;
+            openEl('reportModal');
+        },'image/png');
+    }
+    function closeReport(){ closeEl('reportModal'); }
+    function downloadReport(){
+        if(!reportUrl) return;
+        const a=document.createElement('a'); a.href=reportUrl; a.download=reportName; document.body.appendChild(a); a.click(); a.remove();
+    }
+    async function shareReport(){
+        if(!reportBlob) return;
+        try{
+            const file=new File([reportBlob],reportName,{type:'image/png'});
+            if(navigator.canShare && navigator.canShare({files:[file]})){
+                await navigator.share({files:[file],title:'Laporan Belanja & Servis Armada'});
+                return;
+            }
+        }catch(e){ if(e && e.name==='AbortError') return; }
+        downloadReport();
+        alert('Gambar disimpan. Buka WhatsApp lalu lampirkan gambar dari galeri atau folder unduhan.');
+        window.open('https://wa.me/','_blank');
     }
     function toggleTheme(){
         const light=document.body.classList.toggle('light-theme');
