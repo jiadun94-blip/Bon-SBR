@@ -42,7 +42,7 @@
         
         .header-main { text-align: center; margin-bottom: 15px; }
         .header-main h2 { margin: 0; color: var(--accent); font-size: 20px; letter-spacing: 1px; }
-        
+        .header-main span { margin: 0; color: var(--accent); font-size: 10px; letter-spacing: 1px; }
         .quick-update {
             background: var(--card-dark); 
             padding: 12px; border-radius: 12px; 
@@ -330,7 +330,8 @@
 <div class="container">
     <div class="sticky-top-panel">
         <div class="header-main">
-            <div class="brand-row"><h2>SBR FLEET CONTROL</h2><button type="button" class="theme-toggle" onclick="toggleTheme()" id="themeToggle">☀️ Mode Terang</button></div>
+            <div class="brand-row"><h2>SBR FLEET CONTROL <br>
+            <span>version 1.0</span></br></h2><button type="button" class="theme-toggle" onclick="toggleTheme()" id="themeToggle">☀️ Mode Terang</button></div>
         </div>
 
         <div class="tab-bar">
@@ -1376,23 +1377,41 @@
     }
     function closeReport(){ closeEl('reportModal'); }
     function downloadReport(){
-        if(!reportUrl) return;
-        const a=document.createElement('a'); a.href=reportUrl; a.download=reportName; document.body.appendChild(a); a.click(); a.remove();
+        // Unduhan memakai nama file otomatis; tidak membuat form/dialog Save As dari aplikasi.
+        // Jika browser sendiri disetel "Tanya lokasi penyimpanan", pengaturan browser tetap berlaku.
+        if(!reportBlob) return;
+        const url = URL.createObjectURL(reportBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = reportName || 'laporan-servis-armada.png';
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
     }
     function reportHint(t){ const el=document.getElementById('reportHint'); if(!el) return; el.textContent=t; el.style.display=t?'block':'none'; }
     async function shareReport(){
         if(!reportBlob) return;
         reportHint('');
-        const file=new File([reportBlob],reportName,{type:'image/png'});
-        // 1) Bila didukung: menu bagikan dengan gambar sudah terlampir
-        if(navigator.canShare && navigator.canShare({files:[file]})){
-            try{ await navigator.share({files:[file],title:'Laporan Belanja & Servis Armada'}); return; }
-            catch(e){ if(e && e.name==='AbortError') return; }
+        const file=new File([reportBlob], reportName || 'laporan-servis-armada.png', {type:'image/png'});
+        // Jika browser mendukung berbagi file, tampilkan menu Share Android agar WhatsApp bisa dipilih
+        if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+            try {
+                await navigator.share({files:[file], title:'Laporan Belanja & Servis Armada', text:reportCaption});
+                return;
+            } catch(e) {
+                if(e && e.name === 'AbortError') return;
+                // Jika berbagi file gagal, lanjut ke fallback unduh otomatis + buka WhatsApp.
+            }
         }
-        // 2) Unduh otomatis (nama unik), lalu langsung buka WhatsApp untuk memilih kontak
+        // Fallback: mulai buka WhatsApp langsung (tanpa menunggu unduhan), lalu unduh PNG dengan nama otomatis.
+        const waWindow = window.open('about:blank', '_blank');
         downloadReport();
-        reportHint('📥 Gambar diunduh ke folder Unduhan. Di WhatsApp: pilih kontak admin, tekan 📎 lalu pilih gambar terbaru.');
-        setTimeout(()=>window.open(`https://wa.me/?text=${encodeURIComponent(reportCaption)}`,'_blank'),700);
+        const waUrl = `https://wa.me/?text=${encodeURIComponent(reportCaption + '\n\nGambar laporan sudah diunduh. Silakan lampirkan file PNG terbaru dari folder Download.')}`;
+        if(waWindow) waWindow.location.href = waUrl;
+        else window.location.href = waUrl;
+        reportHint('Gambar sedang diunduh dengan nama otomatis. WhatsApp dibuka; bila gambar belum terlampir, pilih 📎 lalu ambil PNG terbaru dari folder Download.');
     }
     function toggleTheme(){
         const light=document.body.classList.toggle('light-theme');
