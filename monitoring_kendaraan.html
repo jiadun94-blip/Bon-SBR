@@ -411,9 +411,7 @@
         <div style="max-height:58vh;overflow:auto;border-radius:10px;border:1px solid var(--line);background:#fff"><img id="reportImg" alt="Laporan belanja dan servis" style="width:100%;display:block"></div>
         <button type="button" class="btn-wa" style="margin-top:12px" onclick="shareReport()">📤 KIRIM KE WHATSAPP</button>
         <div id="reportHint" class="helper-note" style="display:none"></div>
-        <label class="field-label" for="adminWa">NOMOR WA ADMIN (untuk cadangan, contoh 62812xxxx)</label>
-        <input id="adminWa" type="tel" inputmode="numeric" autocomplete="off" placeholder="62812xxxxxxx" oninput="this.value=this.value.replace(/\D/g,'');try{localStorage.setItem('sbr_admin_wa',this.value)}catch(e){}">
-        <button type="button" class="btn-add-block" onclick="downloadReport()">⬇ SIMPAN PNG MANUAL</button>
+        <button type="button" class="btn-add-block" onclick="downloadReport()">⬇ SIMPAN SAJA</button>
         <button type="button" class="btn-done" onclick="closeReport()">TUTUP</button>
       </div>
     </div>
@@ -1103,7 +1101,7 @@
         expenseItems=expenseItems.filter(x=>x.id!==id);localStorage.setItem(EXPENSE_STORAGE_KEY,JSON.stringify(expenseItems));renderExpenses();
     }
     /* ===== Laporan gambar (PNG) untuk WhatsApp ===== */
-    let reportBlob=null, reportUrl='', reportName='laporan.png';
+    let reportBlob=null, reportUrl='', reportName='laporan.png', reportCaption='Laporan Belanja & Servis Armada';
     const BULAN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     const tglPanjang = d => { const m=String(d||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?`${Number(m[3])} ${BULAN[Number(m[2])-1]} ${m[1]}`:(d||'-'); };
 
@@ -1216,13 +1214,14 @@
           rec={date:document.getElementById('expenseDate').value,vehicle,repairs:repairDraft.map(v=>String(v).trim()).filter(Boolean),purchases,budget:parseNum(document.getElementById('expenseBudget').value)||0,notes:document.getElementById('expenseNotes').value.trim()};
         }
         const cv=renderReportCanvas(rec);
-        reportName=`laporan-servis-${String(rec.vehicle||'armada').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'')}-${rec.date||localToday()}.png`;
+        const _n=new Date(), _t=`${String(_n.getHours()).padStart(2,'0')}${String(_n.getMinutes()).padStart(2,'0')}${String(_n.getSeconds()).padStart(2,'0')}`;
+        reportName=`laporan-servis-${String(rec.vehicle||'armada').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'')}-${rec.date||localToday()}-${_t}.png`;
+        reportCaption=`Laporan Belanja & Servis Armada\n${rec.vehicle||''} - ${tglPanjang(rec.date)}`;
         cv.toBlob(b=>{
             if(!b){ alert('Gagal membuat gambar laporan.'); return; }
             if(reportUrl) URL.revokeObjectURL(reportUrl);
             reportBlob=b; reportUrl=URL.createObjectURL(b);
             document.getElementById('reportImg').src=reportUrl;
-            try{ document.getElementById('adminWa').value=localStorage.getItem('sbr_admin_wa')||''; }catch(e){}
             reportHint('');
             openEl('reportModal');
         },'image/png');
@@ -1237,26 +1236,15 @@
         if(!reportBlob) return;
         reportHint('');
         const file=new File([reportBlob],reportName,{type:'image/png'});
-        // 1) Menu bagikan Android: gambar langsung terlampir, tinggal pilih WhatsApp & kontak admin
+        // 1) Bila didukung: menu bagikan dengan gambar sudah terlampir
         if(navigator.canShare && navigator.canShare({files:[file]})){
             try{ await navigator.share({files:[file],title:'Laporan Belanja & Servis Armada'}); return; }
             catch(e){ if(e && e.name==='AbortError') return; }
         }
-        // 2) Cadangan: salin gambar ke clipboard lalu buka chat admin, tinggal Tempel & kirim
-        let copied=false;
-        try{
-            if(navigator.clipboard && window.ClipboardItem){
-                await navigator.clipboard.write([new ClipboardItem({'image/png':reportBlob})]);
-                copied=true;
-            }
-        }catch(e){}
-        if(copied){
-            const num=(document.getElementById('adminWa').value||'').replace(/\D/g,'');
-            reportHint('✅ Gambar sudah disalin. Di chat WhatsApp, tekan lama kolom pesan lalu pilih Tempel, kemudian kirim.');
-            window.open(num?`https://wa.me/${num}`:'https://wa.me/','_blank');
-            return;
-        }
-        reportHint('Aplikasi/browser ini tidak bisa melampirkan gambar ke WhatsApp secara langsung. Buka file ini lewat Chrome (idealnya dari alamat HTTPS atau dipasang sebagai aplikasi) agar tombol ini langsung membuka WhatsApp dengan gambar terlampir.');
+        // 2) Unduh otomatis (nama unik), lalu langsung buka WhatsApp untuk memilih kontak
+        downloadReport();
+        reportHint('📥 Gambar diunduh ke folder Unduhan. Di WhatsApp: pilih kontak admin, tekan 📎 lalu pilih gambar terbaru.');
+        setTimeout(()=>window.open(`https://wa.me/?text=${encodeURIComponent(reportCaption)}`,'_blank'),700);
     }
     function toggleTheme(){
         const light=document.body.classList.toggle('light-theme');
