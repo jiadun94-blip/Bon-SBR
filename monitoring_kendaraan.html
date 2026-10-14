@@ -296,6 +296,22 @@
         .tab-badge { display:inline-block; min-width:16px; padding:1px 5px; margin-left:5px; border-radius:9px; background:#ffbe50; color:#3a2600; font-size:10px; line-height:14px; }
         body.light-theme .tab-bar { background:#e2eff6; }
         body.light-theme .tab-btn.active { color:#fff; }
+        .purchase-row-grid2 { display:grid; grid-template-columns:minmax(0,1fr) 36px; gap:6px; align-items:center; }
+        .purchase-sub { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px; }
+        .purchase-sub .field-label { margin-top:6px; }
+        .banner-btns { display:flex; gap:6px; }
+        .mini-add.locked { opacity:.7; }
+        .approval-strip { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px; padding:8px 10px; border-radius:10px; font-size:12px; border:1px dashed var(--line); color:var(--muted); }
+        .approval-strip button { width:auto; padding:6px 10px; font-size:11px; background:rgba(66,183,255,.15); color:#8bd8ff; border-radius:8px; }
+        .approval-strip.ok { color:#2fbf8a; border-style:solid; border-color:rgba(47,191,138,.45); }
+        body.light-theme .approval-strip button { color:#17608d; }
+        body.light-theme .approval-strip.ok { color:#1c8a60; }
+        .cat-row { display:grid; grid-template-columns:minmax(0,1fr) 36px; gap:7px; align-items:center; }
+        .cat-row.custom { grid-template-columns:minmax(0,1fr) 36px 36px; }
+        .cat-cell { display:grid; grid-template-columns:minmax(0,1fr) 34px; gap:4px; align-items:center; }
+        .cat-back { width:34px; height:40px; padding:0; background:rgba(66,183,255,.15); color:#8bd8ff; border:1px solid rgba(66,183,255,.3); }
+        body.light-theme .cat-back { color:#17608d; }
+        .purchase-row-grid select, .purchase-row-grid2 select, .cat-row select { padding:11px 8px; font-size:13px; }
         .bel-edit { align-items:center; }
         .bel-edit input { padding:9px 8px; text-align:right; font-size:13px; }
         body.light-theme .bel-table { background:#f4f9fc; }
@@ -334,7 +350,7 @@
 
 
     <section id="expenseSection" class="scroll-content">
-        <div class="section-banner"><span>🧾 BELANJA & SERVIS ARMADA</span><span id="expenseCount">0 data</span></div>
+        <div class="section-banner"><span>🧾 BELANJA & SERVIS ARMADA</span><span style="display:flex;align-items:center;gap:8px"><span id="expenseCount">0 data</span><button type="button" class="mini-add" onclick="openCatalog()">📚 Database</button></span></div>
         <div id="expenseList" class="expense-list"></div>
     </section>
 
@@ -356,11 +372,11 @@
           <div class="section-banner compact-banner"><span>🔧 JENIS PERBAIKAN</span><button type="button" class="mini-add" onclick="openRepairModal()">✎ Atur</button></div>
           <div id="repairSummary"></div>
 
-          <div class="section-banner compact-banner"><span>🛒 DAFTAR BELANJA</span><button type="button" class="mini-add" id="purchaseBtn" onclick="purchaseBtnAction()">✎ Atur</button></div>
+          <div class="section-banner compact-banner"><span>🛒 DAFTAR BELANJA</span><span class="banner-btns" id="purchaseBtns"></span></div>
           <div id="purchaseSummary"></div>
 
           <label class="field-label" for="expenseBudget">Jumlah uang belanja / kas diberikan (Rp)</label>
-          <input id="expenseBudget" type="text" inputmode="numeric" autocomplete="off" placeholder="Contoh: 1.500.000" oninput="moneyInput(this)" required>
+          <input id="expenseBudget" type="text" inputmode="numeric" autocomplete="off" placeholder="Contoh: 1.500.000" oninput="moneyInput(this)">
           <div class="summary-card highlight modal-balance"><span class="s-label">💰 SISA UANG BELANJA</span><strong id="modalRemaining">Rp 0</strong><small id="modalBalanceNote">Uang belanja dikurangi realisasi</small></div>
           <label class="field-label" for="expenseNotes">Catatan (opsional)</label>
           <textarea id="expenseNotes" rows="2" maxlength="240" placeholder="Catatan tambahan..."></textarea>
@@ -369,7 +385,7 @@
             <button type="button" class="btn-wa" onclick="sendExpenseWA()">📲 KIRIM WA</button>
             <button type="button" class="btn-reset" onclick="closeExpenseModal()">TUTUP</button>
           </div>
-          <div class="helper-note">Tekan ✎ Atur untuk mengisi daftar belanja dan estimasi, lalu Selesai (data terkunci). Setelah itu tombol berubah jadi 💵 Realisasi untuk mengisi harga sebenarnya. Data versi ini tersimpan di browser perangkat ini.</div>
+          <div class="helper-note">Alur: ✎ Atur (isi estimasi, lalu Selesai) → 📲 Ajukan anggaran via WhatsApp → setelah di-ACC tekan 💵 Realisasi untuk mulai mengisi harga sebenarnya (barang dan estimasi masih bisa ditambah atau diubah). Data versi ini tersimpan di browser perangkat ini.</div>
         </form>
       </div>
     </div>
@@ -386,6 +402,23 @@
       </div>
     </div>
 
+    <div id="catalogModal" class="expense-modal sub-modal" role="dialog" aria-modal="true">
+      <div class="expense-modal-card">
+        <div class="expense-modal-head">
+          <div><h2>📚 Database Servis</h2><div class="expense-meta">Daftar pilihan untuk dropdown pekerjaan &amp; barang</div></div>
+          <button type="button" class="modal-close" onclick="closeCatalog()">✕</button>
+        </div>
+        <div class="tab-bar">
+          <button type="button" class="tab-btn active" id="catTabRepairs" onclick="catTab('repairs')">🔧 PEKERJAAN</button>
+          <button type="button" class="tab-btn" id="catTabItems" onclick="catTab('items')">🛒 BARANG</button>
+        </div>
+        <div id="catalogList" class="dynamic-text-list"></div>
+        <button type="button" class="btn-add-block" onclick="catAdd()">＋ TAMBAH</button>
+        <div class="helper-note">Pekerjaan atau barang yang diketik lewat "Lainnya" otomatis masuk ke database setelah catatan disimpan. Hapus di sini bila salah ketik. Harga barang berisi harga terakhir dan otomatis mengisi estimasi.</div>
+        <button type="button" class="btn-done" onclick="closeCatalog()">✔ SELESAI</button>
+      </div>
+    </div>
+
     <div id="purchaseModal" class="expense-modal sub-modal" role="dialog" aria-modal="true">
       <div class="expense-modal-card">
         <div class="expense-modal-head">
@@ -396,7 +429,6 @@
         <button type="button" class="btn-add-block" id="purchaseAddBtn" onclick="addPurchaseItem()">＋ TAMBAH BARANG</button>
         <div class="sum-total"><span>Jumlah estimasi</span><strong id="purchaseModalEstimate">Rp 0</strong></div>
         <div class="sum-total" id="purchaseActualRow"><span>Jumlah realisasi</span><strong id="purchaseModalActual">Rp 0</strong></div>
-        <button type="button" class="btn-add-block" id="purchaseUnlockBtn" onclick="unlockPurchase()">🔓 BUKA KUNCI DAFTAR</button>
         <button type="button" class="btn-done" onclick="finishPurchase()">✔ SELESAI</button>
       </div>
     </div>
@@ -636,8 +668,77 @@
     const EXPENSE_STORAGE_KEY = 'sbr_fleet_expenses_v2';
     let expenseItems = [];
     let repairDraft = [];
+    let repairFlag = [];
+
+    /* ===== Database pekerjaan & barang ===== */
+    const CATALOG_KEY = 'sbr_catalog_v1';
+    const DEFAULT_CATALOG = {
+        repairs:['Ganti oli mesin','Ganti filter oli','Ganti filter solar','Ganti filter udara','Servis rem','Ganti kampas rem','Ganti ban','Tambal ban','Servis AC','Ganti aki','Ganti V-belt','Servis kelistrikan','Ganti lampu','Las / perbaikan body'],
+        items:[{name:'Oli mesin',price:0},{name:'Filter oli',price:0},{name:'Filter solar',price:0},{name:'Filter udara',price:0},{name:'Kampas rem',price:0},{name:'Ban',price:0},{name:'Aki',price:0},{name:'V-belt',price:0},{name:'Bohlam / lampu',price:0}]
+    };
+    let catalog = null;
+    let catMode = 'repairs';
+    function saveCatalog(){ try{ localStorage.setItem(CATALOG_KEY,JSON.stringify(catalog)); }catch(e){} }
+    function loadCatalog(){
+        try{
+            const c=JSON.parse(localStorage.getItem(CATALOG_KEY));
+            if(c && Array.isArray(c.repairs) && Array.isArray(c.items)){ catalog=c; return; }
+        }catch(e){}
+        catalog=JSON.parse(JSON.stringify(DEFAULT_CATALOG)); saveCatalog();
+    }
+    const catRepairs = () => { if(!catalog) loadCatalog(); return [...catalog.repairs].filter(Boolean).sort((a,b)=>a.localeCompare(b,'id')); };
+    const catItems = () => { if(!catalog) loadCatalog(); return [...catalog.items].filter(x=>x&&x.name).sort((a,b)=>a.name.localeCompare(b.name,'id')); };
+    function learnCatalog(rec){
+        if(!catalog) loadCatalog();
+        const low=v=>String(v).toLowerCase();
+        rec.repairs.forEach(r=>{ if(!catalog.repairs.some(c=>low(c)===low(r))) catalog.repairs.push(r); });
+        rec.purchases.forEach(p=>{
+            if(!p.name) return;
+            const price=Number(p.actual)>0?Number(p.actual):(Number(p.estimate)||0);
+            const ex=catalog.items.find(c=>low(c.name)===low(p.name));
+            if(ex){ if(price>0) ex.price=price; } else catalog.items.push({name:p.name,price});
+        });
+        saveCatalog();
+    }
+    function openCatalog(){
+        if(!catalog) loadCatalog();
+        catalog.repairs.sort((a,b)=>a.localeCompare(b,'id')); catalog.items.sort((a,b)=>a.name.localeCompare(b.name,'id'));
+        renderCatalog(); openEl('catalogModal');
+    }
+    function closeCatalog(){
+        catalog.repairs=catalog.repairs.map(x=>String(x).trim()).filter(Boolean);
+        catalog.items=catalog.items.map(x=>({name:String(x.name||'').trim(),price:Number(x.price)||0})).filter(x=>x.name);
+        saveCatalog(); closeEl('catalogModal');
+    }
+    function catTab(m){ catMode=m; renderCatalog(); }
+    function renderCatalog(){
+        document.getElementById('catTabRepairs').classList.toggle('active',catMode==='repairs');
+        document.getElementById('catTabItems').classList.toggle('active',catMode==='items');
+        const box=document.getElementById('catalogList');
+        let html;
+        if(catMode==='repairs'){
+            html=catalog.repairs.map((r,i)=>`<div class="cat-row"><input value="${safeText(r)}" maxlength="120" placeholder="Nama pekerjaan" oninput="catalog.repairs[${i}]=this.value;saveCatalog()"><button type="button" class="remove-row" onclick="catDel(${i})">✕</button></div>`).join('');
+        } else {
+            html=catalog.items.map((x,i)=>`<div class="purchase-row-grid"><input value="${safeText(x.name)}" maxlength="120" placeholder="Nama barang" oninput="catalog.items[${i}].name=this.value;saveCatalog()"><input type="text" inputmode="numeric" autocomplete="off" value="${safeText(fmtNum(numShow(x.price)))}" placeholder="Harga" oninput="moneyInput(this);catalog.items[${i}].price=parseNum(this.value)||0;saveCatalog()"><button type="button" class="remove-row" onclick="catDel(${i})">✕</button></div>`).join('');
+        }
+        box.innerHTML=html||'<div class="sum-empty">Belum ada data.<br>Tekan ＋ Tambah.</div>';
+    }
+    function catAdd(){
+        if(catMode==='repairs') catalog.repairs.push(''); else catalog.items.push({name:'',price:0});
+        renderCatalog();
+        const ins=document.querySelectorAll('#catalogList input'); const n=catMode==='repairs'?1:2;
+        const t=ins[ins.length-n]; if(t) t.focus();
+    }
+    function catDel(i){
+        if(!confirm('Hapus dari database?')) return;
+        catalog[catMode].splice(i,1); saveCatalog(); renderCatalog();
+    }
     let purchaseDraft = [];
-    let purchaseLocked = false;
+    let purchaseLocked = false;      // estimasi sudah selesai diisi
+    let purchaseSubmitted = false;   // sudah diajukan via WA
+    let purchaseApproved = false;    // anggaran sudah di-ACC -> realisasi dibuka
+    let purchaseSnap = '';
+    const realMode = () => purchaseLocked && purchaseApproved;
     const rupiah = n => new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(n)||0);
     const localToday = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
     const safeText = v => String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -660,7 +761,7 @@
         document.getElementById('expenseForm').reset();
         document.getElementById('expenseId').value='';
         document.getElementById('expenseDate').value=localToday();
-        repairDraft=[]; purchaseDraft=[]; purchaseLocked=false;
+        repairDraft=[]; repairFlag=[]; purchaseDraft=[]; purchaseLocked=false; purchaseApproved=false; purchaseSubmitted=false;
         ['repairModal','purchaseModal'].forEach(closeEl);
         renderRepairDraft(); renderPurchaseDraft(); renderActualSummary(); updateExpenseTotals();
         document.getElementById('expenseModalTitle').textContent='🧾 Catatan Belanja & Servis';
@@ -694,6 +795,9 @@
         if(field==='name'){
             const est=document.querySelectorAll('#purchaseList .purchase-est')[i];
             if(est) est.focus();
+        } else if(field==='est' && realMode()){
+            const act=document.querySelectorAll('#purchaseList .purchase-act')[i];
+            if(act) act.focus();
         } else if(field==='act'){
             const all=document.querySelectorAll('#purchaseList .purchase-act');
             if(all[i+1]) all[i+1].focus(); else all[i].blur();
@@ -707,13 +811,31 @@
     function addTextItem(type,value=''){
         repairDraft.push(value);
         renderRepairDraft();
-        const inputs=document.querySelectorAll('#repairList input');
+        const inputs=document.querySelectorAll('#repairList .repair-inp');
         if(inputs.length) inputs[inputs.length-1].focus();
     }
+    function repairIsCustom(i){
+        const v=String(repairDraft[i]||'').trim();
+        return !!repairFlag[i] || (v!=='' && !catRepairs().includes(v));
+    }
     function renderRepairDraft(){
-        document.getElementById('repairList').innerHTML=repairDraft.map((v,i)=>`<div class="dynamic-text-row"><input value="${safeText(v)}" maxlength="120" placeholder="Contoh: Ganti oli / servis rem" enterkeyhint="next" onkeydown="repairKey(event,${i})" oninput="repairDraft[${i}]=this.value;renderRepairSummary()"><button type="button" class="remove-row" onclick="removeRepairItem(${i})">✕</button></div>`).join('');
+        const cat=catRepairs();
+        document.getElementById('repairList').innerHTML=repairDraft.map((v,i)=> repairIsCustom(i)
+            ? `<div class="cat-row custom"><input class="repair-inp" value="${safeText(v)}" maxlength="120" placeholder="Ketik pekerjaan manual" enterkeyhint="next" onkeydown="repairKey(event,${i})" oninput="repairDraft[${i}]=this.value;renderRepairSummary()"><button type="button" class="cat-back" title="Pilih dari database" onclick="repairBack(${i})">☰</button><button type="button" class="remove-row" onclick="removeRepairItem(${i})">✕</button></div>`
+            : `<div class="cat-row"><select class="repair-inp" onchange="pickRepair(${i},this)"><option value="">-- Pilih jenis pekerjaan --</option>${cat.map(r=>`<option value="${safeText(r)}"${r===v?' selected':''}>${safeText(r)}</option>`).join('')}<option value="__other__">➕ Lainnya (ketik manual)</option></select><button type="button" class="remove-row" onclick="removeRepairItem(${i})">✕</button></div>`
+        ).join('');
         renderRepairSummary();
     }
+    function pickRepair(i,sel){
+        if(sel.value==='__other__'){
+            repairFlag[i]=true; repairDraft[i]='';
+            renderRepairDraft();
+            const t=document.querySelectorAll('#repairList .repair-inp')[i]; if(t) t.focus();
+            return;
+        }
+        repairDraft[i]=sel.value; renderRepairSummary();
+    }
+    function repairBack(i){ repairFlag[i]=false; repairDraft[i]=''; renderRepairDraft(); }
     function renderRepairSummary(){
         const items=repairDraft.map(x=>String(x).trim()).filter(Boolean);
         document.getElementById('repairSummary').innerHTML=items.length
@@ -725,32 +847,66 @@
         e.preventDefault();
         if(String(repairDraft[i]||'').trim()) addTextItem('repair');
     }
-    function removeRepairItem(i){ repairDraft.splice(i,1); renderRepairDraft(); }
+    function removeRepairItem(i){ repairDraft.splice(i,1); repairFlag.splice(i,1); renderRepairDraft(); }
     function openRepairModal(){
         const added=!repairDraft.length;
         if(added) repairDraft.push('');
         renderRepairDraft(); openEl('repairModal');
-        if(added){ const inp=document.querySelector('#repairList input'); if(inp) inp.focus(); }
+        if(added){ const inp=document.querySelector('#repairList .repair-inp'); if(inp) inp.focus(); }
     }
     function closeRepairModal(){
-        repairDraft=repairDraft.map(x=>String(x).trim()).filter(Boolean);
+        repairDraft=repairDraft.map(x=>String(x).trim()).filter(Boolean); repairFlag=[];
         renderRepairDraft(); closeEl('repairModal');
     }
 
     /* ===== Daftar belanja: estimasi -> terkunci -> realisasi ===== */
     function addPurchaseItem(){
-        if(purchaseLocked) return;
         purchaseDraft.push({name:'',estimate:'',actual:''}); renderPurchaseDraft();
         const inputs=document.querySelectorAll('#purchaseList .purchase-name'); if(inputs.length) inputs[inputs.length-1].focus();
     }
+    function itemIsCustom(x){
+        const n=String(x.name||'').trim();
+        return !!x._c || (n!=='' && !catItems().some(c=>c.name===n));
+    }
+    function itemNameCell(x,i){
+        if(itemIsCustom(x)){
+            return `<div class="cat-cell"><input class="purchase-name" value="${safeText(x.name)}" maxlength="120" placeholder="Ketik nama barang / jasa" enterkeyhint="next" onkeydown="purchaseKey(event,${i},'name')" oninput="purchaseDraft[${i}].name=this.value;refreshPurchaseViews()"><button type="button" class="cat-back" title="Pilih dari database" onclick="itemBack(${i})">☰</button></div>`;
+        }
+        return `<select class="purchase-name" onchange="pickItem(${i},this)"><option value="">-- Pilih barang --</option>${catItems().map(c=>`<option value="${safeText(c.name)}"${c.name===x.name?' selected':''}>${safeText(c.name)}${Number(c.price)>0?' ('+fmtNum(c.price)+')':''}</option>`).join('')}<option value="__other__">➕ Lainnya (ketik manual)</option></select>`;
+    }
+    function pickItem(i,sel){
+        const x=purchaseDraft[i];
+        if(sel.value==='__other__'){
+            x._c=true; x.name='';
+            renderPurchaseDraft();
+            const t=document.querySelectorAll('#purchaseList .purchase-name')[i]; if(t) t.focus();
+            return;
+        }
+        x.name=sel.value;
+        const c=catItems().find(c=>c.name===sel.value);
+        const est=document.querySelectorAll('#purchaseList .purchase-est')[i];
+        if(c && Number(c.price)>0 && !(Number(x.estimate)>0)){ x.estimate=Number(c.price); if(est) est.value=fmtNum(c.price); }
+        refreshPurchaseViews();
+        if(est) est.focus();
+    }
+    function itemBack(i){ const x=purchaseDraft[i]; x._c=false; x.name=''; renderPurchaseDraft(); }
     function renderPurchaseDraft(){
-        if(purchaseLocked && !purchaseDraft.some(hasPurchase)) purchaseLocked=false;
+        if(purchaseLocked && !purchaseDraft.some(hasPurchase)){ purchaseLocked=false; purchaseApproved=false; purchaseSubmitted=false; }
         const box=document.getElementById('purchaseList');
-        if(purchaseLocked){
-            box.innerHTML=`<div class="bel-table"><div class="bel-row bel-head"><span>Barang</span><span>Estimasi</span><span>Realisasi</span></div>${purchaseDraft.map((x,i)=>`<div class="bel-row bel-edit"><span>${safeText(String(x.name||'').trim()||'Barang')}</span><span>${fmtNum(Number(x.estimate)||0)||'0'}</span><input class="purchase-act" type="text" inputmode="numeric" autocomplete="off" value="${safeText(fmtNum(numShow(x.actual)))}" placeholder="Realisasi" enterkeyhint="next" onkeydown="purchaseKey(event,${i},'act')" oninput="moneyInput(this);purchaseDraft[${i}].actual=parseNum(this.value);refreshPurchaseViews()"></div>`).join('')}</div>`;
+        if(realMode()){
+            box.innerHTML=purchaseDraft.map((x,i)=>`<div class="purchase-item">
+              <div class="purchase-row-grid2">
+                ${itemNameCell(x,i)}
+                <button type="button" class="remove-row" onclick="removePurchaseItem(${i})">✕</button>
+              </div>
+              <div class="purchase-sub">
+                <div><label class="field-label">ESTIMASI (Rp)</label><input class="purchase-est" type="text" inputmode="numeric" autocomplete="off" value="${safeText(fmtNum(numShow(x.estimate)))}" placeholder="0" enterkeyhint="next" onkeydown="purchaseKey(event,${i},'est')" oninput="moneyInput(this);purchaseDraft[${i}].estimate=parseNum(this.value);refreshPurchaseViews()"></div>
+                <div><label class="field-label">REALISASI (Rp)</label><input class="purchase-act" type="text" inputmode="numeric" autocomplete="off" value="${safeText(fmtNum(numShow(x.actual)))}" placeholder="Isi realisasi" enterkeyhint="next" onkeydown="purchaseKey(event,${i},'act')" oninput="moneyInput(this);purchaseDraft[${i}].actual=parseNum(this.value);refreshPurchaseViews()"></div>
+              </div>
+            </div>`).join('');
         } else {
             box.innerHTML=purchaseDraft.map((x,i)=>`<div class="purchase-item"><div class="purchase-row-grid">
-              <input class="purchase-name" value="${safeText(x.name)}" maxlength="120" placeholder="Nama barang / jasa" enterkeyhint="next" onkeydown="purchaseKey(event,${i},'name')" oninput="purchaseDraft[${i}].name=this.value;refreshPurchaseViews()">
+              ${itemNameCell(x,i)}
               <input class="purchase-est" type="text" inputmode="numeric" autocomplete="off" value="${safeText(fmtNum(numShow(x.estimate)))}" placeholder="Estimasi" enterkeyhint="done" onkeydown="purchaseKey(event,${i},'est')" oninput="moneyInput(this);purchaseDraft[${i}].estimate=parseNum(this.value);refreshPurchaseViews()">
               <button type="button" class="remove-row" onclick="removePurchaseItem(${i})">✕</button>
             </div></div>`).join('');
@@ -759,11 +915,9 @@
         refreshPurchaseViews();
     }
     function applyPurchaseMode(){
-        const L=purchaseLocked, $=id=>document.getElementById(id);
+        const L=realMode(), $=id=>document.getElementById(id);
         $('purchaseModalTitle').textContent=L?'💵 Realisasi Belanja':'🛒 Daftar Belanja';
-        $('purchaseModalSub').textContent=L?'Daftar & estimasi terkunci. Isi harga sebenarnya.':'Isi barang dan estimasi, tekan Selesai untuk mengunci';
-        $('purchaseAddBtn').style.display=L?'none':'block';
-        $('purchaseUnlockBtn').style.display=L?'block':'none';
+        $('purchaseModalSub').textContent=L?'Isi harga sebenarnya. Barang & estimasi masih bisa diubah atau ditambah.':'Isi barang dan estimasi, tekan Selesai';
         $('purchaseActualRow').style.display=L?'flex':'none';
     }
     function removePurchaseItem(i){ purchaseDraft.splice(i,1); renderPurchaseDraft(); }
@@ -779,16 +933,26 @@
             const act=items.reduce((t,x)=>t+(Number(x.actual)||0),0);
             box.innerHTML=`<div class="bel-table"><div class="bel-row bel-head"><span>Barang</span><span>Estimasi</span><span>Realisasi</span></div>${items.map(x=>`<div class="bel-row"><span>${safeText(String(x.name||'').trim()||'Barang')}</span><span>${fmtNum(Number(x.estimate)||0)||'0'}</span>${Number(x.actual)>0?`<span>${fmtNum(x.actual)}</span>`:'<span class="muted">—</span>'}</div>`).join('')}<div class="bel-row bel-total"><span>Jumlah</span><span>${rupiah(est)}</span><span>${act>0?rupiah(act):'—'}</span></div></div>`;
         }
-        const btn=document.getElementById('purchaseBtn');
-        if(btn) btn.textContent=(purchaseLocked&&items.length)?'💵 Realisasi':'✎ Atur';
+        if(items.length && purchaseLocked){
+            box.innerHTML+= purchaseApproved
+              ? '<div class="approval-strip ok"><span>✅ Anggaran sudah di-ACC</span></div>'
+              : `<div class="approval-strip"><span>${purchaseSubmitted?'⏳ Diajukan, menunggu ACC':'📝 Belum diajukan'}</span><button type="button" onclick="openPurchaseModal()">✎ Ubah estimasi</button></div>`;
+        }
+        const btns=document.getElementById('purchaseBtns');
+        if(btns){
+            if(!(items.length&&purchaseLocked)) btns.innerHTML='<button type="button" class="mini-add" onclick="openPurchaseModal()">✎ Atur</button>';
+            else if(purchaseApproved) btns.innerHTML='<button type="button" class="mini-add" onclick="openPurchaseModal()">💵 Realisasi</button>';
+            else btns.innerHTML='<button type="button" class="mini-add" onclick="ajukanWA()">📲 Ajukan</button><button type="button" class="mini-add locked" onclick="mulaiRealisasi()">🔒 Realisasi</button>';
+        }
     }
-    function purchaseBtnAction(){ openPurchaseModal(); }
+    const estSnap = () => JSON.stringify(purchaseDraft.filter(hasPurchase).map(x=>[String(x.name||'').trim(),Number(x.estimate)||0]));
+    function resetSubmittedIfChanged(){ if(!purchaseApproved && purchaseSubmitted && estSnap()!==purchaseSnap) purchaseSubmitted=false; }
     function openPurchaseModal(){
-        purchaseDraft=purchaseDraft.filter(hasPurchase);
+        purchaseDraft=purchaseDraft.filter(hasPurchase); purchaseSnap=estSnap();
         let added=false;
         if(!purchaseLocked && !purchaseDraft.length){ purchaseDraft.push({name:'',estimate:'',actual:''}); added=true; }
         renderPurchaseDraft(); openEl('purchaseModal');
-        if(purchaseLocked){
+        if(realMode()){
             const ins=[...document.querySelectorAll('#purchaseList .purchase-act')];
             const t=ins.find(i=>!i.value)||ins[0]; if(t) t.focus();
         } else if(added){
@@ -796,23 +960,45 @@
         }
     }
     function closePurchaseModal(){
-        purchaseDraft=purchaseDraft.filter(hasPurchase);
+        purchaseDraft=purchaseDraft.filter(hasPurchase); resetSubmittedIfChanged();
         renderPurchaseDraft(); closeEl('purchaseModal');
     }
     function finishPurchase(){
         purchaseDraft=purchaseDraft.filter(hasPurchase);
-        if(!purchaseLocked){
-            if(!purchaseDraft.length){ closePurchaseModal(); return; }
-            if(purchaseDraft.some(x=>!String(x.name||'').trim())){ alert('Lengkapi nama barang pada semua baris.'); return; }
-            purchaseLocked=true;
-        }
+        if(!purchaseDraft.length){ closePurchaseModal(); return; }
+        if(purchaseDraft.some(x=>!String(x.name||'').trim())){ alert('Lengkapi nama barang pada semua baris.'); return; }
+        purchaseLocked=true; resetSubmittedIfChanged();
         renderPurchaseDraft(); closeEl('purchaseModal');
     }
-    function unlockPurchase(){
-        if(!confirm('Buka kunci daftar belanja? Nama barang dan estimasi bisa diubah lagi.')) return;
-        purchaseLocked=false; renderPurchaseDraft();
+    function ajukanWA(){
+        if(!purchaseLocked){ alert('Selesaikan daftar belanja dulu (tekan Atur lalu Selesai).'); return; }
+        const rec=buildExpenseRecord(); if(!rec) return;
+        const total=rec.purchases.reduce((t,p)=>t+(Number(p.estimate)||0),0);
+        let msg=`*PENGAJUAN ANGGARAN BELANJA & SERVIS ARMADA*\nTanggal: ${tglIndo(rec.date)}\nArmada: ${rec.vehicle||'-'}\n`;
+        if(rec.repairs.length) msg+=`\n*Jenis perbaikan*\n${rec.repairs.map((r,i)=>`${i+1}. ${r}`).join('\n')}\n`;
+        msg+=`\n*Rencana belanja*\n${rec.purchases.map((p,i)=>`${i+1}. ${p.name||'Barang'} - ${rupiah(p.estimate)}`).join('\n')}`;
+        msg+=`\n\n*Total pengajuan: ${rupiah(total)}*`;
+        if(rec.notes) msg+=`\nCatatan: ${rec.notes}`;
+        msg+=`\n\nMohon di-ACC. Terima kasih 🙏`;
+        purchaseSubmitted=true;
+        if(!persistExpense()){ purchaseSubmitted=false; return; }
+        renderPurchaseSummary();
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,'_blank');
     }
-    function openActualFromList(id){ editExpense(id); openPurchaseModal(); }
+    function mulaiRealisasi(){
+        if(!purchaseApproved){
+            const q=purchaseSubmitted
+                ? 'Apakah pengajuan anggaran sudah di-ACC?\n\nOK = sudah ACC, mulai realisasi.'
+                : 'Pengajuan belum dikirim via WhatsApp.\n\nTetap tandai sudah ACC dan mulai realisasi?';
+            if(!confirm(q)) return;
+            purchaseApproved=true; purchaseSubmitted=true;
+            if(!persistExpense()){ purchaseApproved=false; return; }
+            renderPurchaseSummary();
+        }
+        openPurchaseModal();
+    }
+    function openActualFromList(id){ editExpense(id); mulaiRealisasi(); }
+    function ajukanFromList(id){ editExpense(id); ajukanWA(); }
 
     function updateExpenseTotals(){
         const est=purchaseDraft.reduce((s,x)=>s+(Number(x.estimate)||0),0);
@@ -824,17 +1010,30 @@
         set('modalBalanceNote',act>budget?'⚠️ Realisasi melebihi uang belanja': 'Uang belanja dikurangi total realisasi');
     }
     document.getElementById('expenseBudget')?.addEventListener('input',updateExpenseTotals);
+    function buildExpenseRecord(){
+        const id=document.getElementById('expenseId').value;
+        const date=document.getElementById('expenseDate').value, vehicle=document.getElementById('expenseVehicle').value;
+        if(!date||!vehicle){ alert('Pilih tanggal dan armada terlebih dahulu.'); return null; }
+        const repairs=repairDraft.map(x=>String(x).trim()).filter(Boolean);
+        const purchases=purchaseDraft.filter(hasPurchase).map(x=>({name:String(x.name||'').trim(),estimate:Number(x.estimate)||0,actual:Number(x.actual)||0}));
+        if(!purchases.length){ alert('Tambahkan minimal satu daftar belanja.'); return null; }
+        const budget=parseNum(document.getElementById('expenseBudget').value)||0;
+        const locked=purchaseLocked&&purchases.length>0;
+        return {id:id||`${Date.now()}`,date,vehicle,repairs,purchases,locked,submitted:locked&&purchaseSubmitted,approved:locked&&purchaseApproved,budget,notes:document.getElementById('expenseNotes').value.trim(),updatedAt:new Date().toISOString()};
+    }
+    function persistExpense(){
+        const rec=buildExpenseRecord(); if(!rec) return null;
+        expenseItems = expenseItems.some(x=>x.id===rec.id) ? expenseItems.map(x=>x.id===rec.id?rec:x) : [rec,...expenseItems];
+        localStorage.setItem(EXPENSE_STORAGE_KEY,JSON.stringify(expenseItems));
+        document.getElementById('expenseId').value=rec.id;
+        learnCatalog(rec);
+        renderExpenses();
+        return rec;
+    }
     function saveExpense(e){
         e.preventDefault();
-        const id=document.getElementById('expenseId').value;
-        const repairs=repairDraft.map(x=>x.trim()).filter(Boolean);
-        const purchases=purchaseDraft.filter(x=>x.name.trim()||x.estimate!==''||x.actual!=='').map(x=>({name:x.name.trim(),estimate:Number(x.estimate)||0,actual:Number(x.actual)||0}));
-        if(!purchases.length){alert('Tambahkan minimal satu daftar belanja.');return;}
-        const budget=parseNum(document.getElementById('expenseBudget').value)||0;
-        const record={id:id||`${Date.now()}`,date:document.getElementById('expenseDate').value,vehicle:document.getElementById('expenseVehicle').value,repairs,purchases,locked:purchaseLocked&&purchases.length>0,budget,notes:document.getElementById('expenseNotes').value.trim(),updatedAt:new Date().toISOString()};
-        if(id) expenseItems=expenseItems.map(x=>x.id===id?record:x); else expenseItems.unshift(record);
-        localStorage.setItem(EXPENSE_STORAGE_KEY,JSON.stringify(expenseItems));
-        renderExpenses(); closeExpenseModal(); resetExpenseForm();
+        if(!persistExpense()) return;
+        closeExpenseModal(); resetExpenseForm();
         alert('Catatan belanja/servis berhasil disimpan.');
     }
     const tglIndo = d => { const m=String(d||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?`${m[3]}/${m[2]}/${m[1]}`:(d||'-'); };
@@ -851,9 +1050,12 @@
           const es=ps.reduce((s,p)=>s+(Number(p.estimate)||0),0);
           const ac=ps.reduce((s,p)=>s+(Number(p.actual)||0),0);
           const done=ac>0;
-          const canReal=x.locked||done;
-          const head=`<div class="expense-row-head"><div><h4>${safeText(x.vehicle||'Armada belum dipilih')}</h4><div class="expense-meta">📅 ${safeText(tglIndo(x.date))}</div></div><div style="text-align:right"><span class="badge ${done?'badge-done':'badge-pending'}">${done?'REALISASI TERISI':'MENUNGGU REALISASI'}</span>${done?'<div class="chev">▾</div>':''}</div></div>`;
-          const actions=`<div class="row-actions"><button class="btn-small-edit" onclick="openExpenseModal('${x.id}')">✏️ EDIT</button>${canReal?`<button class="btn-small-edit" onclick="openActualFromList('${x.id}')">💵 REALISASI</button>`:''}${done?`<button class="btn-small-edit" onclick="sendExpenseWA('${x.id}')">📲 WA</button>`:''}<button class="btn-small-delete" onclick="deleteExpense('${x.id}')">🗑️ HAPUS</button></div>`;
+          const locked=x.locked===undefined?done:!!x.locked;
+          const appr=x.approved===undefined?locked:!!x.approved;
+          const canReal=locked||done;
+          const sub=!!x.submitted||appr;
+          const head=`<div class="expense-row-head"><div><h4>${safeText(x.vehicle||'Armada belum dipilih')}</h4><div class="expense-meta">📅 ${safeText(tglIndo(x.date))}</div></div><div style="text-align:right"><span class="badge ${done?'badge-done':'badge-pending'}">${done?'REALISASI TERISI':appr?'MENUNGGU REALISASI':locked?(sub?'MENUNGGU ACC':'BELUM DIAJUKAN'):'DRAFT'}</span>${done?'<div class="chev">▾</div>':''}</div></div>`;
+          const actions=`<div class="row-actions"><button class="btn-small-edit" onclick="openExpenseModal('${x.id}')">✏️ EDIT</button>${(locked&&!appr&&!done)?`<button class="btn-small-edit" onclick="ajukanFromList('${x.id}')">📲 AJUKAN</button>`:''}${canReal?`<button class="btn-small-edit" onclick="openActualFromList('${x.id}')">💵 REALISASI</button>`:''}${done?`<button class="btn-small-edit" onclick="sendExpenseWA('${x.id}')">📲 WA</button>`:''}<button class="btn-small-delete" onclick="deleteExpense('${x.id}')">🗑️ HAPUS</button></div>`;
           if(!done) return `<article class="expense-row">${head}${actions}</article>`;
           return `<article class="expense-row clickable" id="exp_${x.id}"><div onclick="toggleExpenseDetail('${x.id}')">${head}</div>
             <div class="expense-detail">
@@ -872,8 +1074,10 @@
         document.getElementById('expenseVehicle').value=x.vehicle||'';
         document.getElementById('expenseBudget').value=fmtNum(x.budget);
         document.getElementById('expenseNotes').value=x.notes||'';
-        repairDraft=[...(x.repairs||[])]; purchaseDraft=(x.purchases||[]).map(p=>({...p}));
+        repairDraft=[...(x.repairs||[])]; repairFlag=[]; purchaseDraft=(x.purchases||[]).map(p=>({...p}));
         purchaseLocked=x.locked===undefined?(x.purchases||[]).some(p=>Number(p.actual)>0):!!x.locked;
+        purchaseApproved=x.approved===undefined?purchaseLocked:!!x.approved;
+        purchaseSubmitted=!!x.submitted||purchaseApproved;
         renderRepairDraft();renderPurchaseDraft();renderActualSummary();updateExpenseTotals();
         document.getElementById('expenseModalTitle').textContent='✏️ Edit Catatan Belanja & Servis';
         document.getElementById('expenseModal').classList.add('open');
@@ -929,7 +1133,7 @@
         b.textContent=pending; b.style.display=pending?'inline-block':'none';
     }
 
-    window.onload = () => { initTheme(); loadExpenseData(); init(); let t='fleet'; try{ t=localStorage.getItem('sbr_fleet_tab')||'fleet'; }catch(e){} switchTab(t); };
+    window.onload = () => { loadCatalog(); initTheme(); loadExpenseData(); init(); let t='fleet'; try{ t=localStorage.getItem('sbr_fleet_tab')||'fleet'; }catch(e){} switchTab(t); };
 </script>
 </body>
 </html>
