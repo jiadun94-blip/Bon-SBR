@@ -490,6 +490,9 @@
 
     let listArmada = [];
     let activePlat = "";
+    let serviceCloudReady = false;
+    let catalogSaveTimer = null;
+    let serviceTokoIds = [];
 
     document.getElementById('m_jenis').addEventListener('change', function() {
         const inp = document.getElementById('m_val');
@@ -555,6 +558,7 @@
             listArmada = await Promise.all(promises);
             renderDashboard();
             populateExpenseVehicles();
+            await loadSharedServiceData();
             
         } catch (err) {
             console.error("Gagal memuat data:", err);
@@ -678,27 +682,95 @@
 
 
 
-    // Form belanja/servis dengan baris dinamis.
+    // Data belanja/servis tersimpan di Supabase agar sama di semua perangkat.
+    // Local Storage tetap dipakai sebagai cache dan sumber migrasi data lama.
     const EXPENSE_STORAGE_KEY = 'sbr_fleet_expenses_v2';
+    const CATALOG_KEY = 'sbr_catalog_v1';
+    const SERVICE_RECORDS_TABLE = 'fleet_service_records';
+    const SERVICE_CATALOG_TABLE = 'fleet_service_catalog';
     let expenseItems = [];
     let repairDraft = [];
     let repairFlag = [];
 
-    /* ===== Database pekerjaan & barang ===== */
-    const CATALOG_KEY = 'sbr_catalog_v1';
     const DEFAULT_CATALOG = {
         repairs:['Ganti oli mesin','Ganti filter oli','Ganti filter solar','Ganti filter udara','Servis rem','Ganti kampas rem','Ganti ban','Tambal ban','Servis AC','Ganti aki','Ganti V-belt','Servis kelistrikan','Ganti lampu','Las / perbaikan body'],
         items:[{name:'Oli mesin',price:0},{name:'Filter oli',price:0},{name:'Filter solar',price:0},{name:'Filter udara',price:0},{name:'Kampas rem',price:0},{name:'Ban',price:0},{name:'Aki',price:0},{name:'V-belt',price:0},{name:'Bohlam / lampu',price:0}]
     };
     let catalog = null;
     let catMode = 'repairs';
-    function saveCatalog(){ try{ localStorage.setItem(CATALOG_KEY,JSON.stringify(catalog)); }catch(e){} }
+    function getTokoIdForVehicle(vehicleLabel){
+        const v=(listArmada||[]).find(x=>`${x.nama_unit} (${x.plat_nomor})`===String(vehicleLabel||''))
+            || (listArmada||[]).find(x=>String(vehicleLabel||'').includes(String(x.plat_nomor||'')));
+        return String(v?.toko_id || 'GLOBAL');
+    }
+    function getServiceTokoIds(){
+        const ids=[...new Set((listArmada||[]).map(v=>String(v.toko_id||'GLOBAL')).filter(Boolean))];
+        return ids.length?ids:['GLOBAL'];
+    }
+    function saveCatalog(){
+        try{ localStorage.setItem(CATALOG_KEY,JSON.stringify(catalog)); }catch(e){}
+        if(!catalog) return;
+        clearTimeout(catalogSaveTimer);
+        catalogSaveTimer=setTimeout(async()=>{
+            try{
+                const {error}=await _sb.from(SERVICE_CATALOG_TABLE).upsert({toko_id:'GLOBAL',catalog,updated_at:new Date().toISOString()},{onConflict:'toko_id'});
+                if(error) throw error;
+            }catch(e){ console.error('Gagal menyimpan katalog ke Supabase:',e); }
+        },500);
+    }
     function loadCatalog(){
         try{
             const c=JSON.parse(localStorage.getItem(CATALOG_KEY));
             if(c && Array.isArray(c.repairs) && Array.isArray(c.items)){ catalog=c; return; }
         }catch(e){}
-        catalog=JSON.parse(JSON.stringify(DEFAULT_CATALOG)); saveCatalog();
+        catalog=JSON.parse(JSON.stringify(DEFAULT_CATALOG));
+        try{ localStorage.setItem(CATALOG_KEY,JSON.stringify(catalog)); }catch(e){}
+    }
+    async function loadSharedServiceData(){
+        serviceTokoIds=getServiceTokoIds();
+        // Ambil catatan bersama dari database.
+        try{
+            const {data:rows,error}=await _sb.from(SERVICE_RECORDS_TABLE).select('id,toko_id,data,updated_at').in('toko_id',serviceTokoIds);
+            if(error) throw error;
+            const cloudRows=rows||[];
+            const cloudById=new Map(cloudRows.map(r=>[String(r.id),r]));
+            let local=[];
+            try{ local=JSON.parse(localStorage.getItem(EXPENSE_STORAGE_KEY)||'[]'); if(!Array.isArray(local)) local=[]; }catch(e){ local=[]; }
+            // Migrasi otomatis: catatan lama di browser diunggah jika belum ada di database.
+            for(const rec of local){
+                if(!rec || !rec.id) continue;
+                const tokoId=getTokoIdForVehicle(rec.vehicle);
+                if(!serviceTokoIds.includes(tokoId) || cloudById.has(String(rec.id))) continue;
+                const {error:upErr}=await _sb.from(SERVICE_RECORDS_TABLE).upsert({id:String(rec.id),toko_id:tokoId,data:rec,updated_at:rec.updatedAt||new Date().toISOString()},{onConflict:'id'});
+                if(!upErr) cloudById.set(String(rec.id),{id:String(rec.id),toko_id:tokoId,data:rec,updated_at:rec.updatedAt});
+                else console.error('Migrasi catatan lokal gagal:',upErr);
+            }
+            const cloudRecords=[...cloudById.values()].map(r=>r.data||{}).filter(r=>r.id);
+            // Pertahankan catatan lokal yang tidak bisa dipetakan ke armada aktif agar tidak hilang.
+            const cloudIds=new Set(cloudRecords.map(r=>String(r.id)));
+            const localUnmapped=local.filter(r=>r&&r.id&&!cloudIds.has(String(r.id)));
+            expenseItems=[...cloudRecords,...localUnmapped];
+            try{ localStorage.setItem(EXPENSE_STORAGE_KEY,JSON.stringify(expenseItems)); }catch(e){}
+            renderExpenses();
+            serviceCloudReady=true;
+        }catch(e){
+            serviceCloudReady=false;
+            console.error('Gagal memuat catatan servis dari Supabase. Pastikan SQL tabel sudah dijalankan.',e);
+            // Data lokal tetap ditampilkan jika tabel cloud belum dibuat / koneksi gagal.
+        }
+        // Katalog pekerjaan/barang juga disinkronkan lintas perangkat.
+        try{
+            const {data,error}=await _sb.from(SERVICE_CATALOG_TABLE).select('catalog').eq('toko_id','GLOBAL').maybeSingle();
+            if(error) throw error;
+            if(data?.catalog && Array.isArray(data.catalog.repairs) && Array.isArray(data.catalog.items)){
+                catalog=data.catalog;
+                try{localStorage.setItem(CATALOG_KEY,JSON.stringify(catalog));}catch(e){}
+            }else{
+                if(!catalog) loadCatalog();
+                const {error:saveErr}=await _sb.from(SERVICE_CATALOG_TABLE).upsert({toko_id:'GLOBAL',catalog,updated_at:new Date().toISOString()},{onConflict:'toko_id'});
+                if(saveErr) throw saveErr;
+            }
+        }catch(e){ console.error('Gagal memuat katalog dari Supabase. Pastikan SQL tabel sudah dijalankan.',e); }
     }
     const catRepairs = () => { if(!catalog) loadCatalog(); return [...catalog.repairs].filter(Boolean).sort((a,b)=>a.localeCompare(b,'id')); };
     const catItems = () => { if(!catalog) loadCatalog(); return [...catalog.items].filter(x=>x&&x.name).sort((a,b)=>a.name.localeCompare(b.name,'id')); };
@@ -757,7 +829,7 @@
     const localToday = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
     const safeText = v => String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     function loadExpenseData() {
-        try { expenseItems=JSON.parse(localStorage.getItem(EXPENSE_STORAGE_KEY)||'[]'); } catch(e) { expenseItems=[]; }
+        try { expenseItems=JSON.parse(localStorage.getItem(EXPENSE_STORAGE_KEY)||'[]'); if(!Array.isArray(expenseItems)) expenseItems=[]; } catch(e) { expenseItems=[]; }
         document.getElementById('expenseDate').value=localToday();
         document.getElementById('expenseForm').addEventListener('submit',saveExpense);
         renderExpenses();
@@ -984,7 +1056,7 @@
         purchaseLocked=true; resetSubmittedIfChanged();
         renderPurchaseDraft(); closeEl('purchaseModal');
     }
-    function ajukanWA(){
+    async function ajukanWA(){
         if(!purchaseLocked){ alert('Selesaikan daftar belanja dulu (tekan Atur lalu Selesai).'); return; }
         const rec=buildExpenseRecord(); if(!rec) return;
         const total=rec.purchases.reduce((t,p)=>t+(Number(p.estimate)||0),0);
@@ -995,24 +1067,24 @@
         if(rec.notes) msg+=`\nCatatan: ${rec.notes}`;
         msg+=`\n\nMohon di-ACC. Terima kasih 🙏`;
         purchaseSubmitted=true;
-        if(!persistExpense()){ purchaseSubmitted=false; return; }
+        if(!await persistExpense()){ purchaseSubmitted=false; return; }
         renderPurchaseSummary();
         window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,'_blank');
     }
-    function mulaiRealisasi(){
+    async function mulaiRealisasi(){
         if(!purchaseApproved){
             const q=purchaseSubmitted
                 ? 'Apakah pengajuan anggaran sudah di-ACC?\n\nOK = sudah ACC, mulai realisasi.'
                 : 'Pengajuan belum dikirim via WhatsApp.\n\nTetap tandai sudah ACC dan mulai realisasi?';
             if(!confirm(q)) return;
             purchaseApproved=true; purchaseSubmitted=true;
-            if(!persistExpense()){ purchaseApproved=false; return; }
+            if(!await persistExpense()){ purchaseApproved=false; return; }
             renderPurchaseSummary();
         }
         openPurchaseModal();
     }
-    function openActualFromList(id){ editExpense(id); mulaiRealisasi(); }
-    function ajukanFromList(id){ editExpense(id); ajukanWA(); }
+    async function openActualFromList(id){ editExpense(id); await mulaiRealisasi(); }
+    async function ajukanFromList(id){ editExpense(id); await ajukanWA(); }
 
     function updateExpenseTotals(){
         const est=purchaseDraft.reduce((s,x)=>s+(Number(x.estimate)||0),0);
@@ -1035,20 +1107,30 @@
         const locked=purchaseLocked&&purchases.length>0;
         return {id:id||`${Date.now()}`,date,vehicle,repairs,purchases,locked,submitted:locked&&purchaseSubmitted,approved:locked&&purchaseApproved,budget,notes:document.getElementById('expenseNotes').value.trim(),updatedAt:new Date().toISOString()};
     }
-    function persistExpense(){
+    async function persistExpense(){
         const rec=buildExpenseRecord(); if(!rec) return null;
-        expenseItems = expenseItems.some(x=>x.id===rec.id) ? expenseItems.map(x=>x.id===rec.id?rec:x) : [rec,...expenseItems];
-        localStorage.setItem(EXPENSE_STORAGE_KEY,JSON.stringify(expenseItems));
+        const tokoId=getTokoIdForVehicle(rec.vehicle);
+        try{
+            const {error}=await _sb.from(SERVICE_RECORDS_TABLE).upsert({id:String(rec.id),toko_id:tokoId,data:rec,updated_at:rec.updatedAt},{onConflict:'id'});
+            if(error) throw error;
+            serviceCloudReady=true;
+        }catch(err){
+            console.error('Gagal menyimpan catatan ke Supabase:',err);
+            alert('Catatan belum tersinkron ke database. Pastikan SQL tabel fleet_service_records sudah dijalankan dan koneksi internet aktif. Data sementara tetap disimpan di perangkat ini.');
+            serviceCloudReady=false;
+        }
+        expenseItems = expenseItems.some(x=>String(x.id)===String(rec.id)) ? expenseItems.map(x=>String(x.id)===String(rec.id)?rec:x) : [rec,...expenseItems];
+        try{localStorage.setItem(EXPENSE_STORAGE_KEY,JSON.stringify(expenseItems));}catch(e){}
         document.getElementById('expenseId').value=rec.id;
         learnCatalog(rec);
         renderExpenses();
         return rec;
     }
-    function saveExpense(e){
+    async function saveExpense(e){
         e.preventDefault();
-        if(!persistExpense()) return;
+        if(!await persistExpense()) return;
         closeExpenseModal(); resetExpenseForm();
-        alert('Catatan belanja/servis berhasil disimpan.');
+        alert(serviceCloudReady?'Catatan belanja/servis berhasil disimpan ke database dan dapat dibuka dari perangkat lain.':'Catatan disimpan sementara di perangkat ini, tetapi belum tersinkron ke database.');
     }
     const tglIndo = d => { const m=String(d||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?`${m[3]}/${m[2]}/${m[1]}`:(d||'-'); };
     function toggleExpenseDetail(id){
@@ -1096,9 +1178,19 @@
         document.getElementById('expenseModalTitle').textContent='✏️ Edit Catatan Belanja & Servis';
         document.getElementById('expenseModal').classList.add('open');
     }
-    function deleteExpense(id){
-        if(!confirm('Hapus catatan belanja/servis ini?'))return;
-        expenseItems=expenseItems.filter(x=>x.id!==id);localStorage.setItem(EXPENSE_STORAGE_KEY,JSON.stringify(expenseItems));renderExpenses();
+    async function deleteExpense(id){
+        if(!confirm('Hapus catatan belanja/servis ini dari semua perangkat?'))return;
+        try{
+            const {error}=await _sb.from(SERVICE_RECORDS_TABLE).delete().eq('id',String(id));
+            if(error) throw error;
+        }catch(e){
+            console.error('Gagal menghapus catatan dari database:',e);
+            alert('Catatan tidak dapat dihapus dari database. Pastikan SQL tabel sudah dijalankan dan koneksi internet aktif.');
+            return;
+        }
+        expenseItems=expenseItems.filter(x=>String(x.id)!==String(id));
+        try{localStorage.setItem(EXPENSE_STORAGE_KEY,JSON.stringify(expenseItems));}catch(e){}
+        renderExpenses();
     }
     /* ===== Laporan gambar (PNG) untuk WhatsApp ===== */
     let reportBlob=null, reportUrl='', reportName='laporan.png', reportCaption='Laporan Belanja & Servis Armada';
