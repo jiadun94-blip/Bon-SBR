@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Minta browser tidak menyimpan dokumen HTML ini sebagai cache permanen.
+         Cache-Control di hosting tetap disarankan untuk hasil paling konsisten. -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="app-build" content="2026.10.14.1">
     <title>SBRdigital | Fleet Control</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
@@ -482,6 +488,56 @@
         </div>
     </div>
 </div>
+
+<script>
+    /* Pemeriksa versi: jika file terbaru sudah dipublikasikan, halaman lama akan memuat ulang.
+       Untuk setiap pembaruan kode berikutnya, ubah nilai meta app-build di bagian <head>. */
+    (function autoCheckAppBuild() {
+        const buildMeta = document.querySelector('meta[name="app-build"]');
+        const currentBuild = buildMeta ? buildMeta.content : '2026.10.14.1';
+        let checking = false;
+
+        async function checkForNewBuild() {
+            if (checking || document.visibilityState === 'hidden') return;
+            checking = true;
+            try {
+                const checkUrl = new URL(window.location.href);
+                checkUrl.hash = '';
+                checkUrl.searchParams.set('__build_check', String(Date.now()));
+                const response = await fetch(checkUrl.toString(), {
+                    method: 'GET',
+                    cache: 'no-store',
+                    credentials: 'same-origin',
+                    headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+                });
+                if (!response.ok) return;
+                const html = await response.text();
+                const parsed = new DOMParser().parseFromString(html, 'text/html');
+                const latestBuild = parsed.querySelector('meta[name="app-build"]')?.content;
+                if (latestBuild && latestBuild !== currentBuild) {
+                    const nextUrl = new URL(window.location.href);
+                    nextUrl.searchParams.set('__app_version', latestBuild);
+                    nextUrl.searchParams.set('__refresh', String(Date.now()));
+                    window.location.replace(nextUrl.toString());
+                }
+            } catch (error) {
+                // Pemeriksaan versi tidak boleh menghalangi aplikasi jika offline atau hosting menolak fetch.
+                console.info('Pemeriksaan versi dilewati:', error);
+            } finally {
+                checking = false;
+            }
+        }
+
+        // Periksa saat halaman dibuka, lalu periksa ulang berkala ketika halaman aktif.
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', checkForNewBuild, { once: true });
+        } else {
+            checkForNewBuild();
+        }
+        window.addEventListener('pageshow', checkForNewBuild);
+        window.setInterval(checkForNewBuild, 5 * 60 * 1000);
+    })();
+</script>
 
 <script>
     const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
