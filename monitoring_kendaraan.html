@@ -436,12 +436,24 @@
             <label class="field-label" for="kasSaldoAwal">Saldo awal kas (Rp)</label>
             <input id="kasSaldoAwal" type="text" inputmode="numeric" placeholder="Contoh: 5.000.000" oninput="moneyInput(this);renderBukuKas()">
             <button type="button" class="btn-primary" onclick="saveSaldoAwal()">💾 SIMPAN SALDO AWAL</button>
+            <div style="border-top:1px solid var(--line);margin:16px 0 12px;padding-top:14px">
+              <div class="section-banner" style="margin-bottom:12px"><span>➕ TAMBAH ISI KAS</span></div>
+              <label class="field-label" for="kasMasukDate">Tanggal isi kas</label>
+              <input id="kasMasukDate" type="date">
+              <label class="field-label" for="kasMasukNominal" style="margin-top:10px">Jumlah isi kas (Rp)</label>
+              <input id="kasMasukNominal" type="text" inputmode="numeric" placeholder="Contoh: 1.000.000" oninput="moneyInput(this)">
+              <label class="field-label" for="kasMasukVehicle" style="margin-top:10px">Armada (opsional)</label>
+              <select id="kasMasukVehicle"><option value="">Kas Umum / Tidak ditentukan</option></select>
+              <label class="field-label" for="kasMasukNote" style="margin-top:10px">Keterangan</label>
+              <input id="kasMasukNote" type="text" maxlength="180" placeholder="Contoh: Tambahan uang operasional">
+              <button type="button" class="btn-primary" style="margin-top:12px" onclick="saveKasMasuk()">＋ SIMPAN ISI KAS</button>
+            </div>
             <div class="expense-summary">
                 <div class="summary-card"><span class="s-label">SALDO AWAL</span><strong id="kasAwal">Rp 0</strong></div>
                 <div class="summary-card"><span class="s-label">TOTAL BELANJA</span><strong id="kasKeluar">Rp 0</strong></div>
                 <div class="summary-card highlight" style="grid-column:1/-1"><span class="s-label">SALDO KAS TERKINI</span><strong id="kasSaldo">Rp 0</strong></div>
             </div>
-            <div class="helper-note">Buku kas mengambil otomatis setiap realisasi belanja yang sudah disimpan di Belanja / Servis, termasuk belanja stok gudang. Perubahan realisasi akan memperbarui saldo agar tidak tercatat ganda.</div>
+            <div class="helper-note">Isi kas dicatat per tanggal dan digabung dengan pembelanjaan dalam satu riwayat. Saldo berjalan dihitung dari saldo awal + isi kas − pembelanjaan. Catatan isi kas disimpan di database jika koneksi tersedia.</div>
         </div>
         <button type="button" class="btn-primary" style="margin-top:12px" onclick="openKasHistory()">📒 LIHAT RIWAYAT BUKU KAS</button>
     </section>
@@ -893,7 +905,7 @@
         return String((v && v.toko_id) || 'GLOBAL');
     }
     function getTokoIdForRecord(rec){
-        if(rec && (rec.kind==='stok' || (rec.kind==='keluar' && !rec.vehicle))) return getServiceTokoIds()[0];
+        if(rec && (rec.kind==='stok' || (rec.kind==='keluar' && !rec.vehicle) || (rec.kind==='kas_masuk' && !rec.vehicle))) return getServiceTokoIds()[0];
         return getTokoIdForVehicle(rec && rec.vehicle);
     }
     function getServiceTokoIds(){
@@ -1335,7 +1347,7 @@
         const el=document.getElementById('exp_'+id); if(el) el.classList.toggle('open');
     }
     function renderExpenses(){
-        const svcItems=expenseItems.filter(x=>x.kind!=='keluar');
+        const svcItems=expenseItems.filter(x=>x.kind!=='keluar'&&x.kind!=='kas_masuk');
         renderGudang();
         renderBukuKas();
         document.getElementById('expenseCount').textContent=`${svcItems.length} catatan`;
@@ -1683,7 +1695,7 @@
         closeStockOut(); renderExpenses();
     }
 
-    // Buku kas dihitung dari realisasi terkini, sehingga edit/hapus belanja otomatis ikut memperbarui saldo.
+    // Buku kas: saldo awal + isi kas - realisasi pembelanjaan, dalam satu riwayat berjalan.
     const KAS_SALDO_KEY = 'sbr_fleet_kas_saldo_awal_v1';
     function saveSaldoAwal(){
         const val=parseNum(document.getElementById('kasSaldoAwal').value)||0;
@@ -1691,49 +1703,84 @@
         renderBukuKas();
         alert('Saldo awal disimpan pada perangkat ini.');
     }
+    function populateKasVehicle(){
+        const el=document.getElementById('kasMasukVehicle'); if(!el)return;
+        const current=el.value;
+        const list=[...new Set((listArmada||[]).map(v=>`${v.nama_unit} (${v.plat_nomor})`))];
+        el.innerHTML='<option value="">Kas Umum / Tidak ditentukan</option>'+list.map(v=>`<option value="${safeText(v)}">${safeText(v)}</option>`).join('');
+        if(list.includes(current))el.value=current;
+    }
+    async function saveKasMasuk(){
+        const date=document.getElementById('kasMasukDate').value||localToday();
+        const nominal=parseNum(document.getElementById('kasMasukNominal').value)||0;
+        const vehicle=document.getElementById('kasMasukVehicle').value||'';
+        const notes=document.getElementById('kasMasukNote').value.trim();
+        if(nominal<=0){alert('Isi jumlah kas harus lebih dari Rp 0.');return;}
+        const rec={id:`kas_${Date.now()}`,kind:'kas_masuk',date,nominal,vehicle,notes:notes||'Isi kas',updatedAt:new Date().toISOString()};
+        let synced=false;
+        try{
+            const {error}=await _sb.from(SERVICE_RECORDS_TABLE).upsert({id:String(rec.id),toko_id:getTokoIdForRecord(rec),data:rec,updated_at:rec.updatedAt},{onConflict:'id'});
+            if(error)throw error;
+            synced=true;
+        }catch(err){console.error('Gagal menyinkronkan isi kas:',err);}
+        expenseItems=[rec,...expenseItems.filter(x=>String(x.id)!==String(rec.id))];
+        try{localStorage.setItem(EXPENSE_STORAGE_KEY,JSON.stringify(expenseItems));}catch(e){}
+        document.getElementById('kasMasukDate').value=localToday();
+        document.getElementById('kasMasukNominal').value='';
+        document.getElementById('kasMasukNote').value='';
+        renderExpenses();
+        alert(synced?'Isi kas berhasil disimpan dan disinkronkan.':'Isi kas tersimpan sementara di perangkat ini, tetapi belum tersinkron ke database.');
+    }
     function renderBukuKas(){
         const input=document.getElementById('kasSaldoAwal'); if(!input)return;
         let awal=0; try{awal=Number(localStorage.getItem(KAS_SALDO_KEY)||0)||0;}catch(e){}
         if(document.activeElement!==input) input.value=fmtNum(awal);
         const rows=[];
         (expenseItems||[]).forEach(rec=>{
-            if(!rec || rec.kind==='keluar') return;
+            if(!rec)return;
+            if(rec.kind==='kas_masuk'){
+                const nominal=Number(rec.nominal)||0;if(nominal<=0)return;
+                rows.push({date:rec.date||'',vehicle:rec.vehicle||'',name:'Isi Kas',nominal,type:'masuk',id:String(rec.id),notes:rec.notes||'Isi kas',createdAt:rec.updatedAt||''});
+                return;
+            }
+            if(rec.kind==='keluar')return;
             (rec.purchases||[]).forEach((p,i)=>{
-                const nominal=Number(p.actual)||0; if(nominal<=0)return;
-                rows.push({date:rec.date||'',vehicle:rec.vehicle||'-',name:p.name||'Belanja',qty:p.qty,unit:p.unit,nominal,kind:rec.kind||'langsung',id:rec.id+'_'+i,notes:rec.notes||''});
+                const nominal=Number(p.actual)||0;if(nominal<=0)return;
+                rows.push({date:rec.date||'',vehicle:rec.vehicle||'',name:p.name||'Belanja',qty:p.qty,unit:p.unit,nominal,type:'keluar',kind:rec.kind||'langsung',id:rec.id+'_'+i,notes:rec.notes||'',createdAt:rec.updatedAt||''});
             });
         });
-        rows.sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.id).localeCompare(String(b.id)));
-        const keluar=rows.reduce((s,r)=>s+r.nominal,0), saldo=awal-keluar;
+        rows.sort((a,b)=>String(a.date).localeCompare(String(b.date))||((a.type==='masuk'?0:1)-(b.type==='masuk'?0:1))||String(a.createdAt).localeCompare(String(b.createdAt))||String(a.id).localeCompare(String(b.id)));
+        let running=awal;
+        rows.forEach(r=>{running+=r.type==='masuk'?r.nominal:-r.nominal;r.balance=running;});
+        const totalMasuk=rows.filter(r=>r.type==='masuk').reduce((s,r)=>s+r.nominal,0);
+        const keluar=rows.filter(r=>r.type==='keluar').reduce((s,r)=>s+r.nominal,0);
+        const saldo=awal+totalMasuk-keluar;
         document.getElementById('kasAwal').textContent=rupiah(awal);
         document.getElementById('kasKeluar').textContent=rupiah(keluar);
         const saldoEl=document.getElementById('kasSaldo'); saldoEl.textContent=rupiah(saldo); saldoEl.style.color=saldo<0?'#ff7675':'';
-        // Filter hanya memengaruhi daftar riwayat; saldo dan total belanja tetap dihitung dari semua transaksi.
-        const dateEl=document.getElementById('kasFilterDate');
-        const vehicleEl=document.getElementById('kasFilterVehicle');
-        const selectedDate=dateEl?dateEl.value:'';
-        const selectedVehicle=vehicleEl?vehicleEl.value:'';
+        const dateEl=document.getElementById('kasFilterDate'),vehicleEl=document.getElementById('kasFilterVehicle');
+        const selectedDate=dateEl?dateEl.value:'',selectedVehicle=vehicleEl?vehicleEl.value:'';
         if(vehicleEl){
             const current=selectedVehicle;
-            const vehicles=[...new Set(rows.map(r=>r.vehicle||'-'))].sort((a,b)=>a.localeCompare(b,'id'));
+            const vehicles=[...new Set(rows.map(r=>r.vehicle||'').filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id'));
             vehicleEl.innerHTML='<option value="">Semua armada</option>'+vehicles.map(v=>`<option value="${safeText(v)}">${safeText(v)}</option>`).join('');
-            if(vehicles.includes(current)) vehicleEl.value=current;
+            if(vehicles.includes(current))vehicleEl.value=current;
         }
         const filtered=rows.filter(r=>(!selectedDate||String(r.date||'').slice(0,10)===selectedDate)&&(!selectedVehicle||r.vehicle===selectedVehicle));
         document.getElementById('kasCount').textContent=rows.length+' transaksi';
         const info=document.getElementById('kasFilterInfo');
-        if(info) info.textContent=`Menampilkan ${filtered.length} dari ${rows.length} transaksi`;
+        if(info)info.textContent=`Menampilkan ${filtered.length} dari ${rows.length} transaksi · Saldo sekarang ${rupiah(saldo)}`;
         const ledger=document.getElementById('kasLedger');
-        if(!filtered.length){ledger.innerHTML=rows.length?'<div class="empty-state">Tidak ada transaksi untuk tanggal/armada yang dipilih.</div>':'<div class="empty-state">Belum ada pengeluaran tercatat.<br>Isi realisasi belanja agar otomatis masuk ke buku kas.</div>';return;}
-        ledger.innerHTML=filtered.slice().reverse().map(r=>`<article class="expense-row"><div class="expense-row-head"><div><h4>🧾 ${safeText(r.name)}</h4><div class="expense-meta">📅 ${safeText(tglIndo(r.date))} · ${safeText(r.vehicle)}${r.kind==='stok'?' · Stok Gudang':''}</div></div><strong style="color:#ffb36b;white-space:nowrap">− ${rupiah(r.nominal)}</strong></div><div class="money-line"><span>Jumlah</span><strong>${safeText(r.qty==null?'':fmtQty(r.qty))} ${safeText(r.unit||'')}</strong></div>${r.notes?`<div class="expense-meta">${safeText(r.notes)}</div>`:''}</article>`).join('');
+        if(!filtered.length){ledger.innerHTML=rows.length?'<div class="empty-state">Tidak ada transaksi untuk tanggal/armada yang dipilih.</div>':'<div class="empty-state">Belum ada transaksi isi kas atau pembelanjaan.</div>';return;}
+        ledger.innerHTML=filtered.slice().reverse().map(r=>`<article class="expense-row"><div class="expense-row-head"><div><h4>${r.type==='masuk'?'📥':'🧾'} ${safeText(r.name)}</h4><div class="expense-meta">📅 ${safeText(tglIndo(r.date))}${r.vehicle?' · '+safeText(r.vehicle):' · Kas Umum'}${r.kind==='stok'?' · Stok Gudang':''}</div></div><strong style="color:${r.type==='masuk'?'#48d597':'#ffb36b'};white-space:nowrap">${r.type==='masuk'?'+':'−'} ${rupiah(r.nominal)}</strong></div>${r.type==='keluar'&&r.qty!=null?`<div class="money-line"><span>Jumlah</span><strong>${safeText(r.qty==null?'':fmtQty(r.qty))} ${safeText(r.unit||'')}</strong></div>`:''}${r.notes?`<div class="expense-meta">${safeText(r.notes)}</div>`:''}<div class="money-line"><span>Saldo setelah transaksi</span><strong style="color:${r.balance<0?'#ff7675':'var(--text)'}">${rupiah(r.balance)}</strong></div></article>`).join('');
     }
     function resetKasFilters(){
-        const d=document.getElementById('kasFilterDate'); if(d)d.value='';
-        const v=document.getElementById('kasFilterVehicle'); if(v)v.value='';
+        const d=document.getElementById('kasFilterDate');if(d)d.value='';
+        const v=document.getElementById('kasFilterVehicle');if(v)v.value='';
         renderBukuKas();
     }
-    function openKasHistory(){ renderBukuKas(); document.getElementById('kasHistoryModal').classList.add('open'); }
-    function closeKasHistory(){ document.getElementById('kasHistoryModal').classList.remove('open'); }
+    function openKasHistory(){renderBukuKas();document.getElementById('kasHistoryModal').classList.add('open');}
+    function closeKasHistory(){document.getElementById('kasHistoryModal').classList.remove('open');}
 
     function toggleTheme(){
         const light=document.body.classList.toggle('light-theme');
@@ -1759,12 +1806,12 @@
         $('tabService').classList.toggle('active',t==='service');
         $('tabGudang').classList.toggle('active',t==='gudang');
         $('tabKas').classList.toggle('active',t==='kas');
-        if(t==='kas') renderBukuKas();
+        if(t==='kas'){const kd=document.getElementById('kasMasukDate');if(kd&&!kd.value)kd.value=localToday();populateKasVehicle();renderBukuKas();}
         try{ localStorage.setItem('sbr_fleet_tab',t); }catch(e){}
         window.scrollTo(0,0);
     }
     function updateServiceBadge(){
-        const pending=expenseItems.filter(x=>x.kind!=='keluar'&&!(x.purchases||[]).some(p=>Number(p.actual)>0)).length;
+        const pending=expenseItems.filter(x=>x.kind!=='keluar'&&x.kind!=='kas_masuk'&&!(x.purchases||[]).some(p=>Number(p.actual)>0)).length;
         const b=document.getElementById('tabServiceBadge'); if(!b) return;
         b.textContent=pending; b.style.display=pending?'inline-block':'none';
     }
