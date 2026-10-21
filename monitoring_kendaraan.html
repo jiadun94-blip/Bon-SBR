@@ -8,7 +8,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="2026.10.14.1">
+    <meta name="app-build" content="2026.10.21.7">
     <title>SBRdigital | Fleet Control</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
@@ -323,20 +323,75 @@
         body.light-theme .bel-table { background:#f4f9fc; }
         body.light-theme .sum-list { background:#f4f9fc; }
         body.light-theme .btn-add-block { color:#17608d; }
+
+        /* ===== Gudang & kategori belanja ===== */
+        .tab-bar.tab3 { grid-template-columns:1fr 1fr 1fr; }
+        .gudang-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+        .g-in { background:linear-gradient(110deg,#12aa83,#087da4); color:#fff; }
+        .g-out { background:rgba(255,190,80,.16); color:#ffd17a; border:1px solid rgba(255,190,80,.35); }
+        .g-pending { font-size:11px; color:#ffd17a; background:rgba(255,190,80,.1); border:1px dashed rgba(255,190,80,.35); border-radius:10px; padding:8px 10px; margin-bottom:10px; }
+        .g-row { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+        .g-stock { font-size:20px; font-weight:800; text-align:right; white-space:nowrap; }
+        .g-stock small { font-size:11px; font-weight:700; opacity:.8; }
+        .g-stock.ok { color:#6ff0cb; } .g-stock.low { color:#ffd17a; } .g-stock.neg { color:var(--danger); }
+        .g-sub { font-size:11px; color:var(--muted); margin-top:3px; }
+        .hist-row { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:10px 0; border-bottom:1px solid var(--line); font-size:13px; }
+        .hist-row .hq { font-weight:800; white-space:nowrap; }
+        .hist-row .hq.in { color:#6ff0cb; } .hist-row .hq.out { color:#ffb36b; }
+        .hist-row button { width:auto; padding:6px 9px; font-size:11px; margin-left:6px; }
+        .qty-sub { margin-bottom:2px; }
+        body.light-theme .g-out { color:#9a6200; }
+        body.light-theme .g-pending { color:#8a5a00; }
+        body.light-theme .g-stock.ok, body.light-theme .hist-row .hq.in { color:#0a8a6a; }
+        body.light-theme .g-stock.low { color:#9a6200; }
+        body.light-theme .hist-row .hq.out { color:#b25a00; }
     </style>
 </head>
 <body>
+<script>
+/* Penampil error: menampilkan pesan error asli di layar bila script gagal dimuat (berguna di WebView lama). */
+(function(){
+  var shown=0;
+  window.addEventListener('error',function(e){
+    try{
+      if(shown>=3) return; shown++;
+      var d=document.createElement('div');
+      d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#7a1010;color:#fff;font:12px/1.4 monospace;padding:8px 10px;word-break:break-all';
+      d.textContent='ERROR: '+(e.message||'?')+' (baris '+(e.lineno||'?')+') [mulai='+(window.__sbrMainStart?'ya':'tidak')+', selesai='+(window.__sbrMainOk?'ya':'tidak')+', supabase='+(typeof window.supabase)+', scripts='+document.scripts.length+']'+(shown===1?' | '+navigator.userAgent:'');
+      d.onclick=function(){ d.parentNode&&d.parentNode.removeChild(d); };
+      (document.body||document.documentElement).appendChild(d);
+    }catch(x){}
+  });
+  function checkMain(){
+    setTimeout(function(){
+      if(window.__sbrMainOk || window.__orangeShown) return;
+      window.__orangeShown=true;
+      try{
+        var d=document.createElement('div');
+        d.style.cssText='position:fixed;left:0;right:0;top:0;z-index:99999;background:#a05a00;color:#fff;font:13px/1.4 sans-serif;padding:10px 12px';
+        d.textContent='Script utama tidak termuat. Kemungkinan file HTML terpotong saat disalin/diunggah. Salin ulang file utuh (ukuran file harus sekitar 107 KB).';
+        d.textContent+=' [mulai='+(window.__sbrMainStart?'ya':'tidak')+', supabase='+(typeof window.supabase)+', scripts='+document.scripts.length+']';
+        document.body.appendChild(d);
+      }catch(x){}
+    },1500);
+  }
+  window.addEventListener('load',checkMain);
+  document.addEventListener('DOMContentLoaded',checkMain);
+})();
+</script>
+
 
 <div class="container">
     <div class="sticky-top-panel">
         <div class="header-main">
             <div class="brand-row"><h2>SBR FLEET CONTROL <br>
-            <span>version 1.0</span></br></h2><button type="button" class="theme-toggle" onclick="toggleTheme()" id="themeToggle">☀️ Mode Terang</button></div>
+            <span>version 1.0 · build 21.10.7</span></br></h2><button type="button" class="theme-toggle" onclick="toggleTheme()" id="themeToggle">☀️ Mode Terang</button></div>
         </div>
 
-        <div class="tab-bar">
+        <div class="tab-bar tab3">
             <button type="button" class="tab-btn active" id="tabFleet" onclick="switchTab('fleet')">🚛 FLEET</button>
             <button type="button" class="tab-btn" id="tabService" onclick="switchTab('service')">🧾 SERVICE<span class="tab-badge" id="tabServiceBadge" style="display:none">0</span></button>
+            <button type="button" class="tab-btn" id="tabGudang" onclick="switchTab('gudang')">📦 GUDANG</button>
         </div>
 
         <div id="fleetHead">
@@ -361,6 +416,19 @@
         <div id="expenseList" class="expense-list"></div>
     </section>
 
+    <section id="gudangSection" class="scroll-content" style="display:none">
+        <div class="section-banner"><span>📦 GUDANG &amp; STOK BARANG</span><span id="gudangCount">0 barang</span></div>
+        <div class="gudang-actions">
+            <button type="button" class="g-in" onclick="openExpenseModal('','stok')">＋ BELANJA STOK</button>
+            <button type="button" class="g-out" onclick="openStockOut()">📤 PAKAI BARANG</button>
+        </div>
+        <div id="gudangPending"></div>
+        <div id="gudangList" class="expense-list"></div>
+        <div class="section-banner" style="margin-top:18px"><span>🕘 RIWAYAT MUTASI STOK</span></div>
+        <div id="gudangHistory"></div>
+        <div class="helper-note">Stok masuk otomatis dari <b>Belanja Stok Gudang</b> setelah kolom realisasi diisi. Stok keluar dicatat lewat tombol Pakai Barang. <b>Belanja Langsung</b> yang diisi jumlahnya otomatis masuk lalu langsung terpotong (terpakai), jadi stok bersih tidak berubah dan tetap tercatat di riwayat.</div>
+    </section>
+
     <button class="expense-fab" onclick="openExpenseModal()">＋ BELANJA / SERVIS</button>
 
     <div id="expenseModal" class="expense-modal" role="dialog" aria-modal="true" aria-labelledby="expenseModalTitle">
@@ -371,13 +439,22 @@
         </div>
         <form id="expenseForm">
           <input type="hidden" id="expenseId">
+          <label class="field-label">Kategori belanja</label>
+          <div class="tab-bar">
+            <button type="button" class="tab-btn active" id="kindLangsung" onclick="setExpenseKind('langsung')">🔧 LANGSUNG (SERVIS)</button>
+            <button type="button" class="tab-btn" id="kindStok" onclick="setExpenseKind('stok')">📦 STOK GUDANG</button>
+          </div>
           <label class="field-label" for="expenseDate">Tanggal</label>
           <input id="expenseDate" type="date" required>
+          <div id="vehicleWrap">
           <label class="field-label" for="expenseVehicle">Armada</label>
           <select id="expenseVehicle" required><option value="">Pilih armada...</option></select>
+          </div>
 
+          <div id="repairWrap">
           <div class="section-banner compact-banner"><span>🔧 JENIS PERBAIKAN</span><button type="button" class="mini-add" onclick="openRepairModal()">✎ Atur</button></div>
           <div id="repairSummary"></div>
+          </div>
 
           <div class="section-banner compact-banner"><span>🛒 DAFTAR BELANJA</span><span class="banner-btns" id="purchaseBtns"></span></div>
           <div id="purchaseSummary"></div>
@@ -394,6 +471,27 @@
           </div>
           <div class="helper-note">Alur: ✎ Atur (isi estimasi, lalu Selesai) → 📲 Ajukan anggaran via WhatsApp → setelah di-ACC tekan 💵 Realisasi untuk mulai mengisi harga sebenarnya (barang dan estimasi masih bisa ditambah atau diubah). Data versi ini tersimpan di browser perangkat ini.</div>
         </form>
+      </div>
+    </div>
+
+    <div id="stockOutModal" class="expense-modal sub-modal" role="dialog" aria-modal="true">
+      <div class="expense-modal-card">
+        <div class="expense-modal-head">
+          <div><h2>📤 Pakai Barang Gudang</h2><div class="expense-meta">Mengurangi stok gudang</div></div>
+          <button type="button" class="modal-close" onclick="closeStockOut()">✕</button>
+        </div>
+        <label class="field-label" for="soDate">Tanggal</label>
+        <input id="soDate" type="date">
+        <label class="field-label" for="soItem">Barang</label>
+        <select id="soItem" onchange="soUpdateUnit()"></select>
+        <label class="field-label" for="soQty">Jumlah keluar <span id="soUnit"></span></label>
+        <input id="soQty" type="text" inputmode="decimal" autocomplete="off" placeholder="Contoh: 2">
+        <label class="field-label" for="soVehicle">Dipakai untuk armada (opsional)</label>
+        <select id="soVehicle"></select>
+        <label class="field-label" for="soNote">Catatan (opsional)</label>
+        <input id="soNote" maxlength="120" placeholder="Contoh: ganti oli rutin">
+        <button type="button" class="btn-done" onclick="saveStockOut()">💾 SIMPAN PEMAKAIAN</button>
+        <button type="button" class="btn-reset" onclick="closeStockOut()">BATAL</button>
       </div>
     </div>
 
@@ -514,7 +612,7 @@
                 if (!response.ok) return;
                 const html = await response.text();
                 const parsed = new DOMParser().parseFromString(html, 'text/html');
-                const latestBuild = parsed.querySelector('meta[name="app-build"]')?.content;
+                const latestBuild = (function(m){ return m ? m.content : undefined; })(parsed.querySelector('meta[name="app-build"]'));
                 if (latestBuild && latestBuild !== currentBuild) {
                     const nextUrl = new URL(window.location.href);
                     nextUrl.searchParams.set('__app_version', latestBuild);
@@ -541,6 +639,7 @@
 </script>
 
 <script>
+    window.__sbrMainStart = true;
     const SB_URL = "https://yxcxvkairftqzmptkorr.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4Y3h2a2FpcmZ0cXptcHRrb3JyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTA0OTMsImV4cCI6MjA5MzM2NjQ5M30.t1l-EbUrTW_mz4sQfWG3vr6RER2_rdp3cSkfKWigGUs";
     const _sb = supabase.createClient(SB_URL, SB_KEY);
@@ -604,12 +703,11 @@
                     teksCatatan = "Belum ada catatan";
                 }
 
-                return {
-                    ...v,
+                return Object.assign({}, v, {
                     waktu_terakhir_final: waktuFix,
                     label_tipe: tipeUpdate,
                     catatan_log: teksCatatan 
-                };
+                });
             });
 
             listArmada = await Promise.all(promises);
@@ -746,6 +844,7 @@
     const SERVICE_RECORDS_TABLE = 'fleet_service_records';
     const SERVICE_CATALOG_TABLE = 'fleet_service_catalog';
     let expenseItems = [];
+    let expenseKind = 'langsung';   // langsung | stok
     let repairDraft = [];
     let repairFlag = [];
 
@@ -758,7 +857,11 @@
     function getTokoIdForVehicle(vehicleLabel){
         const v=(listArmada||[]).find(x=>`${x.nama_unit} (${x.plat_nomor})`===String(vehicleLabel||''))
             || (listArmada||[]).find(x=>String(vehicleLabel||'').includes(String(x.plat_nomor||'')));
-        return String(v?.toko_id || 'GLOBAL');
+        return String((v && v.toko_id) || 'GLOBAL');
+    }
+    function getTokoIdForRecord(rec){
+        if(rec && (rec.kind==='stok' || (rec.kind==='keluar' && !rec.vehicle))) return getServiceTokoIds()[0];
+        return getTokoIdForVehicle(rec && rec.vehicle);
     }
     function getServiceTokoIds(){
         const ids=[...new Set((listArmada||[]).map(v=>String(v.toko_id||'GLOBAL')).filter(Boolean))];
@@ -796,7 +899,7 @@
             // Migrasi otomatis: catatan lama di browser diunggah jika belum ada di database.
             for(const rec of local){
                 if(!rec || !rec.id) continue;
-                const tokoId=getTokoIdForVehicle(rec.vehicle);
+                const tokoId=getTokoIdForRecord(rec);
                 if(!serviceTokoIds.includes(tokoId) || cloudById.has(String(rec.id))) continue;
                 const {error:upErr}=await _sb.from(SERVICE_RECORDS_TABLE).upsert({id:String(rec.id),toko_id:tokoId,data:rec,updated_at:rec.updatedAt||new Date().toISOString()},{onConflict:'id'});
                 if(!upErr) cloudById.set(String(rec.id),{id:String(rec.id),toko_id:tokoId,data:rec,updated_at:rec.updatedAt});
@@ -819,7 +922,7 @@
         try{
             const {data,error}=await _sb.from(SERVICE_CATALOG_TABLE).select('catalog').eq('toko_id','GLOBAL').maybeSingle();
             if(error) throw error;
-            if(data?.catalog && Array.isArray(data.catalog.repairs) && Array.isArray(data.catalog.items)){
+            if(data && data.catalog && Array.isArray(data.catalog.repairs) && Array.isArray(data.catalog.items)){
                 catalog=data.catalog;
                 try{localStorage.setItem(CATALOG_KEY,JSON.stringify(catalog));}catch(e){}
             }else{
@@ -884,17 +987,18 @@
     const realMode = () => purchaseLocked && purchaseApproved;
     const rupiah = n => new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(n)||0);
     const localToday = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
-    const safeText = v => String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const safeText = v => String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     function loadExpenseData() {
         try { expenseItems=JSON.parse(localStorage.getItem(EXPENSE_STORAGE_KEY)||'[]'); if(!Array.isArray(expenseItems)) expenseItems=[]; } catch(e) { expenseItems=[]; }
         document.getElementById('expenseDate').value=localToday();
         document.getElementById('expenseForm').addEventListener('submit',saveExpense);
         renderExpenses();
     }
-    function openExpenseModal(id='') {
+    function openExpenseModal(id='',kind='') {
         if(id) editExpense(id);
         else {
             resetExpenseForm();
+            if(kind) setExpenseKind(kind);
             document.getElementById('expenseModal').classList.add('open');
             populateExpenseVehicles();
         }
@@ -909,6 +1013,7 @@
         renderRepairDraft(); renderPurchaseDraft(); renderActualSummary(); updateExpenseTotals();
         document.getElementById('expenseModalTitle').textContent='🧾 Catatan Belanja & Servis';
         populateExpenseVehicles();
+        setExpenseKind('langsung');
     }
     function populateExpenseVehicles(){
         const sel=document.getElementById('expenseVehicle'); if(!sel) return;
@@ -918,10 +1023,10 @@
         if(keep) sel.value=keep;
     }
     const numShow = v => (Number(v)>0 ? v : '');
-    const fmtNum = v => { const d=String(v??'').replace(/\D/g,''); return d===''?'':d.replace(/\B(?=(\d{3})+(?!\d))/g,'.'); };
-    const parseNum = v => { const d=String(v??'').replace(/\D/g,''); return d===''?'':Number(d); };
+    const fmtNum = v => { const d=String(v==null?'':v).replace(/\D/g,''); return d===''?'':d.replace(/\B(?=(\d{3})+(?!\d))/g,'.'); };
+    const parseNum = v => { const d=String(v==null?'':v).replace(/\D/g,''); return d===''?'':Number(d); };
     function moneyInput(el){
-        const pos=el.selectionStart??el.value.length;
+        const pos=(el.selectionStart==null?el.value.length:el.selectionStart);
         const digitsBefore=el.value.slice(0,pos).replace(/\D/g,'').length;
         const digits=el.value.replace(/\D/g,'').replace(/^0+(?=\d)/,'');
         el.value=fmtNum(digits);
@@ -1042,6 +1147,7 @@
                 ${itemNameCell(x,i)}
                 <button type="button" class="remove-row" onclick="removePurchaseItem(${i})">✕</button>
               </div>
+              ${qtyRow(x,i)}
               <div class="purchase-sub">
                 <div><label class="field-label">ESTIMASI (Rp)</label><input class="purchase-est" type="text" inputmode="numeric" autocomplete="off" value="${safeText(fmtNum(numShow(x.estimate)))}" placeholder="0" enterkeyhint="next" onkeydown="purchaseKey(event,${i},'est')" oninput="moneyInput(this);purchaseDraft[${i}].estimate=parseNum(this.value);refreshPurchaseViews()"></div>
                 <div><label class="field-label">REALISASI (Rp)</label><input class="purchase-act" type="text" inputmode="numeric" autocomplete="off" value="${safeText(fmtNum(numShow(x.actual)))}" placeholder="Isi realisasi" enterkeyhint="next" onkeydown="purchaseKey(event,${i},'act')" oninput="moneyInput(this);purchaseDraft[${i}].actual=parseNum(this.value);refreshPurchaseViews()"></div>
@@ -1052,7 +1158,7 @@
               ${itemNameCell(x,i)}
               <input class="purchase-est" type="text" inputmode="numeric" autocomplete="off" value="${safeText(fmtNum(numShow(x.estimate)))}" placeholder="Estimasi" enterkeyhint="done" onkeydown="purchaseKey(event,${i},'est')" oninput="moneyInput(this);purchaseDraft[${i}].estimate=parseNum(this.value);refreshPurchaseViews()">
               <button type="button" class="remove-row" onclick="removePurchaseItem(${i})">✕</button>
-            </div></div>`).join('');
+            </div>${qtyRow(x,i)}</div>`).join('');
         }
         applyPurchaseMode();
         refreshPurchaseViews();
@@ -1074,7 +1180,7 @@
         } else {
             const est=items.reduce((t,x)=>t+(Number(x.estimate)||0),0);
             const act=items.reduce((t,x)=>t+(Number(x.actual)||0),0);
-            box.innerHTML=`<div class="bel-table"><div class="bel-row bel-head"><span>Barang</span><span>Estimasi</span><span>Realisasi</span></div>${items.map(x=>`<div class="bel-row"><span>${safeText(String(x.name||'').trim()||'Barang')}</span><span>${fmtNum(Number(x.estimate)||0)||'0'}</span>${Number(x.actual)>0?`<span>${fmtNum(x.actual)}</span>`:'<span class="muted">—</span>'}</div>`).join('')}<div class="bel-row bel-total"><span>Jumlah</span><span>${rupiah(est)}</span><span>${act>0?rupiah(act):'—'}</span></div></div>`;
+            box.innerHTML=`<div class="bel-table"><div class="bel-row bel-head"><span>Barang</span><span>Estimasi</span><span>Realisasi</span></div>${items.map(x=>`<div class="bel-row"><span>${safeText(itemLabel(x))}</span><span>${fmtNum(Number(x.estimate)||0)||'0'}</span>${Number(x.actual)>0?`<span>${fmtNum(x.actual)}</span>`:'<span class="muted">—</span>'}</div>`).join('')}<div class="bel-row bel-total"><span>Jumlah</span><span>${rupiah(est)}</span><span>${act>0?rupiah(act):'—'}</span></div></div>`;
         }
         if(items.length && purchaseLocked){
             box.innerHTML+= purchaseApproved
@@ -1119,7 +1225,8 @@
         const total=rec.purchases.reduce((t,p)=>t+(Number(p.estimate)||0),0);
         let msg=`*PENGAJUAN ANGGARAN BELANJA & SERVIS ARMADA*\nTanggal: ${tglIndo(rec.date)}\nArmada: ${rec.vehicle||'-'}\n`;
         if(rec.repairs.length) msg+=`\n*Jenis perbaikan*\n${rec.repairs.map((r,i)=>`${i+1}. ${r}`).join('\n')}\n`;
-        msg+=`\n*Rencana belanja*\n${rec.purchases.map((p,i)=>`${i+1}. ${p.name||'Barang'} - ${rupiah(p.estimate)}`).join('\n')}`;
+        if(rec.kind==='stok') msg=msg.replace('BELANJA & SERVIS ARMADA','BELANJA STOK GUDANG').replace(/Armada: .*\n/,'Tujuan: Stok Gudang\n');
+        msg+=`\n*Rencana belanja*\n${rec.purchases.map((p,i)=>`${i+1}. ${itemLabel(p)} - ${rupiah(p.estimate)}`).join('\n')}`;
         msg+=`\n\n*Total pengajuan: ${rupiah(total)}*`;
         if(rec.notes) msg+=`\nCatatan: ${rec.notes}`;
         msg+=`\n\nMohon di-ACC. Terima kasih 🙏`;
@@ -1146,27 +1253,28 @@
     function updateExpenseTotals(){
         const est=purchaseDraft.reduce((s,x)=>s+(Number(x.estimate)||0),0);
         const act=purchaseDraft.reduce((s,x)=>s+(Number(x.actual)||0),0);
-        const budget=parseNum(document.getElementById('expenseBudget')?.value)||0;
+        const budget=parseNum((document.getElementById('expenseBudget')||{}).value)||0;
         const set=(id,t)=>{ const el=document.getElementById(id); if(el) el.textContent=t; };
         set('purchaseModalEstimate',rupiah(est)); set('purchaseModalActual',rupiah(act));
         set('modalRemaining',rupiah(budget-act));
         set('modalBalanceNote',act>budget?'⚠️ Realisasi melebihi uang belanja': 'Uang belanja dikurangi total realisasi');
     }
-    document.getElementById('expenseBudget')?.addEventListener('input',updateExpenseTotals);
+    (function(el){ if(el) el.addEventListener('input',updateExpenseTotals); })(document.getElementById('expenseBudget'));
     function buildExpenseRecord(){
         const id=document.getElementById('expenseId').value;
-        const date=document.getElementById('expenseDate').value, vehicle=document.getElementById('expenseVehicle').value;
+        const date=document.getElementById('expenseDate').value, vehicle=expenseKind==='stok'?'Stok Gudang':document.getElementById('expenseVehicle').value;
         if(!date||!vehicle){ alert('Pilih tanggal dan armada terlebih dahulu.'); return null; }
-        const repairs=repairDraft.map(x=>String(x).trim()).filter(Boolean);
-        const purchases=purchaseDraft.filter(hasPurchase).map(x=>({name:String(x.name||'').trim(),estimate:Number(x.estimate)||0,actual:Number(x.actual)||0}));
+        const repairs=expenseKind==='stok'?[]:repairDraft.map(x=>String(x).trim()).filter(Boolean);
+        const purchases=purchaseDraft.filter(hasPurchase).map(x=>({name:String(x.name||'').trim(),estimate:Number(x.estimate)||0,actual:Number(x.actual)||0,qty:parseQty(x.qty),unit:String(x.unit||'').trim()}));
         if(!purchases.length){ alert('Tambahkan minimal satu daftar belanja.'); return null; }
+        if(expenseKind==='stok' && purchases.some(p=>!(p.qty>0))){ alert('Isi jumlah (qty) untuk semua barang stok gudang.'); return null; }
         const budget=parseNum(document.getElementById('expenseBudget').value)||0;
         const locked=purchaseLocked&&purchases.length>0;
-        return {id:id||`${Date.now()}`,date,vehicle,repairs,purchases,locked,submitted:locked&&purchaseSubmitted,approved:locked&&purchaseApproved,budget,notes:document.getElementById('expenseNotes').value.trim(),updatedAt:new Date().toISOString()};
+        return {id:id||`${Date.now()}`,kind:expenseKind,date,vehicle,repairs,purchases,locked,submitted:locked&&purchaseSubmitted,approved:locked&&purchaseApproved,budget,notes:document.getElementById('expenseNotes').value.trim(),updatedAt:new Date().toISOString()};
     }
     async function persistExpense(){
         const rec=buildExpenseRecord(); if(!rec) return null;
-        const tokoId=getTokoIdForVehicle(rec.vehicle);
+        const tokoId=getTokoIdForRecord(rec);
         try{
             const {error}=await _sb.from(SERVICE_RECORDS_TABLE).upsert({id:String(rec.id),toko_id:tokoId,data:rec,updated_at:rec.updatedAt},{onConflict:'id'});
             if(error) throw error;
@@ -1194,11 +1302,13 @@
         const el=document.getElementById('exp_'+id); if(el) el.classList.toggle('open');
     }
     function renderExpenses(){
-        document.getElementById('expenseCount').textContent=`${expenseItems.length} catatan`;
+        const svcItems=expenseItems.filter(x=>x.kind!=='keluar');
+        renderGudang();
+        document.getElementById('expenseCount').textContent=`${svcItems.length} catatan`;
         updateServiceBadge();
         const list=document.getElementById('expenseList');
-        if(!expenseItems.length){list.innerHTML='<div class="empty-state">Belum ada catatan belanja atau servis.<br>Tekan tombol ＋ Belanja / Servis di bawah.</div>';return;}
-        list.innerHTML=expenseItems.map(x=>{
+        if(!svcItems.length){list.innerHTML='<div class="empty-state">Belum ada catatan belanja atau servis.<br>Tekan tombol ＋ Belanja / Servis di bawah.</div>';return;}
+        list.innerHTML=svcItems.map(x=>{
           const ps=x.purchases||[];
           const es=ps.reduce((s,p)=>s+(Number(p.estimate)||0),0);
           const ac=ps.reduce((s,p)=>s+(Number(p.actual)||0),0);
@@ -1207,13 +1317,14 @@
           const appr=x.approved===undefined?locked:!!x.approved;
           const canReal=locked||done;
           const sub=!!x.submitted||appr;
-          const head=`<div class="expense-row-head"><div><h4>${safeText(x.vehicle||'Armada belum dipilih')}</h4><div class="expense-meta">📅 ${safeText(tglIndo(x.date))}</div></div><div style="text-align:right"><span class="badge ${done?'badge-done':'badge-pending'}">${done?'REALISASI TERISI':appr?'MENUNGGU REALISASI':locked?(sub?'MENUNGGU ACC':'BELUM DIAJUKAN'):'DRAFT'}</span>${done?'<div class="chev">▾</div>':''}</div></div>`;
+          const head=`<div class="expense-row-head"><div><h4>${x.kind==='stok'?'📦 ':''}${safeText(x.vehicle||'Armada belum dipilih')}</h4><div class="expense-meta">📅 ${safeText(tglIndo(x.date))}</div></div><div style="text-align:right"><span class="badge ${done?'badge-done':'badge-pending'}">${done?'REALISASI TERISI':appr?'MENUNGGU REALISASI':locked?(sub?'MENUNGGU ACC':'BELUM DIAJUKAN'):'DRAFT'}</span>${done?'<div class="chev">▾</div>':''}</div></div>`;
           const actions=`<div class="row-actions"><button class="btn-small-edit" onclick="openExpenseModal('${x.id}')">✏️ EDIT</button>${(locked&&!appr&&!done)?`<button class="btn-small-edit" onclick="ajukanFromList('${x.id}')">📲 AJUKAN</button>`:''}${canReal?`<button class="btn-small-edit" onclick="openActualFromList('${x.id}')">💵 REALISASI</button>`:''}${done?`<button class="btn-small-edit" onclick="sendExpenseWA('${x.id}')">📲 WA</button>`:''}<button class="btn-small-delete" onclick="deleteExpense('${x.id}')">🗑️ HAPUS</button></div>`;
           if(!done) return `<article class="expense-row">${head}${actions}</article>`;
           return `<article class="expense-row clickable" id="exp_${x.id}"><div onclick="toggleExpenseDetail('${x.id}')">${head}</div>
             <div class="expense-detail">
+              ${x.kind==='stok'?'<div class="expense-meta" style="margin-top:10px">📦 Realisasi ini masuk otomatis ke stok gudang</div>':''}
               ${(x.repairs||[]).length?`<div class="expense-meta" style="margin-top:10px">🔧 Perbaikan: ${x.repairs.map(safeText).join(', ')}</div>`:''}
-              <div class="bel-table" style="margin-top:10px"><div class="bel-row bel-head"><span>Barang</span><span>Estimasi</span><span>Realisasi</span></div>${ps.map(p=>`<div class="bel-row"><span>${safeText(p.name||'Belanja')}</span><span>${fmtNum(Number(p.estimate)||0)||'0'}</span>${Number(p.actual)>0?`<span>${fmtNum(p.actual)}</span>`:'<span class="muted">—</span>'}</div>`).join('')}<div class="bel-row bel-total"><span>Jumlah</span><span>${rupiah(es)}</span><span>${rupiah(ac)}</span></div></div>
+              <div class="bel-table" style="margin-top:10px"><div class="bel-row bel-head"><span>Barang</span><span>Estimasi</span><span>Realisasi</span></div>${ps.map(p=>`<div class="bel-row"><span>${safeText(itemLabel(Object.assign({},p,{name:p.name||'Belanja'})))}</span><span>${fmtNum(Number(p.estimate)||0)||'0'}</span>${Number(p.actual)>0?`<span>${fmtNum(p.actual)}</span>`:'<span class="muted">—</span>'}</div>`).join('')}<div class="bel-row bel-total"><span>Jumlah</span><span>${rupiah(es)}</span><span>${rupiah(ac)}</span></div></div>
               <div class="money-line"><span>Uang belanja</span><strong>${rupiah(x.budget)}</strong></div><div class="money-line"><span>Sisa uang</span><strong>${rupiah((Number(x.budget)||0)-ac)}</strong></div>
               ${x.notes?`<div class="expense-meta" style="margin-top:8px">📝 ${safeText(x.notes)}</div>`:''}
               ${actions}
@@ -1227,16 +1338,17 @@
         document.getElementById('expenseVehicle').value=x.vehicle||'';
         document.getElementById('expenseBudget').value=fmtNum(x.budget);
         document.getElementById('expenseNotes').value=x.notes||'';
-        repairDraft=[...(x.repairs||[])]; repairFlag=[]; purchaseDraft=(x.purchases||[]).map(p=>({...p}));
+        repairDraft=[...(x.repairs||[])]; repairFlag=[]; purchaseDraft=(x.purchases||[]).map(p=>(Object.assign({},p)));
         purchaseLocked=x.locked===undefined?(x.purchases||[]).some(p=>Number(p.actual)>0):!!x.locked;
         purchaseApproved=x.approved===undefined?purchaseLocked:!!x.approved;
         purchaseSubmitted=!!x.submitted||purchaseApproved;
         renderRepairDraft();renderPurchaseDraft();renderActualSummary();updateExpenseTotals();
+        setExpenseKind(x.kind==='stok'?'stok':'langsung');
         document.getElementById('expenseModalTitle').textContent='✏️ Edit Catatan Belanja & Servis';
         document.getElementById('expenseModal').classList.add('open');
     }
-    async function deleteExpense(id){
-        if(!confirm('Hapus catatan belanja/servis ini dari semua perangkat?'))return;
+    async function deleteExpense(id,msg){
+        if(!confirm(msg||'Hapus catatan belanja/servis ini dari semua perangkat?'))return;
         try{
             const {error}=await _sb.from(SERVICE_RECORDS_TABLE).delete().eq('id',String(id));
             if(error) throw error;
@@ -1355,12 +1467,12 @@
     function sendExpenseWA(id=''){
         const x=id?expenseItems.find(y=>y.id===id):null;
         let rec;
-        if(x){ rec={date:x.date,vehicle:x.vehicle,repairs:x.repairs||[],purchases:x.purchases||[],budget:x.budget,notes:x.notes}; }
+        if(x){ rec={date:x.date,vehicle:x.vehicle,repairs:x.repairs||[],purchases:(x.purchases||[]).map(p=>(Object.assign({},p,{name:itemLabel(p)}))),budget:x.budget,notes:x.notes}; }
         else{
-          const vehicle=document.getElementById('expenseVehicle').value;
-          const purchases=purchaseDraft.filter(hasPurchase).map(p=>({name:String(p.name||'').trim(),estimate:Number(p.estimate)||0,actual:Number(p.actual)||0}));
+          const vehicle=expenseKind==='stok'?'Stok Gudang':document.getElementById('expenseVehicle').value;
+          const purchases=purchaseDraft.filter(hasPurchase).map(p=>({name:itemLabel(p),estimate:Number(p.estimate)||0,actual:Number(p.actual)||0}));
           if(!vehicle||!purchases.length){ alert('Pilih armada dan isi daftar belanja sebelum membuat laporan.'); return; }
-          rec={date:document.getElementById('expenseDate').value,vehicle,repairs:repairDraft.map(v=>String(v).trim()).filter(Boolean),purchases,budget:parseNum(document.getElementById('expenseBudget').value)||0,notes:document.getElementById('expenseNotes').value.trim()};
+          rec={date:document.getElementById('expenseDate').value,vehicle,repairs:expenseKind==='stok'?[]:repairDraft.map(v=>String(v).trim()).filter(Boolean),purchases,budget:parseNum(document.getElementById('expenseBudget').value)||0,notes:document.getElementById('expenseNotes').value.trim()};
         }
         const cv=renderReportCanvas(rec);
         const _n=new Date(), _t=`${String(_n.getHours()).padStart(2,'0')}${String(_n.getMinutes()).padStart(2,'0')}${String(_n.getSeconds()).padStart(2,'0')}`;
@@ -1413,6 +1525,130 @@
         else window.location.href = waUrl;
         reportHint('Gambar sedang diunduh dengan nama otomatis. WhatsApp dibuka; bila gambar belum terlampir, pilih 📎 lalu ambil PNG terbaru dari folder Download.');
     }
+    /* ===== Kategori belanja & Gudang ===== */
+    const parseQty = v => { const n=Number(String(v==null?'':v).replace(',','.')); return isFinite(n)&&n>0?n:0; };
+    const fmtQty = n => String(Math.round(Number(n)*100)/100).replace('.',',');
+    const itemLabel = p => {
+        const n=String(p.name||'').trim()||'Barang', q=parseQty(p.qty);
+        return q>0 ? `${n} (${fmtQty(q)}${p.unit?' '+p.unit:''})` : n;
+    };
+    function qtyRow(x,i){
+        const stok=expenseKind==='stok';
+        return `<div class="purchase-sub qty-sub"><div><label class="field-label">${stok?'JUMLAH MASUK':'JUMLAH (STOK TERPOTONG)'}</label><input type="text" inputmode="decimal" autocomplete="off" value="${safeText(x.qty==null?'':x.qty)}" placeholder="Qty" oninput="purchaseDraft[${i}].qty=this.value.replace(/[^0-9.,]/g,'');refreshPurchaseViews()"></div><div><label class="field-label">SATUAN</label><input value="${safeText(x.unit||'')}" maxlength="15" placeholder="pcs / liter / buah" oninput="purchaseDraft[${i}].unit=this.value"></div></div>`;
+    }
+    function setExpenseKind(k){
+        expenseKind = (k==='stok') ? 'stok' : 'langsung';
+        const stok = expenseKind==='stok';
+        document.getElementById('kindLangsung').classList.toggle('active',!stok);
+        document.getElementById('kindStok').classList.toggle('active',stok);
+        document.getElementById('vehicleWrap').style.display = stok ? 'none' : '';
+        document.getElementById('repairWrap').style.display = stok ? 'none' : '';
+        document.getElementById('expenseVehicle').required = !stok;
+        renderPurchaseDraft();
+    }
+
+    function computeStock(){
+        const map=new Map(), moves=[]; let pending=0;
+        const get=(name,unit)=>{
+            const key=String(name).trim().toLowerCase();
+            if(!map.has(key)) map.set(key,{key,name:String(name).trim(),unit:unit||'',inQty:0,outQty:0,spent:0});
+            const e=map.get(key); if(!e.unit && unit) e.unit=unit; return e;
+        };
+        expenseItems.forEach(r=>{
+            if(!r) return;
+            if(r.kind==='stok'){
+                (r.purchases||[]).forEach(p=>{
+                    const q=parseQty(p.qty); if(!String(p.name||'').trim()||!q) return;
+                    if(!(Number(p.actual)>0)){ pending++; return; }
+                    const e=get(p.name,p.unit); e.inQty+=q; e.spent+=Number(p.actual)||0; e.fromStok=true;
+                    moves.push({type:'masuk',id:r.id,date:r.date,name:e.name,qty:q,unit:p.unit||e.unit,total:Number(p.actual)||0,at:r.updatedAt||r.date});
+                });
+            } else if(r.kind==='keluar'){
+                const q=parseQty(r.qty); if(!String(r.item||'').trim()||!q) return;
+                const e=get(r.item,r.unit); e.outQty+=q; e.fromStok=true;
+                moves.push({type:'keluar',id:r.id,date:r.date,name:e.name,qty:q,unit:r.unit||e.unit,vehicle:r.vehicle,note:r.notes,at:r.updatedAt||r.date});
+            } else {
+                // Belanja langsung: otomatis masuk gudang lalu langsung terpakai, stok bersih tidak berubah.
+                (r.purchases||[]).forEach(p=>{
+                    const q=parseQty(p.qty), act=Number(p.actual)||0;
+                    if(!String(p.name||'').trim()||!q||!(act>0)) return;
+                    const e=get(p.name,p.unit); e.inQty+=q; e.outQty+=q; e.spent+=act;
+                    const at=r.updatedAt||r.date, u=p.unit||e.unit;
+                    moves.push({type:'keluar',auto:true,id:r.id,date:r.date,name:e.name,qty:q,unit:u,vehicle:r.vehicle,at:at+'~1'});
+                    moves.push({type:'masuk',auto:true,id:r.id,date:r.date,name:e.name,qty:q,unit:u,total:act,at:at+'~0'});
+                });
+            }
+        });
+        moves.sort((a,b)=> String(b.date).localeCompare(String(a.date)) || String(b.at).localeCompare(String(a.at)));
+        return {map,moves,pending};
+    }
+    let gudangKeys=[];
+    function renderGudang(){
+        const listEl=document.getElementById('gudangList'); if(!listEl) return;
+        const {map,moves,pending}=computeStock();
+        const items=[...map.values()].filter(x=>x.fromStok||x.inQty-x.outQty!==0).sort((a,b)=>a.name.localeCompare(b.name,'id'));
+        gudangKeys=items.map(x=>x.key);
+        document.getElementById('gudangCount').textContent=`${items.length} barang`;
+        document.getElementById('gudangPending').innerHTML = pending ? `<div class="g-pending">⏳ ${pending} barang belanja stok belum direalisasi, belum masuk ke gudang. Isi realisasinya di tab Service.</div>` : '';
+        listEl.innerHTML = items.length ? items.map((x,i)=>{
+            const st=x.inQty-x.outQty;
+            const cls=st<0?'neg':(st===0?'low':'ok');
+            const avg=x.inQty>0?Math.round(x.spent/x.inQty):0;
+            return `<article class="expense-row"><div class="g-row"><div><h4 style="margin:0">${safeText(x.name)}</h4><div class="g-sub">Masuk ${fmtQty(x.inQty)} • Keluar ${fmtQty(x.outQty)}${avg?` • Rata-rata ${rupiah(avg)}/${safeText(x.unit||'unit')}`:''}</div></div><div class="g-stock ${cls}">${fmtQty(st)} <small>${safeText(x.unit||'')}</small>${st<=0?`<div><span class="badge badge-pending">${st<0?'MINUS':'HABIS'}</span></div>`:''}</div></div>${st>0?`<div class="row-actions"><button class="btn-small-edit" onclick="openStockOut(${i})">📤 PAKAI</button></div>`:''}</article>`;
+        }).join('') : '<div class="empty-state">Gudang masih kosong.<br>Tekan ＋ Belanja Stok, lalu isi realisasinya agar stok masuk.</div>';
+        const hist=document.getElementById('gudangHistory');
+        hist.innerHTML = moves.length ? moves.slice(0,40).map(m=>{
+            const sub = m.auto ? (m.type==='masuk' ? `📅 ${safeText(tglIndo(m.date))} • Belanja langsung • ${rupiah(m.total)}` : `📅 ${safeText(tglIndo(m.date))} • Langsung terpakai • ${safeText(m.vehicle||'')}`)
+                : m.type==='masuk' ? `📅 ${safeText(tglIndo(m.date))} • Belanja stok • ${rupiah(m.total)}`
+                : `📅 ${safeText(tglIndo(m.date))}${m.vehicle?' • '+safeText(m.vehicle):''}${m.note?' • '+safeText(m.note):''}`;
+            const btn = (m.type==='masuk'||m.auto)
+                ? `<button class="btn-small-edit" onclick="openExpenseModal('${m.id}')">✏️</button>`
+                : `<button class="btn-small-delete" onclick="deleteExpense('${m.id}','Hapus catatan pemakaian ini? Stok akan bertambah kembali.')">🗑️</button>`;
+            return `<div class="hist-row"><div><div>${m.type==='masuk'?'📥':'📤'} ${safeText(m.name)}</div><div class="g-sub">${sub}</div></div><div style="display:flex;align-items:center"><span class="hq ${m.type==='masuk'?'in':'out'}">${m.type==='masuk'?'+':'−'}${fmtQty(m.qty)} ${safeText(m.unit||'')}</span>${btn}</div></div>`;
+        }).join('') : '<div class="empty-state">Belum ada mutasi stok.</div>';
+    }
+    function openStockOut(idx){
+        const {map}=computeStock();
+        const avail=[...map.values()].filter(x=>x.inQty-x.outQty>0).sort((a,b)=>a.name.localeCompare(b.name,'id'));
+        if(!avail.length){ alert('Belum ada stok di gudang. Lakukan belanja stok dan isi realisasinya dulu.'); return; }
+        const sel=document.getElementById('soItem');
+        sel.innerHTML=avail.map(x=>`<option value="${safeText(x.key)}" data-unit="${safeText(x.unit)}">${safeText(x.name)} (stok ${fmtQty(x.inQty-x.outQty)} ${safeText(x.unit)})</option>`).join('');
+        const pre = (typeof idx==='number') ? gudangKeys[idx] : '';
+        if(pre) sel.value=pre;
+        const vs=document.getElementById('soVehicle');
+        vs.innerHTML='<option value="">— Tidak ditentukan —</option>'+(listArmada||[]).map(v=>{const l=`${v.nama_unit} (${v.plat_nomor})`;return `<option value="${safeText(l)}">${safeText(l)}</option>`;}).join('');
+        document.getElementById('soDate').value=localToday();
+        document.getElementById('soQty').value=''; document.getElementById('soNote').value='';
+        soUpdateUnit(); openEl('stockOutModal');
+        setTimeout(()=>document.getElementById('soQty').focus(),50);
+    }
+    function soUpdateUnit(){
+        const o=document.getElementById('soItem').selectedOptions[0];
+        const u=o?o.getAttribute('data-unit'):'';
+        document.getElementById('soUnit').textContent=u?`(${u})`:'';
+    }
+    function closeStockOut(){ closeEl('stockOutModal'); }
+    async function saveStockOut(){
+        const key=document.getElementById('soItem').value;
+        const qty=parseQty(document.getElementById('soQty').value);
+        const date=document.getElementById('soDate').value||localToday();
+        if(!key||!qty){ alert('Pilih barang dan isi jumlah keluar.'); return; }
+        const st=computeStock().map.get(key); if(!st) return;
+        const sisa=st.inQty-st.outQty;
+        if(qty>sisa && !confirm(`Stok ${st.name} hanya ${fmtQty(sisa)} ${st.unit}. Tetap catat ${fmtQty(qty)}?`)) return;
+        const rec={id:`${Date.now()}`,kind:'keluar',date,vehicle:document.getElementById('soVehicle').value,item:st.name,unit:st.unit,qty,notes:document.getElementById('soNote').value.trim(),updatedAt:new Date().toISOString()};
+        try{
+            const {error}=await _sb.from(SERVICE_RECORDS_TABLE).upsert({id:String(rec.id),toko_id:getTokoIdForRecord(rec),data:rec,updated_at:rec.updatedAt},{onConflict:'id'});
+            if(error) throw error;
+        }catch(err){
+            console.error('Gagal menyimpan pemakaian stok:',err);
+            alert('Pemakaian belum tersinkron ke database. Data sementara tetap disimpan di perangkat ini.');
+        }
+        expenseItems=[rec,...expenseItems];
+        try{localStorage.setItem(EXPENSE_STORAGE_KEY,JSON.stringify(expenseItems));}catch(e){}
+        closeStockOut(); renderExpenses();
+    }
+
     function toggleTheme(){
         const light=document.body.classList.toggle('light-theme');
         localStorage.setItem('sbr_fleet_theme',light?'light':'dark');
@@ -1425,23 +1661,27 @@
     }
 
     function switchTab(t){
-        const svc=(t==='service');
-        document.getElementById('fleetHead').style.display=svc?'none':'';
-        document.getElementById('dashboard').style.display=svc?'none':'';
-        document.getElementById('expenseSection').style.display=svc?'':'none';
-        document.querySelector('.expense-fab').style.display=svc?'':'none';
-        document.getElementById('tabFleet').classList.toggle('active',!svc);
-        document.getElementById('tabService').classList.toggle('active',svc);
-        try{ localStorage.setItem('sbr_fleet_tab',svc?'service':'fleet'); }catch(e){}
+        if(!['fleet','service','gudang'].includes(t)) t='fleet';
+        const $=id=>document.getElementById(id);
+        $('fleetHead').style.display=t==='fleet'?'':'none';
+        $('dashboard').style.display=t==='fleet'?'':'none';
+        $('expenseSection').style.display=t==='service'?'':'none';
+        $('gudangSection').style.display=t==='gudang'?'':'none';
+        document.querySelector('.expense-fab').style.display=t==='service'?'':'none';
+        $('tabFleet').classList.toggle('active',t==='fleet');
+        $('tabService').classList.toggle('active',t==='service');
+        $('tabGudang').classList.toggle('active',t==='gudang');
+        try{ localStorage.setItem('sbr_fleet_tab',t); }catch(e){}
         window.scrollTo(0,0);
     }
     function updateServiceBadge(){
-        const pending=expenseItems.filter(x=>!(x.purchases||[]).some(p=>Number(p.actual)>0)).length;
+        const pending=expenseItems.filter(x=>x.kind!=='keluar'&&!(x.purchases||[]).some(p=>Number(p.actual)>0)).length;
         const b=document.getElementById('tabServiceBadge'); if(!b) return;
         b.textContent=pending; b.style.display=pending?'inline-block':'none';
     }
 
     window.onload = () => { loadCatalog(); initTheme(); loadExpenseData(); init(); let t='fleet'; try{ t=localStorage.getItem('sbr_fleet_tab')||'fleet'; }catch(e){} switchTab(t); };
+    window.__sbrMainOk = true;
 </script>
 </body>
 </html>
