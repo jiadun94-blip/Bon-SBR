@@ -1710,13 +1710,14 @@
         el.innerHTML='<option value="">Kas Umum / Tidak ditentukan</option>'+list.map(v=>`<option value="${safeText(v)}">${safeText(v)}</option>`).join('');
         if(list.includes(current))el.value=current;
     }
+    let editingKasMasukId = '';
     async function saveKasMasuk(){
         const date=document.getElementById('kasMasukDate').value||localToday();
         const nominal=parseNum(document.getElementById('kasMasukNominal').value)||0;
         const vehicle=document.getElementById('kasMasukVehicle').value||'';
         const notes=document.getElementById('kasMasukNote').value.trim();
         if(nominal<=0){alert('Isi jumlah kas harus lebih dari Rp 0.');return;}
-        const rec={id:`kas_${Date.now()}`,kind:'kas_masuk',date,nominal,vehicle,notes:notes||'Isi kas',updatedAt:new Date().toISOString()};
+        const rec={id:editingKasMasukId||`kas_${Date.now()}`,kind:'kas_masuk',date,nominal,vehicle,notes:notes||'Isi kas',updatedAt:new Date().toISOString()};
         let synced=false;
         try{
             const {error}=await _sb.from(SERVICE_RECORDS_TABLE).upsert({id:String(rec.id),toko_id:getTokoIdForRecord(rec),data:rec,updated_at:rec.updatedAt},{onConflict:'id'});
@@ -1725,11 +1726,45 @@
         }catch(err){console.error('Gagal menyinkronkan isi kas:',err);}
         expenseItems=[rec,...expenseItems.filter(x=>String(x.id)!==String(rec.id))];
         try{localStorage.setItem(EXPENSE_STORAGE_KEY,JSON.stringify(expenseItems));}catch(e){}
+        editingKasMasukId='';
         document.getElementById('kasMasukDate').value=localToday();
         document.getElementById('kasMasukNominal').value='';
         document.getElementById('kasMasukNote').value='';
+        document.getElementById('kasMasukVehicle').value='';
+        const btn=document.querySelector('[onclick="saveKasMasuk()"]'); if(btn)btn.textContent='＋ SIMPAN ISI KAS';
         renderExpenses();
-        alert(synced?'Isi kas berhasil disimpan dan disinkronkan.':'Isi kas tersimpan sementara di perangkat ini, tetapi belum tersinkron ke database.');
+        alert(synced?(rec.id.startsWith('kas_')?'Isi kas berhasil disimpan dan disinkronkan.':'Perubahan isi kas berhasil disimpan dan disinkronkan.'):'Isi kas tersimpan sementara di perangkat ini, tetapi belum tersinkron ke database.');
+    }
+    function editKasMasuk(id){
+        const rec=(expenseItems||[]).find(x=>String(x.id)===String(id)&&x.kind==='kas_masuk');
+        if(!rec){alert('Catatan isi kas tidak ditemukan.');return;}
+        editingKasMasukId=String(rec.id);
+        document.getElementById('kasMasukDate').value=rec.date||localToday();
+        document.getElementById('kasMasukNominal').value=fmtNum(rec.nominal||0);
+        populateKasVehicle(); document.getElementById('kasMasukVehicle').value=rec.vehicle||'';
+        document.getElementById('kasMasukNote').value=rec.notes||'';
+        const btn=document.querySelector('[onclick="saveKasMasuk()"]'); if(btn)btn.textContent='💾 SIMPAN PERUBAHAN ISI KAS';
+        closeKasHistory();
+        document.getElementById('kasMasukDate').scrollIntoView({behavior:'smooth',block:'center'});
+    }
+    async function deleteKasTransaction(id){
+        const key=String(id);
+        const entry=(expenseItems||[]).find(x=>String(x.id)===key&&x.kind==='kas_masuk');
+        if(entry){
+            if(!confirm(`Hapus catatan isi kas ${rupiah(entry.nominal)} tanggal ${tglIndo(entry.date)}? Saldo akan dihitung ulang.`))return;
+            try{const {error}=await _sb.from(SERVICE_RECORDS_TABLE).delete().eq('id',key);if(error)throw error;}catch(e){console.error(e);alert('Tidak bisa menghapus dari database. Pastikan koneksi internet aktif.');return;}
+            expenseItems=expenseItems.filter(x=>String(x.id)!==key);try{localStorage.setItem(EXPENSE_STORAGE_KEY,JSON.stringify(expenseItems));}catch(e){}
+            renderExpenses();return;
+        }
+        const split=key.lastIndexOf('_'); const parentId=key.slice(0,split); const idx=Number(key.slice(split+1));
+        const rec=(expenseItems||[]).find(x=>String(x.id)===parentId&&x.kind!=='kas_masuk'&&x.kind!=='keluar');
+        if(!rec||!Array.isArray(rec.purchases)||!Number.isInteger(idx)||idx<0||idx>=rec.purchases.length){alert('Transaksi belanja tidak ditemukan.');return;}
+        const purchase=rec.purchases[idx];
+        if(!confirm(`Hapus transaksi belanja “${purchase.name||'Belanja'}” senilai ${rupiah(purchase.actual)}? Saldo akan dihitung ulang.`))return;
+        const updated={...rec,purchases:rec.purchases.filter((_,i)=>i!==idx),updatedAt:new Date().toISOString()};
+        try{const {error}=await _sb.from(SERVICE_RECORDS_TABLE).upsert({id:String(updated.id),toko_id:getTokoIdForRecord(updated),data:updated,updated_at:updated.updatedAt},{onConflict:'id'});if(error)throw error;}catch(e){console.error(e);alert('Transaksi belanja belum bisa diubah di database. Periksa koneksi internet.');return;}
+        expenseItems=expenseItems.map(x=>String(x.id)===parentId?updated:x);try{localStorage.setItem(EXPENSE_STORAGE_KEY,JSON.stringify(expenseItems));}catch(e){}
+        renderExpenses();
     }
     function renderBukuKas(){
         const input=document.getElementById('kasSaldoAwal'); if(!input)return;
@@ -1746,7 +1781,7 @@
             if(rec.kind==='keluar')return;
             (rec.purchases||[]).forEach((p,i)=>{
                 const nominal=Number(p.actual)||0;if(nominal<=0)return;
-                rows.push({date:rec.date||'',vehicle:rec.vehicle||'',name:p.name||'Belanja',qty:p.qty,unit:p.unit,nominal,type:'keluar',kind:rec.kind||'langsung',id:rec.id+'_'+i,notes:rec.notes||'',createdAt:rec.updatedAt||''});
+                rows.push({date:rec.date||'',vehicle:rec.vehicle||'',name:p.name||'Belanja',qty:p.qty,unit:p.unit,nominal,type:'keluar',kind:rec.kind||'langsung',id:rec.id+'_'+i,parentId:String(rec.id),purchaseIndex:i,notes:rec.notes||'',createdAt:rec.updatedAt||''});
             });
         });
         rows.sort((a,b)=>String(a.date).localeCompare(String(b.date))||((a.type==='masuk'?0:1)-(b.type==='masuk'?0:1))||String(a.createdAt).localeCompare(String(b.createdAt))||String(a.id).localeCompare(String(b.id)));
@@ -1772,7 +1807,7 @@
         if(info)info.textContent=`Menampilkan ${filtered.length} dari ${rows.length} transaksi · Saldo sekarang ${rupiah(saldo)}`;
         const ledger=document.getElementById('kasLedger');
         if(!filtered.length){ledger.innerHTML=rows.length?'<div class="empty-state">Tidak ada transaksi untuk tanggal/armada yang dipilih.</div>':'<div class="empty-state">Belum ada transaksi isi kas atau pembelanjaan.</div>';return;}
-        ledger.innerHTML=filtered.slice().reverse().map(r=>`<article class="expense-row"><div class="expense-row-head"><div><h4>${r.type==='masuk'?'📥':'🧾'} ${safeText(r.name)}</h4><div class="expense-meta">📅 ${safeText(tglIndo(r.date))}${r.vehicle?' · '+safeText(r.vehicle):' · Kas Umum'}${r.kind==='stok'?' · Stok Gudang':''}</div></div><strong style="color:${r.type==='masuk'?'#48d597':'#ffb36b'};white-space:nowrap">${r.type==='masuk'?'+':'−'} ${rupiah(r.nominal)}</strong></div>${r.type==='keluar'&&r.qty!=null?`<div class="money-line"><span>Jumlah</span><strong>${safeText(r.qty==null?'':fmtQty(r.qty))} ${safeText(r.unit||'')}</strong></div>`:''}${r.notes?`<div class="expense-meta">${safeText(r.notes)}</div>`:''}<div class="money-line"><span>Saldo setelah transaksi</span><strong style="color:${r.balance<0?'#ff7675':'var(--text)'}">${rupiah(r.balance)}</strong></div></article>`).join('');
+        ledger.innerHTML=filtered.slice().reverse().map(r=>`<article class="expense-row"><div class="expense-row-head"><div><h4>${r.type==='masuk'?'📥':'🧾'} ${safeText(r.name)}</h4><div class="expense-meta">📅 ${safeText(tglIndo(r.date))}${r.vehicle?' · '+safeText(r.vehicle):' · Kas Umum'}${r.kind==='stok'?' · Stok Gudang':''}</div></div><strong style="color:${r.type==='masuk'?'#48d597':'#ffb36b'};white-space:nowrap">${r.type==='masuk'?'+':'−'} ${rupiah(r.nominal)}</strong></div>${r.type==='keluar'&&r.qty!=null?`<div class="money-line"><span>Jumlah</span><strong>${safeText(r.qty==null?'':fmtQty(r.qty))} ${safeText(r.unit||'')}</strong></div>`:''}${r.notes?`<div class="expense-meta">${safeText(r.notes)}</div>`:''}<div class="money-line"><span>Saldo setelah transaksi</span><strong style="color:${r.balance<0?'#ff7675':'var(--text)'}">${rupiah(r.balance)}</strong></div><div class="row-actions" style="margin-top:10px">${r.type==='masuk'?`<button type="button" class="btn-small-edit" onclick="editKasMasuk('${safeText(r.id)}')">✏️ EDIT</button>`:`<button type="button" class="btn-small-edit" onclick="closeKasHistory();openExpenseModal('${safeText(r.parentId||'')}')">✏️ EDIT BELANJA</button>`}<button type="button" class="btn-small-delete" onclick="deleteKasTransaction('${safeText(r.id)}')">🗑️ HAPUS</button></div></article>`).join('');
     }
     function resetKasFilters(){
         const d=document.getElementById('kasFilterDate');if(d)d.value='';
