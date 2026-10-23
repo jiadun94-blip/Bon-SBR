@@ -1,26 +1,16 @@
 {
-  "id": "./monitoring-kendaraan",
+  "id": "./monitoring_kendaraan.html",
   "name": "SBR Monitoring Kendaraan",
   "short_name": "Monitoring",
   "description": "Monitoring kendaraan dan operasional armada SBR Putra Food",
-  "start_url": "./monitoring-kendaraan.html",
-  "scope": "./",
+  "start_url": "./monitoring_kendaraan.html",
+  "scope": "./monitoring_kendaraan.html",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#121212",
   "theme_color": "#17202a",
   "icons": [
-    {
-      "src": "./icon-monitoring-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "./icon-monitoring-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "./icon-monitoring-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./icon-monitoring-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
