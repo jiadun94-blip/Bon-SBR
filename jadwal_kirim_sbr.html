@@ -964,80 +964,151 @@
         const d = window.lastSimData;
         if (!d || !d.item) { alert('Pilih item simulasi terlebih dahulu.'); return; }
 
-        const scale = 2, W = 760, pad = 20, rowH = 34, headH = 40, titleH = 64;
-        const cols = [
-            { t: 'Armada', w: 190, a: 'left' },
-            { t: 'Saldo Kirim', w: 100, a: 'center' },
-            { t: 'Agen', w: 220, a: 'left' },
-            { t: 'Dikirim', w: 100, a: 'center' },
-            { t: 'Sisa', w: 110, a: 'center' }
-        ];
-        const tableW = cols.reduce((x, c) => x + c.w, 0);
-        const cw = tableW + pad * 2;
-        const rows = d.rows;
-        const ch = pad + titleH + headH + rows.length * rowH + rowH + pad;
+        const card = document.querySelector('.summary-card.stock');
+        const header = card.querySelector('.summary-header');
+        const scroller = card.querySelector('.scroll-y');
+        const table = card.querySelector('table');
+        const select = document.getElementById('pilihItemSimulasi');
+        const cs = (el) => getComputedStyle(el);
+        const px = (v) => parseFloat(v) || 0;
+        const isClear = (c) => !c || c === 'transparent' || /rgba\(.*,\s*0\)$/.test(c);
+
+        const scale = 2;
+        const cR = card.getBoundingClientRect();
+        const hR = header.getBoundingClientRect();
+        const tR = table.getBoundingClientRect();
+        const sR = scroller.getBoundingClientRect();
+        const cCS = cs(card), hCS = cs(header);
+        const bw = px(cCS.borderTopWidth), rad = px(cCS.borderTopLeftRadius);
+
+        // ukuran = card asli, tapi tinggi menampilkan seluruh tabel (tanpa scroll)
+        const tableTop = sR.top - cR.top;
+        const cw = Math.round(cR.width);
+        const ch = Math.round(tableTop + tR.height + px(cCS.paddingBottom) + bw);
 
         const cv = document.createElement('canvas');
         cv.width = cw * scale; cv.height = ch * scale;
         const g = cv.getContext('2d');
         g.scale(scale, scale);
-        const font = "'Roboto Condensed', Tahoma, sans-serif";
+        g.textBaseline = 'middle';
 
-        g.fillStyle = '#ffffff'; g.fillRect(0, 0, cw, ch);
-
-        // judul
-        g.fillStyle = '#1a202c'; g.textBaseline = 'middle'; g.textAlign = 'left';
-        g.font = `900 20px ${font}`;
-        g.fillText('SIMULASI ALOKASI ITEM', pad, pad + 14);
-        g.font = `bold 15px ${font}`; g.fillStyle = '#744210';
-        g.fillText('Item: ' + d.item, pad, pad + 38);
-        const tgl = (document.getElementById('tglKirimGlobal') || {}).value;
-        if (tgl) { g.textAlign = 'right'; g.fillStyle = '#718096'; g.font = `bold 13px ${font}`; g.fillText(tgl, cw - pad, pad + 38); }
-
-        const cellText = (txt, x, w, a, y) => {
-            g.textAlign = a;
-            const tx = a === 'left' ? x + 8 : x + w / 2;
-            let t = String(txt), max = w - 16;
-            while (g.measureText(t).width > max && t.length > 1) t = t.slice(0, -1);
-            if (t !== String(txt)) t = t.slice(0, -1) + '…';
-            g.fillText(t, tx, y);
+        const rr = (x, y, w, h, r) => {
+            r = Math.min(r, w / 2, h / 2);
+            g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r);
+            g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r);
+            g.arcTo(x, y, x + w, y, r); g.closePath();
+        };
+        const fontOf = (s) => `${s.fontStyle} ${s.fontWeight} ${s.fontSize} ${s.fontFamily}`;
+        const fit = (txt, max) => {
+            let t = String(txt);
+            if (g.measureText(t).width <= max) return t;
+            while (t.length > 1 && g.measureText(t + '…').width > max) t = t.slice(0, -1);
+            return t + '…';
+        };
+        // gambar potongan teks (bisa beberapa warna/ukuran) sesuai alignment
+        const drawSegs = (segs, x, w, align, cy) => {
+            let total = 0;
+            segs.forEach(s => { g.font = s.font; s.w = g.measureText(s.text).width; total += s.w; });
+            let sx = align === 'center' ? x + (w - total) / 2 : align === 'right' ? x + w - total : x;
+            g.textAlign = 'left';
+            segs.forEach(s => { g.font = s.font; g.fillStyle = s.color; g.fillText(s.text, sx, cy); sx += s.w; });
         };
 
-        // header tabel
-        let y = pad + titleH, x = pad;
-        g.fillStyle = '#744210'; g.fillRect(pad, y, tableW, headH);
-        g.fillStyle = '#fefcbf'; g.font = `900 13px ${font}`;
-        cols.forEach(c => { cellText(c.t.toUpperCase(), x, c.w, c.a, y + headH / 2); x += c.w; });
-        y += headH;
+        // card (background + border)
+        rr(bw / 2, bw / 2, cw - bw, ch - bw, rad);
+        g.fillStyle = isClear(cCS.backgroundColor) ? cs(document.body).backgroundColor : cCS.backgroundColor;
+        g.fill();
+        g.lineWidth = bw; g.strokeStyle = cCS.borderTopColor; g.stroke();
 
-        // baris
-        rows.forEach((r, i) => {
-            if (i % 2 === 1) { g.fillStyle = '#f7fafc'; g.fillRect(pad, y, tableW, rowH); }
-            g.fillStyle = '#e2e8f0'; g.fillRect(pad, y + rowH - 1, tableW, 1);
-            const vals = [r.armada, r.saldo, r.agen + (r.fix ? ' (FIX)' : ''), r.dikirim, r.sisa];
-            x = pad;
-            vals.forEach((v, ci) => {
-                let c = cols[ci];
-                g.font = (ci === 0 || ci === 2) ? `bold 14px ${font}` : `900 15px ${font}`;
-                g.fillStyle = '#2d3748';
-                if (ci === 2 && r.fix) g.fillStyle = '#27ae60';
-                if (ci === 4 && v !== '' && v < 0) g.fillStyle = '#e53e3e';
-                cellText(v, x, c.w, c.a, y + rowH / 2);
-                x += c.w;
+        // header: judul + item terpilih (kotak seperti dropdown)
+        const titleEl = header.querySelector('span');
+        g.font = fontOf(hCS); g.fillStyle = hCS.color; g.textAlign = 'left';
+        const hMid = (titleEl.getBoundingClientRect().top - cR.top) + titleEl.getBoundingClientRect().height / 2;
+        g.fillText(titleEl.textContent.trim().toUpperCase(), titleEl.getBoundingClientRect().left - cR.left, hMid);
+        const selR = select.getBoundingClientRect(), selCS = cs(select);
+        const sx = selR.left - cR.left, sy = selR.top - cR.top;
+        rr(sx + 0.5, sy + 0.5, selR.width - 1, selR.height - 1, px(selCS.borderTopLeftRadius));
+        g.fillStyle = selCS.backgroundColor; g.fill();
+        g.lineWidth = 1; g.strokeStyle = selCS.borderTopColor; g.stroke();
+        g.font = fontOf(selCS); g.fillStyle = selCS.color; g.textAlign = 'left';
+        g.fillText(fit(select.options[select.selectedIndex].text, selR.width - 24), sx + px(selCS.paddingLeft) + 2, sy + selR.height / 2);
+        // garis bawah header
+        const hbW = px(hCS.borderBottomWidth);
+        g.fillStyle = hCS.borderBottomColor;
+        g.fillRect(hR.left - cR.left, hR.bottom - cR.top - hbW, hR.width, hbW);
+
+        // tabel — posisi tiap sel diambil dari DOM yang sedang tampil
+        const ox = tR.left - cR.left, oy = tableTop;
+        table.querySelectorAll('tr').forEach(tr => {
+            tr.querySelectorAll('th, td').forEach(cell => {
+                const r = cell.getBoundingClientRect(), s = cs(cell);
+                const x = ox + (r.left - tR.left), y = oy + (r.top - tR.top), w = r.width, h = r.height;
+                if (!isClear(s.backgroundColor)) { g.fillStyle = s.backgroundColor; g.fillRect(x, y, w, h); }
+                const bb = px(s.borderBottomWidth);
+                if (bb > 0 && s.borderBottomStyle !== 'none') { g.fillStyle = s.borderBottomColor; g.fillRect(x, y + h - bb, w, bb); }
+
+                const input = cell.querySelector('input');
+                if (input) {
+                    const iR = input.getBoundingClientRect(), iS = cs(input);
+                    const ix = ox + (iR.left - tR.left), iy = oy + (iR.top - tR.top);
+                    rr(ix + 0.5, iy + 0.5, iR.width - 1, iR.height - 1, px(iS.borderTopLeftRadius));
+                    g.fillStyle = iS.backgroundColor; g.fill();
+                    g.lineWidth = 1; g.strokeStyle = iS.borderTopColor; g.stroke();
+                    const val = input.value, show = val !== '' ? val : input.placeholder;
+                    g.font = fontOf(iS);
+                    g.fillStyle = val !== '' ? iS.color : '#718096';
+                    const pl = px(iS.paddingLeft) + 1, inner = iR.width - pl * 2;
+                    const t = fit(show, inner);
+                    g.textAlign = iS.textAlign === 'center' ? 'center' : 'left';
+                    g.fillText(t, iS.textAlign === 'center' ? ix + iR.width / 2 : ix + pl, iy + iR.height / 2);
+                    return;
+                }
+
+                // teks sel (termasuk <span> berwarna seperti tag FIX)
+                const segs = [];
+                const upper = s.textTransform === 'uppercase';
+                cell.childNodes.forEach(n => {
+                    if (n.nodeType === 3) {
+                        const t = n.textContent.replace(/\s+/g, ' ');
+                        if (t.trim() !== '' || t === ' ') segs.push({ text: upper ? t.toUpperCase() : t, color: s.color, font: fontOf(s) });
+                    } else if (n.nodeType === 1) {
+                        const ns = cs(n);
+                        const t = n.textContent.replace(/\s+/g, ' ');
+                        if (t.trim() !== '') segs.push({ text: upper ? t.toUpperCase() : t, color: ns.color, font: fontOf(ns) });
+                    }
+                });
+                if (segs.length) {
+                    segs[0].text = segs[0].text.replace(/^\s+/, '');
+                    const last = segs[segs.length - 1]; last.text = last.text.replace(/\s+$/, '');
+                    const al = s.textAlign === 'center' ? 'center' : (s.textAlign === 'right' || s.textAlign === 'end') ? 'right' : 'left';
+                    const pad = px(s.paddingLeft);
+                    const innerW = w - pad - px(s.paddingRight);
+                    const cyMid = y + (h - bb) / 2;
+                    g.font = segs[0].font;
+                    if (segs.length === 1 && g.measureText(segs[0].text).width > innerW + 0.5) {
+                        // bungkus per kata seperti tampilan asli
+                        const words = segs[0].text.split(' '), lines = [];
+                        let cur = '';
+                        words.forEach(wd => {
+                            const t = cur ? cur + ' ' + wd : wd;
+                            if (cur && g.measureText(t).width > innerW) { lines.push(cur); cur = wd; } else cur = t;
+                        });
+                        if (cur) lines.push(cur);
+                        const fs = px(s.fontSize);
+                        const lh = (s.lineHeight && s.lineHeight !== 'normal') ? px(s.lineHeight) : fs * 1.25;
+                        let ly = cyMid - (lines.length - 1) * lh / 2;
+                        lines.forEach(ln => {
+                            drawSegs([{ text: ln, color: segs[0].color, font: segs[0].font }], x + pad, innerW, al, ly);
+                            ly += lh;
+                        });
+                    } else {
+                        drawSegs(segs, x + pad, innerW, al, cyMid);
+                    }
+                }
             });
-            y += rowH;
         });
 
-        // total
-        g.fillStyle = '#fefcbf'; g.fillRect(pad, y, tableW, rowH);
-        g.fillStyle = '#1a202c'; g.font = `900 15px ${font}`;
-        g.textAlign = 'left'; g.fillText('Total Kiriman :', pad + 8, y + rowH / 2);
-        g.textAlign = 'center'; g.fillText(String(d.total), pad + cols[0].w + cols[1].w / 2, y + rowH / 2);
-
-        // border luar
-        g.strokeStyle = '#b7791f'; g.lineWidth = 1;
-        g.strokeRect(pad + 0.5, pad + titleH + 0.5, tableW - 1, headH + rows.length * rowH + rowH - 1);
-
+        const tgl = (document.getElementById('tglKirimGlobal') || {}).value;
         cv.toBlob(blob => {
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
