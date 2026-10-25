@@ -9,22 +9,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta name="app-build" content="2026.10.21.7">
-    <title>SBR Monitoring Kendaraan | Fleet Control</title>
-    <meta name="theme-color" content="#17202a">
-    <link rel="manifest" href="./manifest-monitoring.json">
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-monitoring-192.png">
-    <script>
-      // PWA khusus halaman Monitoring Kendaraan. Cakupan dibatasi ke URL halaman ini.
-      if ('serviceWorker' in navigator && location.protocol === 'https:') {
-        window.addEventListener('load', function () {
-          navigator.serviceWorker.register('./service-worker-monitoring.js', {
-            scope: './monitoring_kendaraan.html'
-          }).catch(function (err) {
-            console.error('Pendaftaran PWA Monitoring gagal:', err);
-          });
-        });
-      }
-    </script>
+    <title>SBRdigital | Fleet Control</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -946,6 +931,20 @@
         catalog=JSON.parse(JSON.stringify(DEFAULT_CATALOG));
         try{ localStorage.setItem(CATALOG_KEY,JSON.stringify(catalog)); }catch(e){}
     }
+    // Hapus catatan di database dan PASTIKAN benar-benar hilang.
+    // Supabase tidak memberi error jika DELETE diblokir RLS (0 baris terhapus), sehingga data "kembali" saat dimuat ulang.
+    // Jika baris masih ada, catatan ditandai deleted:true (soft delete) agar tidak muncul lagi dan tidak diunggah ulang dari perangkat lain.
+    async function removeRecordCloud(rec){
+        const id=String(rec.id);
+        try{ await _sb.from(SERVICE_RECORDS_TABLE).delete().eq('id',id); }catch(e){ console.warn('Hapus fisik gagal, lanjut soft delete:',e); }
+        const {data:still,error:chkErr}=await _sb.from(SERVICE_RECORDS_TABLE).select('id').eq('id',id);
+        if(chkErr) throw chkErr;
+        if(still && still.length){
+            const now=new Date().toISOString();
+            const {error:upErr}=await _sb.from(SERVICE_RECORDS_TABLE).upsert({id,toko_id:getTokoIdForRecord(rec),data:{id,kind:rec.kind,deleted:true,updatedAt:now},updated_at:now},{onConflict:'id'});
+            if(upErr) throw upErr;
+        }
+    }
     async function loadSharedServiceData(){
         serviceTokoIds=getServiceTokoIds();
         // Ambil catatan bersama dari database.
@@ -965,9 +964,10 @@
                 if(!upErr) cloudById.set(String(rec.id),{id:String(rec.id),toko_id:tokoId,data:rec,updated_at:rec.updatedAt});
                 else console.error('Migrasi catatan lokal gagal:',upErr);
             }
-            const cloudRecords=[...cloudById.values()].map(r=>r.data||{}).filter(r=>r.id);
+            const allCloud=[...cloudById.values()].map(r=>r.data||{}).filter(r=>r.id);
+            const cloudRecords=allCloud.filter(r=>!r.deleted);
             // Pertahankan catatan lokal yang tidak bisa dipetakan ke armada aktif agar tidak hilang.
-            const cloudIds=new Set(cloudRecords.map(r=>String(r.id)));
+            const cloudIds=new Set(allCloud.map(r=>String(r.id)));
             const localUnmapped=local.filter(r=>r&&r.id&&!cloudIds.has(String(r.id)));
             expenseItems=[...cloudRecords,...localUnmapped];
             try{ localStorage.setItem(EXPENSE_STORAGE_KEY,JSON.stringify(expenseItems)); }catch(e){}
@@ -1411,8 +1411,8 @@
     async function deleteExpense(id,msg){
         if(!confirm(msg||'Hapus catatan belanja/servis ini dari semua perangkat?'))return;
         try{
-            const {error}=await _sb.from(SERVICE_RECORDS_TABLE).delete().eq('id',String(id));
-            if(error) throw error;
+            const target=expenseItems.find(x=>String(x.id)===String(id))||{id};
+            await removeRecordCloud(target);
         }catch(e){
             console.error('Gagal menghapus catatan dari database:',e);
             alert('Catatan tidak dapat dihapus dari database. Pastikan SQL tabel sudah dijalankan dan koneksi internet aktif.');
@@ -1726,12 +1726,17 @@
         if(list.includes(current))el.value=current;
     }
     let editingKasMasukId = '';
+    let savingKas=false;
     async function saveKasMasuk(){
+        if(savingKas)return;
         const date=document.getElementById('kasMasukDate').value||localToday();
         const nominal=parseNum(document.getElementById('kasMasukNominal').value)||0;
         const vehicle=document.getElementById('kasMasukVehicle').value||'';
         const notes=document.getElementById('kasMasukNote').value.trim();
         if(nominal<=0){alert('Isi jumlah kas harus lebih dari Rp 0.');return;}
+        savingKas=true;
+        const saveBtn=document.querySelector('[onclick="saveKasMasuk()"]'); if(saveBtn)saveBtn.disabled=true;
+        try{
         const rec={id:editingKasMasukId||`kas_${Date.now()}`,kind:'kas_masuk',date,nominal,vehicle,notes:notes||'Isi kas',updatedAt:new Date().toISOString()};
         let synced=false;
         try{
@@ -1749,6 +1754,7 @@
         const btn=document.querySelector('[onclick="saveKasMasuk()"]'); if(btn)btn.textContent='＋ SIMPAN ISI KAS';
         renderExpenses();
         alert(synced?(rec.id.startsWith('kas_')?'Isi kas berhasil disimpan dan disinkronkan.':'Perubahan isi kas berhasil disimpan dan disinkronkan.'):'Isi kas tersimpan sementara di perangkat ini, tetapi belum tersinkron ke database.');
+        }finally{ savingKas=false; const b=document.querySelector('[onclick="saveKasMasuk()"]'); if(b)b.disabled=false; }
     }
     function editKasMasuk(id){
         const rec=(expenseItems||[]).find(x=>String(x.id)===String(id)&&x.kind==='kas_masuk');
@@ -1767,7 +1773,7 @@
         const entry=(expenseItems||[]).find(x=>String(x.id)===key&&x.kind==='kas_masuk');
         if(entry){
             if(!confirm(`Hapus catatan isi kas ${rupiah(entry.nominal)} tanggal ${tglIndo(entry.date)}? Saldo akan dihitung ulang.`))return;
-            try{const {error}=await _sb.from(SERVICE_RECORDS_TABLE).delete().eq('id',key);if(error)throw error;}catch(e){console.error(e);alert('Tidak bisa menghapus dari database. Pastikan koneksi internet aktif.');return;}
+            try{await removeRecordCloud(entry);}catch(e){console.error(e);alert('Tidak bisa menghapus dari database. Pastikan koneksi internet aktif.');return;}
             expenseItems=expenseItems.filter(x=>String(x.id)!==key);try{localStorage.setItem(EXPENSE_STORAGE_KEY,JSON.stringify(expenseItems));}catch(e){}
             renderExpenses();return;
         }
@@ -1787,7 +1793,7 @@
         if(document.activeElement!==input) input.value=fmtNum(awal);
         const rows=[];
         (expenseItems||[]).forEach(rec=>{
-            if(!rec)return;
+            if(!rec||rec.deleted)return;
             if(rec.kind==='kas_masuk'){
                 const nominal=Number(rec.nominal)||0;if(nominal<=0)return;
                 rows.push({date:rec.date||'',vehicle:rec.vehicle||'',name:'Isi Kas',nominal,type:'masuk',id:String(rec.id),notes:rec.notes||'Isi kas',createdAt:rec.updatedAt||''});
