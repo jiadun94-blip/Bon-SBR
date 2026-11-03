@@ -8,7 +8,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="2026.11.03.2">
+    <meta name="app-build" content="2026.11.03.3">
     <title>SBRdigital | Fleet Control</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
@@ -415,6 +415,7 @@
     <section id="expenseSection" class="scroll-content">
         <div class="section-banner"><span>🧾 BELANJA & SERVIS ARMADA</span><span style="display:flex;align-items:center;gap:8px"><span id="expenseCount">0 data</span><button type="button" class="mini-add" onclick="openCatalog()">📚 Database</button></span></div>
         <div id="expenseList" class="expense-list"></div>
+        <div id="svcPager" style="display:none;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 80px"></div>
     </section>
 
     <section id="gudangSection" class="scroll-content" style="display:none">
@@ -427,6 +428,7 @@
         <div id="gudangList" class="expense-list"></div>
         <div class="section-banner" style="margin-top:18px"><span>🕘 RIWAYAT MUTASI STOK</span></div>
         <div id="gudangHistory"></div>
+        <div id="mutPager" style="display:none;align-items:center;justify-content:space-between;gap:8px;margin-top:12px"></div>
         <div class="helper-note">Stok masuk otomatis dari <b>Belanja Stok Gudang</b> setelah kolom realisasi diisi. Stok keluar dicatat lewat tombol Pakai Barang. Barang yang dipilih di <b>Pakai Stok Gudang</b> pada form Service otomatis memotong saldo gudang. <b>Belanja Langsung</b> yang diisi jumlahnya otomatis masuk lalu langsung terpotong (terpakai), jadi stok bersih tidak berubah dan tetap tercatat di riwayat.</div>
     </section>
 
@@ -1381,8 +1383,8 @@
         document.getElementById('expenseCount').textContent=`${svcItems.length} catatan`;
         updateServiceBadge();
         const list=document.getElementById('expenseList');
-        if(!svcItems.length){list.innerHTML='<div class="empty-state">Belum ada catatan belanja atau servis.<br>Tekan tombol ＋ Belanja / Servis di bawah.</div>';return;}
-        list.innerHTML=svcItems.map(x=>{
+        if(!svcItems.length){list.innerHTML='<div class="empty-state">Belum ada catatan belanja atau servis.<br>Tekan tombol ＋ Belanja / Servis di bawah.</div>';const sp=document.getElementById('svcPager');if(sp)sp.style.display='none';return;}
+        list.innerHTML=paginate('svc','svcPager',svcItems).map(x=>{
           const ps=x.purchases||[];
           const es=ps.reduce((s,p)=>s+(Number(p.estimate)||0),0);
           const ac=ps.reduce((s,p)=>s+(Number(p.actual)||0),0);
@@ -1739,7 +1741,7 @@
             return `<article class="expense-row"><div class="g-row"><div><h4 style="margin:0">${safeText(x.name)}</h4><div class="g-sub">Masuk ${fmtQty(x.inQty)} • Keluar ${fmtQty(x.outQty)}${avg?` • Rata-rata ${rupiah(avg)}/${safeText(x.unit||'unit')}`:''}</div></div><div class="g-stock ${cls}">${fmtQty(st)} <small>${safeText(x.unit||'')}</small>${st<=0?`<div><span class="badge badge-pending">${st<0?'MINUS':'HABIS'}</span></div>`:''}</div></div>${st>0?`<div class="row-actions"><button class="btn-small-edit" onclick="openStockOut(${i})">📤 PAKAI</button></div>`:''}</article>`;
         }).join('') : '<div class="empty-state">Gudang masih kosong.<br>Tekan ＋ Belanja Stok, lalu isi realisasinya agar stok masuk.</div>';
         const hist=document.getElementById('gudangHistory');
-        hist.innerHTML = moves.length ? moves.slice(0,40).map(m=>{
+        hist.innerHTML = moves.length ? paginate('mut','mutPager',moves).map(m=>{
             const sub = m.stockUse ? `📅 ${safeText(tglIndo(m.date))} • Dipakai saat service • ${safeText(m.vehicle||'')}` : m.auto ? (m.type==='masuk' ? `📅 ${safeText(tglIndo(m.date))} • Belanja langsung • ${rupiah(m.total)}` : `📅 ${safeText(tglIndo(m.date))} • Langsung terpakai • ${safeText(m.vehicle||'')}`)
                 : m.type==='masuk' ? `📅 ${safeText(tglIndo(m.date))} • Belanja stok • ${rupiah(m.total)}`
                 : `📅 ${safeText(tglIndo(m.date))}${m.vehicle?' • '+safeText(m.vehicle):''}${m.note?' • '+safeText(m.note):''}`;
@@ -1748,6 +1750,7 @@
                 : `<button class="btn-small-delete" onclick="deleteExpense('${m.id}','Hapus catatan pemakaian ini? Stok akan bertambah kembali.')">🗑️</button>`;
             return `<div class="hist-row"><div><div>${m.type==='masuk'?'📥':'📤'} ${safeText(m.name)}</div><div class="g-sub">${sub}</div></div><div style="display:flex;align-items:center"><span class="hq ${m.type==='masuk'?'in':'out'}">${m.type==='masuk'?'+':'−'}${fmtQty(m.qty)} ${safeText(m.unit||'')}</span>${btn}</div></div>`;
         }).join('') : '<div class="empty-state">Belum ada mutasi stok.</div>';
+        if(!moves.length){ const mp=document.getElementById('mutPager'); if(mp) mp.style.display='none'; }
     }
     function openStockOut(idx){
         const {map}=computeStock();
@@ -1918,6 +1921,24 @@
             pager.innerHTML=`<button type="button" class="btn-small-edit" ${kasPage<=1?'disabled style="opacity:.4"':''} onclick="kasGoPage(${kasPage-1})">◀ Sebelumnya</button><span class="expense-meta">Halaman ${kasPage} / ${totalPages}</span><button type="button" class="btn-small-edit" ${kasPage>=totalPages?'disabled style="opacity:.4"':''} onclick="kasGoPage(${kasPage+1})">Berikutnya ▶</button>`;
         }
         ledger.innerHTML=pageRows.map(r=>`<article class="expense-row"><div class="expense-row-head"><div><h4>${r.type==='masuk'?'📥':'🧾'} ${safeText(r.name)}</h4><div class="expense-meta">📅 ${safeText(tglIndo(r.date))}${r.vehicle?' · '+safeText(r.vehicle):' · Kas Umum'}${r.kind==='stok'?' · Stok Gudang':''}</div></div><strong style="color:${r.type==='masuk'?'#48d597':'#ffb36b'};white-space:nowrap">${r.type==='masuk'?'+':'−'} ${rupiah(r.nominal)}</strong></div>${r.type==='keluar'&&r.qty!=null?`<div class="money-line"><span>Jumlah</span><strong>${safeText(r.qty==null?'':fmtQty(r.qty))} ${safeText(r.unit||'')}</strong></div>`:''}${r.notes?`<div class="expense-meta">${safeText(r.notes)}</div>`:''}<div class="money-line"><span>Saldo setelah transaksi</span><strong style="color:${r.balance<0?'#ff7675':'var(--text)'}">${rupiah(r.balance)}</strong></div><div class="row-actions" style="margin-top:10px">${r.type==='masuk'?`<button type="button" class="btn-small-edit" onclick="editKasMasuk('${safeText(r.id)}')">✏️ EDIT</button>`:`<button type="button" class="btn-small-edit" onclick="closeKasHistory();openExpenseModal('${safeText(r.parentId||'')}')">✏️ EDIT BELANJA</button>`}<button type="button" class="btn-small-delete" onclick="deleteKasTransaction('${safeText(r.id)}')">🗑️ HAPUS</button></div></article>`).join('');
+    }
+    const LIST_PAGE_SIZE=5; const listPages={svc:1,mut:1};
+    // Potong daftar sesuai halaman aktif dan gambar tombol navigasinya.
+    function paginate(key,pagerId,arr){
+        const totalPages=Math.max(1,Math.ceil(arr.length/LIST_PAGE_SIZE));
+        if(listPages[key]>totalPages) listPages[key]=totalPages;
+        if(listPages[key]<1) listPages[key]=1;
+        const pg=listPages[key], pager=document.getElementById(pagerId);
+        if(pager){
+            pager.style.display=totalPages>1?'flex':'none';
+            pager.innerHTML=`<button type="button" class="btn-small-edit" ${pg<=1?'disabled style="opacity:.4"':''} onclick="goListPage('${key}',${pg-1})">◀ Sebelumnya</button><span class="expense-meta">Halaman ${pg} / ${totalPages}</span><button type="button" class="btn-small-edit" ${pg>=totalPages?'disabled style="opacity:.4"':''} onclick="goListPage('${key}',${pg+1})">Berikutnya ▶</button>`;
+        }
+        return arr.slice((pg-1)*LIST_PAGE_SIZE,pg*LIST_PAGE_SIZE);
+    }
+    function goListPage(key,n){
+        listPages[key]=n;
+        if(key==='svc') renderExpenses(); else renderGudang();
+        const el=document.getElementById(key==='svc'?'expenseList':'gudangHistory'); if(el) el.scrollIntoView({block:'start'});
     }
     const KAS_PAGE_SIZE=5; let kasPage=1;
     function kasGoPage(n){ kasPage=n; renderBukuKas(); const m=document.querySelector('#kasHistoryModal .expense-modal-card'); if(m)m.scrollTop=0; }
