@@ -8,7 +8,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="app-build" content="2026.10.21.7">
+    <meta name="app-build" content="2026.11.03.2">
     <title>SBRdigital | Fleet Control</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
@@ -427,7 +427,7 @@
         <div id="gudangList" class="expense-list"></div>
         <div class="section-banner" style="margin-top:18px"><span>🕘 RIWAYAT MUTASI STOK</span></div>
         <div id="gudangHistory"></div>
-        <div class="helper-note">Stok masuk otomatis dari <b>Belanja Stok Gudang</b> setelah kolom realisasi diisi. Stok keluar dicatat lewat tombol Pakai Barang. <b>Belanja Langsung</b> yang diisi jumlahnya otomatis masuk lalu langsung terpotong (terpakai), jadi stok bersih tidak berubah dan tetap tercatat di riwayat.</div>
+        <div class="helper-note">Stok masuk otomatis dari <b>Belanja Stok Gudang</b> setelah kolom realisasi diisi. Stok keluar dicatat lewat tombol Pakai Barang. Barang yang dipilih di <b>Pakai Stok Gudang</b> pada form Service otomatis memotong saldo gudang. <b>Belanja Langsung</b> yang diisi jumlahnya otomatis masuk lalu langsung terpotong (terpakai), jadi stok bersih tidak berubah dan tetap tercatat di riwayat.</div>
     </section>
 
     <section id="kasSection" class="scroll-content" style="display:none">
@@ -465,12 +465,13 @@
           <button type="button" class="modal-close" onclick="closeKasHistory()">✕</button>
         </div>
         <div style="display:grid;grid-template-columns:1fr;gap:10px;margin:12px 0">
-          <div><label class="field-label" for="kasFilterDate">Filter tanggal</label><input id="kasFilterDate" type="date" onchange="renderBukuKas()"></div>
-          <div><label class="field-label" for="kasFilterVehicle">Filter armada</label><select id="kasFilterVehicle" onchange="renderBukuKas()"><option value="">Semua armada</option></select></div>
+          <div><label class="field-label" for="kasFilterDate">Filter tanggal</label><input id="kasFilterDate" type="date" onchange="kasPage=1;renderBukuKas()"></div>
+          <div><label class="field-label" for="kasFilterVehicle">Filter armada</label><select id="kasFilterVehicle" onchange="kasPage=1;renderBukuKas()"><option value="">Semua armada</option></select></div>
           <button type="button" class="btn-small-edit" onclick="resetKasFilters()">↺ RESET FILTER</button>
         </div>
         <div id="kasFilterInfo" class="expense-meta" style="margin-bottom:8px"></div>
         <div id="kasLedger" class="expense-list"></div>
+        <div id="kasPager" style="display:none;align-items:center;justify-content:space-between;gap:8px;margin-top:12px"></div>
       </div>
     </div>
 
@@ -503,6 +504,11 @@
 
           <div class="section-banner compact-banner"><span>🛒 DAFTAR BELANJA</span><span class="banner-btns" id="purchaseBtns"></span></div>
           <div id="purchaseSummary"></div>
+
+          <div id="stockUseWrap">
+          <div class="section-banner compact-banner"><span>📦 PAKAI STOK GUDANG</span><span class="banner-btns"><button type="button" class="mini-add" onclick="addStockUse()">＋ Tambah</button></span></div>
+          <div id="stockUseList"></div>
+          </div>
 
           <label class="field-label" for="expenseBudget">Jumlah uang belanja / kas diberikan (Rp)</label>
           <input id="expenseBudget" type="text" inputmode="numeric" autocomplete="off" placeholder="Contoh: 1.500.000" oninput="moneyInput(this)">
@@ -1068,7 +1074,7 @@
         document.getElementById('expenseForm').reset();
         document.getElementById('expenseId').value='';
         document.getElementById('expenseDate').value=localToday();
-        repairDraft=[]; repairFlag=[]; purchaseDraft=[]; purchaseLocked=false; purchaseApproved=false; purchaseSubmitted=false;
+        repairDraft=[]; repairFlag=[]; purchaseDraft=[]; stockUseDraft=[]; purchaseLocked=false; purchaseApproved=false; purchaseSubmitted=false;
         ['repairModal','purchaseModal'].forEach(closeEl);
         renderRepairDraft(); renderPurchaseDraft(); renderActualSummary(); updateExpenseTotals();
         document.getElementById('expenseModalTitle').textContent='🧾 Catatan Belanja & Servis';
@@ -1287,6 +1293,7 @@
         if(rec.repairs.length) msg+=`\n*Jenis perbaikan*\n${rec.repairs.map((r,i)=>`${i+1}. ${r}`).join('\n')}\n`;
         if(rec.kind==='stok') msg=msg.replace('BELANJA & SERVIS ARMADA','BELANJA STOK GUDANG').replace(/Armada: .*\n/,'Tujuan: Stok Gudang\n');
         msg+=`\n*Rencana belanja*\n${rec.purchases.map((p,i)=>`${i+1}. ${itemLabel(p)} - ${rupiah(p.estimate)}`).join('\n')}`;
+        if((rec.stockUse||[]).length) msg+=`\n\n*Pakai stok gudang*\n${rec.stockUse.map((u,i)=>`${i+1}. ${itemLabel(u)}`).join('\n')}`;
         msg+=`\n\n*Total pengajuan: ${rupiah(total)}*`;
         if(rec.notes) msg+=`\nCatatan: ${rec.notes}`;
         msg+=`\n\nMohon di-ACC. Terima kasih 🙏`;
@@ -1326,11 +1333,17 @@
         if(!date||!vehicle){ alert('Pilih tanggal dan armada terlebih dahulu.'); return null; }
         const repairs=expenseKind==='stok'?[]:repairDraft.map(x=>String(x).trim()).filter(Boolean);
         const purchases=purchaseDraft.filter(hasPurchase).map(x=>({name:String(x.name||'').trim(),estimate:Number(x.estimate)||0,actual:Number(x.actual)||0,qty:parseQty(x.qty),unit:String(x.unit||'').trim()}));
-        if(!purchases.length){ alert('Tambahkan minimal satu daftar belanja.'); return null; }
+        const stockUse=expenseKind==='stok'?[]:validStockUse().map(x=>({name:String(x.name).trim(),unit:String(x.unit||'').trim(),qty:parseQty(x.qty)}));
+        if(!purchases.length && !stockUse.length){ alert('Tambahkan minimal satu daftar belanja atau barang yang dipakai dari stok gudang.'); return null; }
+        if(stockUse.length){
+            const avail=stockUseAvail(), over=[];
+            stockUseDraft.filter(x=>x.key&&parseQty(x.qty)>0).forEach(x=>{ if(stockUseRemaining(avail,x.key)<0 && !over.includes(x.name)) over.push(x.name); });
+            if(over.length && !confirm(`Stok gudang tidak cukup untuk: ${over.join(', ')}.\n\nTetap simpan? Saldo gudang akan menjadi minus.`)) return null;
+        }
         if(expenseKind==='stok' && purchases.some(p=>!(p.qty>0))){ alert('Isi jumlah (qty) untuk semua barang stok gudang.'); return null; }
         const budget=parseNum(document.getElementById('expenseBudget').value)||0;
         const locked=purchaseLocked&&purchases.length>0;
-        return {id:id||`${Date.now()}`,kind:expenseKind,date,vehicle,repairs,purchases,locked,submitted:locked&&purchaseSubmitted,approved:locked&&purchaseApproved,budget,notes:document.getElementById('expenseNotes').value.trim(),updatedAt:new Date().toISOString()};
+        return {id:id||`${Date.now()}`,kind:expenseKind,date,vehicle,repairs,purchases,stockUse,locked,submitted:locked&&purchaseSubmitted,approved:locked&&purchaseApproved,budget,notes:document.getElementById('expenseNotes').value.trim(),updatedAt:new Date().toISOString()};
     }
     async function persistExpense(){
         const rec=buildExpenseRecord(); if(!rec) return null;
@@ -1378,12 +1391,16 @@
           const appr=x.approved===undefined?locked:!!x.approved;
           const canReal=locked||done;
           const sub=!!x.submitted||appr;
-          const head=`<div class="expense-row-head"><div><h4>${x.kind==='stok'?'📦 ':''}${safeText(x.vehicle||'Armada belum dipilih')}</h4><div class="expense-meta">📅 ${safeText(tglIndo(x.date))}</div></div><div style="text-align:right"><span class="badge ${done?'badge-done':'badge-pending'}">${done?'REALISASI TERISI':appr?'MENUNGGU REALISASI':locked?(sub?'MENUNGGU ACC':'BELUM DIAJUKAN'):'DRAFT'}</span>${done?'<div class="chev">▾</div>':''}</div></div>`;
+          const su=(x.stockUse||[]).filter(u=>u&&parseQty(u.qty)>0);
+          const onlyStock=!ps.length&&su.length>0;
+          const suHtml=su.length?`<div class="expense-meta" style="margin:10px 0 2px">📦 Pakai stok gudang: ${su.map(u=>safeText(itemLabel(u))).join(', ')}</div>`:'';
+          const head=`<div class="expense-row-head"><div><h4>${x.kind==='stok'?'📦 ':''}${safeText(x.vehicle||'Armada belum dipilih')}</h4><div class="expense-meta">📅 ${safeText(tglIndo(x.date))}</div></div><div style="text-align:right"><span class="badge ${(done||onlyStock)?'badge-done':'badge-pending'}">${onlyStock?'PAKAI STOK GUDANG':done?'REALISASI TERISI':appr?'MENUNGGU REALISASI':locked?(sub?'MENUNGGU ACC':'BELUM DIAJUKAN'):'DRAFT'}</span>${done?'<div class="chev">▾</div>':''}</div></div>`;
           const actions=`<div class="row-actions"><button class="btn-small-edit" onclick="openExpenseModal('${x.id}')">✏️ EDIT</button>${(locked&&!appr&&!done)?`<button class="btn-small-edit" onclick="ajukanFromList('${x.id}')">📲 AJUKAN</button>`:''}${canReal?`<button class="btn-small-edit" onclick="openActualFromList('${x.id}')">💵 REALISASI</button>`:''}${done?`<button class="btn-small-edit" onclick="sendExpenseWA('${x.id}')">📲 WA</button>`:''}<button class="btn-small-delete" onclick="deleteExpense('${x.id}')">🗑️ HAPUS</button></div>`;
-          if(!done) return `<article class="expense-row">${head}${actions}</article>`;
+          if(!done) return `<article class="expense-row">${head}${suHtml}${actions}</article>`;
           return `<article class="expense-row clickable" id="exp_${x.id}"><div onclick="toggleExpenseDetail('${x.id}')">${head}</div>
             <div class="expense-detail">
               ${x.kind==='stok'?'<div class="expense-meta" style="margin-top:10px">📦 Realisasi ini masuk otomatis ke stok gudang</div>':''}
+              ${suHtml}
               ${(x.repairs||[]).length?`<div class="expense-meta" style="margin-top:10px">🔧 Perbaikan: ${x.repairs.map(safeText).join(', ')}</div>`:''}
               <div class="bel-table" style="margin-top:10px"><div class="bel-row bel-head"><span>Barang</span><span>Estimasi</span><span>Realisasi</span></div>${ps.map(p=>`<div class="bel-row"><span>${safeText(itemLabel(Object.assign({},p,{name:p.name||'Belanja'})))}</span><span>${fmtNum(Number(p.estimate)||0)||'0'}</span>${Number(p.actual)>0?`<span>${fmtNum(p.actual)}</span>`:'<span class="muted">—</span>'}</div>`).join('')}<div class="bel-row bel-total"><span>Jumlah</span><span>${rupiah(es)}</span><span>${rupiah(ac)}</span></div></div>
               <div class="money-line"><span>Uang belanja</span><strong>${rupiah(x.budget)}</strong></div><div class="money-line"><span>Sisa uang</span><strong>${rupiah((Number(x.budget)||0)-ac)}</strong></div>
@@ -1404,6 +1421,7 @@
         purchaseApproved=x.approved===undefined?purchaseLocked:!!x.approved;
         purchaseSubmitted=!!x.submitted||purchaseApproved;
         renderRepairDraft();renderPurchaseDraft();renderActualSummary();updateExpenseTotals();
+        stockUseDraft=(x.stockUse||[]).map(su=>Object.assign({key:String(su.name||'').trim().toLowerCase()},su));
         setExpenseKind(x.kind==='stok'?'stok':'langsung');
         document.getElementById('expenseModalTitle').textContent='✏️ Edit Catatan Belanja & Servis';
         document.getElementById('expenseModal').classList.add('open');
@@ -1604,11 +1622,67 @@
         document.getElementById('kindStok').classList.toggle('active',stok);
         document.getElementById('vehicleWrap').style.display = stok ? 'none' : '';
         document.getElementById('repairWrap').style.display = stok ? 'none' : '';
+        document.getElementById('stockUseWrap').style.display = stok ? 'none' : '';
         document.getElementById('expenseVehicle').required = !stok;
-        renderPurchaseDraft();
+        renderPurchaseDraft(); renderStockUse();
     }
 
-    function computeStock(){
+    /* ===== Pakai stok gudang saat service (otomatis memotong saldo gudang) ===== */
+    let stockUseDraft=[];
+    const validStockUse = () => stockUseDraft.filter(x=>String(x.name||'').trim() && parseQty(x.qty)>0);
+    function stockUseAvail(){
+        const {map}=computeStock(document.getElementById('expenseId').value);
+        const avail={};
+        map.forEach((v,k)=>{ avail[k]={name:v.name,unit:v.unit,sisa:v.inQty-v.outQty,fromStok:!!v.fromStok}; });
+        return avail;
+    }
+    function stockUseRemaining(avail,key){
+        const used=stockUseDraft.reduce((t,x)=>t+(String(x.key||'')===key?parseQty(x.qty):0),0);
+        return (avail[key]?avail[key].sisa:0)-used;
+    }
+    function refreshStockUseWarn(){
+        const avail=stockUseAvail();
+        stockUseDraft.forEach((x,i)=>{
+            const el=document.getElementById('suWarn'+i); if(!el) return;
+            if(!x.key){ el.textContent=''; return; }
+            const rem=stockUseRemaining(avail,x.key);
+            el.textContent = rem<0 ? `⚠️ Melebihi stok gudang (tersedia ${fmtQty(avail[x.key].sisa)} ${avail[x.key].unit||''})` : `Sisa stok setelah dipakai: ${fmtQty(rem)} ${avail[x.key]?avail[x.key].unit||'':''}`;
+            el.style.color = rem<0 ? 'var(--danger)' : '';
+        });
+    }
+    function renderStockUse(){
+        const box=document.getElementById('stockUseList'); if(!box) return;
+        const avail=stockUseAvail();
+        const keys=Object.keys(avail).filter(k=>avail[k].sisa>0 || stockUseDraft.some(x=>x.key===k)).sort((a,b)=>avail[a].name.localeCompare(avail[b].name,'id'));
+        if(!stockUseDraft.length){
+            box.innerHTML = keys.length
+                ? '<div class="sum-empty">Belum ada barang gudang yang dipakai.<br>Tekan ＋ Tambah jika service memakai stok gudang.</div>'
+                : '<div class="sum-empty">Gudang masih kosong.<br>Isi stok lewat Belanja Stok di tab Gudang.</div>';
+            return;
+        }
+        box.innerHTML=stockUseDraft.map((x,i)=>`<div class="purchase-item" style="margin-bottom:8px">
+            <div class="purchase-row-grid2">
+              <select onchange="pickStockUse(${i},this.value)"><option value="">-- Pilih barang gudang --</option>${keys.map(k=>`<option value="${safeText(k)}"${k===x.key?' selected':''}>${safeText(avail[k].name)} (stok ${fmtQty(avail[k].sisa)} ${safeText(avail[k].unit||'')})</option>`).join('')}</select>
+              <button type="button" class="remove-row" onclick="removeStockUse(${i})">✕</button>
+            </div>
+            <div class="purchase-sub qty-sub"><div><label class="field-label">JUMLAH DIPAKAI ${x.unit?'('+safeText(x.unit)+')':''}</label><input type="text" inputmode="decimal" autocomplete="off" value="${safeText(x.qty==null?'':x.qty)}" placeholder="Qty" oninput="stockUseDraft[${i}].qty=this.value.replace(/[^0-9.,]/g,'');refreshStockUseWarn()"></div></div>
+            <div class="g-sub" id="suWarn${i}" style="margin-top:6px"></div>
+          </div>`).join('');
+        refreshStockUseWarn();
+    }
+    function addStockUse(){
+        const avail=stockUseAvail();
+        if(!Object.values(avail).some(v=>v.sisa>0)){ alert('Belum ada stok di gudang. Lakukan Belanja Stok dan isi realisasinya dulu, atau gunakan Belanja Langsung.'); return; }
+        stockUseDraft.push({key:'',name:'',unit:'',qty:''}); renderStockUse();
+    }
+    function pickStockUse(i,key){
+        const avail=stockUseAvail(), x=stockUseDraft[i];
+        x.key=key; x.name=key&&avail[key]?avail[key].name:''; x.unit=key&&avail[key]?avail[key].unit:'';
+        renderStockUse();
+    }
+    function removeStockUse(i){ stockUseDraft.splice(i,1); renderStockUse(); }
+
+    function computeStock(excludeId){
         const map=new Map(), moves=[]; let pending=0;
         const get=(name,unit)=>{
             const key=String(name).trim().toLowerCase();
@@ -1617,6 +1691,7 @@
         };
         expenseItems.forEach(r=>{
             if(!r) return;
+            if(excludeId && String(r.id)===String(excludeId)) return;
             if(r.kind==='stok'){
                 (r.purchases||[]).forEach(p=>{
                     const q=parseQty(p.qty); if(!String(p.name||'').trim()||!q) return;
@@ -1629,6 +1704,12 @@
                 const e=get(r.item,r.unit); e.outQty+=q; e.fromStok=true;
                 moves.push({type:'keluar',id:r.id,date:r.date,name:e.name,qty:q,unit:r.unit||e.unit,vehicle:r.vehicle,note:r.notes,at:r.updatedAt||r.date});
             } else {
+                // Pakai stok gudang saat service: memotong saldo gudang (tanpa mengurangi kas).
+                if(!r.deleted) (r.stockUse||[]).forEach(su=>{
+                    const q=parseQty(su.qty); if(!String(su.name||'').trim()||!q) return;
+                    const e=get(su.name,su.unit); e.outQty+=q; e.fromStok=true;
+                    moves.push({type:'keluar',stockUse:true,id:r.id,date:r.date,name:e.name,qty:q,unit:su.unit||e.unit,vehicle:r.vehicle,at:r.updatedAt||r.date});
+                });
                 // Belanja langsung: otomatis masuk gudang lalu langsung terpakai, stok bersih tidak berubah.
                 (r.purchases||[]).forEach(p=>{
                     const q=parseQty(p.qty), act=Number(p.actual)||0;
@@ -1659,10 +1740,10 @@
         }).join('') : '<div class="empty-state">Gudang masih kosong.<br>Tekan ＋ Belanja Stok, lalu isi realisasinya agar stok masuk.</div>';
         const hist=document.getElementById('gudangHistory');
         hist.innerHTML = moves.length ? moves.slice(0,40).map(m=>{
-            const sub = m.auto ? (m.type==='masuk' ? `📅 ${safeText(tglIndo(m.date))} • Belanja langsung • ${rupiah(m.total)}` : `📅 ${safeText(tglIndo(m.date))} • Langsung terpakai • ${safeText(m.vehicle||'')}`)
+            const sub = m.stockUse ? `📅 ${safeText(tglIndo(m.date))} • Dipakai saat service • ${safeText(m.vehicle||'')}` : m.auto ? (m.type==='masuk' ? `📅 ${safeText(tglIndo(m.date))} • Belanja langsung • ${rupiah(m.total)}` : `📅 ${safeText(tglIndo(m.date))} • Langsung terpakai • ${safeText(m.vehicle||'')}`)
                 : m.type==='masuk' ? `📅 ${safeText(tglIndo(m.date))} • Belanja stok • ${rupiah(m.total)}`
                 : `📅 ${safeText(tglIndo(m.date))}${m.vehicle?' • '+safeText(m.vehicle):''}${m.note?' • '+safeText(m.note):''}`;
-            const btn = (m.type==='masuk'||m.auto)
+            const btn = (m.type==='masuk'||m.auto||m.stockUse)
                 ? `<button class="btn-small-edit" onclick="openExpenseModal('${m.id}')">✏️</button>`
                 : `<button class="btn-small-delete" onclick="deleteExpense('${m.id}','Hapus catatan pemakaian ini? Stok akan bertambah kembali.')">🗑️</button>`;
             return `<div class="hist-row"><div><div>${m.type==='masuk'?'📥':'📤'} ${safeText(m.name)}</div><div class="g-sub">${sub}</div></div><div style="display:flex;align-items:center"><span class="hq ${m.type==='masuk'?'in':'out'}">${m.type==='masuk'?'+':'−'}${fmtQty(m.qty)} ${safeText(m.unit||'')}</span>${btn}</div></div>`;
@@ -1827,15 +1908,26 @@
         const info=document.getElementById('kasFilterInfo');
         if(info)info.textContent=`Menampilkan ${filtered.length} dari ${rows.length} transaksi · Saldo sekarang ${rupiah(saldo)}`;
         const ledger=document.getElementById('kasLedger');
-        if(!filtered.length){ledger.innerHTML=rows.length?'<div class="empty-state">Tidak ada transaksi untuk tanggal/armada yang dipilih.</div>':'<div class="empty-state">Belum ada transaksi isi kas atau pembelanjaan.</div>';return;}
-        ledger.innerHTML=filtered.slice().reverse().map(r=>`<article class="expense-row"><div class="expense-row-head"><div><h4>${r.type==='masuk'?'📥':'🧾'} ${safeText(r.name)}</h4><div class="expense-meta">📅 ${safeText(tglIndo(r.date))}${r.vehicle?' · '+safeText(r.vehicle):' · Kas Umum'}${r.kind==='stok'?' · Stok Gudang':''}</div></div><strong style="color:${r.type==='masuk'?'#48d597':'#ffb36b'};white-space:nowrap">${r.type==='masuk'?'+':'−'} ${rupiah(r.nominal)}</strong></div>${r.type==='keluar'&&r.qty!=null?`<div class="money-line"><span>Jumlah</span><strong>${safeText(r.qty==null?'':fmtQty(r.qty))} ${safeText(r.unit||'')}</strong></div>`:''}${r.notes?`<div class="expense-meta">${safeText(r.notes)}</div>`:''}<div class="money-line"><span>Saldo setelah transaksi</span><strong style="color:${r.balance<0?'#ff7675':'var(--text)'}">${rupiah(r.balance)}</strong></div><div class="row-actions" style="margin-top:10px">${r.type==='masuk'?`<button type="button" class="btn-small-edit" onclick="editKasMasuk('${safeText(r.id)}')">✏️ EDIT</button>`:`<button type="button" class="btn-small-edit" onclick="closeKasHistory();openExpenseModal('${safeText(r.parentId||'')}')">✏️ EDIT BELANJA</button>`}<button type="button" class="btn-small-delete" onclick="deleteKasTransaction('${safeText(r.id)}')">🗑️ HAPUS</button></div></article>`).join('');
+        if(!filtered.length){ledger.innerHTML=rows.length?'<div class="empty-state">Tidak ada transaksi untuk tanggal/armada yang dipilih.</div>':'<div class="empty-state">Belum ada transaksi isi kas atau pembelanjaan.</div>';const pg0=document.getElementById('kasPager');if(pg0)pg0.style.display='none';return;}
+        const totalPages=Math.max(1,Math.ceil(filtered.length/KAS_PAGE_SIZE));
+        if(kasPage>totalPages)kasPage=totalPages; if(kasPage<1)kasPage=1;
+        const pageRows=filtered.slice().reverse().slice((kasPage-1)*KAS_PAGE_SIZE,kasPage*KAS_PAGE_SIZE);
+        const pager=document.getElementById('kasPager');
+        if(pager){
+            pager.style.display=totalPages>1?'flex':'none';
+            pager.innerHTML=`<button type="button" class="btn-small-edit" ${kasPage<=1?'disabled style="opacity:.4"':''} onclick="kasGoPage(${kasPage-1})">◀ Sebelumnya</button><span class="expense-meta">Halaman ${kasPage} / ${totalPages}</span><button type="button" class="btn-small-edit" ${kasPage>=totalPages?'disabled style="opacity:.4"':''} onclick="kasGoPage(${kasPage+1})">Berikutnya ▶</button>`;
+        }
+        ledger.innerHTML=pageRows.map(r=>`<article class="expense-row"><div class="expense-row-head"><div><h4>${r.type==='masuk'?'📥':'🧾'} ${safeText(r.name)}</h4><div class="expense-meta">📅 ${safeText(tglIndo(r.date))}${r.vehicle?' · '+safeText(r.vehicle):' · Kas Umum'}${r.kind==='stok'?' · Stok Gudang':''}</div></div><strong style="color:${r.type==='masuk'?'#48d597':'#ffb36b'};white-space:nowrap">${r.type==='masuk'?'+':'−'} ${rupiah(r.nominal)}</strong></div>${r.type==='keluar'&&r.qty!=null?`<div class="money-line"><span>Jumlah</span><strong>${safeText(r.qty==null?'':fmtQty(r.qty))} ${safeText(r.unit||'')}</strong></div>`:''}${r.notes?`<div class="expense-meta">${safeText(r.notes)}</div>`:''}<div class="money-line"><span>Saldo setelah transaksi</span><strong style="color:${r.balance<0?'#ff7675':'var(--text)'}">${rupiah(r.balance)}</strong></div><div class="row-actions" style="margin-top:10px">${r.type==='masuk'?`<button type="button" class="btn-small-edit" onclick="editKasMasuk('${safeText(r.id)}')">✏️ EDIT</button>`:`<button type="button" class="btn-small-edit" onclick="closeKasHistory();openExpenseModal('${safeText(r.parentId||'')}')">✏️ EDIT BELANJA</button>`}<button type="button" class="btn-small-delete" onclick="deleteKasTransaction('${safeText(r.id)}')">🗑️ HAPUS</button></div></article>`).join('');
     }
+    const KAS_PAGE_SIZE=5; let kasPage=1;
+    function kasGoPage(n){ kasPage=n; renderBukuKas(); const m=document.querySelector('#kasHistoryModal .expense-modal-card'); if(m)m.scrollTop=0; }
     function resetKasFilters(){
+        kasPage=1;
         const d=document.getElementById('kasFilterDate');if(d)d.value='';
         const v=document.getElementById('kasFilterVehicle');if(v)v.value='';
         renderBukuKas();
     }
-    function openKasHistory(){renderBukuKas();document.getElementById('kasHistoryModal').classList.add('open');}
+    function openKasHistory(){kasPage=1;renderBukuKas();document.getElementById('kasHistoryModal').classList.add('open');}
     function closeKasHistory(){document.getElementById('kasHistoryModal').classList.remove('open');}
 
     function toggleTheme(){
