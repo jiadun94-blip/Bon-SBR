@@ -5,179 +5,642 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SBRdigital | Kelola Harga</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #334155;
+            --border-color: #334155;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --modal-bg: #1e293b;
+        }
+
+        [data-theme="light"] {
+            --bg-main: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-input: #f8fafc;
+            --border-color: #cbd5e1;
+            --accent: #0284c7;
+            --accent-hover: #0369a1;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --modal-bg: #ffffff;
+        }
+
         body { 
-            font-family: 'Roboto Condensed', sans-serif; 
-            background: #121212; 
-            color: #e0e0e0; 
-            margin: 0; padding: 0; 
-            user-select: none;
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg-main); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 0; 
+            -webkit-tap-highlight-color: transparent;
+            transition: background 0.3s, color 0.3s;
         }
 
         /* Sticky Header */
         .sticky-header {
             position: sticky;
             top: 0;
-            z-index: 100;
-            background: #121212;
-            padding: 15px 15px 10px 15px;
-            border-bottom: 1px solid #333; 
+            z-index: 90;
+            background: var(--bg-main);
+            padding: 12px 12px 8px 12px;
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border-color);
         }
         
         .card { 
-            background: #1e1e1e; 
-            padding: 15px; border-radius: 10px; 
-            border: 1px solid #333; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            background: var(--bg-card); 
+            padding: 16px; 
+            border-radius: 14px; 
+            border: 1px solid var(--border-color); 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+            transition: background 0.3s, border 0.3s;
+        }
+
+        .header-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
         }
 
         .header-section {
-            background: #2d2d2d;
-            color: white;
-            text-align: center;
-            padding: 12px;
+            color: var(--text-main);
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-icon-top {
+            background: var(--bg-input);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 6px 10px;
             border-radius: 8px;
-            font-weight: bold;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-icon-top:active { transform: scale(0.95); }
+        
+        /* Collapsible Form Container */
+        .form-collapsible {
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            max-height: 900px;
+            opacity: 1;
+        }
+        .form-collapsible.hidden {
+            max-height: 0;
+            opacity: 0;
+            margin: 0;
+            padding: 0;
+            border: none;
+        }
+
+        .konversi-banner {
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            color: var(--accent);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .unit-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .unit-price-card {
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 8px;
+        }
+
+        .unit-price-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .unit-badge-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--accent);
             text-transform: uppercase;
-            margin-bottom: 15px;
-            font-size: 15px;
-            letter-spacing: 1px;
-            border: 1px solid #444;
+        }
+
+        .btn-calc-trigger {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 10px;
+            padding: 2px 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .btn-calc-trigger:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .helper-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-mini-helper {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 5px 9px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-mini-helper:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .form-row { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px; 
+            margin-bottom: 10px; 
         }
         
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-        label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 6px; color: #bbb; letter-spacing: 0.5px; }
+        label { 
+            display: block; 
+            font-size: 10px; 
+            font-weight: 700; 
+            margin-bottom: 4px; 
+            color: var(--text-muted); 
+            letter-spacing: 0.5px; 
+        }
         
         select, input { 
-            width: 100%; padding: 12px; border: 1px solid #444; 
-            border-radius: 8px; background: #2d2d2d; color: #fff; box-sizing: border-box; 
-            font-family: inherit; font-size: 15px; transition: border 0.3s;
+            width: 100%; 
+            padding: 10px 12px; 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            background: var(--bg-input); 
+            color: var(--text-main); 
+            box-sizing: border-box; 
+            font-family: inherit; 
+            font-size: 14px; 
+            transition: all 0.2s;
         }
-        select:focus, input:focus { border-color: #3498db; outline: none; }
+        select:focus, input:focus { 
+            border-color: var(--accent); 
+            outline: none; 
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); 
+        }
         
         .btn-save { 
-            background: #2980b9; color: white; border: none; padding: 14px; 
-            border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; 
-            text-transform: uppercase; font-size: 15px; margin-bottom: 15px;
-            box-shadow: 0 4px 0 #1c5980; transition: all 0.1s; letter-spacing: 1px;
+            background: var(--accent); 
+            color: #0f172a; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 700; 
+            width: 100%; 
+            text-transform: uppercase; 
+            font-size: 13px; 
+            margin-top: 4px;
+            margin-bottom: 12px;
+            transition: all 0.2s; 
+            letter-spacing: 0.5px;
         }
-        .btn-save:active { transform: translateY(4px); box-shadow: none; }
+        .btn-save:active { transform: scale(0.98); background: var(--accent-hover); }
 
         .search-box { 
-            padding: 12px; border: 1px solid #444; 
-            border-radius: 8px; width: 100%; box-sizing: border-box; 
-            background: #2d2d2d; color: white; font-family: inherit; font-size: 14px;
+            padding: 10px 14px; 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            width: 100%; 
+            box-sizing: border-box; 
+            background: var(--bg-input); 
+            color: var(--text-main); 
+            font-family: inherit; 
+            font-size: 13px;
         }
 
-        .content-body { padding: 15px; }
-        
+        .content-body { padding: 12px; }
+
+        /* Agent List Cards (Main View) */
+        .agent-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .agent-card-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+        .agent-card-item:hover {
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+        .agent-info h4 {
+            margin: 0 0 4px 0;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+        .agent-info p {
+            margin: 0;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .agent-arrow {
+            font-size: 16px;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* Modal Pop-up Styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: var(--modal-bg);
+            width: 100%;
+            max-width: 600px;
+            max-height: 85vh;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 -10px 25px rgba(0,0,0,0.3);
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+        .modal-header {
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: var(--text-main);
+        }
+        .btn-close {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .modal-body {
+            padding: 16px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* Table inside Modal */
         .table-container { 
-            width: 100%; overflow-x: auto; border-radius: 10px; 
-            border: 1px solid #333; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            width: 100%; 
+            overflow-x: auto; 
+            border-radius: 10px; 
+            border: 1px solid var(--border-color); 
+            background: var(--bg-card); 
         }
 
-        table { width: 100%; border-collapse: collapse; background: white; color: #1e293b; min-width: 650px;} 
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            background: var(--bg-card); 
+            color: var(--text-main); 
+            min-width: 420px;
+        } 
         
         thead th { 
-            background: #f8fafc; color: #475569; 
-            padding: 15px 10px; font-size: 12px; text-transform: uppercase; 
-            border-bottom: 2px solid #cbd5e1; text-align: left; letter-spacing: 0.5px;
+            background: var(--bg-input); 
+            color: var(--text-muted); 
+            padding: 10px 8px; 
+            font-size: 11px; 
+            text-transform: uppercase; 
+            border-bottom: 1px solid var(--border-color); 
+            text-align: left; 
         }
         thead th.center { text-align: center; }
         thead th.right { text-align: right; }
         
-        td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; font-size: 14px; vertical-align: middle; }
-        tr:hover { background: #f8fafc; }
+        td { 
+            padding: 10px 8px; 
+            border-bottom: 1px solid var(--border-color); 
+            font-size: 13px; 
+            vertical-align: middle; 
+        }
+        tr:last-child td { border-bottom: none; }
         
-        .text-bold { font-weight: bold; color: #0f172a; }
-        .price-text { font-weight: bold; text-align: right; color: #16a085; font-size: 15px; }
+        .price-text { font-weight: 700; text-align: right; color: var(--success); font-size: 13px; }
         
         .badge-satuan { 
-            background: #e2e8f0; color: #475569; 
-            padding: 4px 8px; border-radius: 6px; 
-            font-size: 11px; font-weight: bold; 
-            display: inline-block; text-transform: uppercase;
+            background: rgba(56, 189, 248, 0.15); 
+            color: var(--accent); 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            font-size: 10px; 
+            font-weight: 700; 
+            display: inline-block; 
+            text-transform: uppercase;
         }
         
-        /* Modifikasi Kolom Aksi agar Sejajar (Horizontal) */
         .action-cell { 
             display: flex; 
-            gap: 6px; 
             justify-content: center; 
             align-items: center; 
         }
         
-        .btn-action {
+        .btn-action-pencil {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            background: #f1f5f9;
-            border: 1px solid #cbd5e1;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
             cursor: pointer;
-            font-size: 14px;
-            padding: 8px 12px;
-            border-radius: 6px;
+            font-size: 13px;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
             transition: all 0.2s;
         }
-        .btn-action.edit:hover { background: #dbeafe; border-color: #93c5fd; }
-        .btn-action.delete:hover { background: #fee2e2; border-color: #fca5a5; }
+        .btn-action-pencil:hover { background: rgba(56, 189, 248, 0.2); border-color: var(--accent); }
 
+        /* Action Menu Options Styling */
+        .btn-action-menu {
+            background: var(--bg-input);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+        .btn-action-menu:active { transform: scale(0.98); }
+        .btn-action-menu.edit-opt:hover { border-color: var(--warning); color: var(--warning); background: rgba(245, 158, 11, 0.1); }
+        .btn-action-menu.delete-opt:hover { border-color: var(--danger); color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .btn-action-menu.cancel-opt:hover { border-color: var(--accent); color: var(--accent); background: rgba(56, 189, 248, 0.1); }
     </style>
 </head>
 <body>
 
 <div class="sticky-header">
     <div class="card">
-        <div class="header-section">TAMBAH / UPDATE HARGA</div>
-        <input type="hidden" id="editId">
-        <div class="form-row">
-            <div class="form-group">
-                <label>NAMA AGEN</label>
-                <select id="selAgen"><option value="">Pilih Agen...</option></select>
+        <div class="header-top-bar">
+            <div class="header-section">
+                <span>💰</span> KELOLA HARGA AGEN
             </div>
-            <div class="form-group">
-                <label>NAMA BARANG</label>
-                <select id="selBarang"><option value="">Pilih Barang...</option></select>
+            <div class="header-actions">
+                <button class="btn-icon-top" id="btnTheme" onclick="toggleTheme()" title="Ubah Tema">🌙</button>
+                <button class="btn-icon-top" id="btnToggle" onclick="toggleForm()">Form ➕</button>
             </div>
         </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label>SATUAN</label>
-                <select id="selSatuan">
-                    <option value="Pcs">Pcs</option>
-                    <option value="Pack">Pack</option>
-                    <option value="Ball">Ball</option>
-                    <option value="Duz">Duz</option>
-                    <option value="Karung">Karung</option>
-                </select>
+
+        <div id="formContainer" class="form-collapsible hidden">
+            <input type="hidden" id="editId">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>NAMA AGEN</label>
+                    <select id="selAgen" onchange="onAgenOrBarangChange()"><option value="">Pilih Agen...</option></select>
+                </div>
+                <div class="form-group">
+                    <label>NAMA BARANG</label>
+                    <select id="selBarang" onchange="onAgenOrBarangChange()"><option value="">Pilih Barang...</option></select>
+                </div>
             </div>
-            <div class="form-group">
-                <label>HARGA JUAL (RP)</label>
-                <input type="number" id="inpHarga" placeholder="0">
+
+            <!-- Info Rasio Konversi Otomatis dari Data Barang -->
+            <div class="konversi-banner" id="infoKonversiBanner">
+                <span id="teksRasioKonversi">📦 Pilih barang untuk melihat rasio 3 satuan</span>
+                <span style="font-size: 11px; opacity: 0.85;">⚡ Auto-Konversi Aktif</span>
             </div>
+
+            <!-- Input 3 Harga Satuan Sekaligus (Otomatis Menyesuaikan & Bisa Diedit/Dibulatkan) -->
+            <div class="unit-grid-3">
+                <div class="unit-price-card">
+                    <div class="unit-price-header">
+                        <span class="unit-badge-label" id="lblSatuan1">BALL</span>
+                        <button type="button" class="btn-calc-trigger" onclick="hitungDariSatuan(1, 'main')" title="Hitung satuan lain dari harga ini">🔄 Patokan</button>
+                    </div>
+                    <input type="number" id="inpHarga1" placeholder="Rp 0" oninput="onInputHarga(1, 'main')">
+                </div>
+                <div class="unit-price-card">
+                    <div class="unit-price-header">
+                        <span class="unit-badge-label" id="lblSatuan2">PACK</span>
+                        <button type="button" class="btn-calc-trigger" onclick="hitungDariSatuan(2, 'main')" title="Hitung satuan lain dari harga ini">🔄 Patokan</button>
+                    </div>
+                    <input type="number" id="inpHarga2" placeholder="Rp 0" oninput="onInputHarga(2, 'main')">
+                </div>
+                <div class="unit-price-card">
+                    <div class="unit-price-header">
+                        <span class="unit-badge-label" id="lblSatuan3">PCS</span>
+                        <button type="button" class="btn-calc-trigger" onclick="hitungDariSatuan(3, 'main')" title="Hitung satuan lain dari harga ini">🔄 Patokan</button>
+                    </div>
+                    <input type="number" id="inpHarga3" placeholder="Rp 0" oninput="onInputHarga(3, 'main')">
+                </div>
+            </div>
+
+            <div class="helper-bar">
+                <span style="font-size: 11px; color: var(--text-muted);">💡 Ketik 1 harga, satuan lain otomatis terisi & tetap bisa diedit manual.</span>
+                <div style="display:flex; gap:4px;">
+                    <button type="button" class="btn-mini-helper" onclick="bulatkanHarga(100, 'main')">✨ Bulatkan 100</button>
+                    <button type="button" class="btn-mini-helper" onclick="bulatkanHarga(500, 'main')">✨ Bulatkan 500</button>
+                </div>
+            </div>
+
+            <button class="btn-save" id="btnSimpan" onclick="simpanHarga()">🚀 SIMPAN HARGA (3 SATUAN SEKALIGUS)</button>
         </div>
-        <button class="btn-save" id="btnSimpan" onclick="simpanHarga()">SIMPAN DATA HARGA</button>
         
-        <input type="text" id="cariData" class="search-box" placeholder="🔍 Cari Agen atau Barang..." onkeyup="filterTabel()">
+        <input type="text" id="cariData" class="search-box" placeholder="🔍 Cari Nama Agen..." onkeyup="filterAgen()">
     </div>
 </div>
 
 <div class="content-body">
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th width="40" class="center">NO</th>
-                    <th>NAMA AGEN</th>
-                    <th>BARANG</th>
-                    <th width="70" class="center">SATUAN</th>
-                    <th width="120" class="right">HARGA JUAL</th>
-                    <th width="110" class="center">AKSI</th>
-                </tr>
-            </thead>
-            <tbody id="bodyTabel"></tbody>
-        </table>
+    <div id="listAgenContainer" class="agent-list">
+        <!-- Daftar agen dimuat dinamis -->
+    </div>
+</div>
+
+<!-- Modal Pop-up Daftar Barang Agen -->
+<div id="agentModal" class="modal-overlay" onclick="outsideModalClick(event, 'agentModal')">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalAgentTitle">Daftar Barang</h3>
+            <button class="btn-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div style="display:flex; gap:8px; margin-bottom:10px;">
+                <input type="text" id="cariBarangModal" class="search-box" placeholder="🔍 Cari nama barang di agen ini..." oninput="filterBarangDiModal()">
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th width="30" class="center">NO</th>
+                            <th>NAMA BARANG</th>
+                            <th width="60" class="center">SATUAN</th>
+                            <th width="100" class="right">HARGA</th>
+                            <th width="60" class="center">AKSI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalBodyTabel"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pop-up Menu Aksi (Edit / Hapus / Kembali) -->
+<div id="actionMenuModal" class="modal-overlay" onclick="outsideModalClick(event, 'actionMenuModal')">
+    <div class="modal-content" style="max-width: 400px; border-radius: 20px 20px 0 0; padding: 20px;">
+        <div class="modal-header" style="padding: 0 0 14px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 14px;">
+            <h3 style="margin: 0; font-size: 15px;">PILIH AKSI</h3>
+            <button class="btn-close" onclick="closeActionMenu()">✕</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-bottom: 10px;">
+            <button class="btn-action-menu edit-opt" onclick="menuActionEdit()">✏️ Edit & Konversi 3 Satuan</button>
+            <button class="btn-action-menu delete-opt" onclick="menuActionDelete()">🗑️ Hapus Satuan Ini</button>
+            <button class="btn-action-menu cancel-opt" onclick="closeActionMenu()">↩️ Kembali</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pop-up Terpisah untuk Edit Data (Mendukung Konversi 3 Satuan Sekaligus) -->
+<div id="editModal" class="modal-overlay" onclick="outsideModalClick(event, 'editModal')">
+    <div class="modal-content" style="max-width: 520px; border-radius: 20px 20px 0 0; padding: 20px;">
+        <div class="modal-header" style="padding: 0 0 16px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 16px;">
+            <h3 style="margin: 0; font-size: 16px;">EDIT HARGA (3 SATUAN OTOMATIS)</h3>
+            <button class="btn-close" onclick="closeEditModal()">✕</button>
+        </div>
+        <input type="hidden" id="modalEditId">
+        <div class="form-row">
+            <div class="form-group">
+                <label>NAMA AGEN</label>
+                <select id="modalSelAgen" onchange="onModalAgenOrBarangChange()"><option value="">Pilih Agen...</option></select>
+            </div>
+            <div class="form-group">
+                <label>NAMA BARANG</label>
+                <select id="modalSelBarang" onchange="onModalAgenOrBarangChange()"><option value="">Pilih Barang...</option></select>
+            </div>
+        </div>
+
+        <div class="konversi-banner">
+            <span id="modalTeksRasioKonversi">📦 1 Ball = 10 Pack = 100 Pcs</span>
+            <span style="font-size: 11px; opacity: 0.85;">⚡ Auto-Konversi</span>
+        </div>
+
+        <div class="unit-grid-3">
+            <div class="unit-price-card">
+                <div class="unit-price-header">
+                    <span class="unit-badge-label" id="modalLblSatuan1">BALL</span>
+                    <button type="button" class="btn-calc-trigger" onclick="hitungDariSatuan(1, 'modal')">🔄 Patokan</button>
+                </div>
+                <input type="number" id="modalInpHarga1" placeholder="Rp 0" oninput="onInputHarga(1, 'modal')">
+            </div>
+            <div class="unit-price-card">
+                <div class="unit-price-header">
+                    <span class="unit-badge-label" id="modalLblSatuan2">PACK</span>
+                    <button type="button" class="btn-calc-trigger" onclick="hitungDariSatuan(2, 'modal')">🔄 Patokan</button>
+                </div>
+                <input type="number" id="modalInpHarga2" placeholder="Rp 0" oninput="onInputHarga(2, 'modal')">
+            </div>
+            <div class="unit-price-card">
+                <div class="unit-price-header">
+                    <span class="unit-badge-label" id="modalLblSatuan3">PCS</span>
+                    <button type="button" class="btn-calc-trigger" onclick="hitungDariSatuan(3, 'modal')">🔄 Patokan</button>
+                </div>
+                <input type="number" id="modalInpHarga3" placeholder="Rp 0" oninput="onInputHarga(3, 'modal')">
+            </div>
+        </div>
+
+        <div class="helper-bar">
+            <span style="font-size: 11px; color: var(--text-muted);">💡 Bisa disesuaikan manual per satuan sebelum update.</span>
+            <div style="display:flex; gap:4px;">
+                <button type="button" class="btn-mini-helper" onclick="bulatkanHarga(100, 'modal')">✨ Bulatkan 100</button>
+                <button type="button" class="btn-mini-helper" onclick="bulatkanHarga(500, 'modal')">✨ Bulatkan 500</button>
+            </div>
+        </div>
+
+        <button class="btn-save" id="btnUpdateModal" onclick="simpanEditModal()" style="margin-top: 6px; background: var(--warning); color: #0f172a;">💾 UPDATE HARGA (3 SATUAN)</button>
     </div>
 </div>
 
@@ -187,101 +650,429 @@
     const _sb = supabase.createClient(SB_URL, SB_KEY);
 
     let currentData = []; 
+    let barangMap = {};
+    let isFormVisible = false;
+    let currentSelectedAgent = "";
+    let activeRowIndex = null;
+
+    // Helper baca konversi lokal jika kolom Supabase belum dijalankan
+    function getLocalKonversiMap() {
+        try {
+            return JSON.parse(localStorage.getItem('sbr_konversi_barang') || '{}');
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function getKonversiBarang(namaBarang) {
+        const b = barangMap[namaBarang] || {};
+        const local = getLocalKonversiMap()[namaBarang] || {};
+        const satuan_1 = b.satuan_1 || local.satuan_1 || 'Ball';
+        const satuan_2 = b.satuan_2 || local.satuan_2 || 'Pack';
+        const satuan_3 = b.satuan_3 || local.satuan_3 || 'Pcs';
+        const isi_1_ke_2 = Math.max(1, Number(b.isi_1_ke_2 || local.isi_1_ke_2 || 10));
+        const isi_2_ke_3 = Math.max(1, Number(b.isi_2_ke_3 || local.isi_2_ke_3 || 10));
+        return { satuan_1, satuan_2, satuan_3, isi_1_ke_2, isi_2_ke_3 };
+    }
+
+    // Dark/Light Theme Handler
+    function toggleTheme() {
+        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+        if (isLight) {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'dark');
+            document.getElementById('btnTheme').innerText = "🌙";
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+            document.getElementById('btnTheme').innerText = "☀️";
+        }
+    }
+
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        document.getElementById('btnTheme').innerText = "☀️";
+    }
+
+    function toggleForm() {
+        const form = document.getElementById('formContainer');
+        const btn = document.getElementById('btnToggle');
+        isFormVisible = !isFormVisible;
+        if (isFormVisible) {
+            form.classList.remove('hidden');
+            btn.innerText = "Tutup ✕";
+        } else {
+            form.classList.add('hidden');
+            btn.innerText = "Form ➕";
+        }
+    }
 
     async function init() {
         const { data: agens } = await _sb.from('agen').select('nama_agen').order('nama_agen');
-        agens?.forEach(a => document.getElementById('selAgen').innerHTML += `<option value="${a.nama_agen}">${a.nama_agen}</option>`);
+        agens?.forEach(a => {
+            document.getElementById('selAgen').innerHTML += `<option value="${a.nama_agen}">${a.nama_agen}</option>`;
+            document.getElementById('modalSelAgen').innerHTML += `<option value="${a.nama_agen}">${a.nama_agen}</option>`;
+        });
 
-        const { data: barangs } = await _sb.from('barang').select('nama_barang').order('nama_barang');
-        barangs?.forEach(b => document.getElementById('selBarang').innerHTML += `<option value="${b.nama_barang}">${b.nama_barang}</option>`);
+        const { data: barangs } = await _sb.from('barang').select('*').order('nama_barang');
+        barangs?.forEach(b => {
+            barangMap[b.nama_barang] = b;
+            document.getElementById('selBarang').innerHTML += `<option value="${b.nama_barang}">${b.nama_barang}</option>`;
+            document.getElementById('modalSelBarang').innerHTML += `<option value="${b.nama_barang}">${b.nama_barang}</option>`;
+        });
 
-        muatDataHarga();
+        await muatDataHarga();
+    }
+
+    // === LOGIKA KONVERSI OTOMATIS 3 SATUAN ===
+    function getFormElements(mode) {
+        if (mode === 'modal') {
+            return {
+                agen: document.getElementById('modalSelAgen').value,
+                barang: document.getElementById('modalSelBarang').value,
+                lbl1: document.getElementById('modalLblSatuan1'),
+                lbl2: document.getElementById('modalLblSatuan2'),
+                lbl3: document.getElementById('modalLblSatuan3'),
+                inp1: document.getElementById('modalInpHarga1'),
+                inp2: document.getElementById('modalInpHarga2'),
+                inp3: document.getElementById('modalInpHarga3'),
+                banner: document.getElementById('modalTeksRasioKonversi')
+            };
+        }
+        return {
+            agen: document.getElementById('selAgen').value,
+            barang: document.getElementById('selBarang').value,
+            lbl1: document.getElementById('lblSatuan1'),
+            lbl2: document.getElementById('lblSatuan2'),
+            lbl3: document.getElementById('lblSatuan3'),
+            inp1: document.getElementById('inpHarga1'),
+            inp2: document.getElementById('inpHarga2'),
+            inp3: document.getElementById('inpHarga3'),
+            banner: document.getElementById('teksRasioKonversi')
+        };
+    }
+
+    function syncLabelDanHargaExisting(mode) {
+        const el = getFormElements(mode);
+        if (!el.barang) {
+            el.banner.innerText = '📦 Pilih barang untuk melihat rasio 3 satuan';
+            return;
+        }
+        const k = getKonversiBarang(el.barang);
+        const totalKecil = k.isi_1_ke_2 * k.isi_2_ke_3;
+
+        el.lbl1.innerText = k.satuan_1;
+        el.lbl2.innerText = k.satuan_2;
+        el.lbl3.innerText = k.satuan_3;
+        el.banner.innerText = `📦 1 ${k.satuan_1} = ${k.isi_1_ke_2} ${k.satuan_2} = ${totalKecil} ${k.satuan_3}`;
+
+        // Jika agen & barang sudah dipilih, tampilkan harga yang sudah pernah disimpan (jika ada)
+        if (el.agen && el.barang) {
+            const existing = currentData.filter(d => d.nama_agen === el.agen && d.nama_barang === el.barang);
+            const h1 = existing.find(d => d.satuan.toLowerCase() === k.satuan_1.toLowerCase());
+            const h2 = existing.find(d => d.satuan.toLowerCase() === k.satuan_2.toLowerCase());
+            const h3 = existing.find(d => d.satuan.toLowerCase() === k.satuan_3.toLowerCase());
+
+            el.inp1.value = h1 ? h1.harga_jual : '';
+            el.inp2.value = h2 ? h2.harga_jual : '';
+            el.inp3.value = h3 ? h3.harga_jual : '';
+        }
+    }
+
+    function onAgenOrBarangChange() {
+        syncLabelDanHargaExisting('main');
+    }
+
+    function onModalAgenOrBarangChange() {
+        syncLabelDanHargaExisting('modal');
+    }
+
+    // Saat user mengetik di salah satu kolom harga:
+    // - Ketik di Satuan 1 (Besar, misal Ball) -> otomatis menghitung Satuan 2 (Pack) & Satuan 3 (Pcs)
+    // - Ketik di Satuan 2 (Pack) -> otomatis menghitung Satuan 3 (Pcs), dan menghitung Satuan 1 jika Satuan 1 masih kosong
+    // - Ketik di Satuan 3 (Pcs) -> otomatis menghitung Satuan 1 & 2 jika keduanya masih kosong
+    // User juga bisa klik tombol "🔄 Patokan" di satuan mana saja untuk memaksa hitung ulang ke semua satuan!
+    function onInputHarga(unitIndex, mode) {
+        const el = getFormElements(mode);
+        const k = getKonversiBarang(el.barang);
+        const totalKecil = k.isi_1_ke_2 * k.isi_2_ke_3;
+
+        const val1 = Number(el.inp1.value) || 0;
+        const val2 = Number(el.inp2.value) || 0;
+        const val3 = Number(el.inp3.value) || 0;
+
+        if (unitIndex === 1) {
+            if (val1 > 0) {
+                el.inp2.value = Math.round(val1 / k.isi_1_ke_2);
+                el.inp3.value = Math.round(val1 / totalKecil);
+            } else {
+                el.inp2.value = '';
+                el.inp3.value = '';
+            }
+        } else if (unitIndex === 2) {
+            if (val2 > 0) {
+                el.inp3.value = Math.round(val2 / k.isi_2_ke_3);
+                if (!val1) {
+                    el.inp1.value = Math.round(val2 * k.isi_1_ke_2);
+                }
+            }
+        } else if (unitIndex === 3) {
+            if (val3 > 0 && !val1 && !val2) {
+                el.inp2.value = Math.round(val3 * k.isi_2_ke_3);
+                el.inp1.value = Math.round(val3 * totalKecil);
+            }
+        }
+    }
+
+    // Tombol paksa hitung ulang semua satuan dari salah satu satuan patokan
+    function hitungDariSatuan(unitIndex, mode) {
+        const el = getFormElements(mode);
+        const k = getKonversiBarang(el.barang);
+        const totalKecil = k.isi_1_ke_2 * k.isi_2_ke_3;
+
+        const val1 = Number(el.inp1.value) || 0;
+        const val2 = Number(el.inp2.value) || 0;
+        const val3 = Number(el.inp3.value) || 0;
+
+        if (unitIndex === 1 && val1 > 0) {
+            el.inp2.value = Math.round(val1 / k.isi_1_ke_2);
+            el.inp3.value = Math.round(val1 / totalKecil);
+        } else if (unitIndex === 2 && val2 > 0) {
+            el.inp1.value = Math.round(val2 * k.isi_1_ke_2);
+            el.inp3.value = Math.round(val2 / k.isi_2_ke_3);
+        } else if (unitIndex === 3 && val3 > 0) {
+            el.inp2.value = Math.round(val3 * k.isi_2_ke_3);
+            el.inp1.value = Math.round(val3 * totalKecil);
+        }
+    }
+
+    // Helper pembulatan harga ke kelipatan 100 atau 500 terdekat (ke atas) agar harga eceran rapi
+    function bulatkanHarga(kelipatan, mode) {
+        const el = getFormElements(mode);
+        [el.inp1, el.inp2, el.inp3].forEach(inp => {
+            const v = Number(inp.value) || 0;
+            if (v > 0) {
+                inp.value = Math.ceil(v / kelipatan) * kelipatan;
+            }
+        });
     }
 
     async function muatDataHarga() {
         const { data } = await _sb.from('harga').select('*').order('nama_agen', { ascending: true });
-        const tbody = document.getElementById('bodyTabel');
-        tbody.innerHTML = "";
-        
         currentData = data || []; 
+        renderAgentList();
         
-        currentData.forEach((h, index) => {
+        if (currentSelectedAgent) {
+            openAgentModal(currentSelectedAgent, true);
+        }
+    }
+
+    function renderAgentList() {
+        const container = document.getElementById('listAgenContainer');
+        container.innerHTML = "";
+
+        const grouped = {};
+        currentData.forEach(item => {
+            if (!grouped[item.nama_agen]) {
+                grouped[item.nama_agen] = [];
+            }
+            grouped[item.nama_agen].push(item);
+        });
+
+        const agentNames = Object.keys(grouped);
+
+        if (agentNames.length === 0) {
+            container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px;">Belum ada data harga agen.</div>`;
+            return;
+        }
+
+        agentNames.forEach(agen => {
+            const items = grouped[agen];
+            const uniqueBarangCount = new Set(items.map(i => i.nama_barang)).size;
+            const div = document.createElement('div');
+            div.className = 'agent-card-item';
+            div.setAttribute('data-agen', agen.toUpperCase());
+            div.onclick = () => openAgentModal(agen);
+            div.innerHTML = `
+                <div class="agent-info">
+                    <h4>${agen}</h4>
+                    <p>${uniqueBarangCount} barang (${items.length} harga satuan)</p>
+                </div>
+                <div class="agent-arrow">➔</div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function openAgentModal(agenName, isRefresh = false) {
+        currentSelectedAgent = agenName;
+        document.getElementById('modalAgentTitle').innerText = agenName;
+        if (!isRefresh) {
+            const searchInp = document.getElementById('cariBarangModal');
+            if (searchInp) searchInp.value = '';
+        }
+        
+        renderTabelBarangAgen();
+
+        if (!isRefresh) {
+            document.getElementById('agentModal').classList.add('active');
+        }
+    }
+
+    function renderTabelBarangAgen() {
+        const modalBodyTabel = document.getElementById('modalBodyTabel');
+        modalBodyTabel.innerHTML = "";
+
+        const keyword = (document.getElementById('cariBarangModal')?.value || '').toLowerCase().trim();
+        const agentItems = currentData
+            .filter(h => h.nama_agen === currentSelectedAgent)
+            .filter(h => !keyword || (h.nama_barang || '').toLowerCase().includes(keyword) || (h.satuan || '').toLowerCase().includes(keyword));
+
+        agentItems.forEach((h, index) => {
+            const originalIndex = currentData.findIndex(item => item.id === h.id);
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td align="center" style="color: #64748b;">${index + 1}</td>
-                <td class="text-bold">${h.nama_agen}</td>
-                <td>${h.nama_barang}</td>
+                <td align="center" style="color: var(--text-muted); font-size: 11px;">${index + 1}</td>
+                <td><strong>${h.nama_barang}</strong></td>
                 <td align="center"><span class="badge-satuan">${h.satuan}</span></td>
-                <td class="price-text">Rp ${h.harga_jual.toLocaleString('id-ID')}</td>
-                <td>
+                <td class="price-text">Rp ${Number(h.harga_jual || 0).toLocaleString('id-ID')}</td>
+                <td align="center">
                     <div class="action-cell">
-                        <button class="btn-action edit" onclick="handleEdit(${index})" title="Edit">✏️</button>
-                        <button class="btn-action delete" onclick="handleDelete(${index})" title="Hapus">🗑️</button>
+                        <button class="btn-action-pencil" onclick="openActionMenu(${originalIndex})" title="Aksi">✏️</button>
                     </div>
                 </td>
             `;
-            tbody.appendChild(tr);
+            modalBodyTabel.appendChild(tr);
         });
-
-        filterTabel();
     }
 
-    function handleEdit(index) {
-        const targetData = currentData[index];
-        document.getElementById('editId').value = targetData.id;
-        document.getElementById('selAgen').value = targetData.nama_agen;
-        document.getElementById('selBarang').value = targetData.nama_barang;
-        document.getElementById('selSatuan').value = targetData.satuan;
-        document.getElementById('inpHarga').value = targetData.harga_jual;
-        
-        const btn = document.getElementById('btnSimpan');
-        btn.innerText = "UPDATE DATA HARGA";
-        btn.style.background = "#e67e22";
-        btn.style.boxShadow = "0 4px 0 #d35400";
-        
-        // Scroll dinonaktifkan agar posisi tabel tetap diam
+    function filterBarangDiModal() {
+        renderTabelBarangAgen();
     }
 
-    async function handleDelete(index) {
-        const targetData = currentData[index];
-        if(confirm(`Hapus harga ${targetData.nama_barang} untuk agen ${targetData.nama_agen}?`)) {
+    function closeModal() {
+        document.getElementById('agentModal').classList.remove('active');
+        currentSelectedAgent = "";
+    }
+
+    // Action Menu Handlers
+    function openActionMenu(index) {
+        activeRowIndex = index;
+        document.getElementById('actionMenuModal').classList.add('active');
+    }
+
+    function closeActionMenu() {
+        document.getElementById('actionMenuModal').classList.remove('active');
+    }
+
+    function menuActionEdit() {
+        closeActionMenu();
+        const targetData = currentData[activeRowIndex];
+        
+        document.getElementById('modalEditId').value = targetData.id;
+        document.getElementById('modalSelAgen').value = targetData.nama_agen;
+        document.getElementById('modalSelBarang').value = targetData.nama_barang;
+
+        // Muat ke-3 satuan barang untuk agen tersebut
+        syncLabelDanHargaExisting('modal');
+
+        // Pastikan harga dari baris yang diklik juga terisi jika satuannya kustom
+        const k = getKonversiBarang(targetData.nama_barang);
+        if (targetData.satuan.toLowerCase() === k.satuan_1.toLowerCase()) {
+            document.getElementById('modalInpHarga1').value = targetData.harga_jual;
+        } else if (targetData.satuan.toLowerCase() === k.satuan_2.toLowerCase()) {
+            document.getElementById('modalInpHarga2').value = targetData.harga_jual;
+        } else if (targetData.satuan.toLowerCase() === k.satuan_3.toLowerCase()) {
+            document.getElementById('modalInpHarga3').value = targetData.harga_jual;
+        }
+
+        document.getElementById('editModal').classList.add('active');
+    }
+
+    async function menuActionDelete() {
+        closeActionMenu();
+        const targetData = currentData[activeRowIndex];
+        if(confirm(`Hapus harga ${targetData.nama_barang} (${targetData.satuan}) untuk agen ${targetData.nama_agen}?`)) {
             await _sb.from('harga').delete().eq('id', targetData.id);
             muatDataHarga();
         }
     }
 
-    async function simpanHarga() {
-        const id = document.getElementById('editId').value;
-        const payload = { 
-            nama_agen: document.getElementById('selAgen').value,
-            nama_barang: document.getElementById('selBarang').value,
-            satuan: document.getElementById('selSatuan').value,
-            harga_jual: document.getElementById('inpHarga').value
-        };
-        if(!payload.nama_agen || !payload.nama_barang || !payload.harga_jual) return alert("Input belum lengkap!");
-
-        if(id) payload.id = id;
-
-        const btn = document.getElementById('btnSimpan');
-        const oldText = btn.innerText;
-        btn.innerText = "MENYIMPAN...";
-
-        await _sb.from('harga').upsert(payload, { onConflict: 'nama_agen,nama_barang,satuan' });
-        
-        document.getElementById('editId').value = "";
-        document.getElementById('inpHarga').value = "";
-        btn.innerText = "SIMPAN DATA HARGA";
-        btn.style.background = "#2980b9";
-        btn.style.boxShadow = "0 4px 0 #1c5980";
-
-        muatDataHarga();
+    function closeEditModal() {
+        document.getElementById('editModal').classList.remove('active');
     }
 
-    function filterTabel() {
+    async function simpanBatch3Satuan(mode) {
+        const el = getFormElements(mode);
+        if (!el.agen || !el.barang) {
+            alert("Pilih Nama Agen dan Nama Barang terlebih dahulu!");
+            return false;
+        }
+
+        const k = getKonversiBarang(el.barang);
+        const h1 = Number(el.inp1.value) || 0;
+        const h2 = Number(el.inp2.value) || 0;
+        const h3 = Number(el.inp3.value) || 0;
+
+        if (h1 <= 0 && h2 <= 0 && h3 <= 0) {
+            alert("Masukkan minimal 1 harga satuan!");
+            return false;
+        }
+
+        const rowsToSave = [];
+        if (h1 > 0) rowsToSave.push({ nama_agen: el.agen, nama_barang: el.barang, satuan: k.satuan_1, harga_jual: h1 });
+        if (h2 > 0) rowsToSave.push({ nama_agen: el.agen, nama_barang: el.barang, satuan: k.satuan_2, harga_jual: h2 });
+        if (h3 > 0) rowsToSave.push({ nama_agen: el.agen, nama_barang: el.barang, satuan: k.satuan_3, harga_jual: h3 });
+
+        const { error } = await _sb.from('harga').upsert(rowsToSave, { onConflict: 'nama_agen,nama_barang,satuan' });
+        if (error) {
+            alert("Gagal menyimpan harga: " + error.message);
+            return false;
+        }
+        return true;
+    }
+
+    async function simpanEditModal() {
+        const btn = document.getElementById('btnUpdateModal');
+        btn.innerText = "MENYIMPAN...";
+        const ok = await simpanBatch3Satuan('modal');
+        btn.innerText = "💾 UPDATE HARGA (3 SATUAN)";
+        if (ok) {
+            closeEditModal();
+            await muatDataHarga();
+        }
+    }
+
+    function outsideModalClick(e, modalId) {
+        if (e.target.id === modalId) {
+            if (modalId === 'agentModal') closeModal();
+            if (modalId === 'actionMenuModal') closeActionMenu();
+            if (modalId === 'editModal') closeEditModal();
+        }
+    }
+
+    async function simpanHarga() {
+        const btn = document.getElementById('btnSimpan');
+        btn.innerText = "MENYIMPAN...";
+
+        const ok = await simpanBatch3Satuan('main');
+
+        btn.innerText = "🚀 SIMPAN HARGA (3 SATUAN SEKALIGUS)";
+        if (ok) {
+            document.getElementById('editId').value = "";
+            document.getElementById('inpHarga1').value = "";
+            document.getElementById('inpHarga2').value = "";
+            document.getElementById('inpHarga3').value = "";
+            await muatDataHarga();
+        }
+    }
+
+    function filterAgen() {
         const input = document.getElementById("cariData").value.toUpperCase();
-        const tr = document.querySelectorAll("#bodyTabel tr");
-        tr.forEach(row => {
-            row.style.display = row.innerText.toUpperCase().includes(input) ? "" : "none";
+        const cards = document.querySelectorAll(".agent-card-item");
+        cards.forEach(card => {
+            const agenName = card.getAttribute("data-agen");
+            card.style.display = agenName.includes(input) ? "flex" : "none";
         });
     }
 
