@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="referrer" content="no-referrer">
     <title>SBR Putra Food - Matriks Rencana Kirim</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <style>
         :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #121214; --text-color: #333333; }
@@ -51,7 +54,7 @@
         body.light-theme .item-tabungan-ceklis { background: #edf2f7; border-color: #cbd5e0; color: #000000; }
         body.light-theme .item-tabungan-ceklis .label-sisi-kiri { color: #000000; }
         body.light-theme .input-qty { background: #fff; color: #000000; border-color: #a0aec0; }
-        body.light-theme select { background: #fff; color: #000000; border-color: #a0aec0; }
+        body.light-theme select, body.light-theme .input-lokasi-sbr { background: #fff; color: #000000; border-color: #a0aec0; }
         body.light-theme table.table-input th { background: #e2e8f0; color: #000000; border-bottom: 2px solid #cbd5e0; }
         body.light-theme table.table-input td { border-bottom: 1px solid #cbd5e0; color: #000000; }
         body.light-theme table.table-input td strong { color: #000000; }
@@ -76,17 +79,18 @@
         .summary-card.stock .summary-header { color: black; }
 
         /* BARIS KONTROL */
-        .bottom-control-panel { display: flex; gap: 15px; background: #1a202c; padding: 15px; border-radius: 12px; border: 2px solid #4a5568; align-items: flex-end; margin-bottom: 15px; }
+        .bottom-control-panel { display: flex; gap: 15px; background: #1a202c; padding: 12px; border-radius: 12px; border: 2px solid #4a5568; align-items: center; margin-bottom: 15px; }
         .control-group { display: flex; flex-direction: column; gap: 6px; }
         .control-group label { font-size: 12px; font-weight: 900; color: #cbd5e0; text-transform: uppercase; letter-spacing: 0.5px; }
-        .control-group input[type="date"] { padding: 10px; border-radius: 6px; border: 2px solid #4a5568; font-size: 15px; font-weight: 700; background: #2d3748; color: white; width: 100%; box-sizing: border-box; font-family: 'Roboto Condensed', Tahoma, sans-serif; }
+
+        /* INPUT FORM LOKASI AGEN */
+        .input-lokasi-sbr { width: 100%; padding: 8px 10px; border-radius: 6px; border: 2px solid #4a5568; background: #2d3748; color: #fff; font-size: 14px; font-weight: 700; box-sizing: border-box; font-family: 'Roboto Condensed', Tahoma, sans-serif; }
 
         /* RESPONSIF KHUSUS HP (MOBILE VIEW FIX) */
         @media (max-width: 768px) {
             .top-summary-grid { flex-direction: column; }
             .summary-card { width: 100%; }
             .bottom-control-panel { flex-direction: column; align-items: stretch; }
-            .bottom-control-panel .btn-primary-blue { margin-top: 5px; }
             
             .card-main-content { flex-direction: column !important; }
             .card-top-info { flex-direction: column; align-items: flex-start !important; gap: 8px; }
@@ -187,6 +191,23 @@
         .info-track-antrean { padding-left: 0px; }
         .info-track-tabungan { padding-left: 28px; }
 
+        /* POPUP LEAFLET AGAR TEKS JELAS DI TEMA GELAP */
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip { color: #1a202c !important; }
+        .leaflet-control-layers { color: #1a202c !important; font-family: 'Roboto Condensed', Tahoma, sans-serif; font-weight: bold; }
+        @keyframes pulseArmadaRing {
+            0% { transform: scale(0.95); opacity: 0.85; }
+            70% { transform: scale(1.45); opacity: 0; }
+            100% { transform: scale(1.45); opacity: 0; }
+        }
+        .armada-pulse-ring {
+            position: absolute;
+            top: -4px; left: -4px;
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            animation: pulseArmadaRing 1.8s infinite ease-out;
+            pointer-events: none;
+        }
+
         @media (max-width: 768px) { 
             .modal-split-grid { grid-template-columns: 1fr; } 
             .modal-sbr-content { margin: 10px auto; width: 98%; padding: 10px; max-height: 90vh; overflow-y: auto; }
@@ -203,7 +224,7 @@
         </div>
         <div style="text-align: right; flex: 1; margin-left: 15px;">
             <h2>SBR PUTRA FOOD</h2>
-            <div class="subtitle">MATRIKS PLANNING & PENYUSUNAN JADWAL KIRIM AGEN</div>
+            <div class="subtitle">MATRIKS PLANNING & PENYUSUNAN JADWAL KIRIM REAL-TIME</div>
         </div>
         <div style="margin-left: 15px;">
             <button onclick="toggleTheme()" id="btnTheme" class="btn-theme">🌞 Mode Terang</button>
@@ -260,12 +281,8 @@
     </div>
 
     <div class="bottom-control-panel">
-        <div class="control-group" style="flex: 1;">
-            <label>📅 TGL OPERASIONAL JALAN :</label>
-            <input type="date" id="tglKirimGlobal" onchange="sinkronisasiTanggalGlobal()" style="height: 46px;">
-        </div>
-        <div style="flex: 1;">
-            <button type="button" class="btn-primary-blue" style="margin: 0; height: 46px; display: flex; align-items: center; justify-content: center;" onclick="bukaPopupMasterOrder()">📑 BUKA PANEL INPUT &amp; SELEKSI KIRIM</button>
+        <div style="flex: 1; width: 100%;">
+            <button type="button" class="btn-primary-blue" style="margin: 0; height: 48px; font-size: 15px; display: flex; align-items: center; justify-content: center;" onclick="bukaPopupMasterOrder()">📑 BUKA PANEL INPUT &amp; SELEKSI KIRIM</button>
         </div>
     </div>
 
@@ -283,8 +300,77 @@
         </div>
     </div>
 
-    <div class="section-label database" style="margin-top: 30px;">📜 HISTORY PENGIRIMAN (SUDAH FIX)</div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 28px; margin-bottom: 8px; gap: 10px; flex-wrap: wrap;">
+        <div class="section-label" style="background: #0d9488; margin: 0; flex: 1;">🛰️ LIVE TRACKING ARMADA DI GOOGLE MAPS (BOLAK-BALIK HINGGA SETORAN)</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn-action" style="background:#dd6b20; color:#fff; padding:10px 14px; font-size:13px;" onclick="bukaModalSetLokasiAgen()">📍 SET LOKASI AGEN</button>
+            <button type="button" class="btn-action" style="background:#3182ce; color:#fff; padding:10px 14px; font-size:13px;" onclick="fokusSemuaArmadaDiPeta()">🎯 PUSATKAN PETA</button>
+        </div>
+    </div>
+    <div style="font-size:12px; margin-bottom:8px; display:flex; gap:12px; flex-wrap:wrap; font-weight:bold; align-items:center;">
+        <span>🚐 <b>Icon Mobil &amp; Garis Jalur</b> = Warna unik per unit kendaraan</span>
+        <span>━━ Garis Penuh = Jalur Menuju Agen</span>
+        <span>╌╌ Garis Putus = Perjalanan Pulang / Setoran</span>
+        <span>🏢 Pin = Lokasi Agen</span>
+    </div>
+    <div id="liveMapAdmin" style="height: 380px; width: 100%; border-radius: 12px; border: 2px solid #3182ce; margin-bottom: 12px; z-index: 1;"></div>
+    <div id="activeTripStatusBar" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom: 18px;"></div>
+
+    <div class="section-label database" style="margin-top: 24px;">📜 HISTORY PENGIRIMAN REAL-TIME (AKTIF &amp; SELESAI HARI INI)</div>
     <div id="logJadwalTerkini"></div>
+</div>
+
+<!-- MODAL SET LOKASI AGEN MANUAL -->
+<div id="modalSetLokasiAgen" class="modal-sbr">
+    <div class="modal-sbr-content" style="max-width: 650px;">
+        <div class="modal-sbr-header">
+            <h3>📍 SET KOORDINAT &amp; LOKASI AGEN</h3>
+            <span class="close-sbr-modal" onclick="tutupModalSetLokasiAgen()">&times;</span>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:12px;">
+            <div class="control-group">
+                <label>1. Pilih Nama Agen :</label>
+                <div class="selector-row">
+                    <select id="selectAgenLokasi" onchange="onPilihAgenLokasi()">
+                        <option value="">-- Pilih Nama Agen --</option>
+                    </select>
+                </div>
+                <div id="statusKoordinatAgenInfo" style="font-size:12px; font-weight:bold; color:#a0aec0;"></div>
+            </div>
+
+            <div class="control-group">
+                <label>2. Tempel Koordinat / Link Google Maps (Opsional Cepat) :</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="inputPasteGmaps" class="input-lokasi-sbr" placeholder="Contoh: -6.8168, 107.6152 atau link Google Maps...">
+                    <button type="button" class="btn-action" style="background:#3182ce; color:#fff; padding:0 14px; font-size:13px; white-space:nowrap;" onclick="terapkanPasteKoordinat()">TERAPKAN</button>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="control-group">
+                    <label>Latitude :</label>
+                    <input type="number" step="any" id="inputLatAgen" class="input-lokasi-sbr" placeholder="-6.816800" onchange="sinkronPinDariInputManual()">
+                </div>
+                <div class="control-group">
+                    <label>Longitude :</label>
+                    <input type="number" step="any" id="inputLngAgen" class="input-lokasi-sbr" placeholder="107.615200" onchange="sinkronPinDariInputManual()">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>3. Klik / Geser Pin Pada Google Maps Untuk Presisi Lokasi :</label>
+                <div id="mapPickerAgen" style="height: 250px; width: 100%; border-radius: 8px; border: 2px solid #3182ce; z-index: 1;"></div>
+            </div>
+
+            <div class="control-group">
+                <label>Alamat / Patokan Lokasi Agen :</label>
+                <input type="text" id="inputAlamatAgen" class="input-lokasi-sbr" placeholder="Contoh: Jl. Raya Lembang No. 123 (Sebelah Alfamart)">
+            </div>
+
+            <button type="button" id="btnSimpanLokasiAgen" class="btn-card-save" style="margin-top:4px;" onclick="simpanLokasiAgenKeDatabase()">💾 SIMPAN LOKASI AGEN KE DATABASE</button>
+        </div>
+    </div>
 </div>
 
 <div id="modalMasterOrder" class="modal-sbr">
@@ -368,6 +454,14 @@
     let cacheRiwayatTerakhirAgen = {}; 
     let indexEditAntreanAktif = -1; 
 
+    function getTanggalOtomatisSekarang() {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
     async function initAplikasi() {
         const savedTheme = localStorage.getItem('sbr_theme');
         const logoImg = document.getElementById('logoBrand');
@@ -382,9 +476,6 @@
             if(logoImg) logoImg.src = "blacklogo.png"; 
         }
 
-        document.getElementById('tglKirimGlobal').valueAsDate = new Date();
-
-        // Ambil data temporary dari database Supabase
         await muatDataTemporaryDariCloud();
 
         try {
@@ -431,9 +522,11 @@
             }
         } catch(e) { console.error(e); }
 
+        await initLiveMapAdmin();
         await muatCacheRiwayatTerakhirSemuaAgen();
         renderListKirimCompact();
-        await muatRiwayatJadwalSelesai(); 
+        await muatRiwayatJadwalSelesai();
+        renderSemuaPinAgenDiPetaUtama();
     }
 
     async function muatDataTemporaryDariCloud() {
@@ -464,7 +557,6 @@
     }
 
     function simpanKePenyimpananLokal() {
-        // Sinkronisasi otomatis ke Supabase Cloud agar bisa dibuka di perangkat mana saja
         simpanKePenyimpananCloud('sbr_list_kirim_sementara', listKirimSementara);
         simpanKePenyimpananCloud('sbr_bank_tabungan_order', bankTabunganOrder);
         simpanKePenyimpananCloud('sbr_supply_armada', cacheSupplyArmada);
@@ -516,10 +608,6 @@
         } catch(e) { console.error("Gagal ambil log dari tabel transaksi:", e); }
     }
 
-    function sinkronisasiTanggalGlobal() {
-        muatRiwayatJadwalSelesai();
-    }
-
     function bukaPopupMasterOrder() {
         const dropdown = document.getElementById('dropdownPilihAgen');
         
@@ -558,7 +646,6 @@
             let listBarangMaster = masterDaftarBarangAgen[ag] || [];
             objOrderAktif = {
                 nama_agen: ag,
-                tanggal_berangkat: document.getElementById('tglKirimGlobal').value,
                 plat_nomor: "", shift: "SUBUH", driver_1: "", driver_2: "",
                 barang: listBarangMaster.map(b => ({ nama_barang: b, qty_order: 0, qty_real: 0 }))
             };
@@ -590,8 +677,6 @@
 
     function simpanKeTabunganOrder() {
         if(!objOrderAktif) return alert("Pilih agen dan isi data orderan terlebih dahulu!");
-
-        objOrderAktif.tanggal_berangkat = document.getElementById('tglKirimGlobal').value;
 
         let idxEksis = bankTabunganOrder.findIndex(x => x.nama_agen === objOrderAktif.nama_agen);
         if(idxEksis !== -1) {
@@ -981,7 +1066,6 @@
         const cCS = cs(card), hCS = cs(header);
         const bw = px(cCS.borderTopWidth), rad = px(cCS.borderTopLeftRadius);
 
-        // ukuran = card asli, tapi tinggi menampilkan seluruh tabel (tanpa scroll)
         const tableTop = sR.top - cR.top;
         const cw = Math.round(cR.width);
         const ch = Math.round(tableTop + tR.height + px(cCS.paddingBottom) + bw);
@@ -1005,7 +1089,6 @@
             while (t.length > 1 && g.measureText(t + '…').width > max) t = t.slice(0, -1);
             return t + '…';
         };
-        // gambar potongan teks (bisa beberapa warna/ukuran) sesuai alignment
         const drawSegs = (segs, x, w, align, cy) => {
             let total = 0;
             segs.forEach(s => { g.font = s.font; s.w = g.measureText(s.text).width; total += s.w; });
@@ -1014,13 +1097,11 @@
             segs.forEach(s => { g.font = s.font; g.fillStyle = s.color; g.fillText(s.text, sx, cy); sx += s.w; });
         };
 
-        // card (background + border)
         rr(bw / 2, bw / 2, cw - bw, ch - bw, rad);
         g.fillStyle = isClear(cCS.backgroundColor) ? cs(document.body).backgroundColor : cCS.backgroundColor;
         g.fill();
         g.lineWidth = bw; g.strokeStyle = cCS.borderTopColor; g.stroke();
 
-        // header: judul + item terpilih (kotak seperti dropdown)
         const titleEl = header.querySelector('span');
         g.font = fontOf(hCS); g.fillStyle = hCS.color; g.textAlign = 'left';
         const hMid = (titleEl.getBoundingClientRect().top - cR.top) + titleEl.getBoundingClientRect().height / 2;
@@ -1032,12 +1113,10 @@
         g.lineWidth = 1; g.strokeStyle = selCS.borderTopColor; g.stroke();
         g.font = fontOf(selCS); g.fillStyle = selCS.color; g.textAlign = 'left';
         g.fillText(fit(select.options[select.selectedIndex].text, selR.width - 24), sx + px(selCS.paddingLeft) + 2, sy + selR.height / 2);
-        // garis bawah header
         const hbW = px(hCS.borderBottomWidth);
         g.fillStyle = hCS.borderBottomColor;
         g.fillRect(hR.left - cR.left, hR.bottom - cR.top - hbW, hR.width, hbW);
 
-        // tabel — posisi tiap sel diambil dari DOM yang sedang tampil
         const ox = tR.left - cR.left, oy = tableTop;
         table.querySelectorAll('tr').forEach(tr => {
             tr.querySelectorAll('th, td').forEach(cell => {
@@ -1064,7 +1143,6 @@
                     return;
                 }
 
-                // teks sel (termasuk <span> berwarna seperti tag FIX)
                 const segs = [];
                 const upper = s.textTransform === 'uppercase';
                 cell.childNodes.forEach(n => {
@@ -1086,7 +1164,6 @@
                     const cyMid = y + (h - bb) / 2;
                     g.font = segs[0].font;
                     if (segs.length === 1 && g.measureText(segs[0].text).width > innerW + 0.5) {
-                        // bungkus per kata seperti tampilan asli
                         const words = segs[0].text.split(' '), lines = [];
                         let cur = '';
                         words.forEach(wd => {
@@ -1108,11 +1185,11 @@
             });
         });
 
-        const tgl = (document.getElementById('tglKirimGlobal') || {}).value;
+        const tgl = getTanggalOtomatisSekarang();
         cv.toBlob(blob => {
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'Simulasi_' + d.item.replace(/[^\w\-]+/g, '_') + '_' + (tgl || '') + '.png';
+            a.download = 'Simulasi_' + d.item.replace(/[^\w\-]+/g, '_') + '_' + tgl + '.png';
             document.body.appendChild(a); a.click(); a.remove();
             setTimeout(() => URL.revokeObjectURL(a.href), 1000);
         }, 'image/png');
@@ -1181,7 +1258,6 @@
                         </div>
                     </div>
                     <div style="display:flex; gap:6px; align-items:center;">
-                        <span class="badge-tgl">📅 ${item.tanggal_berangkat}</span>
                         <span class="badge-shift ${item.shift}">${item.shift}</span>
                         <button type="button" class="btn-comp-edit" onclick="tarikKembaliUntukEdit(${index})">✏️ EDIT MUATAN</button>
                         <button type="button" class="btn-comp-del" onclick="hapusDariListSementara(${index})">❌ HAPUS</button>
@@ -1193,11 +1269,7 @@
                         <div class="logistik-grid">
                             <div class="grid-row">
                                 <div>
-                                    <label>Tgl Jalan</label>
-                                    <input type="date" value="${item.tanggal_berangkat}" onchange="ubahLogistikDiList(${index}, 'tanggal_berangkat', this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'tanggal_berangkat');">
-                                </div>
-                                <div>
-                                    <label>Dikirim</label>
+                                    <label>Dikirim (Shift)</label>
                                     <select onchange="ubahLogistikDiList(${index}, 'shift', this.value); cekStatusDiambil(${index}, this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'shift');">
                                         <option value="SUBUH" ${item.shift === "SUBUH" ? "selected" : ""}>SUBUH</option>
                                         <option value="SIANG" ${item.shift === "SIANG" ? "selected" : ""}>SIANG</option>
@@ -1205,18 +1277,19 @@
                                         <option value="Diambil" ${item.shift === "Diambil" ? "selected" : ""}>DIAMBIL</option>
                                     </select>
                                 </div>
-                            </div>
-                            <div class="grid-row">
                                 <div>
                                     <label>Armada</label>
                                     <select ${isDisabled ? 'disabled' : ''} style="${styleDisabled}" onchange="ubahLogistikDiList(${index}, 'plat_nomor', this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'plat_nomor');">${optMobil}</select>
                                 </div>
+                            </div>
+                            <div class="grid-row">
                                 <div>
-                                    <label>Driver Couple</label>
-                                    <div style="display:flex; gap:4px;">
-                                        <select ${isDisabled ? 'disabled' : ''} style="${styleDisabled}" onchange="ubahLogistikDiList(${index}, 'driver_1', this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'driver_1');">${optDriver1}</select>
-                                        <select ${isDisabled ? 'disabled' : ''} style="${styleDisabled}" onchange="ubahLogistikDiList(${index}, 'driver_2', this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'driver_2');">${optDriver2}</select>
-                                    </div>
+                                    <label>Driver 1</label>
+                                    <select ${isDisabled ? 'disabled' : ''} style="${styleDisabled}" onchange="ubahLogistikDiList(${index}, 'driver_1', this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'driver_1');">${optDriver1}</select>
+                                </div>
+                                <div>
+                                    <label>Driver 2</label>
+                                    <select ${isDisabled ? 'disabled' : ''} style="${styleDisabled}" onchange="ubahLogistikDiList(${index}, 'driver_2', this.value); checkBatasanLangsung(this, '${item.nama_agen}', 'driver_2');">${optDriver2}</select>
                                 </div>
                             </div>
                         </div>
@@ -1241,13 +1314,13 @@
 
         for (let i = 0; i < listKirimSementara.length; i++) {
             let data = listKirimSementara[i];
-            if (!data.tanggal_berangkat || data.shift === "Diambil") continue;
+            if (data.shift === "Diambil") continue;
 
-            let keyMobil = `${data.tanggal_berangkat}_${data.shift}_${data.plat_nomor}`;
+            let keyMobil = `${data.shift}_${data.plat_nomor}`;
             if (data.plat_nomor && data.plat_nomor !== "-") hitungMobil[keyMobil] = (hitungMobil[keyMobil] || 0) + 1;
 
-            let keyD1 = `${data.tanggal_berangkat}_${data.driver_1}`;
-            let keyD2 = `${data.tanggal_berangkat}_${data.driver_2}`;
+            let keyD1 = `${data.driver_1}`;
+            let keyD2 = `${data.driver_2}`;
 
             if (data.driver_1 && data.driver_1 !== "-") hitungDriverGlobal[keyD1] = (hitungDriverGlobal[keyD1] || 0) + 1;
             if (data.driver_2 && data.driver_2 !== "-") hitungDriverGlobal[keyD2] = (hitungDriverGlobal[keyD2] || 0) + 1;
@@ -1255,14 +1328,20 @@
             if (hitungMobil[keyMobil] > 2) {
                 let mobilObj = masterKendaraan.find(m => m.plat === data.plat_nomor);
                 let namaMobilPeringatan = mobilObj ? (mobilObj.nama_unit ? mobilObj.nama_unit : mobilObj.plat) : data.plat_nomor;
-                alert(`[BATAS ARMADA TERLAMPAUI]\n\nMobil "${namaMobilPeringatan}" sudah terpilih 2 kali pada Shift ${data.shift} tanggal ${data.tanggal_berangkat}.\nTidak boleh dipilih lagi!`);
+                alert(`[BATAS ARMADA TERLAMPAUI]
+
+Mobil "${namaMobilPeringatan}" sudah terpilih 2 kali pada Shift ${data.shift}.
+Tidak boleh dipilih lagi!`);
                 resetNilaiKomponenLogistik(namaAgen, tipeProperti);
                 return false;
             }
 
             if (hitungDriverGlobal[keyD1] > 2 || hitungDriverGlobal[keyD2] > 2) {
                 let namaSopirBermasalah = hitungDriverGlobal[keyD1] > 2 ? data.driver_1 : data.driver_2;
-                alert(`[BATAS DRIVER GLOBAL TERLAMPAUI]\n\nDriver "${namaSopirBermasalah}" sudah dipanggil 2 kali pada tanggal ${data.tanggal_berangkat} (Total Akumulasi Semua Shift).\nSopir tidak boleh dipilih untuk ketiga kalinya!`);
+                alert(`[BATAS DRIVER GLOBAL TERLAMPAUI]
+
+Driver "${namaSopirBermasalah}" sudah dipanggil 2 kali pada antrean aktif saat ini.
+Sopir tidak boleh dipilih untuk ketiga kalinya!`);
                 resetNilaiKomponenLogistik(namaAgen, tipeProperti);
                 return false;
             }
@@ -1284,7 +1363,6 @@
 
         let namaAg = data.nama_agen.toUpperCase();
 
-        if(!data.tanggal_berangkat) return alert(`[Validasi Gagal] Tanggal berangkat untuk Agen ${namaAg} kosong!`);
         if(data.shift !== "Diambil") {
             if(!data.plat_nomor) return alert(`[Validasi Gagal] Armada Mobil untuk Agen ${namaAg} belum dipilih!`);
             if(!data.driver_1 || !data.driver_2) return alert(`[Validasi Gagal] Driver Couple untuk Agen ${namaAg} belum lengkap!`);
@@ -1295,14 +1373,38 @@
         if(btnCard) { btnCard.disabled = true; btnCard.innerText = "SEDANG FIX DATA..."; }
 
         try {
+            const tglOtomatis = getTanggalOtomatisSekarang();
+            if (data.shift !== "Diambil") {
+                const { data: jadwalSatuRute, error: errRute } = await clientSupabase
+                    .from('jadwal_kirim')
+                    .select('id_jadwal, driver_1, driver_2')
+                    .eq('tanggal_kirim', tglOtomatis)
+                    .eq('plat_nomor', data.plat_nomor)
+                    .neq('status_kirim', 'SELESAI');
+                if (errRute) throw errRute;
+                const driverPair = [data.driver_1, data.driver_2].map(nama => nama.trim().toLowerCase()).sort().join('|');
+                const totalAgenRute = (jadwalSatuRute || []).filter(jadwal => {
+                    const pasanganJadwal = [jadwal.driver_1, jadwal.driver_2].map(nama => (nama || '').trim().toLowerCase()).sort().join('|');
+                    return pasanganJadwal === driverPair;
+                }).length;
+                if (totalAgenRute >= 4) {
+                    throw new Error(`Rute ${data.plat_nomor} untuk ${data.driver_1} / ${data.driver_2} sudah mencapai batas 4 agen.`);
+                }
+            }
             const coupleDriver = data.shift === "Diambil" ? "Diambil Sendiri" : `${data.driver_1} / ${data.driver_2}`;
             const platMobilSimpan = data.shift === "Diambil" ? "-" : data.plat_nomor;
 
             const { data: resJadwal, error: errMaster } = await clientSupabase
                 .from('jadwal_kirim')
                 .insert([{
-                    tanggal_kirim: data.tanggal_berangkat, shift: data.shift,
-                    nama_agen: data.nama_agen, plat_nomor: platMobilSimpan, driver: coupleDriver
+                    tanggal_kirim: tglOtomatis,
+                    shift: data.shift,
+                    nama_agen: data.nama_agen,
+                    plat_nomor: platMobilSimpan,
+                    driver: coupleDriver,
+                    driver_1: data.shift === "Diambil" ? null : data.driver_1,
+                    driver_2: data.shift === "Diambil" ? null : data.driver_2,
+                    status_kirim: data.shift === "Diambil" ? "SELESAI" : "MENUNGGU_DRIVER"
                 }])
                 .select();
 
@@ -1321,10 +1423,10 @@
                 if(errDetail) throw errDetail;
             }
 
-            alert(`✅ FIX BERHASIL: Jadwal untuk agen ${namaAg} aman masuk ke database!`);
+            alert(`✅ FIX BERHASIL: Jadwal untuk agen ${namaAg} aman masuk ke database (Tgl otomatis: ${tglOtomatis})!`);
             
             cacheRiwayatTerakhirAgen[data.nama_agen.toLowerCase().trim()] = {
-                tanggal: data.tanggal_berangkat,
+                tanggal: tglOtomatis,
                 driver: coupleDriver
             };
 
@@ -1342,14 +1444,14 @@
 
     async function muatRiwayatJadwalSelesai() {
         const containerLog = document.getElementById('logJadwalTerkini');
-        const tglTerpilih = document.getElementById('tglKirimGlobal').value;
-        containerLog.innerHTML = `<span style="font-size:15px; color:inherit;">Memuat data...</span>`;
+        const tglHariIni = getTanggalOtomatisSekarang();
+        containerLog.innerHTML = `<span style="font-size:15px; color:inherit;">Memuat data real-time...</span>`;
 
         try {
             const { data: listJadwal, error } = await clientSupabase
                 .from('jadwal_kirim')
-                .select(`id_jadwal, tanggal_kirim, shift, nama_agen, plat_nomor, driver, jadwal_kirim_detail(nama_barang, qty_order, qty_real)`)
-                .eq('tanggal_kirim', tglTerpilih)
+                .select(`id_jadwal, tanggal_kirim, shift, nama_agen, plat_nomor, driver, status_kirim, no_nota, driver_lat, driver_lng, last_gps_update, jadwal_kirim_detail(nama_barang, qty_order, qty_real)`)
+                .or(`status_kirim.neq.SELESAI,tanggal_kirim.eq.${tglHariIni}`)
                 .order('id_jadwal', { ascending: false });
 
             if(error) throw error;
@@ -1358,7 +1460,7 @@
             hitungTotalKebutuhanGlobal();
 
             if(!listJadwal || listJadwal.length === 0) {
-                containerLog.innerHTML = `<span style="font-size:15px; color:inherit; font-style:italic;">Belum ada history pengiriman terkonfirmasi untuk tanggal operasional ini.</span>`;
+                containerLog.innerHTML = `<span style="font-size:15px; color:inherit; font-style:italic;">Belum ada pengiriman aktif atau selesai untuk hari ini.</span>`;
                 return;
             }
 
@@ -1376,14 +1478,26 @@
                 let namaUnitHistori = unitHistori ? (unitHistori.nama_unit ? unitHistori.nama_unit : unitHistori.plat) : j.plat_nomor;
                 if(j.shift === "Diambil") namaUnitHistori = "Diambil Sendiri";
 
+                let statusLabel = '⏳ MENUNGGU DRIVER';
+                let statusBg = '#4a5568';
+                if (j.status_kirim === 'DALAM_PERJALANAN') { statusLabel = '🚚 MENUJU AGEN'; statusBg = '#2563eb'; }
+                else if (j.status_kirim === 'KEMBALI_KE_GUDANG') { statusLabel = '🏠 PULANG / BELUM SETORAN'; statusBg = '#d97706'; }
+                else if (j.status_kirim === 'SELESAI') { statusLabel = '✅ SELESAI SETORAN'; statusBg = '#16a34a'; }
+                const notaBadge = j.no_nota ? `<span class="badge-tgl" style="background:#1e3a8a; color:#bfdbfe;">🧾 ${j.no_nota}</span>` : '';
+                const tglBadge = j.status_kirim === 'SELESAI'
+                    ? `<span class="badge-tgl" style="background:#14532d; color:#bbf7d0;">📅 Selesai: ${j.tanggal_kirim}</span>`
+                    : `<span class="badge-tgl">⏳ Proses (Tgl otomatis saat beres)</span>`;
+
                 div.innerHTML = `
                     <div class="card-top-info">
-                        <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                             🏢 Agen: <strong style="font-size:17px;">${j.nama_agen.toUpperCase()}</strong>
                             <span class="badge-armada">🚚 ${namaUnitHistori}</span>
+                            <span style="padding:4px 8px; border-radius:5px; color:#fff; font-size:11px; font-weight:900; background:${statusBg};">${statusLabel}</span>
+                            ${notaBadge}
                         </div>
-                        <div style="display:flex; gap:6px;">
-                            <span class="badge-tgl">📅 ${j.tanggal_kirim}</span>
+                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                            ${tglBadge}
                             <span class="badge-shift ${j.shift}">${j.shift}</span>
                         </div>
                     </div>
@@ -1391,7 +1505,7 @@
                         <div class="card-left-inputs">
                             <div class="logistik-grid" style="border-color: #4a5568;">
                                 <div class="grid-row">
-                                    <div><label>Tgl Jalan</label><input type="text" value="${j.tanggal_kirim}" disabled style="background:grey; color:inherit; border:1px solid #4a5568; padding:8px; width:100%; box-sizing:border-box; border-radius:6px; font-weight:bold; font-size:14px; font-family: 'Roboto Condensed', Tahoma, sans-serif;"></div>
+                                    <div><label>Status Tanggal</label><input type="text" value="${j.status_kirim === 'SELESAI' ? j.tanggal_kirim : 'Otomatis saat beres'}" disabled style="background:grey; color:inherit; border:1px solid #4a5568; padding:8px; width:100%; box-sizing:border-box; border-radius:6px; font-weight:bold; font-size:14px; font-family: 'Roboto Condensed', Tahoma, sans-serif;"></div>
                                     <div><label>Shift</label><input type="text" value="${j.shift}" disabled style="background:grey; color:inherit; border:1px solid #4a5568; padding:8px; width:100%; box-sizing:border-box; border-radius:6px; font-weight:bold; font-size:14px; font-family: 'Roboto Condensed', Tahoma, sans-serif;"></div>
                                 </div>
                                 <div class="grid-row">
@@ -1419,40 +1533,53 @@
             return;
         }
 
-        let tglGlobal = document.getElementById('tglKirimGlobal').value;
-        
-        let teksWA = `📋 *RENCANA PENGIRIMAN SBR PUTRA FOOD*\n`;
-        teksWA += `📅 Tgl Operasional: *${tglGlobal}*\n\n`;
-        teksWA += `==========================\n\n`;
+        let teksWA = `📋 *RENCANA PENGIRIMAN SBR PUTRA FOOD (REAL-TIME)*
+
+`;
+        teksWA += `==========================
+
+`;
 
         listKirimSementara.forEach((item, index) => {
-            teksWA += `*${index + 1}.* 🏢 *AGEN: ${item.nama_agen.toUpperCase()}*\n`;
-            teksWA += `📅 Tgl Kirim: ${item.tanggal_berangkat || '-'}\n`;
-            teksWA += `⏰ Shift: *${item.shift || '-'}*\n`;
+            teksWA += `*${index + 1}.* 🏢 *AGEN: ${item.nama_agen.toUpperCase()}*
+`;
+            teksWA += `⏰ Shift: *${item.shift || '-'}*
+`;
             
             let namaMobil = item.plat_nomor;
             let unitMobil = masterKendaraan.find(m => m.plat === item.plat_nomor);
             if(unitMobil && unitMobil.nama_unit) namaMobil = `${unitMobil.nama_unit} (${item.plat_nomor})`;
             if(item.shift === "Diambil") namaMobil = "Diambil Sendiri";
 
-            teksWA += `🚚 Armada: ${namaMobil || 'Belum dipilih'}\n`;
+            teksWA += `🚚 Armada: ${namaMobil || 'Belum dipilih'}
+`;
             if(item.shift === "Diambil") {
-                teksWA += `👤 Pengambil: Diambil Sendiri\n\n`;
+                teksWA += `👤 Pengambil: Diambil Sendiri
+
+`;
             } else {
-                teksWA += `👤 Sopir: ${item.driver_1 || '-'} & ${item.driver_2 || '-'}\n\n`;
+                teksWA += `👤 Sopir: ${item.driver_1 || '-'} & ${item.driver_2 || '-'}
+
+`;
             }
-            teksWA += `📦 *MUATAN:*\n`;
+            teksWA += `📦 *MUATAN:*
+`;
             
             let adaMuatan = false;
             item.barang.forEach(b => {
                 if(b.qty_order > 0 || b.qty_real > 0) {
-                    teksWA += `  ▪️ ${b.nama_barang} : *Order ${b.qty_order}* \n`;
+                    teksWA += `  ▪️ ${b.nama_barang} : *Order ${b.qty_order}* 
+`;
                     adaMuatan = true;
                 }
             });
             
-            if(!adaMuatan) teksWA += `  _(Belum ada rincian muatan)_\n`;
-            teksWA += `\n--------------------------\n\n`;
+            if(!adaMuatan) teksWA += `  _(Belum ada rincian muatan)_
+`;
+            teksWA += `
+--------------------------
+
+`;
         });
 
         teksWA = teksWA.trim();
@@ -1466,26 +1593,35 @@
             return;
         }
 
-        let teksWA = `📋 *DAFTAR ORDER*\n`;
-        teksWA += `--------------------------\n\n`;
+        let teksWA = `📋 *DAFTAR ORDER*
+`;
+        teksWA += `--------------------------
+
+`;
 
         bankTabunganOrder.forEach((item) => {
-            teksWA += `🏢 *AGEN: ${item.nama_agen.toUpperCase()}*\n`;
-            teksWA += `📦 *RINCIAN ORDER:*\n`;
+            teksWA += `🏢 *AGEN: ${item.nama_agen.toUpperCase()}*
+`;
+            teksWA += `📦 *RINCIAN ORDER:*
+`;
             
             let adaMuatan = false;
             item.barang.forEach(b => {
                 if(b.qty_order > 0 || b.qty_real > 0) {
-                    teksWA += `  ▪️ ${b.nama_barang} : *Order ${b.qty_order}*\n`;
+                    teksWA += `  ▪️ ${b.nama_barang} : *Order ${b.qty_order}*
+`;
                     adaMuatan = true;
                 }
             });
             
-            if(!adaMuatan) teksWA += `  _(Belum ada rincian muatan)_\n`;
-            teksWA += `\n`;
+            if(!adaMuatan) teksWA += `  _(Belum ada rincian muatan)_
+`;
+            teksWA += `
+`;
         });
 
-        teksWA += `==========================\n`;
+        teksWA += `==========================
+`;
         teksWA += `_Data ini adalah orderan yang sudah dicatat dan siap diproses Pengiriman._`;
 
         let urlWA = `https://wa.me/?text=${encodeURIComponent(teksWA)}`;
@@ -1493,6 +1629,838 @@
     }
 
     window.onload = initAplikasi;
+</script>
+<script>
+    // ===== LIVE TRACKING GOOGLE MAPS (TANPA API KEY), WARNA UNIK, GARIS RUTE & MODE DRIVE FLEKSIBEL =====
+    let mapAdmin = null;
+    let markerArmada = {};
+    let routeLineArmada = {};
+    let routeCoordsArmada = {};
+    let routeCacheOSRM = {};
+    let markerAgenMap = {};
+    let activeArmadaData = {};
+    let armadaColorMap = {};
+
+    // State Mode Drive (mengikuti titik GPS di sepanjang jalur rute)
+    let driveModeTripId = null;
+    let driveModeLocked = false;
+    let userPanningMap = false;
+    let driveZoomLevel = 16; // 17, 16, atau 'route'
+    let prevGpsCoordsByTrip = {};
+    const KOORDINAT_GUDANG_SBR = { lat: -6.829805631327394, lng: 107.64451131743134 };
+
+    let mapPickerAgen = null;
+    let markerPickerAgen = null;
+
+    const ARMADA_PALETTE = [
+        { main: '#2563eb', dark: '#1e3a8a', name: 'Biru' },
+        { main: '#059669', dark: '#064e3b', name: 'Hijau' },
+        { main: '#dc2626', dark: '#7f1d1d', name: 'Merah' },
+        { main: '#7c3aed', dark: '#4c1d95', name: 'Ungu' },
+        { main: '#d97706', dark: '#78350f', name: 'Oranye' },
+        { main: '#0891b2', dark: '#164e63', name: 'Cyan' },
+        { main: '#db2777', dark: '#831843', name: 'Pink' },
+        { main: '#4f46e5', dark: '#312e81', name: 'Indigo' },
+        { main: '#65a30d', dark: '#365314', name: 'Lime' },
+        { main: '#0d9488', dark: '#134e4a', name: 'Teal' }
+    ];
+
+    function escapeHtmlAttr(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    function escapeJsSingleQuote(str) {
+        return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+
+    function getWarnaArmada(j) {
+        const key = (j.plat_nomor && j.plat_nomor !== '-') ? j.plat_nomor.trim().toUpperCase() : `TRIP_${j.id_jadwal}`;
+        if (!armadaColorMap[key]) {
+            const usedCount = Object.keys(armadaColorMap).length;
+            armadaColorMap[key] = ARMADA_PALETTE[usedCount % ARMADA_PALETTE.length];
+        }
+        return armadaColorMap[key];
+    }
+
+    function hitungBearingDerajat(lat1, lng1, lat2, lng2) {
+        const toRad = d => d * Math.PI / 180;
+        const toDeg = r => r * 180 / Math.PI;
+        const dLng = toRad(lng2 - lng1);
+        const y = Math.sin(dLng) * Math.cos(toRad(lat2));
+        const x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
+                  Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(dLng);
+        return (toDeg(Math.atan2(y, x)) + 360) % 360;
+    }
+
+    function snapKeJalurRute(lat, lng, coords) {
+        if (!Array.isArray(coords) || coords.length === 0) {
+            return { lat: Number(lat), lng: Number(lng), bearing: null, snapped: false };
+        }
+
+        let bestIdx = 0;
+        let bestDistSq = Infinity;
+        for (let i = 0; i < coords.length; i++) {
+            const dLat = coords[i][0] - lat;
+            const dLng = coords[i][1] - lng;
+            const distSq = dLat * dLat + dLng * dLng;
+            if (distSq < bestDistSq) {
+                bestDistSq = distSq;
+                bestIdx = i;
+            }
+        }
+
+        const meterPerDeg = 111320;
+        const approxMeters = Math.sqrt(bestDistSq) * meterPerDeg;
+        if (approxMeters > 250) {
+            return { lat: Number(lat), lng: Number(lng), bearing: null, snapped: false };
+        }
+
+        const snappedPt = coords[bestIdx];
+        const nextPt = coords[Math.min(bestIdx + 1, coords.length - 1)];
+        const prevPt = coords[Math.max(bestIdx - 1, 0)];
+        let bearing = null;
+        if (nextPt && (nextPt[0] !== snappedPt[0] || nextPt[1] !== snappedPt[1])) {
+            bearing = hitungBearingDerajat(snappedPt[0], snappedPt[1], nextPt[0], nextPt[1]);
+        } else if (prevPt && (prevPt[0] !== snappedPt[0] || prevPt[1] !== snappedPt[1])) {
+            bearing = hitungBearingDerajat(prevPt[0], prevPt[1], snappedPt[0], snappedPt[1]);
+        }
+
+        return { lat: snappedPt[0], lng: snappedPt[1], bearing, snapped: true };
+    }
+
+    function tentukanHeadingMobil(j, snapped) {
+        if (j.driver_heading !== null && j.driver_heading !== undefined && j.driver_heading !== '') {
+            const h = Number(j.driver_heading);
+            if (!isNaN(h) && h >= 0 && h <= 360) return h;
+        }
+
+        const curLat = parseFloat(j.driver_lat);
+        const curLng = parseFloat(j.driver_lng);
+        const prev = prevGpsCoordsByTrip[j.id_jadwal];
+        if (!isNaN(curLat) && !isNaN(curLng)) {
+            if (prev && (Math.abs(prev.lat - curLat) > 0.00001 || Math.abs(prev.lng - curLng) > 0.00001)) {
+                const moveBearing = hitungBearingDerajat(prev.lat, prev.lng, curLat, curLng);
+                prevGpsCoordsByTrip[j.id_jadwal] = { lat: curLat, lng: curLng };
+                return moveBearing;
+            }
+            prevGpsCoordsByTrip[j.id_jadwal] = { lat: curLat, lng: curLng };
+        }
+
+        return snapped ? snapped.bearing : null;
+    }
+
+    function setDriveZoom(zoomVal) {
+        driveZoomLevel = zoomVal === 'route' ? 'route' : Number(zoomVal);
+        if (driveModeTripId !== null && activeArmadaData[driveModeTripId] && mapAdmin) {
+            userPanningMap = false;
+            const j = activeArmadaData[driveModeTripId];
+            const coords = routeCoordsArmada[j.id_jadwal];
+            const snapped = snapKeJalurRute(parseFloat(j.driver_lat), parseFloat(j.driver_lng), coords);
+
+            if (driveZoomLevel === 'route' && Array.isArray(coords) && coords.length > 1) {
+                mapAdmin.fitBounds(L.latLngBounds(coords).pad(0.18));
+            } else if (typeof driveZoomLevel === 'number') {
+                mapAdmin.setView([snapped.lat, snapped.lng], driveZoomLevel, { animate: true });
+            }
+        }
+        renderActiveTripStatusBar();
+    }
+
+    function buatSvgIconMobil(bgColor, borderColor, isPulang, bearing = null, isDriveActive = false) {
+        const rotateStyle = (typeof bearing === 'number' && !isNaN(bearing))
+            ? `transform: rotate(${bearing.toFixed(1)}deg); transition: transform 0.35s ease;`
+            : '';
+        const driveRing = isDriveActive
+            ? `<div style="position:absolute; inset:-6px; border-radius:50%; border:2.5px dashed #38bdf8; pointer-events:none;"></div>`
+            : '';
+
+        return `
+            <div style="position:relative; width:38px; height:38px; display:flex; align-items:center; justify-content:center;">
+                <div class="armada-pulse-ring" style="background:${bgColor};"></div>
+                ${driveRing}
+                <div style="position:relative; width:36px; height:36px; border-radius:50%; background:${bgColor}; border:3px solid ${isDriveActive ? '#38bdf8' : '#ffffff'}; box-shadow:0 3px 10px rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; ${rotateStyle}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/>
+                        <path d="M15 18H9"/>
+                        <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/>
+                        <circle cx="17" cy="18" r="2"/>
+                        <circle cx="7" cy="18" r="2"/>
+                    </svg>
+                    ${isPulang ? `<span style="position:absolute; top:-5px; right:-5px; background:#f59e0b; color:#000; font-size:9px; font-weight:900; padding:1px 4px; border-radius:999px; border:1.5px solid #fff;">↩</span>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    function cariKoordinatAgenTujuan(namaAgen) {
+        if (!namaAgen || !masterCacheAgenDB) return null;
+        const target = namaAgen.toLowerCase().trim();
+        const found = masterCacheAgenDB.find(a => (a.nama_agen || '').toLowerCase().trim() === target);
+        if (found && found.latitude && found.longitude) {
+            return {
+                lat: parseFloat(found.latitude),
+                lng: parseFloat(found.longitude),
+                alamat: found.alamat || '',
+                nama_agen: found.nama_agen
+            };
+        }
+        return null;
+    }
+
+    function cariTujuanPerjalanan(jadwal) {
+        if (jadwal && jadwal.status_kirim === 'KEMBALI_KE_GUDANG') {
+            return { ...KOORDINAT_GUDANG_SBR, nama_agen: 'Gudang SBR', alamat: 'Gudang SBR' };
+        }
+        return cariKoordinatAgenTujuan(jadwal && jadwal.nama_agen);
+    }
+
+    function aktifkanModeDrive(idJadwal, fitJalurSekali = false) {
+        const j = activeArmadaData[idJadwal];
+        if (!j || !mapAdmin) return;
+        if (!j.driver_lat || !j.driver_lng) {
+            alert("Sinyal GPS dari HP driver untuk jadwal ini belum masuk.");
+            return;
+        }
+        driveModeTripId = idJadwal;
+        driveModeLocked = true;
+        userPanningMap = false;
+
+        const coords = routeCoordsArmada[idJadwal];
+        const snapped = snapKeJalurRute(parseFloat(j.driver_lat), parseFloat(j.driver_lng), coords);
+
+        if ((fitJalurSekali || driveZoomLevel === 'route') && Array.isArray(coords) && coords.length > 1) {
+            mapAdmin.fitBounds(L.latLngBounds(coords).pad(0.18));
+        } else {
+            const z = typeof driveZoomLevel === 'number' ? driveZoomLevel : 16;
+            mapAdmin.setView([snapped.lat, snapped.lng], z, { animate: true });
+        }
+        updateMarkerArmada(j);
+        renderActiveTripStatusBar();
+    }
+
+    function matikanModeDrive() {
+        driveModeTripId = null;
+        driveModeLocked = false;
+        renderActiveTripStatusBar();
+    }
+
+    async function initLiveMapAdmin() {
+        const mapEl = document.getElementById('liveMapAdmin');
+        if (!mapEl || typeof L === 'undefined') return;
+
+        const gmapsJalanAdmin = L.tileLayer('https://mt1.google.com/vt/lyrs=m&hl=id&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            attribution: '© Google Maps'
+        });
+        const gmapsSatelitAdmin = L.tileLayer('https://mt1.google.com/vt/lyrs=y&hl=id&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            attribution: '© Google Maps'
+        });
+
+        mapAdmin = L.map('liveMapAdmin', {
+            center: [KOORDINAT_GUDANG_SBR.lat, KOORDINAT_GUDANG_SBR.lng],
+            zoom: 12,
+            layers: [gmapsJalanAdmin]
+        });
+        L.marker([KOORDINAT_GUDANG_SBR.lat, KOORDINAT_GUDANG_SBR.lng])
+            .addTo(mapAdmin)
+            .bindPopup('<b>📦 Gudang SBR</b>');
+
+        mapAdmin.on('dragstart', function() {
+            if (driveModeTripId !== null) {
+                userPanningMap = true;
+                renderActiveTripStatusBar();
+            }
+        });
+
+        L.control.layers(
+            { "Peta jalan": gmapsJalanAdmin, "Satelit": gmapsSatelitAdmin },
+            null,
+            { position: 'topright' }
+        ).addTo(mapAdmin);
+
+        setTimeout(() => { if (mapAdmin) mapAdmin.invalidateSize(); }, 350);
+
+        renderSemuaPinAgenDiPetaUtama();
+
+        const { data: ongoingTrips } = await clientSupabase
+            .from('jadwal_kirim')
+            .select('*')
+            .in('status_kirim', ['MENUNGGU_DRIVER', 'DALAM_PERJALANAN', 'KEMBALI_KE_GUDANG']);
+
+        if (ongoingTrips) {
+            for (const j of ongoingTrips) {
+                await updateMarkerArmada(j);
+            }
+            const jalanAktif = ongoingTrips.find(t => t.status_kirim === 'DALAM_PERJALANAN' && t.driver_lat && t.driver_lng);
+            if (jalanAktif) {
+                aktifkanModeDrive(jalanAktif.id_jadwal, false);
+            } else {
+                fokusSemuaArmadaDiPeta();
+            }
+        }
+
+        clientSupabase
+            .channel('admin-live-map-sbr')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'jadwal_kirim' }, async (payload) => {
+                const j = payload.new;
+                if (!j) return;
+
+                if (j.status_kirim === 'SELESAI') {
+                    const tglSelesai = getTanggalOtomatisSekarang();
+                    if (j.tanggal_kirim !== tglSelesai) {
+                        await clientSupabase
+                            .from('jadwal_kirim')
+                            .update({ tanggal_kirim: tglSelesai })
+                            .eq('id_jadwal', j.id_jadwal);
+                    }
+                }
+
+                await updateMarkerArmada(j);
+                muatRiwayatJadwalSelesai();
+            })
+            .subscribe();
+    }
+
+    function renderSemuaPinAgenDiPetaUtama() {
+        if (!mapAdmin) return;
+        Object.values(markerAgenMap).forEach(m => mapAdmin.removeLayer(m));
+        markerAgenMap = {};
+
+        masterCacheAgenDB.forEach(ag => {
+            if (ag.latitude && ag.longitude) {
+                const gmapsUrlAgen = `https://www.google.com/maps/search/?api=1&query=${ag.latitude},${ag.longitude}`;
+                const agenIcon = L.divIcon({
+                    html: `
+                        <div style="display:flex; flex-direction:column; align-items:center; transform:translate(-50%, -100%);">
+                            <div style="background:#1e293b; color:#f8fafc; padding:2px 7px; border-radius:6px; font-size:10px; font-weight:900; border:1.5px solid #38bdf8; white-space:nowrap; box-shadow:0 2px 6px rgba(0,0,0,0.45); margin-bottom:2px;">🏢 ${escapeHtmlAttr(ag.nama_agen.toUpperCase())}</div>
+                            <div style="width:26px; height:26px; border-radius:50% 50% 50% 0; background:#0284c7; transform:rotate(-45deg); border:2.5px solid #fff; box-shadow:0 3px 8px rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center;">
+                                <div style="width:8px; height:8px; background:#fff; border-radius:50%; transform:rotate(45deg);"></div>
+                            </div>
+                        </div>
+                    `,
+                    className: '',
+                    iconSize: [0, 0],
+                    iconAnchor: [0, 0]
+                });
+
+                markerAgenMap[ag.nama_agen] = L.marker([ag.latitude, ag.longitude], { icon: agenIcon })
+                    .addTo(mapAdmin)
+                    .bindPopup(`
+                        <div style="font-family:sans-serif; font-size:13px; line-height:1.4;">
+                            🏢 <b>AGEN: ${escapeHtmlAttr(ag.nama_agen.toUpperCase())}</b><br>
+                            ${ag.alamat ? escapeHtmlAttr(ag.alamat) + '<br>' : ''}
+                            <a href="${gmapsUrlAgen}" target="_blank" rel="noopener" style="display:inline-block; margin-top:6px; background:#2563eb; color:#fff; padding:4px 8px; border-radius:5px; text-decoration:none; font-weight:bold; font-size:12px;">📍 Buka di Google Maps</a>
+                        </div>
+                    `);
+            }
+        });
+    }
+
+    // ===== FUNGSI MODAL SET LOKASI AGEN MANUAL =====
+    function bukaModalSetLokasiAgen(preselectAgen = '') {
+        const select = document.getElementById('selectAgenLokasi');
+        if (!masterCacheAgenDB || masterCacheAgenDB.length === 0) {
+            select.innerHTML = '<option value="">❌ Daftar agen kosong</option>';
+        } else {
+            let html = '<option value="">-- Pilih Nama Agen --</option>';
+            masterCacheAgenDB.forEach(ag => {
+                if (ag.nama_agen) {
+                    const statusPin = (ag.latitude && ag.longitude) ? '✅ Ada Koordinat' : '⚠️ Belum Di-set';
+                    html += `<option value="${escapeHtmlAttr(ag.nama_agen)}">${escapeHtmlAttr(ag.nama_agen.toUpperCase())} (${statusPin})</option>`;
+                }
+            });
+            select.innerHTML = html;
+        }
+
+        document.getElementById('inputPasteGmaps').value = '';
+        document.getElementById('inputLatAgen').value = '';
+        document.getElementById('inputLngAgen').value = '';
+        document.getElementById('inputAlamatAgen').value = '';
+        document.getElementById('statusKoordinatAgenInfo').innerText = '';
+
+        document.getElementById('modalSetLokasiAgen').style.display = 'block';
+
+        setTimeout(() => {
+            if (!mapPickerAgen && typeof L !== 'undefined') {
+                const gmapsJalanPicker = L.tileLayer('https://mt1.google.com/vt/lyrs=m&hl=id&x={x}&y={y}&z={z}', {
+                    maxZoom: 20,
+                    attribution: '© Google Maps'
+                });
+                const gmapsSatelitPicker = L.tileLayer('https://mt1.google.com/vt/lyrs=y&hl=id&x={x}&y={y}&z={z}', {
+                    maxZoom: 20,
+                    attribution: '© Google Maps'
+                });
+                const osmFallbackPicker = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap'
+                });
+
+                let gmapsPickerErrorCount = 0;
+                gmapsJalanPicker.on('tileerror', function() {
+                    gmapsPickerErrorCount++;
+                    if (gmapsPickerErrorCount === 3 && mapPickerAgen && !mapPickerAgen.hasLayer(osmFallbackPicker)) {
+                        mapPickerAgen.removeLayer(gmapsJalanPicker);
+                        osmFallbackPicker.addTo(mapPickerAgen);
+                    }
+                });
+
+                mapPickerAgen = L.map('mapPickerAgen', {
+                    center: [-6.8168, 107.6152],
+                    zoom: 13,
+                    layers: [gmapsJalanPicker]
+                });
+
+                L.control.layers(
+                    { "🗺️ Peta Jalan": gmapsJalanPicker, "🛰️ Satelit": gmapsSatelitPicker, "🌐 Peta Standar": osmFallbackPicker },
+                    null,
+                    { position: 'topright' }
+                ).addTo(mapPickerAgen);
+
+                mapPickerAgen.on('click', function(e) {
+                    setPinPickerAgen(e.latlng.lat, e.latlng.lng, false);
+                });
+            }
+            if (mapPickerAgen) {
+                mapPickerAgen.invalidateSize();
+                if (markerPickerAgen) {
+                    mapPickerAgen.removeLayer(markerPickerAgen);
+                    markerPickerAgen = null;
+                }
+                mapPickerAgen.setView([-6.8168, 107.6152], 13);
+            }
+            if (preselectAgen) {
+                const optMatch = Array.from(select.options).find(o => o.value.toLowerCase().trim() === preselectAgen.toLowerCase().trim());
+                if (optMatch) {
+                    select.value = optMatch.value;
+                    onPilihAgenLokasi();
+                }
+            }
+        }, 200);
+    }
+
+    function tutupModalSetLokasiAgen() {
+        document.getElementById('modalSetLokasiAgen').style.display = 'none';
+    }
+
+    function setPinPickerAgen(lat, lng, centerMap = true) {
+        if (!mapPickerAgen) return;
+        const latFixed = Number(lat).toFixed(6);
+        const lngFixed = Number(lng).toFixed(6);
+
+        document.getElementById('inputLatAgen').value = latFixed;
+        document.getElementById('inputLngAgen').value = lngFixed;
+
+        if (markerPickerAgen) {
+            markerPickerAgen.setLatLng([latFixed, lngFixed]);
+        } else {
+            markerPickerAgen = L.marker([latFixed, lngFixed], { draggable: true }).addTo(mapPickerAgen);
+            markerPickerAgen.on('dragend', function(ev) {
+                const pos = ev.target.getLatLng();
+                document.getElementById('inputLatAgen').value = pos.lat.toFixed(6);
+                document.getElementById('inputLngAgen').value = pos.lng.toFixed(6);
+            });
+        }
+
+        if (centerMap) {
+            mapPickerAgen.setView([latFixed, lngFixed], 16);
+        }
+    }
+
+    function onPilihAgenLokasi() {
+        const namaAg = document.getElementById('selectAgenLokasi').value;
+        const infoEl = document.getElementById('statusKoordinatAgenInfo');
+        if (!namaAg) {
+            infoEl.innerText = '';
+            return;
+        }
+
+        const agObj = masterCacheAgenDB.find(a => a.nama_agen === namaAg);
+        if (!agObj) return;
+
+        document.getElementById('inputAlamatAgen').value = agObj.alamat || '';
+
+        if (agObj.latitude && agObj.longitude) {
+            infoEl.style.color = '#48bb78';
+            infoEl.innerText = `✅ Koordinat tersimpan: ${agObj.latitude}, ${agObj.longitude}`;
+            setPinPickerAgen(agObj.latitude, agObj.longitude, true);
+        } else {
+            infoEl.style.color = '#ecc94b';
+            infoEl.innerText = '⚠️ Agen ini belum memiliki titik lokasi. Silakan tempel dari Google Maps atau klik pada peta.';
+            document.getElementById('inputLatAgen').value = '';
+            document.getElementById('inputLngAgen').value = '';
+            if (markerPickerAgen && mapPickerAgen) {
+                mapPickerAgen.removeLayer(markerPickerAgen);
+                markerPickerAgen = null;
+            }
+        }
+    }
+
+    function terapkanPasteKoordinat() {
+        const raw = document.getElementById('inputPasteGmaps').value.trim();
+        if (!raw) return alert("Tempel koordinat atau link Google Maps terlebih dahulu!");
+
+        let lat = null;
+        let lng = null;
+
+        const matchAt = raw.match(/@(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
+        const match3d4d = raw.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+        const matchQuery = raw.match(/[?&](?:q|ll|query)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
+        const matchDirect = raw.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+
+        if (match3d4d) {
+            lat = parseFloat(match3d4d[1]);
+            lng = parseFloat(match3d4d[2]);
+        } else if (matchAt) {
+            lat = parseFloat(matchAt[1]);
+            lng = parseFloat(matchAt[2]);
+        } else if (matchQuery) {
+            lat = parseFloat(matchQuery[1]);
+            lng = parseFloat(matchQuery[2]);
+        } else if (matchDirect) {
+            lat = parseFloat(matchDirect[1]);
+            lng = parseFloat(matchDirect[2]);
+        }
+
+        if (lat === null || lng === null || isNaN(lat) || isNaN(lng)) {
+            return alert("❌ Format koordinat tidak dikenali.\n\nPastikan menyalin angka koordinat (contoh: -6.8168, 107.6152) atau URL lengkap Google Maps dari browser.");
+        }
+
+        setPinPickerAgen(lat, lng, true);
+    }
+
+    function sinkronPinDariInputManual() {
+        const lat = parseFloat(document.getElementById('inputLatAgen').value);
+        const lng = parseFloat(document.getElementById('inputLngAgen').value);
+        if (!isNaN(lat) && !isNaN(lng)) {
+            setPinPickerAgen(lat, lng, true);
+        }
+    }
+
+    async function simpanLokasiAgenKeDatabase() {
+        const namaAg = document.getElementById('selectAgenLokasi').value;
+        const lat = parseFloat(document.getElementById('inputLatAgen').value);
+        const lng = parseFloat(document.getElementById('inputLngAgen').value);
+        const alamat = document.getElementById('inputAlamatAgen').value.trim();
+
+        if (!namaAg) return alert("Pilih nama agen terlebih dahulu!");
+        if (isNaN(lat) || isNaN(lng)) return alert("Koordinat Latitude & Longitude belum diisi!");
+
+        const btn = document.getElementById('btnSimpanLokasiAgen');
+        btn.disabled = true;
+        btn.innerText = "MENYIMPAN LOKASI...";
+
+        try {
+            const { error } = await clientSupabase
+                .from('agen')
+                .update({
+                    latitude: lat,
+                    longitude: lng,
+                    alamat: alamat || null
+                })
+                .eq('nama_agen', namaAg);
+
+            if (error) throw error;
+
+            const idx = masterCacheAgenDB.findIndex(a => a.nama_agen === namaAg);
+            if (idx !== -1) {
+                masterCacheAgenDB[idx].latitude = lat;
+                masterCacheAgenDB[idx].longitude = lng;
+                masterCacheAgenDB[idx].alamat = alamat;
+            }
+
+            renderSemuaPinAgenDiPetaUtama();
+            for (const j of Object.values(activeArmadaData)) {
+                if ((j.nama_agen || '').toLowerCase().trim() === namaAg.toLowerCase().trim()) {
+                    await gambarJalurArmadaKeTujuan(j);
+                    await updateMarkerArmada(j);
+                }
+            }
+
+            if (mapAdmin) {
+                mapAdmin.setView([lat, lng], 15);
+                if (markerAgenMap[namaAg]) markerAgenMap[namaAg].openPopup();
+            }
+
+            alert(`✅ Lokasi agen ${namaAg.toUpperCase()} berhasil disimpan!`);
+            tutupModalSetLokasiAgen();
+        } catch (e) {
+            alert("❌ Gagal menyimpan lokasi agen: " + e.message + "\n\nPastikan tabel 'agen' di Supabase sudah memiliki kolom latitude, longitude, dan alamat.");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "💾 SIMPAN LOKASI AGEN KE DATABASE";
+        }
+    }
+
+    async function gambarJalurArmadaKeTujuan(j) {
+        if (!mapAdmin || !j.driver_lat || !j.driver_lng) return null;
+
+        const warna = getWarnaArmada(j);
+        const isPulang = j.status_kirim === 'KEMBALI_KE_GUDANG';
+        const tujuan = cariTujuanPerjalanan(j);
+
+        if (!tujuan) {
+            if (routeLineArmada[j.id_jadwal]) {
+                mapAdmin.removeLayer(routeLineArmada[j.id_jadwal]);
+                delete routeLineArmada[j.id_jadwal];
+            }
+            delete routeCoordsArmada[j.id_jadwal];
+            return null;
+        }
+
+        const startLat = parseFloat(j.driver_lat);
+        const startLng = parseFloat(j.driver_lng);
+        const endLat = tujuan.lat;
+        const endLng = tujuan.lng;
+
+        const lineOptions = {
+            color: warna.main,
+            weight: 5,
+            opacity: 0.88,
+            dashArray: isPulang ? '10, 10' : null,
+            lineCap: 'round',
+            lineJoin: 'round'
+        };
+
+        const cacheKey = `${startLat.toFixed(4)},${startLng.toFixed(4)}->${endLat.toFixed(4)},${endLng.toFixed(4)}`;
+
+        if (!routeLineArmada[j.id_jadwal]) {
+            const fallbackCoords = [[startLat, startLng], [endLat, endLng]];
+            routeCoordsArmada[j.id_jadwal] = fallbackCoords;
+            routeLineArmada[j.id_jadwal] = L.polyline(fallbackCoords, {
+                ...lineOptions,
+                dashArray: '8, 8'
+            }).addTo(mapAdmin);
+        }
+
+        if (routeCacheOSRM[cacheKey]) {
+            const coords = routeCacheOSRM[cacheKey];
+            routeCoordsArmada[j.id_jadwal] = coords;
+            routeLineArmada[j.id_jadwal].setLatLngs(coords).setStyle(lineOptions);
+            return coords;
+        }
+
+        try {
+            const urlOSRM = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`;
+            const resp = await fetch(urlOSRM);
+            if (resp.ok) {
+                const json = await resp.json();
+                if (json.routes && json.routes.length > 0 && json.routes[0].geometry) {
+                    const latLngs = json.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                    routeCacheOSRM[cacheKey] = latLngs;
+                    routeCoordsArmada[j.id_jadwal] = latLngs;
+                    if (routeLineArmada[j.id_jadwal]) {
+                        routeLineArmada[j.id_jadwal].setLatLngs(latLngs).setStyle(lineOptions);
+                    }
+                    return latLngs;
+                }
+            }
+        } catch (err) {
+            // Fallback garis lurus otomatis tetap aktif jika offline/diblokir
+        }
+
+        const fallbackCoords = [[startLat, startLng], [endLat, endLng]];
+        routeCoordsArmada[j.id_jadwal] = fallbackCoords;
+        if (routeLineArmada[j.id_jadwal]) {
+            routeLineArmada[j.id_jadwal].setLatLngs(fallbackCoords).setStyle({
+                ...lineOptions,
+                dashArray: '8, 8'
+            });
+        }
+        return fallbackCoords;
+    }
+
+    async function updateMarkerArmada(j) {
+        if (!mapAdmin) return;
+
+        if (j.status_kirim === 'SELESAI') {
+            if (markerArmada[j.id_jadwal]) {
+                mapAdmin.removeLayer(markerArmada[j.id_jadwal]);
+                delete markerArmada[j.id_jadwal];
+            }
+            if (routeLineArmada[j.id_jadwal]) {
+                mapAdmin.removeLayer(routeLineArmada[j.id_jadwal]);
+                delete routeLineArmada[j.id_jadwal];
+            }
+            delete routeCoordsArmada[j.id_jadwal];
+            delete prevGpsCoordsByTrip[j.id_jadwal];
+            delete activeArmadaData[j.id_jadwal];
+            if (driveModeTripId === j.id_jadwal) {
+                driveModeTripId = null;
+                driveModeLocked = false;
+            }
+            renderActiveTripStatusBar();
+            return;
+        }
+
+        activeArmadaData[j.id_jadwal] = j;
+
+        if ((j.status_kirim === 'DALAM_PERJALANAN' || j.status_kirim === 'KEMBALI_KE_GUDANG') && j.driver_lat && j.driver_lng && cariTujuanPerjalanan(j) && driveModeTripId === null && !driveModeLocked) {
+            driveModeTripId = j.id_jadwal;
+            driveModeLocked = true;
+            userPanningMap = false;
+        }
+
+        renderActiveTripStatusBar();
+
+        if (!j.driver_lat || !j.driver_lng) return;
+
+        const coords = await gambarJalurArmadaKeTujuan(j);
+        const isDriveActive = driveModeTripId === j.id_jadwal;
+        const snapped = isDriveActive
+            ? snapKeJalurRute(parseFloat(j.driver_lat), parseFloat(j.driver_lng), coords)
+            : { lat: parseFloat(j.driver_lat), lng: parseFloat(j.driver_lng), bearing: null, snapped: false };
+        const headingMobil = tentukanHeadingMobil(j, snapped);
+
+        const warna = getWarnaArmada(j);
+        const isPulang = j.status_kirim === 'KEMBALI_KE_GUDANG';
+        const tujuan = cariTujuanPerjalanan(j);
+        const arahLabel = isPulang ? '↩ PULANG (GUDANG SBR)' : `→ ${j.nama_agen}`;
+        const driveTag = isDriveActive ? ' • 🚗 DRIVE' : '';
+
+        const truckIcon = L.divIcon({
+            html: `
+                <div style="display:flex; align-items:center; gap:6px; transform:translate(-19px, -19px); pointer-events:auto;">
+                    ${buatSvgIconMobil(warna.main, warna.dark, isPulang, headingMobil, isDriveActive)}
+                    <div style="background:${warna.dark}; color:#ffffff; padding:4px 9px; border-radius:999px; font-weight:900; font-size:11px; border:2px solid ${isDriveActive ? '#38bdf8' : '#ffffff'}; white-space:nowrap; box-shadow:0 3px 10px rgba(0,0,0,0.55); font-family:'Roboto Condensed', sans-serif;">
+                        ${escapeHtmlAttr(j.plat_nomor)} • ${escapeHtmlAttr(arahLabel)}${driveTag}
+                    </div>
+                </div>
+            `,
+            className: '',
+            iconSize: [0, 0],
+            iconAnchor: [0, 0]
+        });
+
+        const waktuUpdate = j.last_gps_update ? new Date(j.last_gps_update).toLocaleTimeString('id-ID') : '-';
+        const statusText = isPulang ? 'Perjalanan Pulang (Menunggu Laporan Setoran)' : 'Dalam Perjalanan Menuju Agen';
+        const gmapsUrlArmada = tujuan
+            ? `https://www.google.com/maps/dir/?api=1&origin=${j.driver_lat},${j.driver_lng}&destination=${tujuan.lat},${tujuan.lng}&travelmode=driving`
+            : `https://www.google.com/maps/search/?api=1&query=${j.driver_lat},${j.driver_lng}`;
+
+        const safeAgenJs = escapeJsSingleQuote(j.nama_agen);
+        const warningLokasiAgen = !tujuan
+            ? `<div style="margin-top:5px; padding:4px 6px; background:#fef3c7; color:#92400e; border-radius:4px; font-size:11px; font-weight:bold;">⚠️ Titik lokasi agen belum di-set, jalur belum tampil. <a href="#" onclick="bukaModalSetLokasiAgen('${safeAgenJs}'); return false;" style="color:#1d4ed8; text-decoration:underline;">Set Sekarang</a></div>`
+            : '';
+
+        const popupInfo = `
+            <div style="font-family:sans-serif; font-size:13px; line-height:1.4;">
+                <div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;">
+                    <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:${warna.main};"></span>
+                    <b>🚐 ${escapeHtmlAttr(j.plat_nomor)}</b>
+                </div>
+                Tujuan Agen: <b>${escapeHtmlAttr(j.nama_agen.toUpperCase())}</b><br>
+                Driver: ${escapeHtmlAttr(j.driver)}<br>
+                Status: <b>${statusText}</b><br>
+                Mode Jalur: <b>${isDriveActive ? (snapped.snapped ? 'Drive (Mengikuti Jalur)' : 'Drive (GPS Aktif)') : 'Pantau Bebas'}</b><br>
+                Update GPS: ${waktuUpdate}
+                ${warningLokasiAgen}
+                <a href="${gmapsUrlArmada}" target="_blank" rel="noopener" style="display:inline-block; margin-top:6px; background:${warna.main}; color:#fff; padding:5px 9px; border-radius:5px; text-decoration:none; font-weight:bold; font-size:12px;">🧭 Buka Rute di Google Maps</a>
+            </div>
+        `;
+
+        if (markerArmada[j.id_jadwal]) {
+            markerArmada[j.id_jadwal].setLatLng([snapped.lat, snapped.lng]).setIcon(truckIcon).setPopupContent(popupInfo);
+        } else {
+            markerArmada[j.id_jadwal] = L.marker([snapped.lat, snapped.lng], { icon: truckIcon })
+                .addTo(mapAdmin)
+                .bindPopup(popupInfo);
+        }
+
+        if (isDriveActive && !userPanningMap) {
+            if (driveZoomLevel === 'route' && Array.isArray(coords) && coords.length > 1) {
+                mapAdmin.fitBounds(L.latLngBounds(coords).pad(0.18));
+            } else {
+                const targetZoom = typeof driveZoomLevel === 'number' ? driveZoomLevel : 16;
+                if (mapAdmin.getZoom() !== targetZoom) {
+                    mapAdmin.setView([snapped.lat, snapped.lng], targetZoom, { animate: true });
+                } else {
+                    mapAdmin.panTo([snapped.lat, snapped.lng], { animate: true, duration: 0.6 });
+                }
+            }
+        }
+    }
+
+    function renderActiveTripStatusBar() {
+        const bar = document.getElementById('activeTripStatusBar');
+        if (!bar) return;
+        const list = Object.values(activeArmadaData);
+        if (list.length === 0) {
+            bar.innerHTML = `<span style="font-size:12px; opacity:0.75; font-style:italic;">Tidak ada armada yang sedang dalam perjalanan aktif saat ini.</span>`;
+            return;
+        }
+
+        const chipsHtml = list.map(j => {
+            const warna = getWarnaArmada(j);
+            const isPulang = j.status_kirim === 'KEMBALI_KE_GUDANG';
+            const isMenunggu = j.status_kirim === 'MENUNGGU_DRIVER';
+            const isDriveActive = driveModeTripId === j.id_jadwal;
+            const st = isPulang ? '↩ PULANG / SETORAN' : (isMenunggu ? '⏳ MENUNGGU TERIMA' : '→ MENUJU AGEN');
+            const tujuan = cariTujuanPerjalanan(j);
+            const pinWarn = !tujuan ? ' ⚠️' : '';
+            const activeRing = isDriveActive ? 'box-shadow:0 0 0 3px #38bdf8, 0 2px 6px rgba(0,0,0,0.4);' : 'box-shadow:0 2px 6px rgba(0,0,0,0.3);';
+
+            return `
+                <div style="display:inline-flex; align-items:center; gap:4px;">
+                    <button type="button" onclick="fokusSatuArmada(${j.id_jadwal})" style="background:${warna.main}; color:#fff; border:2px solid #ffffff; border-radius:8px; padding:6px 10px; font-size:12px; font-weight:900; cursor:pointer; ${activeRing} display:flex; align-items:center; gap:5px;">
+                        <span>🚐</span>
+                        <span>${escapeHtmlAttr(j.plat_nomor)} (${escapeHtmlAttr(j.nama_agen)}${pinWarn}) • ${st}</span>
+                    </button>
+                    ${tujuan ? `<button type="button" onclick="aktifkanModeDrive(${j.id_jadwal}, false)" title="Ikuti titik GPS melaju di jalur tujuan" style="background:${isDriveActive ? '#0284c7' : '#1e293b'}; color:#fff; border:2px solid ${isDriveActive ? '#7dd3fc' : '#64748b'}; border-radius:8px; padding:6px 9px; font-size:11px; font-weight:900; cursor:pointer;">🚗 ${isDriveActive ? (userPanningMap ? 'IKUTI LAGI' : 'DRIVE ON') : 'DRIVE'}</button>` : ''}
+                </div>
+            `;
+        }).join('');
+
+        const zoomControlHtml = driveModeTripId !== null ? `
+            <span style="display:inline-flex; align-items:center; gap:3px; background:#0f172a; border:1.5px solid #475569; border-radius:8px; padding:3px 6px; font-size:11px; font-weight:900; color:#fff;">
+                <span>🔍</span>
+                <button type="button" onclick="setDriveZoom(17)" style="background:${driveZoomLevel===17?'#0284c7':'transparent'}; color:#fff; border:none; border-radius:5px; padding:3px 6px; cursor:pointer; font-weight:900;">Z17</button>
+                <button type="button" onclick="setDriveZoom(16)" style="background:${driveZoomLevel===16?'#0284c7':'transparent'}; color:#fff; border:none; border-radius:5px; padding:3px 6px; cursor:pointer; font-weight:900;">Z16</button>
+                <button type="button" onclick="setDriveZoom('route')" style="background:${driveZoomLevel==='route'?'#0284c7':'transparent'}; color:#fff; border:none; border-radius:5px; padding:3px 6px; cursor:pointer; font-weight:900;">RUTE</button>
+            </span>
+        ` : '';
+
+        const stopDriveBtn = driveModeTripId !== null
+            ? `<button type="button" onclick="matikanModeDrive()" style="background:#475569; color:#fff; border:2px solid #cbd5e1; border-radius:8px; padding:6px 10px; font-size:11px; font-weight:900; cursor:pointer;">⏹ LEPAS DRIVE</button>`
+            : '';
+
+        bar.innerHTML = chipsHtml + zoomControlHtml + stopDriveBtn;
+    }
+
+    function fokusSatuArmada(idJadwal) {
+        const marker = markerArmada[idJadwal];
+        const line = routeLineArmada[idJadwal];
+        if (marker && mapAdmin) {
+            const j = activeArmadaData[idJadwal];
+            if (j && (j.status_kirim === 'DALAM_PERJALANAN' || j.status_kirim === 'KEMBALI_KE_GUDANG') && cariTujuanPerjalanan(j)) {
+                aktifkanModeDrive(idJadwal, false);
+            } else if (line) {
+                const group = L.featureGroup([marker, line]);
+                mapAdmin.fitBounds(group.getBounds().pad(0.25));
+            } else {
+                mapAdmin.setView(marker.getLatLng(), 15);
+            }
+            marker.openPopup();
+        } else {
+            alert("Sinyal GPS dari HP driver untuk jadwal ini belum masuk.");
+        }
+    }
+
+    function fokusSemuaArmadaDiPeta() {
+        if (!mapAdmin) return;
+        const layers = [
+            ...Object.values(markerArmada),
+            ...Object.values(routeLineArmada)
+        ];
+        if (layers.length === 0) return;
+        const group = L.featureGroup(layers);
+        mapAdmin.fitBounds(group.getBounds().pad(0.25));
+    }
 </script>
 </body>
 </html>

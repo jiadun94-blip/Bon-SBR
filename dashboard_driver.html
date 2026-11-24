@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SBR | Dashboard Driver</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #f4f6f8; --text-color: #333333; }
@@ -91,6 +93,15 @@
         .nama-partner { display: block; font-size: 11px; color: #e67e22; margin-top: 3px; font-style: italic; font-weight: bold; }
         
         .empty-state { text-align: center; padding: 40px; color: #95a5a6; font-size: 13px; }
+        .dispatch-card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:14px; margin-bottom:10px; box-shadow:0 3px 10px rgba(0,0,0,.05); }
+        .dispatch-card h3 { margin:0 0 6px; color:#1e3a8a; font-size:16px; }
+        .dispatch-meta { color:#64748b; font-size:12px; margin-bottom:8px; }
+        .dispatch-stops { margin:0; padding-left:20px; color:#334155; font-size:14px; }
+        .dispatch-stops li { margin:4px 0; }
+        .dispatch-action { display:inline-block; margin-top:10px; padding:10px 14px; border:0; border-radius:8px; background:#15803d; color:#fff; text-decoration:none; font:700 13px 'Roboto Condensed',sans-serif; cursor:pointer; }
+        .dispatch-action.returning { background:#b45309; }
+        #driverLiveMap { height:300px; border-radius:12px; border:1px solid #dbe3ec; background:#e2e8f0; }
+        @media(max-width:520px) { #driverLiveMap { height:250px; } }
     </style>
 </head>
 <body>
@@ -127,6 +138,13 @@
     </a>
 </div>
 
+<span class="section-title">Tugas Pengiriman</span>
+<div id="dispatchList">
+    <div class="card-riwayat-box empty-state">Memuat jadwal pengiriman...</div>
+</div>
+<span class="section-title">Peta Perjalanan Live</span>
+<div id="driverLiveMap" aria-label="Peta posisi driver dan tujuan pengiriman"></div>
+
 <span class="section-title">Riwayat Kiriman Terakhir</span>
 <div class="card-riwayat-box">
     <table>
@@ -142,11 +160,219 @@
     const _sb = supabase.createClient(SB_URL, SB_KEY);
 
     const userLogin = localStorage.getItem("userNama") || "Ikih";
+    const WAREHOUSE = { lat: -6.829805631327394, lng: 107.64451131743134 };
+    let driverMap;
+    let driverMarker;
+    let warehouseMarker;
+    let destinationMarkers = [];
+    let tripRoute;
+    let dispatchChannel;
 
     window.onload = () => {
         document.getElementById('welcomeNama').innerText = "HALO, " + userLogin.toUpperCase() + "!";
+        initDriverMap();
         loadRiwayat();
+        loadDispatch();
+        dispatchChannel = _sb.channel('driver-dashboard-' + userLogin.replace(/[^a-zA-Z0-9_-]/g, '_'))
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'jadwal_kirim' }, loadDispatch)
+            .subscribe();
+        window.setInterval(loadDispatch, 15000);
     };
+
+    function initDriverMap() {
+        const mapElement = document.getElementById('driverLiveMap');
+        if (!mapElement || typeof L === 'undefined') {
+            document.getElementById('driverLiveMap').textContent = 'Peta tidak dapat dimuat. Periksa koneksi internet.';
+            return;
+        }
+        driverMap = L.map(mapElement).setView([WAREHOUSE.lat, WAREHOUSE.lng], 12);
+        const roadTiles = L.tileLayer('https://mt1.google.com/vt/lyrs=m&hl=id&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            attribution: '&copy; Google Maps'
+        }).addTo(driverMap);
+        const satelliteTiles = L.tileLayer('https://mt1.google.com/vt/lyrs=y&hl=id&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            attribution: '&copy; Google Maps'
+        });
+        L.control.layers({ 'Peta jalan': roadTiles, 'Satelit': satelliteTiles }, null, { position: 'topright' }).addTo(driverMap);
+        warehouseMarker = L.marker([WAREHOUSE.lat, WAREHOUSE.lng]).addTo(driverMap)
+            .bindPopup('Gudang SBR');
+    }
+
+    function dispatchGroupKey(job) {
+        const drivers = [job.driver_1, job.driver_2].map(name => (name || '').trim().toLowerCase()).sort();
+        return [job.tanggal_kirim, job.plat_nomor, ...drivers].join('|');
+    }
+
+    function validCoordinate(lat, lng) {
+        return lat !== null && lat !== '' && lng !== null && lng !== ''
+            && Number.isFinite(Number(lat)) && Number.isFinite(Number(lng))
+            && Math.abs(Number(lat)) <= 90 && Math.abs(Number(lng)) <= 180;
+    }
+
+    async function loadDispatch() {
+        const container = document.getElementById('dispatchList');
+        try {
+            const { data: jobs, error } = await _sb
+                .from('jadwal_kirim')
+                .select('id_jadwal, tanggal_kirim, shift, nama_agen, plat_nomor, driver, driver_1, driver_2, status_kirim, driver_lat, driver_lng, last_gps_update')
+                .or(`driver_1.eq.${userLogin},driver_2.eq.${userLogin}`)
+                .in('status_kirim', ['MENUNGGU_DRIVER', 'DALAM_PERJALANAN', 'KEMBALI_KE_GUDANG'])
+                .order('tanggal_kirim', { ascending: true })
+                .order('id_jadwal', { ascending: true });
+            if (error) throw error;
+
+            const { data: agents, error: agentError } = await _sb.from('agen').select('nama_agen, latitude, longitude');
+            if (agentError) throw agentError;
+            renderDispatch(jobs || [], agents || []);
+        } catch (error) {
+            container.innerHTML = '';
+            const message = document.createElement('div');
+            message.className = 'card-riwayat-box empty-state';
+            message.style.color = '#b91c1c';
+            message.textContent = 'Gagal memuat jadwal: ' + error.message;
+            container.appendChild(message);
+        }
+    }
+
+    function renderDispatch(jobs, agents) {
+        const container = document.getElementById('dispatchList');
+        container.innerHTML = '';
+        destinationMarkers.forEach(marker => driverMap && driverMap.removeLayer(marker));
+        destinationMarkers = [];
+        if (tripRoute && driverMap) driverMap.removeLayer(tripRoute);
+
+        if (!jobs.length) {
+            if (driverMarker && driverMap) driverMap.removeLayer(driverMarker);
+            driverMarker = null;
+            const empty = document.createElement('div');
+            empty.className = 'card-riwayat-box empty-state';
+            empty.textContent = 'Belum ada tugas pengiriman aktif untuk akun ini.';
+            container.appendChild(empty);
+            return;
+        }
+
+        const grouped = new Map();
+        jobs.forEach(job => {
+            const key = dispatchGroupKey(job);
+            if (!grouped.has(key)) grouped.set(key, []);
+            grouped.get(key).push(job);
+        });
+
+        let latestLiveJob = null;
+        for (const group of grouped.values()) {
+            for (let offset = 0; offset < group.length; offset += 4) {
+                const stops = group.slice(offset, offset + 4);
+                const card = document.createElement('article');
+                card.className = 'dispatch-card';
+                const title = document.createElement('h3');
+                title.textContent = stops.length > 1 ? `🚚 ${stops.length} tujuan dalam satu rute` : `🚚 Kiriman ke ${stops[0].nama_agen}`;
+                card.appendChild(title);
+
+                const meta = document.createElement('div');
+                meta.className = 'dispatch-meta';
+                meta.textContent = `${stops[0].tanggal_kirim} • ${stops[0].shift} • ${stops[0].plat_nomor} • ${stops[0].driver || ''}`;
+                card.appendChild(meta);
+
+                const list = document.createElement('ol');
+                list.className = 'dispatch-stops';
+                stops.forEach(job => {
+                    const item = document.createElement('li');
+                    const status = job.status_kirim === 'DALAM_PERJALANAN'
+                        ? 'Sedang menuju agen'
+                        : (job.status_kirim === 'KEMBALI_KE_GUDANG' ? 'Perjalanan kembali ke gudang' : 'Menunggu diterima');
+                    item.textContent = `${job.nama_agen} — ${status}`;
+                    list.appendChild(item);
+                });
+                card.appendChild(list);
+
+                const current = stops.find(job => job.status_kirim === 'DALAM_PERJALANAN')
+                    || stops.find(job => job.status_kirim === 'KEMBALI_KE_GUDANG')
+                    || stops[0];
+                const isReturning = current.status_kirim === 'KEMBALI_KE_GUDANG';
+                const isWaiting = current.status_kirim === 'MENUNGGU_DRIVER';
+                const action = document.createElement(isWaiting ? 'button' : 'a');
+                action.className = 'dispatch-action' + (isReturning ? ' returning' : '');
+                if (isWaiting) {
+                    action.type = 'button';
+                    action.textContent = 'Terima & mulai perjalanan';
+                    action.addEventListener('click', () => terimaTugasDariDashboard(current.id_jadwal, action));
+                } else {
+                    action.href = isReturning ? 'laporan_setoran.html' : `bon.html?job=${encodeURIComponent(current.id_jadwal)}`;
+                    action.textContent = isReturning ? 'Buka laporan setoran' : 'Lanjutkan bon pengiriman';
+                }
+                card.appendChild(action);
+                container.appendChild(card);
+
+                const active = stops.find(job => job.status_kirim === 'DALAM_PERJALANAN')
+                    || stops.find(job => job.status_kirim === 'KEMBALI_KE_GUDANG');
+                if (!latestLiveJob && active && validCoordinate(active.driver_lat, active.driver_lng)) {
+                    latestLiveJob = active;
+                }
+
+                stops.forEach(job => {
+                    const agent = agents.find(entry => (entry.nama_agen || '').trim().toLowerCase() === (job.nama_agen || '').trim().toLowerCase());
+                    if (driverMap && agent && validCoordinate(agent.latitude, agent.longitude)) {
+                        const marker = L.marker([Number(agent.latitude), Number(agent.longitude)]).addTo(driverMap)
+                            .bindPopup('Agen: ' + job.nama_agen);
+                        destinationMarkers.push(marker);
+                    }
+                });
+            }
+        }
+
+        if (driverMap && latestLiveJob) {
+            const position = [Number(latestLiveJob.driver_lat), Number(latestLiveJob.driver_lng)];
+            if (!driverMarker) driverMarker = L.marker(position).addTo(driverMap).bindPopup('Posisi driver');
+            else driverMarker.setLatLng(position);
+
+            const destination = latestLiveJob.status_kirim === 'KEMBALI_KE_GUDANG'
+                ? WAREHOUSE
+                : (() => {
+                    const agent = agents.find(entry => (entry.nama_agen || '').trim().toLowerCase() === (latestLiveJob.nama_agen || '').trim().toLowerCase());
+                    return agent ? { lat: Number(agent.latitude), lng: Number(agent.longitude) } : null;
+                })();
+            if (destination && validCoordinate(destination.lat, destination.lng)) {
+                tripRoute = L.polyline([position, [destination.lat, destination.lng]], { color: '#2563eb', weight: 4, dashArray: '8, 8' }).addTo(driverMap);
+                driverMap.setView(position, Math.max(driverMap.getZoom(), 14));
+            } else {
+                driverMap.setView(position, Math.max(driverMap.getZoom(), 14));
+            }
+        } else if (driverMarker && driverMap) {
+            driverMap.removeLayer(driverMarker);
+            driverMarker = null;
+        }
+    }
+
+    async function terimaTugasDariDashboard(idJadwal, button) {
+        if (button.disabled) return;
+        button.disabled = true;
+        const pageBon = window.open('about:blank', '_blank');
+        if (!pageBon) {
+            button.disabled = false;
+            alert('Izinkan pop-up untuk membuka Bon setelah menerima tugas.');
+            return;
+        }
+
+        try {
+            const { data, error } = await _sb
+                .from('jadwal_kirim')
+                .update({ status_kirim: 'DALAM_PERJALANAN' })
+                .eq('id_jadwal', idJadwal)
+                .eq('status_kirim', 'MENUNGGU_DRIVER')
+                .select('id_jadwal')
+                .maybeSingle();
+            if (error) throw error;
+            if (!data) throw new Error('Tugas sudah diterima atau tidak lagi tersedia.');
+
+            pageBon.location.href = `bon.html?job=${encodeURIComponent(idJadwal)}`;
+            await loadDispatch();
+        } catch (error) {
+            pageBon.close();
+            button.disabled = false;
+            alert('Gagal menerima tugas: ' + error.message);
+        }
+    }
 
     async function loadRiwayat() {
         const tbody = document.getElementById('bodyRiwayat');
