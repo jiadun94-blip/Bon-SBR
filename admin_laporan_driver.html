@@ -2,248 +2,2586 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SBR | Admin Laporan Driver</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SBR | Master Setoran Driver & Rekap Nota v6.5</title>
+    
+    <!-- Library Supabase & Excel -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Library HTML2Canvas untuk Simpan Gambar -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Courier+New:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        /* TEMA CHARCOAL BASE SBR DIGITAL */
-        body { font-family: 'Roboto Condensed', sans-serif; background-color: #121212; color: #eee; margin: 0; padding: 10px; }
-        .card { background: #1e1e1e; border-radius: 8px; padding: 15px; border: 1px solid #333; margin-bottom: 20px; }
-        h2 { margin: 0 0 15px; font-size: 16px; text-align: center; background: #333; padding: 12px; border-radius: 6px; color: #fff; text-transform: uppercase; }
+        /* =========================================================
+           SOLUSI 1: MASTER-DETAIL TERPADU (COMPACT & ZERO-REDUNDANCY)
+           ========================================================= */
+        :root {
+            --bg-body: #0b0f19;
+            --bg-card: #131b2e;
+            --bg-card-subtle: #19243d;
+            --bg-input: #0f1626;
+            --bg-th: #152037;
+            --bg-td: #131b2e;
+            --bg-hover: #1c2a47;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #202d48;
+            --border-radius: 8px;
+            
+            --btn-primary: #2563eb;
+            --btn-primary-hover: #1d4ed8;
+            --btn-excel: #059669;
+            --btn-wa: #16a34a;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
 
-        /* FILTER AREA CONTROL - Disesuaikan untuk posisi tombol di bawah */
-        .filter-section { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 10px; 
-            background: rgba(0,0,0,0.3); 
-            padding: 15px; 
-            border-radius: 8px; 
-            margin-bottom: 20px;
+            --cash-color: #10b981;
+            --trf-color: #38bdf8;
+            --total-setor-color: #fbbf24;
+            --sisa-color: #f87171;
+            
+            --setor-sudah-bg: rgba(16, 185, 129, 0.15);
+            --setor-sudah-text: #34d399;
+            --setor-sudah-border: #059669;
+            --setor-belum-bg: rgba(239, 68, 68, 0.15);
+            --setor-belum-text: #f87171;
+            --setor-belum-border: #dc2626;
         }
 
-        .btn-container {
-            grid-column: span 2;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+        .light-mode {
+            --bg-body: #f4f6fa;
+            --bg-card: #ffffff;
+            --bg-card-subtle: #f8fafc;
+            --bg-input: #f1f5f9;
+            --bg-th: #f1f5f9;
+            --bg-td: #ffffff;
+            --bg-hover: #f1f5f9;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+
+            --cash-color: #059669;
+            --trf-color: #0284c7;
+            --total-setor-color: #d97706;
+            --sisa-color: #dc2626;
+            
+            --setor-sudah-bg: #d1fae5;
+            --setor-sudah-text: #065f46;
+            --setor-sudah-border: #34d399;
+            --setor-belum-bg: #fee2e2;
+            --setor-belum-text: #991b1b;
+            --setor-belum-border: #f87171;
+        }
+
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background-color: var(--bg-body); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 8px 10px; 
+            transition: background-color 0.2s, color 0.2s;
+            -webkit-tap-highlight-color: transparent;
+            font-size: 12.5px;
+            line-height: 1.35;
+        }
+
+        /* =========================================================
+           1. TOP SLIM NAVBAR (BRAND + METRIC SUMMARY + THEME)
+           ========================================================= */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-card);
+            padding: 6px 12px;
+            border-radius: var(--border-radius);
+            margin-bottom: 6px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
             gap: 10px;
         }
 
-        .filter-group { display: flex; flex-direction: column; }
-        .filter-group label { font-size: 11px; margin-bottom: 4px; color: #aaa; }
-        input[type="date"] { background: #2d2d2d; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 4px; font-family: inherit; width: 100%; box-sizing: border-box; }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-        .btn { padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; border: none; font-size: 12px; width: 100%; }
-        .btn-tampilkan { background: #3b4c64; color: white; }
-        .btn-excel { background: #166534; color: white; }
-        .btn:active { transform: scale(0.95); }
+        .brand-badge {
+            background: #2563eb;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 10px;
+            padding: 3px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.4px;
+        }
 
-        /* RINGKASAN KOTAK INFORMASI UANG */
-        .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
-        .summary-box { background: #252525; padding: 12px; border-radius: 6px; border: 1px solid #444; text-align: center; }
-        .summary-box p { margin: 0; font-size: 11px; color: #aaa; text-transform: uppercase; }
-        .summary-box h3 { margin: 5px 0 0; font-size: 16px; font-weight: bold; }
+        .brand-title {
+            margin: 0;
+            font-size: 13.5px;
+            font-weight: 800;
+            letter-spacing: -0.2px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
 
-        /* TABLE KONTRAST HIGH - KHAS SBR ADMIN */
-        .table-container { width: 100%; overflow-x: auto; border-radius: 4px; background: #fff; border: 1px solid #444; }
-        table { width: 100%; border-collapse: separate; border-spacing: 0; color: #000; }
-        th { background: #f1f5f9; color: #1e293b; padding: 10px 5px; font-size: 11px; border: 1px solid #cbd5e1; position: sticky; top: 0; z-index: 10; }
-        td { padding: 8px; border: 1px solid #e2e8f0; font-size: 12px; text-align: center; white-space: nowrap; }
-        .txt-kiri { text-align: left; }
-        .sub-txt { font-size: 10px; color: #666; display: block; }
-        .text-bold { font-weight: bold; }
+        .brand-sub {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .theme-btn {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s;
+        }
+        .theme-btn:active { transform: scale(0.9); }
+
+        /* =========================================================
+           2. STREAMLINED FILTER & ACTION TOOLBAR (1 SINGLE STRIP)
+           ========================================================= */
+        .filter-strip {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 6px 10px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px;
+            box-shadow: var(--shadow);
+        }
+
+        .filter-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .date-box {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--bg-input);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+        .date-box label {
+            font-size: 9.5px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        input[type="date"] {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: 600;
+            outline: none;
+            padding: 2px;
+            cursor: pointer;
+            color-scheme: dark light;
+        }
+
+        .preset-strip {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .btn-preset {
+            background: var(--bg-input);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 4px 9px;
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .btn-preset:hover { color: var(--text-main); border-color: var(--btn-primary); }
+        .btn-preset.active {
+            background: var(--btn-primary);
+            color: #ffffff;
+            border-color: var(--btn-primary);
+        }
+
+        .filter-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-ctrl {
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-weight: 700;
+            font-size: 11.5px;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .btn-ctrl:active { transform: scale(0.97); }
+        .btn-primary-ctrl { background: var(--btn-primary); color: #fff; }
+        .btn-excel-ctrl { background: var(--btn-excel); color: #fff; }
+        .btn-wa-ctrl { background: var(--btn-wa); color: #fff; }
+
+        /* =========================================================
+           3. UNIFIED KPI METRIC TILES (2 BARIS STRUKTUR SEIMBANG)
+           ========================================================= */
+        .kpi-container {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            margin-bottom: 8px;
+        }
+
+        /* Baris Atas: 3 Kartu Keuangan (Cash, Biaya, Bersih) */
+        .kpi-row-top {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 7px;
+        }
+
+        /* Baris Bawah: 2 Kartu Status Setoran Kasir (Sudah vs Belum) */
+        .kpi-row-bottom {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 7px;
+        }
+
+        @media (max-width: 768px) {
+            .kpi-row-top { grid-template-columns: 1fr; }
+            .kpi-row-bottom { grid-template-columns: 1fr; }
+        }
+
+        .kpi-tile {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 9px 13px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .kpi-tile:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.09);
+        }
+        .kpi-tile::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3.5px;
+        }
+        .kpi-tile.cash::before { background: var(--cash-color); }
+        .kpi-tile.biaya::before { background: #f97316; }
+        .kpi-tile.bersih::before { background: var(--total-setor-color); }
+        .kpi-tile.sudah::before { background: var(--cash-color); }
+        .kpi-tile.belum::before { background: var(--sisa-color); }
+
+        .kpi-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2px;
+        }
+        .kpi-label {
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.35px;
+        }
+        .kpi-icon { font-size: 14px; }
+
+        .kpi-val {
+            font-size: 17.5px;
+            font-weight: 800;
+            letter-spacing: -0.35px;
+            font-variant-numeric: tabular-nums;
+            line-height: 1.25;
+            margin-bottom: 2px;
+        }
+        .kpi-tile.cash .kpi-val { color: var(--cash-color); }
+        .kpi-tile.biaya .kpi-val { color: #f97316; }
+        .kpi-tile.bersih .kpi-val { color: var(--total-setor-color); }
+        .kpi-tile.sudah .kpi-val { color: var(--cash-color); }
+        .kpi-tile.belum .kpi-val { color: var(--sisa-color); }
+
+        .kpi-sub {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* =========================================================
+           4. DATA CARD & MASTER-DETAIL SPREADSHEET TABLE
+           ========================================================= */
+        .content-card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+        }
+
+        .table-toolbar {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 6px;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .search-wrap {
+            flex: 1;
+            min-width: 180px;
+            max-width: 340px;
+            position: relative;
+        }
+        .search-wrap input {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 5px 24px 5px 26px;
+            border-radius: 5px;
+            font-family: inherit;
+            width: 100%;
+            font-size: 11px;
+            outline: none;
+        }
+        .search-wrap input:focus { border-color: var(--btn-primary); }
+        .search-icon {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 11px;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+        .btn-clear-s {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 11px;
+            cursor: pointer;
+            display: none;
+        }
+
+        .pills-group {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .pill-btn {
+            background: var(--bg-input);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .pill-btn.active {
+            background: var(--btn-primary);
+            color: #ffffff;
+            border-color: var(--btn-primary);
+        }
+        .pill-btn.pill-belum.active { background: #dc2626; border-color: #dc2626; }
+        .pill-btn.pill-sudah.active { background: #059669; border-color: #059669; }
+
+        /* Master Table */
+        .table-container {
+            width: 100%;
+            max-height: 65vh;
+            overflow-x: auto;
+            overflow-y: auto;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+        }
+        table { width: 100%; border-collapse: collapse; text-align: center; }
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            background: var(--bg-th);
+            color: var(--text-muted);
+            padding: 7px 6px;
+            font-size: 10px;
+            font-weight: 700;
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        tbody td {
+            padding: 6px 6px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 11px;
+            white-space: nowrap;
+            background: var(--bg-td);
+            color: var(--text-main);
+            font-variant-numeric: tabular-nums;
+        }
+        tbody tr.master-row:hover td {
+            background: var(--bg-hover);
+            cursor: pointer;
+        }
+        tfoot td {
+            position: sticky;
+            bottom: 0;
+            z-index: 4;
+            background: var(--bg-card-subtle);
+            border-top: 2px solid var(--border-color);
+            padding: 7px 6px;
+            font-size: 11px;
+            font-weight: 800;
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Tombol Expand Detail */
+        .btn-expand {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: #38bdf8;
+            font-weight: 800;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .btn-expand:hover { background: #38bdf8; color: #0f172a; }
+
+        /* Tombol Pill Operasional */
+        .btn-operasional-pill {
+            background: rgba(249, 115, 22, 0.12);
+            border: 1px solid rgba(249, 115, 22, 0.35);
+            color: #f97316;
+            font-weight: 700;
+            font-size: 11px;
+            padding: 2.5px 7px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s ease;
+        }
+        .btn-operasional-pill:hover {
+            background: rgba(249, 115, 22, 0.25);
+            border-color: #f97316;
+            color: #ffedd5;
+            transform: translateY(-1px);
+        }
+        .btn-arrow-pill {
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            color: #38bdf8;
+            font-size: 10px;
+            font-weight: 800;
+            width: 22px;
+            height: 22px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            padding: 0;
+        }
+        .btn-arrow-pill:hover {
+            background: #38bdf8;
+            color: #0f172a;
+        }
+        .link-modal-biaya {
+            font-size: 9.5px;
+            color: #38bdf8;
+            cursor: pointer;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            opacity: 0.85;
+            transition: opacity 0.15s ease;
+        }
+        .link-modal-biaya:hover {
+            opacity: 1;
+            color: #7dd3fc;
+        }
+
+        /* =========================================================
+           MODERN 3-CARD AUDIT DRAWER (EXPAND DETAIL)
+           ========================================================= */
+        tr.detail-row {
+            background: var(--bg-card-subtle);
+        }
+        tr.detail-row td.detail-cell-wrapper {
+            padding: 10px 14px;
+            background: var(--bg-card-subtle);
+            border-bottom: 2px solid var(--border-color);
+            border-left: 4px solid #38bdf8;
+            white-space: normal;
+        }
+
+        .nested-box-drawer {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            text-align: left;
+        }
+
+        @media (min-width: 992px) {
+            .nested-box-drawer {
+                grid-template-columns: minmax(340px, 1.8fr) minmax(260px, 1.2fr) minmax(240px, 1.1fr);
+            }
+        }
+
+        /* Card Box Container */
+        .audit-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .audit-card:hover {
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.09);
+        }
+
+        /* Card Headers */
+        .audit-card-header {
+            background: var(--bg-th);
+            padding: 7px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .audit-card-title {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .title-biaya { color: #f97316; }
+        .title-audit { color: var(--total-setor-color); }
+
+        .audit-badge-count {
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            font-size: 9.5px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 10px;
+        }
+        .audit-badge-kas {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            font-size: 9.5px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            max-width: 140px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .audit-badge-driver {
+            background: rgba(148, 163, 184, 0.15);
+            color: var(--text-muted);
+            font-size: 9.5px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Card Body */
+        .audit-card-body {
+            padding: 8px 10px;
+            flex: 1;
+        }
+
+        /* Card 1: Nested Table Inside Card */
+        .audit-card .nested-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10.5px;
+        }
+        .audit-card .nested-table th {
+            background: var(--bg-input);
+            padding: 5px 6px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 9.5px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-align: left;
+        }
+        .audit-card .nested-table td {
+            padding: 5px 6px;
+            border-bottom: 1px solid var(--border-color);
+            background: transparent !important;
+            font-size: 10.5px;
+            vertical-align: middle;
+        }
+        .audit-card .nested-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .btn-table-action {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 2px 5px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-table-action:hover {
+            background: var(--btn-primary);
+            color: #ffffff;
+            border-color: var(--btn-primary);
+        }
+
+        /* Card 2: Biaya List */
+        .biaya-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4.5px;
+            font-size: 10.5px;
+        }
+        .biaya-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 0;
+            border-bottom: 1px dashed var(--border-color);
+        }
+        .biaya-item:last-child {
+            border-bottom: none;
+        }
+        .biaya-label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .biaya-subket {
+            font-size: 9.5px;
+            color: #fbbf24;
+            font-weight: 600;
+        }
+        .biaya-val {
+            font-weight: 700;
+            color: var(--text-main);
+            font-variant-numeric: tabular-nums;
+        }
+        .km-val {
+            color: #38bdf8;
+            font-weight: 600;
+        }
+
+        .audit-card-footer.footer-biaya {
+            background: rgba(249, 115, 22, 0.1);
+            border-top: 1px solid rgba(249, 115, 22, 0.25);
+            padding: 7px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 800;
+            color: #f97316;
+        }
+        .biaya-total-val {
+            font-size: 13px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Card 3: Slip Audit Kasir */
+        .card-audit {
+            border-color: rgba(251, 191, 36, 0.35);
+            background: var(--bg-card);
+        }
+        .light-mode .card-audit {
+            background: #fffdfa;
+            border-color: #fde68a;
+        }
+        .audit-calc-body {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .calc-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+        .calc-label {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .calc-val-cash {
+            font-weight: 800;
+            color: var(--cash-color);
+            font-variant-numeric: tabular-nums;
+        }
+        .calc-val-biaya {
+            font-weight: 800;
+            color: #f97316;
+            font-variant-numeric: tabular-nums;
+        }
+        .calc-divider {
+            border-top: 1.5px dashed var(--border-color);
+            margin: 4px 0 6px 0;
+        }
+        .calc-net-box {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 6px;
+            padding: 6px 8px;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .calc-net-label {
+            display: block;
+            font-size: 9.5px;
+            font-weight: 800;
+            color: var(--total-setor-color);
+            letter-spacing: 0.4px;
+        }
+        .calc-net-val {
+            display: block;
+            font-size: 16px;
+            font-weight: 900;
+            color: var(--total-setor-color);
+            letter-spacing: -0.3px;
+            font-variant-numeric: tabular-nums;
+            margin-top: 2px;
+        }
+
+        .audit-action-zone {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .audit-status-badge {
+            text-align: center;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.2px;
+        }
+        .audit-status-badge.lunas {
+            background: var(--setor-sudah-bg);
+            color: var(--setor-sudah-text);
+            border: 1px solid var(--setor-sudah-border);
+        }
+        .audit-status-badge.belum {
+            background: var(--setor-belum-bg);
+            color: var(--setor-belum-text);
+            border: 1px solid var(--setor-belum-border);
+        }
+
+        .btn-audit-toggle {
+            width: 100%;
+            padding: 6px 8px;
+            border-radius: 5px;
+            font-size: 10.5px;
+            font-weight: 800;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .btn-audit-toggle.terima {
+            background: #059669;
+            color: #ffffff;
+        }
+        .btn-audit-toggle.terima:hover {
+            background: #047857;
+        }
+        .btn-audit-toggle.batal {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            font-size: 9.5px;
+            font-weight: 600;
+            padding: 4px;
+        }
+        .btn-audit-toggle.batal:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border-color: #ef4444;
+        }
+
+        /* Badges */
+        .badge-nota { 
+            background: rgba(59, 130, 246, 0.12); 
+            color: #60a5fa; 
+            padding: 2px 5px; 
+            border-radius: 3px; 
+            font-weight: 700; 
+            font-size: 9.5px; 
+            cursor: pointer; 
+            display: inline-block; 
+            margin: 1px;
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            transition: all 0.1s;
+        }
+        .badge-nota:hover { background: #2563eb; color: #ffffff; }
+
+        .badge-lunas { background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 700; border-radius: 3px; padding: 2px 5px; font-size: 9px; }
+        .badge-pending { background: rgba(245, 158, 11, 0.15); color: #f59e0b; font-weight: 700; border-radius: 3px; padding: 2px 5px; font-size: 9px; }
+
+        /* Checklist Kasir */
+        .setoran-wrapper {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .setoran-checkbox {
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+            accent-color: #10b981;
+        }
+        .badge-setoran {
+            padding: 3px 7px;
+            border-radius: 4px;
+            font-size: 9.5px;
+            font-weight: 800;
+            letter-spacing: 0.2px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            user-select: none;
+            transition: all 0.15s;
+        }
+        .setoran-belum { background: var(--setor-belum-bg); color: var(--setor-belum-text); border: 1px solid var(--setor-belum-border); }
+        .setoran-sudah { background: var(--setor-sudah-bg); color: var(--setor-sudah-text); border: 1px solid var(--setor-sudah-border); }
+
+        /* =========================================================
+           5. ANDROID MOBILE CARDS (TOUCH-OPTIMIZED)
+           ========================================================= */
+        .mobile-card-container { display: none; }
+
+        @media (max-width: 820px) {
+            body { padding: 4px 6px 24px 6px; }
+            .app-header { padding: 6px 8px; }
+            .brand-sub { display: none; }
+            .filter-strip { flex-direction: column; align-items: stretch; padding: 8px; gap: 6px; }
+            .filter-left { flex-direction: column; align-items: stretch; gap: 5px; }
+            .date-box { justify-content: space-between; padding: 4px 8px; }
+            .preset-strip { overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+            .preset-strip::-webkit-scrollbar { display: none; }
+            .filter-right { justify-content: stretch; width: 100%; gap: 6px; }
+            .filter-right .btn-ctrl { flex: 1; justify-content: center; padding: 7px 8px; font-size: 11.5px; }
+
+            /* KPI 2-Baris Seimbang di Mobile */
+            .kpi-container { gap: 6px; margin-bottom: 7px; }
+            .kpi-row-top { grid-template-columns: 1fr 1fr; gap: 6px; }
+            .kpi-tile.bersih { grid-column: span 2; }
+            .kpi-row-bottom { grid-template-columns: 1fr 1fr; gap: 6px; }
+            .kpi-tile { padding: 8px 10px; }
+            .kpi-val { font-size: 15.5px; }
+            .kpi-tile.bersih .kpi-val { font-size: 17.5px; }
+
+            /* Toolbar Pencarian & Filter Status di Mobile */
+            .table-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+            }
+            .search-wrap {
+                min-width: 100%;
+                max-width: 100%;
+            }
+            .search-wrap input {
+                padding: 7px 26px 7px 28px;
+                font-size: 12px;
+                border-radius: 6px;
+            }
+            .pills-group {
+                width: 100%;
+                display: flex;
+                gap: 4px;
+            }
+            .pill-btn {
+                flex: 1;
+                text-align: center;
+                padding: 6px 4px;
+                font-size: 11px;
+                border-radius: 6px;
+            }
+
+            /* Container Switcher */
+            .table-container.desktop-only { display: none; }
+            .mobile-card-container { display: flex; flex-direction: column; gap: 8px; }
+
+            /* Kartu Perjalanan Supir Ergonomis Mobile */
+            .driver-card {
+                background: var(--bg-card);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                padding: 10px 12px;
+                display: flex;
+                flex-direction: column;
+                gap: 7px;
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+                transition: transform 0.15s ease, box-shadow 0.15s ease;
+            }
+            .driver-card:active {
+                transform: scale(0.995);
+            }
+            .driver-card.card-sudah {
+                border-left: 4.5px solid var(--cash-color);
+            }
+            .driver-card.card-belum {
+                border-left: 4.5px solid var(--sisa-color);
+            }
+
+            .driver-card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                border-bottom: 1px solid var(--border-color);
+                padding-bottom: 6px;
+                cursor: pointer;
+            }
+            .driver-card-drv { font-size: 13px; font-weight: 800; color: var(--text-main); }
+            .driver-card-unit { font-size: 10.5px; color: var(--text-muted); font-weight: 600; margin-top: 1px; }
+            .driver-card-time { font-size: 10px; color: var(--text-muted); text-align: right; }
+
+            .driver-net-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: rgba(251, 191, 36, 0.08);
+                padding: 6px 10px;
+                border-radius: 6px;
+                border: 1px solid rgba(251, 191, 36, 0.25);
+            }
+            .driver-net-label { font-size: 10px; font-weight: 800; color: var(--total-setor-color); text-transform: uppercase; }
+            .driver-net-value { font-size: 16px; font-weight: 900; color: var(--total-setor-color); font-variant-numeric: tabular-nums; }
+
+            .btn-ceklis-mobile {
+                width: 100%;
+                padding: 10px 12px;
+                border-radius: 6px;
+                font-weight: 800;
+                font-size: 11.5px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                border: none;
+                letter-spacing: 0.2px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            }
+            .btn-ceklis-mobile:active { transform: scale(0.98); }
+            .btn-ceklis-mobile.sudah { background: var(--setor-sudah-bg); color: var(--setor-sudah-text); border: 1px solid var(--setor-sudah-border); }
+            .btn-ceklis-mobile.belum { background: var(--setor-belum-bg); color: var(--setor-belum-text); border: 1px solid var(--setor-belum-border); }
+
+            .mobile-detail-toggle {
+                background: transparent;
+                border: none;
+                color: #38bdf8;
+                font-size: 10.5px;
+                font-weight: 800;
+                cursor: pointer;
+                padding: 4px 0;
+                text-align: center;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+            }
+            .mobile-acc-content {
+                display: none;
+                flex-direction: column;
+                gap: 7px;
+                padding-top: 8px;
+                border-top: 1px dashed var(--border-color);
+            }
+            .mobile-acc-content.open { display: flex; }
+        }
+
+        /* =========================================================
+           6. STRUK MODAL & ACTION
+           ========================================================= */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(3px); }
+        .modal-content { background: var(--bg-card); margin: 4% auto; border-radius: 10px; width: 92%; max-width: 420px; border: 1px solid var(--border-color); box-shadow: 0 16px 36px rgba(0,0,0,0.5); overflow: hidden; }
+        .modal-header { background: var(--bg-th); padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+        .modal-body { padding: 12px; max-height: 75vh; overflow-y: auto; }
+        .close-btn { font-size: 20px; cursor: pointer; color: var(--text-muted); line-height: 1; }
+        .close-btn:hover { color: #ef4444; }
+
+        .struk-box { background: #fff !important; border: 1px solid #cbd5e1; padding: 12px; border-radius: 6px; font-family: 'Inter', sans-serif; color: #1f2937 !important; font-size: 11px; line-height: 1.35; }
+        .struk-center { text-align: center; }
+        .struk-bold { font-weight: 700; color: #111827; }
+        .struk-title { font-size: 14px; font-weight: 800; margin: 0; }
+        .struk-separator { border-top: 1px dashed #cbd5e1; margin: 4px 0; }
+        .struk-double-separator { border-top: 2px double #94a3b8; margin: 6px 0; }
+        .struk-row { display: flex; justify-content: space-between; align-items: center; }
+        .struk-text-muted { color: #6b7280; font-size: 10px; }
+
+        .printer-options { margin-top: 8px; text-align: center; background: var(--bg-input); padding: 6px; border-radius: 5px; border: 1px solid var(--border-color); font-size: 10.5px; }
+        .printer-options select { padding: 4px 6px; border-radius: 4px; font-weight: 600; background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); outline: none; font-size: 10.5px; }
+
+        .action-menu-btn { width: 100%; margin-bottom: 6px; padding: 9px; border-radius: 5px; font-weight: 700; border: none; cursor: pointer; font-size: 11.5px; }
+        .btn-edit { background: var(--btn-primary); color: white; }
+        .btn-hapus { background: #ef4444; color: white; }
+        .btn-batal { background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color); }
+
+        #toastContainer { position: fixed; bottom: 14px; right: 14px; z-index: 9999; display: flex; flex-direction: column; gap: 5px; pointer-events: none; }
+        .toast { background: var(--bg-card); color: var(--text-main); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); box-shadow: 0 6px 16px rgba(0,0,0,0.3); font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 6px; pointer-events: auto; }
+        .toast.success { border-left: 3px solid #10b981; }
+        .toast.warning { border-left: 3px solid #ef4444; }
+
+        .empty-message { padding: 25px !important; color: var(--text-muted) !important; text-align: center; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>MONITORING LAPORAN HARIAN DRIVER</h2>
-
-    <div class="summary-grid">
-        <div class="summary-box">
-            <p>Total Cash Kotor</p>
-            <h3 id="totKotor" style="color: #2ecc71;">Rp 0</h3>
-        </div>
-        <div class="summary-box">
-            <p>Total Operasional</p>
-            <h3 id="totBiaya" style="color: #e74c3c;">Rp 0</h3>
-        </div>
-        <div class="summary-box">
-            <p>Total Sisa Bersih</p>
-            <h3 id="totBersih" style="color: #fbc531;">Rp 0</h3>
-        </div>
+<!-- 1. SLIM TOP NAVBAR -->
+<header class="app-header">
+    <div class="header-brand">
+        <span class="brand-badge">SBR</span>
+        <h1 class="brand-title">SETORAN DRIVER & REKAP</h1>
+        <span class="brand-sub">&bull; Kasir & Mutasi Nota Terpadu</span>
     </div>
+    <div class="header-right">
+        <span style="font-size:10.5px; color:var(--text-muted);" id="headerTripCount">0 Perjalanan</span>
+        <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" title="Ganti Tema">☀️</button>
+    </div>
+</header>
 
-    <div class="filter-section">
-        <div class="filter-group">
-            <label>DARI TANGGAL</label>
+<!-- 2. STREAMLINED FILTER & ACTION TOOLBAR (1 STRIP) -->
+<div class="filter-strip">
+    <div class="filter-left">
+        <div class="date-box">
+            <label>Dari:</label>
             <input type="date" id="tglMulai">
-        </div>
-        <div class="filter-group">
-            <label>SAMPAI TANGGAL</label>
+            <span style="color:var(--text-muted);">&rarr;</span>
+            <label>Sampai:</label>
             <input type="date" id="tglSelesai">
         </div>
-        <div class="btn-container">
-            <button class="btn btn-tampilkan" onclick="muatLaporanDriver()">TAMPILKAN</button>
-            <button class="btn btn-excel" onclick="exportExcelDriver()">EXPORT EXCEL</button>
+
+        <div class="preset-strip">
+            <button type="button" class="btn-preset active" id="presetKemarinHariIni" onclick="pilihPresetTanggal('kemarin_hari_ini', this)">Kemarin & Hari Ini</button>
+            <button type="button" class="btn-preset" id="presetHariIni" onclick="pilihPresetTanggal('hari_ini', this)">Hari Ini Saja</button>
+            <button type="button" class="btn-preset" id="preset7Hari" onclick="pilihPresetTanggal('7_hari', this)">7 Hari</button>
+            <button type="button" class="btn-preset" id="presetBulanIni" onclick="pilihPresetTanggal('bulan_ini', this)">Bulan Ini</button>
         </div>
     </div>
 
-    <div class="table-container">
-        <table id="tabelAdminDriver">
-            <thead>
-                <tr>
-                    <th>JAM/TGL</th>
-                    <th>DRIVER</th>
-                    <th>UNIT KENDARAAN</th>
-                    <th>AGEN / NO NOTA</th>
-                    <th>CASH KOTOR (RP)</th>
-                    <th>UANG JALAN (RP)</th>
-                    <th>BBM (RP)</th>
-                    <th>BONGKAR (RP)</th>
-                    <th>LAIN-LAIN (RP)</th>
-                    <th>KAS BIAYA DARI</th>
-                    <th>SISA BERSIH (RP)</th>
-                </tr>
-            </thead>
-            <tbody id="isiTabelDriver">
-                <tr><td colspan="11" style="padding:40px; background:#fff; color:#999;">Tentukan rentang tanggal lalu klik Tampilkan.</td></tr>
-            </tbody>
-        </table>
+    <div class="filter-right">
+        <button class="btn-ctrl btn-primary-ctrl" onclick="muatDataMaster()"><span>🔍</span> Tampilkan</button>
+        <button class="btn-ctrl btn-excel-ctrl" onclick="exportExcelMaster()"><span>📥</span> Excel</button>
+        <button class="btn-ctrl btn-wa-ctrl" onclick="salinRekapDriverWA()"><span>📱</span> Salin WA</button>
     </div>
 </div>
 
+<!-- 3. UNIFIED KPI METRIC TILES (2 BARIS STRUKTUR SEIMBANG) -->
+<div class="kpi-container">
+    <!-- Baris 1: 3 Kartu Keuangan / Omzet Utama -->
+    <div class="kpi-row-top">
+        <div class="kpi-tile cash">
+            <div class="kpi-top">
+                <span class="kpi-label">Total Cash Ditagih</span>
+                <span class="kpi-icon">💵</span>
+            </div>
+            <div class="kpi-val" id="kpiTotalCash">Rp 0</div>
+            <div class="kpi-sub" id="kpiSubTrf">Transfer: Rp 0</div>
+        </div>
+        <div class="kpi-tile biaya">
+            <div class="kpi-top">
+                <span class="kpi-label">Biaya Operasional</span>
+                <span class="kpi-icon">⛽</span>
+            </div>
+            <div class="kpi-val" id="kpiTotalBiaya">Rp 0</div>
+            <div class="kpi-sub">BBM, Jalan, Bongkar, Lain</div>
+        </div>
+        <div class="kpi-tile bersih">
+            <div class="kpi-top">
+                <span class="kpi-label">Bersih Wajib di Laci</span>
+                <span class="kpi-icon">💰</span>
+            </div>
+            <div class="kpi-val" id="kpiTotalBersih">Rp 0</div>
+            <div class="kpi-sub">Cash Ditagih - Operasional</div>
+        </div>
+    </div>
+
+    <!-- Baris 2: 2 Kartu Status Setoran Kasir -->
+    <div class="kpi-row-bottom">
+        <div class="kpi-tile sudah">
+            <div class="kpi-top">
+                <span class="kpi-label">Sudah Diterima Kasir</span>
+                <span class="kpi-icon">✅</span>
+            </div>
+            <div class="kpi-val" id="kpiSudahSetor">Rp 0</div>
+            <div class="kpi-sub" id="kpiSudahCount">0 Supir Lunas</div>
+        </div>
+        <div class="kpi-tile belum">
+            <div class="kpi-top">
+                <span class="kpi-label">Belum Diterima Kasir</span>
+                <span class="kpi-icon">⏳</span>
+            </div>
+            <div class="kpi-val" id="kpiBelumSetor">Rp 0</div>
+            <div class="kpi-sub" id="kpiBelumCount">0 Supir Belum Setor</div>
+        </div>
+    </div>
+</div>
+
+<!-- 4. MASTER DATA CONTAINER -->
+<div class="content-card">
+    <div class="table-toolbar">
+        <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="liveSearchInput" placeholder="Cari supir, agen, nomor nota, armada..." oninput="filterDanRender()">
+            <button type="button" class="btn-clear-s" id="btnClearSearch" onclick="hapusSearch()">✕</button>
+        </div>
+
+        <div class="pills-group">
+            <button type="button" class="pill-btn active" id="pillSemua" onclick="setStatusFilter('Semua')">Semua (<span id="cntSemua">0</span>)</button>
+            <button type="button" class="pill-btn pill-belum" id="pillBelum" onclick="setStatusFilter('Belum')">⏳ Belum (<span id="cntBelum">0</span>)</button>
+            <button type="button" class="pill-btn pill-sudah" id="pillSudah" onclick="setStatusFilter('Sudah')">✅ Sudah (<span id="cntSudah">0</span>)</button>
+        </div>
+    </div>
+
+    <!-- Desktop Master-Detail Table -->
+    <div class="table-container desktop-only">
+        <table id="tabelMasterDesktop">
+            <thead>
+                <tr>
+                    <th style="width: 25px;"></th>
+                    <th>WAKTU</th>
+                    <th style="text-align: left;">DRIVER & ARMADA</th>
+                    <th style="text-align: left;">AGEN & NOTA</th>
+                    <th style="text-align: right; color: var(--cash-color);">CASH TAGIHAN</th>
+                    <th style="text-align: right;">OPERASIONAL</th>
+                    <th>KAS DARI</th>
+                    <th style="text-align: right; color: var(--total-setor-color); font-weight:800;">WAJIB SETOR</th>
+                    <th>CEKLIS KASIR</th>
+                </tr>
+            </thead>
+            <tbody id="isiTabelMaster">
+                <tr><td colspan="9" class="empty-message">Pilih rentang tanggal lalu klik Tampilkan.</td></tr>
+            </tbody>
+            <tfoot id="kakiTabelMaster"></tfoot>
+        </table>
+    </div>
+
+    <!-- Mobile Card View -->
+    <div class="mobile-card-container" id="isiKartuMobile"></div>
+</div>
+
+<!-- Modal Struk -->
+<div id="modalDetail" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalJudul" style="margin:0; font-size:12px; font-weight:800;">STRUK TRANSAKSI</h3>
+            <span class="close-btn" onclick="tutupModal()">&times;</span>
+        </div>
+        <div class="modal-body" id="modalIsi"></div>
+    </div>
+</div>
+
+<!-- Modal Aksi Nota -->
+<div id="modalAksi" class="modal">
+    <div class="modal-content" style="max-width: 280px;">
+        <div class="modal-header">
+            <h3 style="margin:0; font-size:12px;">OPSI NOTA: <span id="lblNotaAksi"></span></h3>
+        </div>
+        <div class="modal-body" style="text-align: center;">
+            <button class="action-menu-btn btn-edit" onclick="bukaFormEdit()">✏️ EDIT NOTA</button>
+            <button class="action-menu-btn btn-hapus" onclick="hapusDataTransaksi()">🗑️ HAPUS NOTA</button>
+            <button class="action-menu-btn btn-batal" onclick="tutupModalAksi()">🔙 KEMBALI</button>
+        </div>
+    </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<!-- =========================================================
+     JAVASCRIPT: SOLUSI 1 MASTER-DETAIL ENGINE
+     ========================================================= -->
 <script>
     const SB_URL = "https://wunnynznajgwltzqdvfi.supabase.co";
     const SB_KEY = "sb_publishable_HJGWlUbTi-sT6tpFU4eZ1g_um4hmtVd";
     const _sb = supabase.createClient(SB_URL, SB_KEY);
 
-    window.onload = () => {
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('tglMulai').value = today;
-        document.getElementById('tglSelesai').value = today;
-    };
+    let masterDataCache = [];
+    let filterStatusSetor = 'Semua';
+    let dataStrukAktif = null;
+    let notaAktifAksi = "";
+    let tabelAsalAksi = "";
+    let openRowsSet = new Set(); // Menyimpan id baris yang sedang di-expand
 
-    async function muatLaporanDriver() {
-        const tbody = document.getElementById('isiTabelDriver');
-        tbody.innerHTML = "<tr><td colspan='11' style='padding:30px; background:#fff; color:#000;'>Menarik data setoran driver...</td></tr>";
+    function formatTanggalLokal(d) {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
 
-        const tglAwal = document.getElementById('tglMulai').value;
-        const tglAkhir = document.getElementById('tglSelesai').value;
+    function toggleTheme() {
+        const body = document.body;
+        const btn = document.getElementById('themeToggle');
+        body.classList.toggle('light-mode');
+        if (body.classList.contains('light-mode')) {
+            btn.innerText = '🌙';
+            localStorage.setItem('theme_sbr', 'light');
+        } else {
+            btn.innerText = '☀️';
+            localStorage.setItem('theme_sbr', 'dark');
+        }
+    }
 
-        const { data: laporanData, error: errLaporan } = await _sb.from('rekap_laporan_driver')
-            .select('*')
-            .gte('created_at', `${tglAwal}T00:00:00`)
-            .lte('created_at', `${tglAkhir}T23:59:59`)
-            .order('created_at', { ascending: false });
+    function pilihPresetTanggal(tipe, btnEl) {
+        const now = new Date();
+        let startStr = "";
+        let endStr = formatTanggalLokal(now);
 
-        if (errLaporan) { alert("Gagal memuat: " + errLaporan.message); return; }
-        
-        if (!laporanData || laporanData.length === 0) { 
-            tbody.innerHTML = "<tr><td colspan='11' style='padding:30px; background:#fff; color:#000;'>Tidak ada setoran driver di tanggal ini.</td></tr>";
-            hitungSummary([]);
-            return; 
+        if (tipe === 'kemarin_hari_ini') {
+            const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+            startStr = formatTanggalLokal(yesterday);
+            endStr = formatTanggalLokal(now);
+        } else if (tipe === 'hari_ini') {
+            startStr = formatTanggalLokal(now);
+            endStr = formatTanggalLokal(now);
+        } else if (tipe === '7_hari') {
+            const past7 = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
+            startStr = formatTanggalLokal(past7);
+            endStr = formatTanggalLokal(now);
+        } else if (tipe === 'bulan_ini') {
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            startStr = formatTanggalLokal(firstDay);
+            endStr = formatTanggalLokal(now);
         }
 
-        const { data: transaksiData } = await _sb.from('transaksi').select('no_nota, bayar_cash');
-        const { data: armadaData } = await _sb.from('monitoring_kendaraan').select('plat_nomor, nama_unit');
+        document.getElementById('tglMulai').value = startStr;
+        document.getElementById('tglSelesai').value = endStr;
 
-        tbody.innerHTML = "";
-        
-        const laporanSelesai = laporanData.map(r => {
-            let totalCashNota = 0;
-            if (r.no_nota) {
-                const listNota = r.no_nota.split(',').map(s => s.trim());
-                listNota.forEach(notaSingle => {
-                    const matchTx = transaksiData?.find(t => t.no_nota === notaSingle);
-                    if (matchTx) {
-                        totalCashNota += parseInt(matchTx.bayar_cash || 0);
-                    }
-                });
+        document.querySelectorAll('.btn-preset').forEach(b => b.classList.remove('active'));
+        if (btnEl) btnEl.classList.add('active');
+
+        muatDataMaster();
+    }
+
+    function tampilkanToast(pesan, jenis = 'success') {
+        const c = document.getElementById('toastContainer');
+        const t = document.createElement('div');
+        t.className = `toast ${jenis}`;
+        t.innerHTML = pesan;
+        c.appendChild(t);
+        setTimeout(() => {
+            t.style.opacity = '0';
+            t.style.transform = 'translateY(8px)';
+            t.style.transition = 'all 0.2s';
+            setTimeout(() => t.remove(), 200);
+        }, 2800);
+    }
+
+    window.onload = () => {
+        const now = new Date();
+        const todayStr = formatTanggalLokal(now);
+        const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+        const yesterdayStr = formatTanggalLokal(yesterday);
+
+        document.getElementById('tglMulai').value = yesterdayStr;
+        document.getElementById('tglSelesai').value = todayStr;
+
+        if (localStorage.getItem('theme_sbr') === 'light') {
+            document.body.classList.add('light-mode');
+            document.getElementById('themeToggle').innerText = '🌙';
+        }
+
+        muatDataMaster();
+    };
+
+    // =========================================================
+    // LOAD MASTER-DETAIL DATA
+    // =========================================================
+    async function muatDataMaster() {
+        const tglMulai = document.getElementById('tglMulai').value;
+        const tglSelesai = document.getElementById('tglSelesai').value;
+
+        document.getElementById('isiTabelMaster').innerHTML = "<tr><td colspan='9' class='empty-message'>Memuat data setoran & nota terpadu... ⏳</td></tr>";
+        document.getElementById('isiKartuMobile').innerHTML = "<div class='empty-message'>Memuat data setoran... ⏳</div>";
+
+        try {
+            // Buffer tanggal mulai mundur 3 hari untuk mengantisipasi transaksi lintas tengah malam
+            // (contoh: nota diinput kasir/admin malam H-1 jam 23.00, lalu supir jalan/rekap subuh hari H jam 02.00)
+            const [y, m, d] = tglMulai.split('-').map(Number);
+            const dMulai = new Date(y, m - 1, d);
+            dMulai.setDate(dMulai.getDate() - 3);
+            const tglMulaiBuffer = formatTanggalLokal(dMulai);
+
+            // Ambil semua data perjalanan driver, transaksi (+ buffer tanggal), dan armada
+            const [resDriver, resNormal, resDp, resArmada] = await Promise.all([
+                _sb.from('rekap_laporan_driver')
+                    .select('*')
+                    .gte('created_at', `${tglMulai}T00:00:00`)
+                    .lte('created_at', `${tglSelesai}T23:59:59`)
+                    .order('created_at', { ascending: false }),
+                _sb.from('transaksi').select('*').gte('tanggal', tglMulaiBuffer).lte('tanggal', tglSelesai),
+                _sb.from('transaksi_dp').select('*').gte('tanggal', tglMulaiBuffer).lte('tanggal', tglSelesai),
+                _sb.from('monitoring_kendaraan').select('plat_nomor, nama_unit')
+            ]);
+
+            let allNotas = [];
+            if (resNormal.data) allNotas.push(...resNormal.data.map(d => ({ ...d, _tabelAsal: 'transaksi' })));
+            if (resDp.data) allNotas.push(...resDp.data.map(d => ({ ...d, _tabelAsal: 'transaksi_dp' })));
+
+            const armadaList = resArmada.data || [];
+            const rawDrivers = resDriver.data || [];
+
+            // Kumpulkan nomor nota supir yang belum ditemukan di allNotas (misal jika nota dibuat > 3 hari lalu)
+            const knownNotaSet = new Set(allNotas.map(n => (n.no_nota || '').trim().toUpperCase()));
+            const missingNotas = [];
+            rawDrivers.forEach(r => {
+                if (r.no_nota && r.no_nota !== '-') {
+                    r.no_nota.split(/[,;/]+/).map(s => s.trim()).filter(Boolean).forEach(notaNo => {
+                        const upper = notaNo.toUpperCase();
+                        if (!knownNotaSet.has(upper) && !missingNotas.includes(notaNo)) {
+                            missingNotas.push(notaNo);
+                        }
+                    });
+                }
+            });
+
+            // Ambil nota yang tertinggal langsung by no_nota
+            if (missingNotas.length > 0) {
+                const [resMissingTx, resMissingDp] = await Promise.all([
+                    _sb.from('transaksi').select('*').in('no_nota', missingNotas),
+                    _sb.from('transaksi_dp').select('*').in('no_nota', missingNotas)
+                ]);
+                if (resMissingTx.data) allNotas.push(...resMissingTx.data.map(d => ({ ...d, _tabelAsal: 'transaksi' })));
+                if (resMissingDp.data) allNotas.push(...resMissingDp.data.map(d => ({ ...d, _tabelAsal: 'transaksi_dp' })));
             }
-            
-            const nominalLain = r.lain_lain || 0; 
-            const totalBiaya = (r.uang_jalan || 0) + (r.uang_bbm || 0) + (r.uang_bongkar || 0) + nominalLain;
-            const sisaBersih = totalCashNota - totalBiaya;
 
-            let namaDriverGabung = r.nama_driver || '-';
-            if (r.driver_2 && r.driver_2 !== '-') {
-                namaDriverGabung += ` / ${r.driver_2}`;
-            }
+            // Bentuk Relasi Master-Detail
+            masterDataCache = rawDrivers.map(r => {
+                let matchedNotas = [];
+                let totalCashNota = 0;
+                let totalTransferNota = 0;
+                let totalKirimTrip = 0;
+                let totalReturTrip = 0;
 
-            const cocokArmada = armadaData?.find(a => a.plat_nomor === r.plat_nomor);
-            const hanyaNamaUnit = cocokArmada ? cocokArmada.nama_unit : (r.plat_nomor || '-');
+                if (r.no_nota && r.no_nota !== '-') {
+                    const rawList = r.no_nota.split(/[,;/]+/).map(s => s.trim()).filter(Boolean);
+                    rawList.forEach(notaNo => {
+                        const targetUpper = notaNo.toUpperCase();
+                        const match = allNotas.find(t => (t.no_nota || '').trim().toUpperCase() === targetUpper);
+                        if (match) {
+                            matchedNotas.push(match);
+                            totalCashNota += parseInt(match.bayar_cash || 0);
+                            totalTransferNota += parseInt(match.bayar_transfer || 0);
+                            totalKirimTrip += parseInt(match.total_kirim || 0);
+                            totalReturTrip += parseInt(match.total_retur || 0);
+                        } else {
+                            matchedNotas.push({
+                                no_nota: notaNo,
+                                nama_agen: r.nama_agen || '-',
+                                bayar_cash: 0,
+                                bayar_transfer: 0,
+                                total_kirim: 0,
+                                total_retur: 0,
+                                sisa_akhir: 0,
+                                _tabelAsal: 'transaksi'
+                            });
+                        }
+                    });
+                }
 
-            const sumberKasAgen = r.sumber_agen && r.sumber_agen !== '-' ? r.sumber_agen : 'Uang Jalan Driver';
+                const totalBiaya = parseInt(r.uang_jalan || 0) + parseInt(r.uang_bbm || 0) + parseInt(r.uang_bongkar || 0) + parseInt(r.lain_lain || 0);
+                const sisaBersih = totalCashNota - totalBiaya;
 
-            let teksLainLainFix = "";
-            if (r.ket_lain_lain && r.ket_lain_lain !== "-") {
-                teksLainLainFix = `${r.ket_lain_lain}: Rp ${nominalLain.toLocaleString('id-ID')}`;
+                let drvFull = r.nama_driver || '-';
+                if (r.driver_2 && r.driver_2 !== '-') drvFull += ` / ${r.driver_2}`;
+
+                const armadaItem = armadaList.find(a => a.plat_nomor === r.plat_nomor);
+                const unitNama = armadaItem ? armadaItem.nama_unit : (r.plat_nomor || '-');
+
+                return {
+                    ...r,
+                    driver_full: drvFull,
+                    unit_nama: unitNama,
+                    cash_kotor: totalCashNota,
+                    total_transfer: totalTransferNota,
+                    total_biaya: totalBiaya,
+                    sisa_bersih: sisaBersih,
+                    notas_detail: matchedNotas,
+                    kas_dari: r.sumber_agen && r.sumber_agen !== '-' ? r.sumber_agen : 'Uang Jalan Driver',
+                    is_setor: r.status_setoran === true
+                };
+            });
+
+            document.getElementById('headerTripCount').innerText = `${masterDataCache.length} Perjalanan`;
+            filterDanRender();
+
+        } catch (err) {
+            console.error("Gagal muat data master:", err);
+            alert("Kendala memuat data: " + err.message);
+        }
+    }
+
+    // =========================================================
+    // FILTER & RENDER
+    // =========================================================
+    function setStatusFilter(status) {
+        filterStatusSetor = status;
+        document.getElementById('pillSemua').classList.toggle('active', status === 'Semua');
+        document.getElementById('pillBelum').classList.toggle('active', status === 'Belum');
+        document.getElementById('pillSudah').classList.toggle('active', status === 'Sudah');
+        filterDanRender();
+    }
+
+    function hapusSearch() {
+        const inp = document.getElementById('liveSearchInput');
+        inp.value = '';
+        inp.focus();
+        document.getElementById('btnClearSearch').style.display = 'none';
+        filterDanRender();
+    }
+
+    function filterDanRender() {
+        const query = (document.getElementById('liveSearchInput')?.value || '').toLowerCase().trim();
+        const btnClear = document.getElementById('btnClearSearch');
+        if (btnClear) btnClear.style.display = query.length > 0 ? 'inline' : 'none';
+
+        let filtered = masterDataCache;
+
+        // Hitung total untuk badge filter
+        let countSudah = masterDataCache.filter(d => d.is_setor).length;
+        let countBelum = masterDataCache.filter(d => !d.is_setor).length;
+        document.getElementById('cntSemua').innerText = masterDataCache.length;
+        document.getElementById('cntSudah').innerText = countSudah;
+        document.getElementById('cntBelum').innerText = countBelum;
+
+        // Filter Status Setoran
+        if (filterStatusSetor === 'Belum') {
+            filtered = filtered.filter(d => !d.is_setor);
+        } else if (filterStatusSetor === 'Sudah') {
+            filtered = filtered.filter(d => d.is_setor);
+        }
+
+        // Filter Search Universal
+        if (query) {
+            filtered = filtered.filter(d => {
+                const drv = (d.driver_full || '').toLowerCase();
+                const unit = (d.unit_nama || '').toLowerCase();
+                const agen = (d.nama_agen || '').toLowerCase();
+                const plat = (d.plat_nomor || '').toLowerCase();
+                const nota = (d.no_nota || '').toLowerCase();
+                const ket = (d.ket_lain_lain || '').toLowerCase();
+                return drv.includes(query) || unit.includes(query) || agen.includes(query) || plat.includes(query) || nota.includes(query) || ket.includes(query);
+            });
+        }
+
+        // Hitung 5 KPI Terpadu
+        let totCash = 0, totTrf = 0, totBiaya = 0, totBersih = 0;
+        let totSudah = 0, totBelum = 0;
+        let cSudah = 0, cBelum = 0;
+
+        filtered.forEach(d => {
+            totCash += d.cash_kotor;
+            totTrf += d.total_transfer;
+            totBiaya += d.total_biaya;
+            totBersih += d.sisa_bersih;
+
+            if (d.is_setor) {
+                totSudah += d.sisa_bersih;
+                cSudah++;
             } else {
-                teksLainLainFix = `Rp ${nominalLain.toLocaleString('id-ID')}`;
+                totBelum += d.sisa_bersih;
+                cBelum++;
             }
-
-            return {
-                ...r,
-                cash_kotor_riil: totalCashNota,
-                total_biaya_riil: totalBiaya,
-                sisa_inter_bersih: sisaBersih,
-                driver_lengkap: namaDriverGabung,
-                nama_unit_saja: hanyaNamaUnit,
-                sumber_kas_fix: sumberKasAgen,
-                output_lain_lain: teksLainLainFix
-            };
         });
 
-        laporanSelesai.forEach(r => {
-            const dObj = new Date(r.created_at);
-            const tglIndo = dObj.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            const jamIndo = dObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('kpiTotalCash').innerText = `Rp ${totCash.toLocaleString('id-ID')}`;
+        document.getElementById('kpiSubTrf').innerText = `Transfer: Rp ${totTrf.toLocaleString('id-ID')}`;
+        document.getElementById('kpiTotalBiaya').innerText = `Rp ${totBiaya.toLocaleString('id-ID')}`;
+        document.getElementById('kpiTotalBersih').innerText = `Rp ${totBersih.toLocaleString('id-ID')}`;
+        document.getElementById('kpiSudahSetor').innerText = `Rp ${totSudah.toLocaleString('id-ID')}`;
+        document.getElementById('kpiSudahCount').innerText = `${cSudah} Supir Lunas`;
+        document.getElementById('kpiBelumSetor').innerText = `Rp ${totBelum.toLocaleString('id-ID')}`;
+        document.getElementById('kpiBelumCount').innerText = `${cBelum} Supir Belum Setor`;
 
-            tbody.innerHTML += `
-                <tr>
-                    <td style="background: #f8fafc;">${tglIndo}<br><span class="sub-txt">${jamIndo} WIB</span></td>
-                    <td class="text-bold txt-kiri">${r.driver_lengkap}</td>
-                    <td class="text-bold" style="color: #475569;">${r.nama_unit_saja}</td>
-                    <td class="txt-kiri">${r.nama_agen || '-'}<br><span class="sub-txt">Nota: ${r.no_nota || '-'}</span></td>
-                    <td style="color: #166534; font-weight:bold;">Rp ${(r.cash_kotor_riil).toLocaleString('id-ID')}</td>
-                    <td>Rp ${(r.uang_jalan || 0).toLocaleString('id-ID')}</td>
-                    <td>Rp ${(r.uang_bbm || 0).toLocaleString('id-ID')}</td>
-                    <td>Rp ${(r.uang_bongkar || 0).toLocaleString('id-ID')}</td>
-                    <td style="font-weight: 500; color: #334155;">${r.output_lain_lain}</td>
-                    <td style="color: #b45309; font-weight:bold; font-size:11px;">${r.sumber_kas_fix}</td>
-                    <td style="background: #fef08a; font-weight:bold; color: #000;">Rp ${r.sisa_inter_bersih.toLocaleString('id-ID')}</td>
+        renderDesktop(filtered, totCash, totBiaya, totBersih);
+        renderMobile(filtered);
+    }
+
+    // =========================================================
+    // RENDER DESKTOP (MASTER-DETAIL SPREADSHEET)
+    // =========================================================
+    function renderDesktop(list, totCash, totBiaya, totBersih) {
+        const tbody = document.getElementById('isiTabelMaster');
+        const tfoot = document.getElementById('kakiTabelMaster');
+
+        if (list.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='9' class='empty-message'>Tidak ada data perjalanan supir sesuai filter.</td></tr>";
+            tfoot.innerHTML = "";
+            return;
+        }
+
+        let html = "";
+        list.forEach(r => {
+            const dObj = new Date(r.created_at);
+            const tgl = dObj.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit' });
+            const jam = dObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+            const isChecked = r.is_setor ? 'checked' : '';
+            const badgeClass = r.is_setor ? 'setoran-sudah' : 'setoran-belum';
+            const badgeText = r.is_setor ? '✅ DISETOR' : '❌ BELUM';
+
+            const strId = String(r.id);
+            const isOpen = openRowsSet.has(strId);
+            const arrowIcon = isOpen ? '▼' : '▶';
+            const displayStyle = isOpen ? 'table-row' : 'none';
+            const notaCount = r.notas_detail.length;
+
+            let notaBadges = r.notas_detail.map(n => 
+                `<span class="badge-nota" onclick="bukaPreviewStruk(event, '${n.no_nota}', '${n._tabelAsal}')" title="Klik cetak struk">${n.no_nota}</span>`
+            ).join(' ') || '-';
+
+            // 1. Master Row
+            html += `
+                <tr class="master-row" onclick="toggleDetailRow('${strId}', event)">
+                    <td style="color:#38bdf8; font-weight:800; font-size:12px; cursor:pointer;" id="arrow_cell_${strId}">
+                        <button type="button" class="btn-arrow-pill" id="arrow_${strId}" onclick="toggleDetailRow('${strId}', event)" title="Buka/tutup rincian">${arrowIcon}</button>
+                    </td>
+                    <td style="font-size:10.5px; font-weight:600;">
+                        ${tgl}<br><span style="color:var(--text-muted); font-size:9.5px;">${jam} WIB</span>
+                    </td>
+                    <td style="text-align:left; font-weight:700;">
+                        ${r.driver_full}
+                        <div style="font-size:9.5px; color:var(--text-muted); font-weight:500;">🚙 ${r.unit_nama}</div>
+                    </td>
+                    <td style="text-align:left;">
+                        <span style="font-weight:700; color:var(--text-main); font-size:11.5px;">${r.nama_agen || '-'}</span>
+                        <div style="margin-top:2px;">
+                            ${notaBadges}
+                        </div>
+                    </td>
+                    <td style="text-align:right; font-weight:700; color:var(--cash-color);">
+                        Rp ${(r.cash_kotor).toLocaleString('id-ID')}
+                    </td>
+                    <td style="text-align:right;">
+                        <button type="button" class="btn-operasional-pill" onclick="toggleDetailRow('${strId}', event)" title="Klik untuk buka/tutup rincian biaya">
+                            Rp ${(r.total_biaya).toLocaleString('id-ID')} <span id="arrow_biaya_${strId}">${arrowIcon}</span>
+                        </button>
+                        <div style="margin-top:2px;">
+                            <span class="link-modal-biaya" onclick="bukaModalBiaya('${strId}', event)" title="Lihat dialog rincian biaya lengkap">🔍 Rincian Biaya</span>
+                        </div>
+                    </td>
+                    <td style="font-size:10px; color:#fbbf24; font-weight:600;">${r.kas_dari}</td>
+                    <td style="text-align:right; font-weight:800; font-size:12.5px; color:${r.sisa_bersih < 0 ? '#ef4444' : 'var(--total-setor-color)'}; background:${r.sisa_bersih < 0 ? 'rgba(239,68,68,0.08)' : 'rgba(251,191,36,0.06)'};">
+                        Rp ${(r.sisa_bersih).toLocaleString('id-ID')}
+                        ${r.sisa_bersih < 0 ? '<div style="font-size:9px; color:#ef4444; font-weight:700;">⚠️ Klaim Defisit</div>' : ''}
+                    </td>
+                    <td>
+                        <div class="setoran-wrapper" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="chk_${strId}" class="setoran-checkbox" ${isChecked} onchange="toggleStatusSetoran('${strId}', this.checked, '${r.driver_full}')">
+                            <label for="chk_${strId}" id="badge_${strId}" class="badge-setoran ${badgeClass}">${badgeText}</label>
+                        </div>
+                    </td>
+                </tr>
+            `;
+
+            // 2. Nested Detail Sub-Row (Modern 3-Card Audit Drawer)
+            let notaRows = "";
+            if (!r.notas_detail || r.notas_detail.length === 0) {
+                notaRows = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:12px;">Tidak ada nota yang terhubung dengan perjalanan ini.</td></tr>`;
+            } else {
+                r.notas_detail.forEach(n => {
+                    const statusNota = (n.sisa_akhir || 0) <= 0 
+                        ? `<span class="badge-lunas">LUNAS</span>` 
+                        : `<span class="badge-pending">SISA Rp ${(n.sisa_akhir || 0).toLocaleString('id-ID')}</span>`;
+
+                    notaRows += `
+                        <tr>
+                            <td>
+                                <span class="badge-nota" onclick="bukaPreviewStruk(event, '${n.no_nota}', '${n._tabelAsal}')" title="Klik cetak struk">${n.no_nota}</span>
+                            </td>
+                            <td><b style="color:var(--text-main); font-size:11px;">${n.nama_agen || '-'}</b></td>
+                            <td style="text-align:right; font-size:9.5px; white-space:nowrap;">
+                                <div style="color:#3b82f6;">Krm: Rp ${(n.total_kirim || 0).toLocaleString('id-ID')}</div>
+                                <div style="color:#ef4444;">Rtr: Rp ${(n.total_retur || 0).toLocaleString('id-ID')}</div>
+                            </td>
+                            <td style="text-align:right; color:var(--cash-color); font-weight:700;">Rp ${(n.bayar_cash || 0).toLocaleString('id-ID')}</td>
+                            <td style="text-align:right; color:var(--trf-color);">Rp ${(n.bayar_transfer || 0).toLocaleString('id-ID')}</td>
+                            <td style="text-align:center;">${statusNota}</td>
+                            <td style="text-align:center;">
+                                <div style="display:inline-flex; gap:3px;">
+                                    <button type="button" class="btn-table-action" onclick="bukaPreviewStruk(event, '${n.no_nota}', '${n._tabelAsal}')" title="Cetak Struk">🖨️</button>
+                                    <button type="button" class="btn-table-action" onclick="bukaModalAksi('${n.no_nota}', '${n._tabelAsal}')" title="Opsi Nota">⚙️</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += `
+                <tr id="detail_row_${strId}" class="detail-row" style="display: ${displayStyle};">
+                    <td colspan="9" class="detail-cell-wrapper">
+                        <div class="nested-box-drawer">
+                            <!-- KARTU 1: RINCIAN NOTA PENJUALAN -->
+                            <div class="audit-card card-nota">
+                                <div class="audit-card-header">
+                                    <span class="audit-card-title">📦 Rincian Nota Penjualan</span>
+                                    <span class="audit-badge-count">${notaCount} Nota</span>
+                                </div>
+                                <div class="audit-card-body" style="padding:0; overflow-x:auto;">
+                                    <table class="nested-table">
+                                        <thead>
+                                            <tr>
+                                                <th>No Nota</th>
+                                                <th>Agen</th>
+                                                <th style="text-align:right;">Kirim / Retur</th>
+                                                <th style="text-align:right;">Cash</th>
+                                                <th style="text-align:right;">Transfer</th>
+                                                <th style="text-align:center;">Status</th>
+                                                <th style="text-align:center;">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>${notaRows}</tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- KARTU 2: RINCIAN BIAYA OPERASIONAL -->
+                            <div class="audit-card card-biaya">
+                                <div class="audit-card-header header-biaya">
+                                    <span class="audit-card-title title-biaya">⛽ Biaya Operasional</span>
+                                    <span class="audit-badge-kas" title="Kas Asal Pengambilan">Kas: ${r.kas_dari}</span>
+                                </div>
+                                <div class="audit-card-body">
+                                    <div class="biaya-list">
+                                        <div class="biaya-item">
+                                            <span class="biaya-label">🚗 Uang Jalan:</span>
+                                            <span class="biaya-val">Rp ${(r.uang_jalan || 0).toLocaleString('id-ID')}</span>
+                                        </div>
+                                        <div class="biaya-item">
+                                            <span class="biaya-label">⛽ Uang BBM:</span>
+                                            <span class="biaya-val">Rp ${(r.uang_bbm || 0).toLocaleString('id-ID')}</span>
+                                        </div>
+                                        <div class="biaya-item">
+                                            <span class="biaya-label">📦 Uang Bongkar:</span>
+                                            <span class="biaya-val">Rp ${(r.uang_bongkar || 0).toLocaleString('id-ID')}</span>
+                                        </div>
+                                        <div class="biaya-item">
+                                            <span class="biaya-label">📝 Lain-lain <span class="biaya-subket">(${r.ket_lain_lain || '-'})</span>:</span>
+                                            <span class="biaya-val">Rp ${(r.lain_lain || 0).toLocaleString('id-ID')}</span>
+                                        </div>
+                                        <div class="biaya-item km-item">
+                                            <span class="biaya-label">📟 KM Spedometer:</span>
+                                            <span class="biaya-val km-val">${r.km_input ? r.km_input.toLocaleString('id-ID') + ' km' : '-'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="audit-card-footer footer-biaya">
+                                    <span>TOTAL OPERASIONAL:</span>
+                                    <span class="biaya-total-val">Rp ${(r.total_biaya).toLocaleString('id-ID')}</span>
+                                </div>
+                            </div>
+
+                            <!-- KARTU 3: SLIP AUDIT REKONSILIASI KASIR -->
+                            <div class="audit-card card-audit">
+                                <div class="audit-card-header header-audit">
+                                    <span class="audit-card-title title-audit">💰 Audit Slip Kasir</span>
+                                    <span class="audit-badge-driver">${r.driver_full}</span>
+                                </div>
+                                <div class="audit-card-body audit-calc-body">
+                                    <div>
+                                        <div class="calc-row">
+                                            <span class="calc-label">💵 Total Cash Tagihan:</span>
+                                            <span class="calc-val-cash">Rp ${(r.cash_kotor).toLocaleString('id-ID')}</span>
+                                        </div>
+                                        <div class="calc-row">
+                                            <span class="calc-label">⛽ Potongan Operasional:</span>
+                                            <span class="calc-val-biaya">- Rp ${(r.total_biaya).toLocaleString('id-ID')}</span>
+                                        </div>
+                                        <div class="calc-divider"></div>
+                                        <div class="calc-net-box" style="${r.sisa_bersih < 0 ? 'background:rgba(239,68,68,0.12); border-color:rgba(239,68,68,0.3);' : ''}">
+                                            <span class="calc-net-label" style="${r.sisa_bersih < 0 ? 'color:#ef4444;' : ''}">${r.sisa_bersih < 0 ? '⚠️ KLAIM DEFISIT KASIR:' : 'UANG BERSIH WAJIB DI LACI:'}</span>
+                                            <span class="calc-net-val" style="${r.sisa_bersih < 0 ? 'color:#ef4444;' : ''}">Rp ${(r.sisa_bersih).toLocaleString('id-ID')}</span>
+                                        </div>
+                                    </div>
+                                    <div class="audit-action-zone">
+                                        ${r.is_setor 
+                                            ? `<div class="audit-status-badge lunas">✅ UANG SUDAH DITERIMA KASIR</div>
+                                               <button type="button" class="btn-audit-toggle batal" onclick="toggleStatusSetoran('${strId}', false, '${r.driver_full}')">Batalkan Status Terima</button>`
+                                            : `<div class="audit-status-badge belum">⏳ MENUNGGU SETORAN KASIR</div>
+                                               <button type="button" class="btn-audit-toggle terima" onclick="toggleStatusSetoran('${strId}', true, '${r.driver_full}')">✅ Konfirmasi Terima Uang Laci</button>`
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
                 </tr>
             `;
         });
 
-        hitungSummary(laporanSelesai);
+        tbody.innerHTML = html;
+
+        tfoot.innerHTML = `
+            <tr>
+                <td colspan="4" style="text-align:right;">TOTAL DI TAMPILAN:</td>
+                <td style="text-align:right; color:var(--cash-color);">Rp ${totCash.toLocaleString('id-ID')}</td>
+                <td style="text-align:right; color:#f97316;">Biaya: Rp ${totBiaya.toLocaleString('id-ID')}</td>
+                <td>-</td>
+                <td style="text-align:right; color:var(--total-setor-color); font-size:12.5px;">Rp ${totBersih.toLocaleString('id-ID')}</td>
+                <td style="font-size:10px; color:var(--text-muted);">${list.length} Perjalanan</td>
+            </tr>
+        `;
     }
 
-    function hitungSummary(data) {
-        let kotor = 0; let biaya = 0; let bersih = 0;
-        
-        if(data && data.length > 0) {
-            data.forEach(r => {
-                kotor += r.cash_kotor_riil;
-                biaya += r.total_biaya_riil;
-            });
-            bersih = kotor - biaya;
+    // Toggle expand/collapse baris detail secara instan tanpa reload/flicker
+    function toggleDetailRow(id, event) {
+        if (event) {
+            // Jangan trigger expand jika mengeklik tombol setoran, struk, atau modal biaya
+            if (event.target.closest('.setoran-wrapper') || event.target.closest('.badge-nota') || event.target.closest('.link-modal-biaya')) {
+                return;
+            }
+            event.stopPropagation();
         }
 
-        document.getElementById('totKotor').innerText = "Rp " + kotor.toLocaleString('id-ID');
-        document.getElementById('totBiaya').innerText = "Rp " + biaya.toLocaleString('id-ID');
-        document.getElementById('totBersih').innerText = "Rp " + bersih.toLocaleString('id-ID');
+        const strId = String(id);
+        const isOpen = openRowsSet.has(strId);
+        if (isOpen) {
+            openRowsSet.delete(strId);
+        } else {
+            openRowsSet.add(strId);
+        }
+
+        const willBeOpen = !isOpen;
+
+        // 1. Desktop Toggle Sub-Row langsung via DOM
+        const rowEl = document.getElementById(`detail_row_${strId}`);
+        const arrowEl = document.getElementById(`arrow_${strId}`);
+        const arrowBiayaEl = document.getElementById(`arrow_biaya_${strId}`);
+
+        if (rowEl) {
+            rowEl.style.display = willBeOpen ? 'table-row' : 'none';
+        }
+        if (arrowEl) {
+            arrowEl.innerText = willBeOpen ? '▼' : '▶';
+        }
+        if (arrowBiayaEl) {
+            arrowBiayaEl.innerText = willBeOpen ? '▼' : '▶';
+        }
+
+        // 2. Mobile Accordion Toggle langsung via DOM
+        const mobAcc = document.getElementById(`mob_acc_${strId}`);
+        const mobBtn = document.getElementById(`mob_toggle_${strId}`);
+        if (mobAcc) {
+            mobAcc.classList.toggle('open', willBeOpen);
+        }
+        if (mobBtn) {
+            mobBtn.innerHTML = willBeOpen ? '▲ Tutup Rincian Biaya & Nota' : '▼ Buka Rincian Biaya & Nota';
+        }
     }
 
-    function exportExcelDriver() {
-        const tglFile = document.getElementById('tglMulai').value;
-        const wb = XLSX.utils.table_to_book(document.getElementById("tabelAdminDriver"));
-        XLSX.writeFile(wb, `Laporan_Setoran_Driver_${tglFile}.xlsx`);
+    // Modal khusus Rincian Biaya Operasional Driver
+    function bukaModalBiaya(driverTripId, event) {
+        if (event) event.stopPropagation();
+        const d = masterDataCache.find(x => String(x.id) === String(driverTripId));
+        if (!d) return;
+
+        document.getElementById('modalJudul').innerText = `RINCIAN BIAYA OPERASIONAL: ${d.driver_full}`;
+        const modalIsi = document.getElementById('modalIsi');
+
+        let html = `
+            <div style="background:var(--bg-card-subtle); padding:10px; border-radius:6px; border:1px solid var(--border-color); margin-bottom:10px;">
+                <div style="font-weight:800; font-size:13px; color:var(--text-main);">${d.driver_full}</div>
+                <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">Armada: 🚙 ${d.unit_nama} &bull; Agen: ${d.nama_agen || '-'}</div>
+            </div>
+
+            <table style="width:100%; border-collapse:collapse; font-size:11.5px; margin-bottom:10px;">
+                <tr style="border-bottom:1px solid var(--border-color);">
+                    <td style="padding:6px 0; color:var(--text-muted);">🚗 Uang Jalan:</td>
+                    <td style="padding:6px 0; text-align:right; font-weight:700;">Rp ${(d.uang_jalan || 0).toLocaleString('id-ID')}</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border-color);">
+                    <td style="padding:6px 0; color:var(--text-muted);">⛽ Uang BBM:</td>
+                    <td style="padding:6px 0; text-align:right; font-weight:700;">Rp ${(d.uang_bbm || 0).toLocaleString('id-ID')}</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border-color);">
+                    <td style="padding:6px 0; color:var(--text-muted);">📦 Uang Bongkar:</td>
+                    <td style="padding:6px 0; text-align:right; font-weight:700;">Rp ${(d.uang_bongkar || 0).toLocaleString('id-ID')}</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border-color);">
+                    <td style="padding:6px 0; color:var(--text-muted);">📝 Biaya Lain-lain:</td>
+                    <td style="padding:6px 0; text-align:right; font-weight:700;">Rp ${(d.lain_lain || 0).toLocaleString('id-ID')}</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border-color);">
+                    <td style="padding:6px 0; color:var(--text-muted);">ℹ️ Keterangan Lain:</td>
+                    <td style="padding:6px 0; text-align:right; font-weight:600; color:#fbbf24;">${d.ket_lain_lain || '-'}</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border-color);">
+                    <td style="padding:6px 0; color:var(--text-muted);">📟 KM Spedometer:</td>
+                    <td style="padding:6px 0; text-align:right; font-weight:600;">${d.km_input ? d.km_input.toLocaleString() + ' km' : '-'}</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border-color);">
+                    <td style="padding:6px 0; color:var(--text-muted);">🏦 Kas Biaya Diambil Dari:</td>
+                    <td style="padding:6px 0; text-align:right; font-weight:700; color:#38bdf8;">${d.kas_dari}</td>
+                </tr>
+                <tr style="background:rgba(249,115,22,0.12); font-weight:800; font-size:12.5px;">
+                    <td style="padding:7px 6px; color:#f97316;">TOTAL OPERASIONAL:</td>
+                    <td style="padding:7px 6px; text-align:right; color:#f97316;">Rp ${(d.total_biaya).toLocaleString('id-ID')}</td>
+                </tr>
+            </table>
+
+            <div style="background:var(--bg-input); padding:8px 10px; border-radius:6px; border:1px solid var(--border-color); font-size:11.5px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+                    <span>Total Cash Ditagih Nota:</span>
+                    <span style="font-weight:700; color:var(--cash-color);">Rp ${(d.cash_kotor).toLocaleString('id-ID')}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <span>Potongan Biaya:</span>
+                    <span style="font-weight:700; color:#f97316;">-Rp ${(d.total_biaya).toLocaleString('id-ID')}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; padding-top:5px; border-top:1px dashed var(--border-color); font-size:13.5px; font-weight:800;">
+                    <span style="${d.sisa_bersih < 0 ? 'color:#ef4444;' : 'color:var(--total-setor-color);'}">${d.sisa_bersih < 0 ? '⚠️ Klaim Defisit Kasir:' : 'Wajib Setor Bersih:'}</span>
+                    <span style="${d.sisa_bersih < 0 ? 'color:#ef4444;' : 'color:var(--total-setor-color);'}">Rp ${(d.sisa_bersih).toLocaleString('id-ID')}</span>
+                </div>
+            </div>
+
+            <button onclick="tutupModal()" style="width:100%; margin-top:10px; padding:9px; background:var(--btn-primary); color:white; border:none; border-radius:5px; font-weight:700; cursor:pointer;">
+                Tutup
+            </button>
+        `;
+
+        modalIsi.innerHTML = html;
+        document.getElementById('modalDetail').style.display = 'block';
     }
+
+    // Render Mobile Cards
+    function renderMobile(list) {
+        const c = document.getElementById('isiKartuMobile');
+        if (list.length === 0) {
+            c.innerHTML = "<div class='empty-message'>Tidak ada data perjalanan supir.</div>";
+            return;
+        }
+
+        let html = "";
+        list.forEach(r => {
+            const dObj = new Date(r.created_at);
+            const tgl = dObj.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit' });
+            const jam = dObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+            const isSudah = r.is_setor;
+            const btnClass = isSudah ? 'sudah' : 'belum';
+            const btnText = isSudah ? '✅ SUDAH DITERIMA KASIR' : '⏳ BELUM DISETOR &bull; KETUK UNTUK TERIMA';
+
+            const strId = String(r.id);
+            const isOpen = openRowsSet.has(strId);
+            const toggleText = isOpen ? '▲ Tutup Rincian Biaya & Nota' : '▼ Buka Rincian Biaya & Nota';
+            const notaCount = r.notas_detail ? r.notas_detail.length : 0;
+
+            let notasBadges = r.notas_detail.map(n => 
+                `<span class="badge-nota" onclick="bukaPreviewStruk(event, '${n.no_nota}', '${n._tabelAsal}')">${n.no_nota}</span>`
+            ).join(' ') || '-';
+
+            let mobileNotaList = "";
+            r.notas_detail.forEach(n => {
+                const sisa = n.sisa_akhir || 0;
+                mobileNotaList += `
+                    <div style="background:var(--bg-card-subtle); padding:6px 8px; border-radius:6px; font-size:10.5px; margin-bottom:4px; border:1px solid var(--border-color);">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="badge-nota" onclick="bukaPreviewStruk(event, '${n.no_nota}', '${n._tabelAsal}')" title="Klik cetak struk">${n.no_nota}</span>
+                            <span style="font-weight:700; color:var(--text-main); font-size:11px;">${n.nama_agen || '-'}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-top:3px; font-size:10px;">
+                            <span>Cash: <b style="color:var(--cash-color);">Rp ${(n.bayar_cash || 0).toLocaleString('id-ID')}</b></span>
+                            <span>Trf: <b style="color:var(--trf-color);">Rp ${(n.bayar_transfer || 0).toLocaleString('id-ID')}</b></span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; padding-top:4px; border-top:1px dashed var(--border-color); font-size:10px;">
+                            <span style="color:${sisa <= 0 ? 'var(--cash-color)' : 'var(--sisa-color)'}; font-weight:700;">
+                                ${sisa <= 0 ? '✅ LUNAS' : '⚠️ Sisa Bon: Rp ' + sisa.toLocaleString('id-ID')}
+                            </span>
+                            <div style="display:inline-flex; gap:4px;">
+                                <button type="button" class="btn-table-action" onclick="bukaPreviewStruk(event, '${n.no_nota}', '${n._tabelAsal}')" title="Cetak Struk">🖨️ Struk</button>
+                                <button type="button" class="btn-table-action" onclick="bukaModalAksi('${n.no_nota}', '${n._tabelAsal}')" title="Opsi Nota">⚙️ Opsi</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                <div class="driver-card ${isSudah ? 'card-sudah' : 'card-belum'}">
+                    <div class="driver-card-header" onclick="toggleDetailRow('${strId}', event)" style="cursor:pointer;">
+                        <div>
+                            <div class="driver-card-drv">${r.driver_full}</div>
+                            <div class="driver-card-unit">🚙 ${r.unit_nama} &bull; <span style="color:var(--text-main); font-weight:700;">${r.nama_agen || '-'}</span></div>
+                        </div>
+                        <div class="driver-card-time">${tgl}<br><span style="font-size:9.5px;">${jam} WIB</span></div>
+                    </div>
+
+                    <div style="display:flex; flex-direction:column; gap:5px;">
+                        <div class="driver-net-row" style="${r.sisa_bersih < 0 ? 'background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.3);' : ''}">
+                            <span class="driver-net-label" style="${r.sisa_bersih < 0 ? 'color:#ef4444;' : ''}">${r.sisa_bersih < 0 ? '⚠️ Klaim Defisit:' : 'Wajib Setor Bersih:'}</span>
+                            <span class="driver-net-value" style="${r.sisa_bersih < 0 ? 'color:#ef4444;' : ''}">Rp ${(r.sisa_bersih).toLocaleString('id-ID')}</span>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:10px; color:var(--text-muted);">
+                            <span>Nota: ${notasBadges}</span>
+                            <button type="button" class="btn-operasional-pill" style="font-size:9.5px; padding:2px 6px;" onclick="bukaModalBiaya('${strId}', event)">🔍 Biaya: Rp ${(r.total_biaya).toLocaleString('id-ID')}</button>
+                        </div>
+
+                        <!-- Tombol Ceklis Hitbox Besar -->
+                        <button type="button" class="btn-ceklis-mobile ${btnClass}" onclick="toggleStatusSetoran('${strId}', ${!isSudah}, '${r.driver_full}')">
+                            ${btnText}
+                        </button>
+
+                        <!-- Accordion Detail -->
+                        <button type="button" class="mobile-detail-toggle" id="mob_toggle_${strId}" onclick="toggleDetailRow('${strId}', event)">
+                            ${toggleText}
+                        </button>
+
+                        <div class="mobile-acc-content ${isOpen ? 'open' : ''}" id="mob_acc_${strId}">
+                            <!-- Rincian Biaya Operasional Mobile -->
+                            <div style="background:var(--bg-input); padding:7px 8px; border-radius:6px; font-size:10px; margin-bottom:5px; border:1px solid var(--border-color);">
+                                <div style="font-weight:bold; color:#f97316; margin-bottom:4px; display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color); padding-bottom:3px;">
+                                    <span>⛽ POTONGAN BIAYA OPERASIONAL:</span>
+                                    <span>Rp ${(r.total_biaya).toLocaleString('id-ID')}</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                                    <span style="color:var(--text-muted);">U.Jalan / BBM:</span>
+                                    <span><b>Rp ${(r.uang_jalan || 0).toLocaleString('id-ID')}</b> / <b>Rp ${(r.uang_bbm || 0).toLocaleString('id-ID')}</b></span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                                    <span style="color:var(--text-muted);">Bongkar / Lain:</span>
+                                    <span><b>Rp ${(r.uang_bongkar || 0).toLocaleString('id-ID')}</b> / <b>Rp ${(r.lain_lain || 0).toLocaleString('id-ID')}</b></span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin-top:3px; padding-top:2px; border-top:1px dashed var(--border-color); font-size:9.5px;">
+                                    <span>Ket: <b style="color:#fbbf24;">${(r.ket_lain_lain || '-')}</b></span>
+                                    <span>Kas: <b style="color:#38bdf8;">${r.kas_dari}</b></span>
+                                </div>
+                            </div>
+
+                            <!-- Slip Audit Kasir Ringkas di Mobile -->
+                            <div class="audit-rekon-box" style="background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.3); padding:7px 8px; border-radius:6px; margin-bottom:5px; font-size:10.5px;">
+                                <div style="font-weight:800; font-size:10px; color:var(--total-setor-color); margin-bottom:4px;">💰 REKONSILIASI KASIR:</div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                                    <span style="color:var(--text-muted);">Cash Ditagih:</span>
+                                    <b style="color:var(--cash-color);">Rp ${(r.cash_kotor).toLocaleString('id-ID')}</b>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+                                    <span style="color:var(--text-muted);">Potongan Biaya:</span>
+                                    <b style="color:#f97316;">- Rp ${(r.total_biaya).toLocaleString('id-ID')}</b>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; border-top:1px dashed var(--border-color); padding-top:4px; font-weight:800; font-size:11.5px;">
+                                    <span style="${r.sisa_bersih < 0 ? 'color:#ef4444;' : 'color:var(--total-setor-color);'}">${r.sisa_bersih < 0 ? '⚠️ Klaim Defisit:' : 'Wajib Bersih Laci:'}</span>
+                                    <span style="${r.sisa_bersih < 0 ? 'color:#ef4444;' : 'color:var(--total-setor-color);'}">Rp ${(r.sisa_bersih).toLocaleString('id-ID')}</span>
+                                </div>
+                            </div>
+
+                            <!-- Daftar Nota -->
+                            <div>
+                                <div style="font-weight:bold; color:var(--text-muted); font-size:10px; margin-bottom:3px;">📦 RINCIAN NOTA PENJUALAN (${notaCount}):</div>
+                                ${mobileNotaList}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        c.innerHTML = html;
+    }
+
+    // =========================================================
+    // UPDATE STATUS CEKLIS SETORAN (OPTIMISTIC + SUPABASE)
+    // =========================================================
+    async function toggleStatusSetoran(id, isChecked, driverName) {
+        const item = masterDataCache.find(d => String(d.id) === String(id));
+        if (item) item.is_setor = isChecked;
+
+        // Update UI seketika
+        filterDanRender();
+
+        try {
+            const { error } = await _sb.from('rekap_laporan_driver')
+                .update({ status_setoran: isChecked })
+                .eq('id', id);
+
+            if (error) throw error;
+
+            tampilkanToast(
+                isChecked 
+                    ? `✅ Setoran <b>${driverName}</b> ditandai <b>SUDAH DITERIMA</b>`
+                    : `⏳ Setoran <b>${driverName}</b> ditandai <b>BELUM DITERIMA</b>`,
+                isChecked ? 'success' : 'warning'
+            );
+        } catch (err) {
+            console.error(err);
+            alert("Gagal update ke server: " + err.message);
+            if (item) item.is_setor = !isChecked;
+            filterDanRender();
+        }
+    }
+
+    // =========================================================
+    // SALIN REKAP WA (ZERO-REDUNDANCY SUMMARY)
+    // =========================================================
+    function salinRekapDriverWA() {
+        if (masterDataCache.length === 0) {
+            alert("Tidak ada data setoran untuk disalin!");
+            return;
+        }
+
+        const tglMulai = document.getElementById('tglMulai').value;
+        const tglSelesai = document.getElementById('tglSelesai').value;
+        const rentang = tglMulai === tglSelesai ? tglMulai : `${tglMulai} s/d ${tglSelesai}`;
+
+        let totCash = 0, totBiaya = 0, totBersih = 0, totSudah = 0, totBelum = 0;
+        let rincian = "";
+
+        masterDataCache.forEach((d, i) => {
+            totCash += d.cash_kotor;
+            totBiaya += d.total_biaya;
+            totBersih += d.sisa_bersih;
+            if (d.is_setor) totSudah += d.sisa_bersih;
+            else totBelum += d.sisa_bersih;
+
+            const st = d.is_setor ? "✅ [SUDAH]" : "⏳ [BELUM]";
+            rincian += `${i + 1}. *${d.driver_full}* (${d.unit_nama})\n`;
+            rincian += `   Agen: ${d.nama_agen || '-'}\n`;
+            rincian += `   Cash: Rp ${d.cash_kotor.toLocaleString('id-ID')} | Biaya: Rp ${d.total_biaya.toLocaleString('id-ID')}\n`;
+            rincian += `   *Wajib Setor:* Rp ${d.sisa_bersih.toLocaleString('id-ID')} ${st}\n\n`;
+        });
+
+        let txt = `📊 *REKAP SETORAN KASIR SBR*\n`;
+        txt += `📅 Periode: ${rentang}\n`;
+        txt += `━━━━━━━━━━━━━━━━━━━━━\n`;
+        txt += `💵 *Total Cash Tagihan:* Rp ${totCash.toLocaleString('id-ID')}\n`;
+        txt += `⛽ *Total Operasional:* Rp ${totBiaya.toLocaleString('id-ID')}\n`;
+        txt += `💰 *Bersih di Laci Kasir:* Rp ${totBersih.toLocaleString('id-ID')}\n`;
+        txt += `━━━━━━━━━━━━━━━━━━━━━\n`;
+        txt += `✅ *Sudah Diterima Kasir:* Rp ${totSudah.toLocaleString('id-ID')}\n`;
+        txt += `⏳ *Belum Diterima Kasir:* Rp ${totBelum.toLocaleString('id-ID')}\n`;
+        txt += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+        txt += `*RINCIAN SUPIR:*\n${rincian}`;
+        txt += `_Diperbarui via SBR System_`;
+
+        navigator.clipboard.writeText(txt).then(() => {
+            tampilkanToast("📋 Ringkasan Setoran berhasil disalin ke Clipboard!", "success");
+        }).catch(err => alert("Gagal menyalin: " + err.message));
+    }
+
+    // =========================================================
+    // EXPORT EXCEL MASTER-DETAIL
+    // =========================================================
+    function exportExcelMaster() {
+        if (masterDataCache.length === 0) {
+            alert("Tidak ada data untuk di-export!");
+            return;
+        }
+
+        const tglMulai = document.getElementById('tglMulai').value;
+        let matriks = [
+            ["WAKTU", "DRIVER", "ARMADA", "AGEN UTAMA", "NO NOTA", "CASH TAGIHAN (RP)", "UANG JALAN (RP)", "BBM (RP)", "BONGKAR (RP)", "LAIN-LAIN (RP)", "KAS DARI", "WAJIB SETOR (RP)", "STATUS CEKLIS"]
+        ];
+
+        masterDataCache.forEach(d => {
+            const dObj = new Date(d.created_at);
+            const tglJam = `${dObj.toLocaleDateString('id-ID')} ${dObj.toLocaleTimeString('id-ID')}`;
+            const st = d.is_setor ? "SUDAH DISETOR" : "BELUM DISETOR";
+
+            matriks.push([
+                tglJam, d.driver_full, d.unit_nama, d.nama_agen || '-', d.no_nota || '-',
+                d.cash_kotor, d.uang_jalan || 0, d.uang_bbm || 0, d.uang_bongkar || 0,
+                d.lain_lain || 0, d.kas_dari, d.sisa_bersih, st
+            ]);
+
+            // Sertakan rincian nota anak jika ada
+            if (d.notas_detail && d.notas_detail.length > 0) {
+                matriks.push(["   ↳ RINCIAN NOTA:", "No Nota", "Agen", "Kirim (Rp)", "Retur (Rp)", "Bayar Cash (Rp)", "Bayar Trf (Rp)", "Sisa Bon (Rp)", "", "", "", "", ""]);
+                d.notas_detail.forEach(n => {
+                    matriks.push(["", n.no_nota, n.nama_agen || '-', n.total_kirim || 0, n.total_retur || 0, n.bayar_cash || 0, n.bayar_transfer || 0, n.sisa_akhir || 0, "", "", "", "", ""]);
+                });
+                matriks.push([]);
+            }
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(matriks);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Master Setoran");
+        XLSX.writeFile(wb, `Setoran_SBR_Terpadu_${tglMulai}.xlsx`);
+    }
+
+    // =========================================================
+    // MODAL STRUK & BLUETOOTH ESC/POS
+    // =========================================================
+    async function bukaPreviewStruk(event, noNota, forceTabel) {
+        if (event) event.stopPropagation();
+
+        const modalIsi = document.getElementById('modalIsi');
+        document.getElementById('modalJudul').innerText = `STRUK NOTA: ${noNota}`;
+        modalIsi.innerHTML = "<p style='text-align:center;'>Memuat struk belanja... ⏳</p>";
+        document.getElementById('modalDetail').style.display = "block";
+
+        try {
+            let trx = null;
+            let tabelAsal = forceTabel || 'transaksi';
+
+            let res = await _sb.from('transaksi').select('*').eq('no_nota', noNota).maybeSingle();
+            if (res.data) {
+                trx = res.data;
+                tabelAsal = 'transaksi';
+            } else {
+                let resDp = await _sb.from('transaksi_dp').select('*').eq('no_nota', noNota).maybeSingle();
+                if (resDp.data) {
+                    trx = resDp.data;
+                    tabelAsal = 'transaksi_dp';
+                }
+            }
+
+            if (!trx) throw new Error("Data transaksi nota " + noNota + " tidak ditemukan!");
+
+            const tabelDetail = tabelAsal === 'transaksi_dp' ? 'transaksi_detaildp' : 'transaksi_detail';
+
+            const [resDet, resBayar] = await Promise.all([
+                _sb.from(tabelDetail).select('*').eq('no_nota', noNota),
+                _sb.from('pembayaran_bon').select('tanggal, bayar_cash, bayar_transfer, keterangan').eq('no_nota_referensi', noNota)
+            ]);
+
+            const detail = resDet.data || [];
+            let riwayatBayar = resBayar.data || [];
+            riwayatBayar.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+
+            dataStrukAktif = { trx, detail, riwayatBayar, tabelAsal };
+
+            const [y, m, d] = trx.tanggal.split('-');
+            const drvGabung = trx.driver_2 ? `${trx.driver_1} / ${trx.driver_2}` : (trx.driver_1 || '-');
+
+            let s = `<div class="struk-box" id="areaCetakStruk">
+                        <div class="struk-center">
+                            <div class="struk-title">SBR PUTRA FOOD</div>
+                            <div class="struk-text-muted" style="margin-top:2px;">Lembang, Bandung Barat</div>
+                        </div>
+                        <div class="struk-separator"></div>
+                        <div class="struk-row struk-text-muted"><span>NO: ${trx.no_nota}</span><span>${d}/${m}/${y}</span></div>
+                        
+                        <div class="struk-center struk-bold" style="font-size:13px; margin: 4px 0;">${trx.nama_agen.toUpperCase()}</div>
+                        <div class="struk-text-muted" style="text-align:center; margin-bottom:4px;">DRV: ${drvGabung} [ ${trx.plat_nomor || '-'} ]</div>
+                        <div class="struk-separator"></div>`;
+
+            const itemsKirim = detail.filter(i => i.tipe === 'Kirim');
+            const itemsRetur = detail.filter(i => i.tipe === 'Retur');
+
+            itemsKirim.forEach(i => {
+                s += `<div style="font-weight:600; margin-top:3px;">${i.nama_barang}</div>`;
+                s += `<div class="struk-row" style="font-size:10px; color:#4b5563;">
+                        <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}</span>
+                        <span class="struk-bold" style="color:#1f2937;">${(i.subtotal || 0).toLocaleString('id-ID')}</span>
+                      </div>`;
+            });
+            s += `<div class="struk-separator"></div>`;
+            s += `<div class="struk-row"><span>Total Kirim</span><span class="struk-bold">Rp ${(trx.total_kirim || 0).toLocaleString('id-ID')}</span></div>`;
+
+            if (itemsRetur.length > 0) {
+                s += `<div class="struk-bold" style="color:#ef4444; font-size:10px; margin-top:3px;">PENGEMBALIAN (RETUR)</div>`;
+                itemsRetur.forEach(i => {
+                    s += `<div style="font-weight:600; margin-top:3px;">${i.nama_barang}</div>`;
+                    s += `<div class="struk-row" style="font-size:10px; color:#ef4444;">
+                            <span>&nbsp;&nbsp;${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}</span>
+                            <span class="struk-bold">-${(i.subtotal || 0).toLocaleString('id-ID')}</span>
+                          </div>`;
+                });
+                s += `<div class="struk-separator"></div>`;
+                s += `<div class="struk-row"><span>Total Retur</span><span class="struk-bold" style="color:#ef4444;">-Rp ${(trx.total_retur || 0).toLocaleString('id-ID')}</span></div>`;
+            }
+
+            const tagihanBersih = (trx.total_kirim || 0) - (trx.total_retur || 0) + (trx.bon_lama || 0);
+            let bonLama = trx.bon_lama || 0;
+            let teksBonLama = bonLama < 0 ? "Deposit" : "Bon Lama";
+            s += `<div class="struk-row" style="margin-top:3px;"><span>${teksBonLama}</span><span class="struk-bold">Rp ${Math.abs(bonLama).toLocaleString('id-ID')}</span></div>`;
+            
+            s += `<div class="struk-double-separator"></div>`;
+            s += `<div class="struk-row struk-bold" style="font-size:13px;"><span>TOTAL TAGIHAN</span><span>Rp ${tagihanBersih.toLocaleString('id-ID')}</span></div>`;
+
+            s += `<div class="struk-separator"></div>`;
+            s += `<div class="struk-row"><span>Bayar Cash</span><span class="struk-bold">Rp ${(trx.bayar_cash || 0).toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-row" style="margin-top:2px;"><span>Bayar Transfer</span><span class="struk-bold">Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}</span></div>`;
+            s += `<div class="struk-separator"></div>`;
+
+            if (riwayatBayar && riwayatBayar.length > 0) {
+                s += `<div class="struk-bold" style="font-size:10px; color:#4b5563; margin-top:3px;">RIWAYAT CICILAN:</div>`;
+                riwayatBayar.forEach(p => {
+                    let det = "";
+                    if ((p.bayar_cash || 0) > 0) det += `CSH: Rp ${p.bayar_cash.toLocaleString('id-ID')} `;
+                    if ((p.bayar_transfer || 0) > 0) det += `TRF: Rp ${p.bayar_transfer.toLocaleString('id-ID')}`;
+                    let tglIndo = p.tanggal;
+                    s += `<div class="struk-row" style="margin-top:1px; font-size:9.5px;"><span>&nbsp;&nbsp;${tglIndo}</span><span class="struk-bold">${det}</span></div>`;
+                });
+                s += `<div class="struk-separator"></div>`;
+            }
+
+            let sisaAkhir = trx.sisa_akhir || 0;
+            let teksSisa = sisaAkhir <= 0 ? "LUNAS" : "SISA BON";
+            let colorSisa = sisaAkhir <= 0 ? "#10b981" : "#ef4444";
+            
+            s += `<div class="struk-row struk-bold" style="font-size:14px; color:${colorSisa}; margin-top:3px;">
+                    <span>${teksSisa}</span>
+                    <span>Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}</span>
+                  </div>`;
+            s += `<div class="struk-separator"></div>`;
+            s += `<div class="struk-center struk-bold struk-text-muted" style="margin-top:5px; font-size:9px;">SBR PUTRA FOOD SYSTEM</div>`;
+            s += `</div>`;
+            
+            s += `<div style="display: flex; gap: 6px; margin-top: 10px;">
+                    <button id="btnCetak" onclick="cetakStrukBluetooth()" style="flex:1; background:var(--btn-primary); color:white; padding:9px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; font-size: 11px;">🖨️ BLUETOOTH</button>
+                    <button id="btnCetakGambar" onclick="cetakGambar()" style="flex:1; background:var(--btn-excel); color:white; padding:9px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; font-size: 11px;">📸 SIMPAN JPG</button>
+                  </div>`;
+                  
+            s += `<div class="printer-options">
+                    <label for="lebarKertas">UKURAN KERTAS: </label>
+                    <select id="lebarKertas">
+                        <option value="58admin" selected>58mm Admin (Auto-cut)</option>
+                        <option value="48">80mm (Besar - 48 Char)</option>
+                        <option value="32">58mm (Kecil - 32 Char)</option>
+                    </select>
+                  </div>`;
+
+            modalIsi.innerHTML = s;
+
+        } catch (e) {
+            modalIsi.innerHTML = `<p style='color:#ef4444; text-align:center;'>Gagal memuat struk: ${e.message}</p>`;
+        }
+    }
+
+    function tutupModal() { 
+        document.getElementById('modalDetail').style.display = "none"; 
+    }
+
+    function getKonfigurasiKertas() {
+        const val = document.getElementById('lebarKertas')?.value || '58admin';
+        if (val === '58admin') {
+            return { is58Admin: true, lebarMax: 32, indentStr: ' '.repeat(15), autoCut: true };
+        }
+        const lebar = parseInt(val) || 48;
+        return { is58Admin: false, lebarMax: lebar, indentStr: '', autoCut: false };
+    }
+
+    function formatBarisKiriKanan(kiri, kanan, cfg) {
+        if (!cfg) cfg = getKonfigurasiKertas();
+        let spasi = cfg.lebarMax - (String(kiri).length + String(kanan).length);
+        if (spasi < 1) spasi = 1;
+        return cfg.indentStr + kiri + " ".repeat(spasi) + kanan + "\n";
+    }
+
+    async function cetakStrukBluetooth() {
+        const cfg = getKonfigurasiKertas();
+        if (!navigator.bluetooth) {
+            alert("Browser ini tidak mendukung Web Bluetooth API.");
+            return;
+        }
+        if (!dataStrukAktif) return;
+
+        const { trx, detail, riwayatBayar } = dataStrukAktif;
+        const GARIS = cfg.indentStr + "-".repeat(cfg.lebarMax) + "\n";
+        const GARIS_GANDA = cfg.indentStr + "=".repeat(cfg.lebarMax) + "\n";
+
+        let teks = "";
+        const ESC_INIT = "\x1B\x40";
+        const ESC_CENTER = "\x1B\x61\x01";
+        const ESC_LEFT = "\x1B\x61\x00";
+        const ESC_BOLD_ON = "\x1B\x45\x01";
+        const ESC_BOLD_OFF = "\x1B\x45\x00";
+        const GS_TXT_DOUBLE_HEIGHT = "\x1D\x21\x01";
+        const GS_TXT_NORMAL = "\x1D\x21\x00";
+
+        const [y, m, d] = trx.tanggal.split('-');
+        const drvGabung = trx.driver_2 ? `${trx.driver_1}/${trx.driver_2}` : (trx.driver_1 || '-');
+
+        teks += ESC_INIT + ESC_LEFT;
+        if (cfg.is58Admin) {
+            const padJudul = Math.max(0, Math.floor((cfg.lebarMax - "SBR PUTRA FOOD".length) / 2));
+            teks += ESC_BOLD_ON + cfg.indentStr + ' '.repeat(padJudul) + "SBR PUTRA FOOD\n" + ESC_BOLD_OFF;
+            const padAlamat = Math.max(0, Math.floor((cfg.lebarMax - "Lembang, Bandung Barat".length) / 2));
+            teks += cfg.indentStr + ' '.repeat(padAlamat) + "Lembang, Bandung Barat\n";
+        } else {
+            teks += ESC_CENTER + ESC_BOLD_ON + "SBR PUTRA FOOD\n" + ESC_BOLD_OFF;
+            teks += "Lembang, Bandung Barat\n" + ESC_LEFT;
+        }
+
+        teks += GARIS;
+        teks += formatBarisKiriKanan(`NO: ${trx.no_nota}`, `TGL: ${d}-${m}-${y}`, cfg);
+        
+        if (cfg.is58Admin) {
+            const agUpper = (trx.nama_agen || '').toUpperCase();
+            const padAg = Math.max(0, Math.floor((cfg.lebarMax - agUpper.length) / 2));
+            teks += ESC_BOLD_ON + GS_TXT_DOUBLE_HEIGHT + cfg.indentStr + ' '.repeat(padAg) + `${agUpper}\n` + GS_TXT_NORMAL + ESC_BOLD_OFF;
+            teks += cfg.indentStr + `DRV: ${drvGabung} [${trx.plat_nomor || '-'}]\n`;
+        } else {
+            teks += ESC_CENTER + ESC_BOLD_ON + GS_TXT_DOUBLE_HEIGHT;
+            teks += `${(trx.nama_agen || '').toUpperCase()}\n`;
+            teks += GS_TXT_NORMAL + ESC_BOLD_OFF;
+            teks += ESC_LEFT + `DRV: ${drvGabung} [${trx.plat_nomor || '-'}]\n`;
+        }
+        teks += GARIS;
+
+        const itemsKirim = detail.filter(i => i.tipe === 'Kirim');
+        const itemsRetur = detail.filter(i => i.tipe === 'Retur');
+
+        itemsKirim.forEach(i => {
+            teks += cfg.indentStr + `${i.nama_barang}\n`;
+            let rincian = `  ${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}`;
+            let sub = `${(i.subtotal || 0).toLocaleString('id-ID')}`;
+            teks += formatBarisKiriKanan(rincian, sub, cfg);
+        });
+        teks += GARIS;
+        teks += ESC_BOLD_ON + formatBarisKiriKanan("TOTAL KIRIM:", `Rp ${(trx.total_kirim || 0).toLocaleString('id-ID')}`, cfg) + ESC_BOLD_OFF;
+
+        if (itemsRetur.length > 0) {
+            teks += GARIS;
+            teks += ESC_BOLD_ON + cfg.indentStr + "BARANG RETUR:\n" + ESC_BOLD_OFF;
+            itemsRetur.forEach(i => {
+                teks += cfg.indentStr + `[R] ${i.nama_barang}\n`;
+                let rincian = `  ${i.qty} ${i.satuan} x ${(i.harga_satuan || 0).toLocaleString('id-ID')}`;
+                let sub = `-${(i.subtotal || 0).toLocaleString('id-ID')}`;
+                teks += formatBarisKiriKanan(rincian, sub, cfg);
+            });
+            teks += GARIS;
+            teks += ESC_BOLD_ON + formatBarisKiriKanan("TOTAL RETUR:", `Rp ${(trx.total_retur || 0).toLocaleString('id-ID')}`, cfg) + ESC_BOLD_OFF;
+        }
+
+        const tagihanBersih = (trx.total_kirim || 0) - (trx.total_retur || 0) + (trx.bon_lama || 0);
+        let bonLama = trx.bon_lama || 0;
+        let teksBonLama = bonLama < 0 ? "DEPOSIT:" : "BON LAMA:";
+        
+        teks += "\n";
+        teks += ESC_BOLD_ON + formatBarisKiriKanan(teksBonLama, `Rp ${Math.abs(bonLama).toLocaleString('id-ID')}`, cfg) + ESC_BOLD_OFF;
+        teks += GARIS_GANDA;
+
+        teks += ESC_BOLD_ON + GS_TXT_DOUBLE_HEIGHT;
+        teks += formatBarisKiriKanan("TOTAL TAGIHAN:", `Rp ${tagihanBersih.toLocaleString('id-ID')}`, cfg);
+        teks += GS_TXT_NORMAL + ESC_BOLD_OFF;
+
+        teks += GARIS;
+        teks += formatBarisKiriKanan("Bayar CASH:", `Rp ${(trx.bayar_cash || 0).toLocaleString('id-ID')}`, cfg);
+        teks += formatBarisKiriKanan("Bayar TRF:", `Rp ${(trx.bayar_transfer || 0).toLocaleString('id-ID')}`, cfg);
+        teks += GARIS;
+
+        let sisaAkhir = trx.sisa_akhir || 0;
+        let teksSisa = sisaAkhir === 0 ? "LUNAS:" : (sisaAkhir < 0 ? "DEPOSIT:" : "SISA BON:");
+        teks += ESC_BOLD_ON + GS_TXT_DOUBLE_HEIGHT;
+        teks += formatBarisKiriKanan(teksSisa, `Rp ${Math.abs(sisaAkhir).toLocaleString('id-ID')}`, cfg);
+        teks += GS_TXT_NORMAL + ESC_BOLD_OFF;
+
+        teks += GARIS;
+        if (cfg.is58Admin) {
+            const padFoot = Math.max(0, Math.floor((cfg.lebarMax - "SBR PUTRA FOOD SYSTEM".length) / 2));
+            teks += ESC_BOLD_ON + cfg.indentStr + ' '.repeat(padFoot) + "SBR PUTRA FOOD SYSTEM\n" + ESC_BOLD_OFF;
+            teks += "\n\n\n\n";
+        } else {
+            teks += ESC_CENTER + ESC_BOLD_ON + "SBR PUTRA FOOD SYSTEM\n" + ESC_BOLD_OFF;
+            teks += "\n\n\n"; 
+        }
+
+        try {
+            document.getElementById('btnCetak').innerText = "Menghubungkan... ⏳";
+            const device = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', '0000fee7-0000-1000-8000-00805f9b34fb']
+            });
+
+            const server = await device.gatt.connect();
+            let service;
+            const serviceUUIDs = ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', '0000fee7-0000-1000-8000-00805f9b34fb'];
+            for (let uuid of serviceUUIDs) {
+                try { service = await server.getPrimaryService(uuid); if (service) break; } catch(e) {}
+            }
+            if (!service) throw new Error("Service printer tidak ditemukan.");
+
+            let characteristic;
+            const charUUIDs = ['00002af1-0000-1000-8000-00805f9b34fb', 'beab8f86-ea54-44a6-9817-ffb7db7bd4b2', '0000fec8-0000-1000-8000-00805f9b34fb'];
+            for (let uuid of charUUIDs) {
+                try { characteristic = await service.getCharacteristic(uuid); if (characteristic) break; } catch(e) {}
+            }
+            if (!characteristic) throw new Error("Karakteristik write printer tidak ditemukan.");
+
+            let encoder = new TextEncoder();
+            let dataUint8 = encoder.encode(teks);
+
+            if (cfg.autoCut) {
+                const cutCmd = new Uint8Array([0x1D, 0x56, 0x42, 0x00]);
+                const merged = new Uint8Array(dataUint8.length + cutCmd.length);
+                merged.set(dataUint8, 0);
+                merged.set(cutCmd, dataUint8.length);
+                dataUint8 = merged;
+            }
+
+            const chunkSize = 64;
+            for (let i = 0; i < dataUint8.length; i += chunkSize) {
+                const chunk = dataUint8.slice(i, i + chunkSize);
+                try {
+                    if (characteristic.properties && characteristic.properties.writeWithoutResponse) {
+                        await characteristic.writeValueWithoutResponse(chunk);
+                    } else {
+                        await characteristic.writeValue(chunk);
+                    }
+                } catch (eWrite) {
+                    await characteristic.writeValue(chunk);
+                }
+                await new Promise(resolve => setTimeout(resolve, 18));
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 600));
+            device.gatt.disconnect();
+            document.getElementById('btnCetak').innerText = "🖨️ BLUETOOTH";
+            tampilkanToast("✅ Berhasil cetak Bluetooth!", "success");
+
+        } catch (error) {
+            alert("Gagal cetak Bluetooth: " + error.message);
+            document.getElementById('btnCetak').innerText = "🖨️ BLUETOOTH";
+        }
+    }
+
+    async function cetakGambar() {
+        const area = document.getElementById('areaCetakStruk');
+        if (!area) return;
+
+        const btn = document.getElementById('btnCetakGambar');
+        btn.innerText = "⏳ Proses...";
+        btn.disabled = true;
+
+        try {
+            const canvas = await html2canvas(area, { scale: 2, backgroundColor: "#ffffff", logging: false });
+            const imageURL = canvas.toDataURL("image/jpeg", 0.9);
+            const downloadLink = document.createElement("a");
+            downloadLink.href = imageURL;
+            let namaFile = "Bukti_Validasi_SBR";
+            if (dataStrukAktif?.trx?.no_nota) namaFile += "_" + dataStrukAktif.trx.no_nota;
+            downloadLink.download = namaFile + ".jpg";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            tampilkanToast("📸 Struk JPG berhasil disimpan!", "success");
+        } catch (error) {
+            alert("Gagal memproses gambar: " + error.message);
+        } finally {
+            btn.innerText = "📸 SIMPAN JPG";
+            btn.disabled = false;
+        }
+    }
+
+    // Modal Aksi
+    function bukaModalAksi(noNota, tabelAsal) {
+        notaAktifAksi = noNota;
+        tabelAsalAksi = tabelAsal;
+        document.getElementById('lblNotaAksi').innerText = noNota;
+        document.getElementById('modalAksi').style.display = 'block';
+    }
+    function tutupModalAksi() {
+        document.getElementById('modalAksi').style.display = 'none';
+        notaAktifAksi = "";
+        tabelAsalAksi = "";
+    }
+    function bukaFormEdit() {
+        window.open("edit_nota.html?nota=" + notaAktifAksi + "&sumber=" + tabelAsalAksi, "_blank");
+        tutupModalAksi();
+    }
+    async function hapusDataTransaksi() {
+        if (confirm(`Yakin ingin menghapus seluruh data nota ${notaAktifAksi}?`)) {
+            const tabelDetail = tabelAsalAksi === 'transaksi_dp' ? 'transaksi_detaildp' : 'transaksi_detail';
+            const { data: trxData } = await _sb.from(tabelAsalAksi).select('nama_agen').eq('no_nota', notaAktifAksi).single();
+            const namaAgen = trxData?.nama_agen;
+
+            await Promise.all([
+                _sb.from(tabelDetail).delete().eq('no_nota', notaAktifAksi),
+                _sb.from(tabelAsalAksi).delete().eq('no_nota', notaAktifAksi)
+            ]);
+
+            if (namaAgen) {
+                await _sb.from('agen').update({ saldo_bon: 0 }).eq('nama_agen', namaAgen);
+            }
+
+            tampilkanToast(`🗑️ Nota ${notaAktifAksi} berhasil dihapus!`, "warning");
+            tutupModalAksi();
+            muatDataMaster();
+        }
+    }
+
+    window.onclick = (e) => { 
+        if (e.target == document.getElementById('modalDetail')) tutupModal(); 
+        if (e.target == document.getElementById('modalAksi')) tutupModalAksi();
+    };
 </script>
+
+    <script src="sbr-nav.js"></script>
 </body>
 </html>
