@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Monitoring Pengiriman</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Load Supabase JS Client dari CDN -->
@@ -246,11 +249,18 @@
 
         if (supabaseClient) {
             try {
-                const tglHariIni = new Date().toISOString().split('T')[0];
+                const formatLocalDate = (d) => {
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${day}`;
+                };
+                const nowDate = new Date();
+                const tglHariIni = formatLocalDate(nowDate);
 
-                const tglKemarinDate = new Date();
+                const tglKemarinDate = new Date(nowDate);
                 tglKemarinDate.setDate(tglKemarinDate.getDate() - 2);
-                const tglKemarin = tglKemarinDate.toISOString().split('T')[0];
+                const tglKemarin = formatLocalDate(tglKemarinDate);
 
                 const { data: dataNota, error } = await supabaseClient
                     .from('transaksi')
@@ -259,7 +269,9 @@
                     .lte('tanggal', tglHariIni)
                     .order('id', { ascending: false });
 
-                if (!error && dataNota) {
+                if (error) {
+                    console.error("Gagal memuat daftar nota:", error);
+                } else if (dataNota) {
                     dataNota.forEach(item => {
                         notaOptionsHTML += `<option value="${item.no_nota}" data-agen="${item.nama_agen}">${item.no_nota} - ${item.nama_agen} (${item.tanggal})</option>`;
                     });

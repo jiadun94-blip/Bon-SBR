@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>SBR | Master Armada</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
@@ -125,7 +128,12 @@
     let timer;
 
     async function muatMobil() {
-        const { data } = await _sb.from('kendaraan').select('*').order('plat_nomor', { ascending: true });
+        const { data, error } = await _sb.from('kendaraan').select('*').order('plat_nomor', { ascending: true });
+        if (error) {
+            console.error('Gagal memuat armada:', error);
+            alert('Gagal memuat data armada: ' + error.message);
+            return;
+        }
         const tbody = document.getElementById('listMobil');
         tbody.innerHTML = "";
         
@@ -179,8 +187,12 @@
 
     async function handleDelete() {
         if(confirm(`Hapus armada ${selectedData.plat_nomor}?`)) {
-            await _sb.from('kendaraan').delete().eq('id', selectedData.id);
-            muatMobil();
+            const { error } = await _sb.from('kendaraan').delete().eq('id', selectedData.id);
+            if (error) {
+                alert("Gagal menghapus armada: " + error.message);
+            } else {
+                muatMobil();
+            }
         }
         tutupMenu();
     }
@@ -192,9 +204,15 @@
         if(!p || !t) return alert("Isi data!");
 
         const payload = { plat_nomor: p, tipe_mobil: t };
-        if(id) payload.id = id;
-
-        await _sb.from('kendaraan').upsert(payload, { onConflict: 'plat_nomor' });
+        let res;
+        if (id) {
+            res = await _sb.from('kendaraan').update(payload).eq('id', id);
+        } else {
+            res = await _sb.from('kendaraan').upsert(payload, { onConflict: 'plat_nomor' });
+        }
+        if (res.error) {
+            return alert("Gagal menyimpan armada: " + res.error.message);
+        }
         
         // Reset Form
         document.getElementById('editId').value = "";
