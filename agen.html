@@ -1,242 +1,3045 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SBR | Database Agen v4</title>
+    <title>SBR | Master Data Terpadu (Harga, Agen & Barang)</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body { font-family: 'Roboto Condensed', sans-serif; background-color: #121212; color: #eee; margin: 0; padding: 8px; user-select: none; }
-        .card { background: #1e1e1e; border-radius: 8px; padding: 12px; border: 1px solid #333; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); }
-        h2 { margin: 0 0 12px; font-size: 14px; text-align: center; background: #2d2d2d; padding: 10px; border-radius: 6px; color: #fff; text-transform: uppercase; border: 1px solid #444; letter-spacing: 1px; }
-        
-        /* FORM LAYOUT */
-        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
-        .form-group { display: flex; flex-direction: column; }
-        label { font-size: 10px; margin-bottom: 4px; color: #bbb; font-weight: bold; letter-spacing: 0.5px; }
-        input, select { background: #2d2d2d; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 6px; font-family: inherit; font-size: 13px; transition: border 0.3s; }
-        input:focus, select:focus { border-color: #3498db; outline: none; }
-        select { cursor: pointer; }
-        
-        .btn-save { background: #3b4c64; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.1s; }
-        .btn-save:active { transform: translateY(4px); }
+        :root {
+            --bg-main: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-soft: #f8fafc;
+            --bg-input: #ffffff;
+            --border: #e2e8f0;
+            --border-strong: #cbd5e1;
+            --text: #0f172a;
+            --muted: #64748b;
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --primary-soft: #ecfdf5;
+            --blue: #0284c7;
+            --blue-soft: #e0f2fe;
+            --amber: #d97706;
+            --amber-soft: #fef3c7;
+            --danger: #dc2626;
+            --danger-soft: #fee2e2;
+            --purple: #7c3aed;
+            --purple-soft: #f3e8ff;
+            --shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+        }
 
-        /* PENCARIAN */
-        .search-container { margin-bottom: 12px; width: 100%; box-sizing: border-box; }
-        .search-input { width: 100%; background: #2d2d2d; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 6px; font-family: inherit; box-sizing: border-box; font-size: 13px; }
-        .search-input:focus { border-color: #3498db; outline: none; }
+        [data-theme="dark"] {
+            --bg-main: #0b1120;
+            --bg-card: #131c31;
+            --bg-soft: #1b2640;
+            --bg-input: #1e293b;
+            --border: #26344f;
+            --border-strong: #334155;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --primary-soft: rgba(16, 185, 129, 0.14);
+            --blue: #38bdf8;
+            --blue-soft: rgba(56, 189, 248, 0.14);
+            --amber: #fbbf24;
+            --amber-soft: rgba(245, 158, 11, 0.14);
+            --danger: #f87171;
+            --danger-soft: rgba(239, 68, 68, 0.14);
+            --purple: #c084fc;
+            --purple-soft: rgba(168, 85, 247, 0.14);
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
 
-        /* TABLE AREA (Gaya Baru & Diperkecil) */
-        .table-container { width: 100%; max-height: 60vh; overflow-x: auto; border: 1px solid #333; border-radius: 8px; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        
-        table { width: 100%; border-collapse: collapse; color: #1e293b; min-width: 100%; } 
-        
-        thead th { background: #f8fafc; color: #475569; position: sticky; top: 0; z-index: 10; padding: 10px 5px; font-size: 10px; text-transform: uppercase; border-bottom: 2px solid #cbd5e1; text-align: left; letter-spacing: 0.5px; }
-        thead th.center { text-align: center; }
-        thead th.right { text-align: right; }
-        
-        td { border-bottom: 1px solid #f1f5f9; padding: 8px 5px; font-size: 12px; vertical-align: middle; }
-        tr:hover { background: #f8fafc; }
-        
-        .text-bold { font-weight: bold; color: #0f172a; }
-        .price-text { font-weight: bold; text-align: right; color: #16a085; font-size: 12px; white-space: nowrap; }
-        .nowrap { white-space: nowrap; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-        /* Badge tipe agen */
-        .badge { padding: 3px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; text-transform: uppercase; display: inline-block; white-space: nowrap;}
-        .badge-normal { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
-        .badge-khusus { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-main);
+            color: var(--text);
+            padding: 14px 14px 70px;
+            transition: background 0.25s, color 0.25s;
+        }
 
-        /* Kolom Aksi */
-        .action-cell { display: flex; gap: 4px; justify-content: center; align-items: center; }
-        .btn-action { display: inline-flex; align-items: center; justify-content: center; background: #f1f5f9; border: 1px solid #cbd5e1; cursor: pointer; font-size: 12px; padding: 5px 8px; border-radius: 4px; transition: all 0.2s; }
-        .btn-action.edit:hover { background: #dbeafe; border-color: #93c5fd; }
-        .btn-action.delete:hover { background: #fee2e2; border-color: #fca5a5; }
+        .wrap { max-width: 1180px; margin: 0 auto; }
+
+        /* TOP HEADER */
+        .page-head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .page-title-box h1 {
+            font-size: 20px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .page-title-box p {
+            font-size: 12.5px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+        .head-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 9px 13px;
+            border-radius: 10px;
+            font-size: 12.5px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            border: 1px solid var(--border-strong);
+            background: var(--bg-card);
+            color: var(--text);
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .btn:hover { border-color: var(--primary); }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary-dark); }
+        .btn-primary:hover { background: var(--primary-dark); color: #fff; }
+        .btn-blue { background: var(--blue); color: #fff; border-color: var(--blue); }
+        .btn-amber { background: var(--amber); color: #fff; border-color: var(--amber); }
+        .btn-danger { background: var(--danger-soft); color: var(--danger); border-color: transparent; }
+        .btn-soft { background: var(--bg-soft); color: var(--text); border-color: var(--border); }
+        .btn-sm { padding: 6px 10px; font-size: 11.5px; border-radius: 8px; }
+
+        /* KPI STRIP */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        @media (max-width: 820px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 13px 14px;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: transform 0.15s, border-color 0.15s;
+        }
+        .kpi-card:hover { transform: translateY(-2px); border-color: var(--primary); }
+        .kpi-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--muted);
+            letter-spacing: 0.4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .kpi-value {
+            font-size: 19px;
+            font-weight: 800;
+            margin-top: 5px;
+            color: var(--text);
+        }
+        .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+        /* TABS */
+        .tabs-bar {
+            display: flex;
+            gap: 6px;
+            background: var(--bg-card);
+            padding: 6px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            margin-bottom: 14px;
+            box-shadow: var(--shadow);
+            overflow-x: auto;
+        }
+        .tab-btn {
+            flex: 1;
+            min-width: 140px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.28);
+        }
+        .tab-badge {
+            font-size: 10.5px;
+            padding: 2px 7px;
+            border-radius: 99px;
+            background: rgba(15, 23, 42, 0.08);
+            color: inherit;
+        }
+        .tab-btn.active .tab-badge { background: rgba(255, 255, 255, 0.22); }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* TOOLBAR */
+        .panel-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: var(--shadow);
+        }
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .toolbar-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .toolbar-left { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; min-width: 240px; align-items: center; }
+        .toolbar-right { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+        .search-inp {
+            flex: 1;
+            min-width: 200px;
+            height: 38px;
+            padding: 0 13px;
+            border-radius: 10px;
+            border: 1px solid var(--border-strong);
+            background: var(--bg-input);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 13px;
+            outline: none;
+        }
+        .search-inp:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+
+        .sort-select {
+            height: 38px;
+            padding: 0 11px;
+            border-radius: 10px;
+            border: 1px solid var(--border-strong);
+            background: var(--bg-input);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+        }
+        .sort-select:focus { border-color: var(--primary); }
+
+        .view-toggle {
+            display: inline-flex;
+            align-items: center;
+            height: 38px;
+            background: var(--bg-soft);
+            border: 1px solid var(--border-strong);
+            border-radius: 10px;
+            padding: 3px;
+            gap: 2px;
+        }
+        .vt-btn {
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            height: 30px;
+            padding: 0 10px;
+            border-radius: 7px;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.15s;
+        }
+        .btn-toolbar {
+            height: 34px;
+            padding: 0 12px;
+            font-size: 12px;
+            border-radius: 9px;
+        }
+        .vt-btn.active {
+            background: var(--bg-card);
+            color: var(--primary-dark);
+            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1);
+        }
+        [data-theme="dark"] .vt-btn.active { color: #34d399; }
+
+        .agen-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 10px;
+        }
+        .agen-card {
+            background: var(--bg-soft);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 13px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: border-color 0.15s;
+        }
+        .agen-card:hover { border-color: var(--primary); background: var(--bg-card); }
+        .agen-card-foot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 8px;
+            border-top: 1px dashed var(--border);
+            gap: 6px;
+        }
+
+        .chip-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .chip {
+            padding: 5px 11px;
+            border-radius: 99px;
+            font-size: 11.5px;
+            font-weight: 700;
+            border: 1px solid var(--border-strong);
+            background: var(--bg-soft);
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .chip.active {
+            background: var(--primary-soft);
+            color: var(--primary-dark);
+            border-color: var(--primary);
+        }
+        [data-theme="dark"] .chip.active { color: #34d399; }
+
+        /* AGENT CARDS GRID (TAB HARGA) */
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 10px;
+        }
+        .agent-price-card {
+            background: var(--bg-soft);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 13px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .agent-price-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-1px);
+            background: var(--bg-card);
+        }
+        .agent-price-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+        .agent-price-card p { font-size: 11.5px; color: var(--muted); }
+
+        /* TABLE */
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 680px; }
+        th {
+            background: var(--bg-soft);
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            padding: 11px 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        td {
+            padding: 10px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: var(--bg-soft); }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 10.5px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .b-blue { background: var(--blue-soft); color: var(--blue); }
+        .b-amber { background: var(--amber-soft); color: var(--amber); }
+        .b-green { background: var(--primary-soft); color: var(--primary-dark); }
+        [data-theme="dark"] .b-green { color: #34d399; }
+        .b-red { background: var(--danger-soft); color: var(--danger); }
+        .b-purple { background: var(--purple-soft); color: var(--purple); }
+        .b-gray { background: var(--bg-soft); color: var(--muted); border: 1px solid var(--border); }
+
+        .money { font-weight: 700; color: var(--primary-dark); white-space: nowrap; }
+        [data-theme="dark"] .money { color: #34d399; }
+        .money-bon { font-weight: 700; color: var(--danger); white-space: nowrap; }
+
+        .row-actions { display: inline-flex; gap: 5px; align-items: center; justify-content: center; }
+
+        /* BARANG GRID */
+        .barang-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 10px;
+        }
+        .barang-card {
+            background: var(--bg-soft);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 13px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+            transition: border-color 0.15s;
+        }
+        .barang-card:hover { border-color: var(--primary); background: var(--bg-card); }
+        .barang-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+        .barang-name { font-size: 14.5px; font-weight: 700; }
+        .barang-badges { display: flex; flex-wrap: wrap; gap: 5px; }
+        .barang-foot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 8px;
+            border-top: 1px dashed var(--border);
+            gap: 6px;
+        }
+
+        /* MODALS */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.58);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+        }
+        .modal-backdrop.active { display: flex; }
+        .modal-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            width: 100%;
+            max-width: 620px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.32);
+            overflow: hidden;
+        }
+        .modal-lg { max-width: 780px; }
+        .modal-head {
+            padding: 15px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .modal-head h3 { font-size: 15.5px; font-weight: 800; }
+        .modal-close {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--bg-soft);
+            color: var(--text);
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .modal-body { padding: 16px 18px; overflow-y: auto; flex: 1; }
+        .modal-foot {
+            padding: 12px 18px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            background: var(--bg-soft);
+        }
+
+        .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        @media (max-width: 560px) {
+            .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
+        }
+        .fg { margin-bottom: 11px; }
+        .fg label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 4px;
+            letter-spacing: 0.4px;
+        }
+        .fg input, .fg select {
+            width: 100%;
+            padding: 9px 11px;
+            border-radius: 9px;
+            border: 1px solid var(--border-strong);
+            background: var(--bg-input);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 13.5px;
+            outline: none;
+        }
+        .fg input:focus, .fg select:focus { border-color: var(--primary); }
+
+        .banner-info {
+            background: var(--blue-soft);
+            color: var(--blue);
+            padding: 9px 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .unit-box {
+            background: var(--bg-soft);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 9px;
+        }
+        .unit-box-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .sync-check {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: var(--amber-soft);
+            color: var(--text);
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+        .sync-check input { width: auto; margin-top: 2px; }
+
+        .toast {
+            position: fixed;
+            bottom: 22px;
+            left: 50%;
+            transform: translateX(-50%) translateY(90px);
+            background: #0f172a;
+            color: #fff;
+            padding: 11px 18px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+            z-index: 3000;
+            opacity: 0;
+            transition: all 0.25s ease;
+            pointer-events: none;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .empty { text-align: center; padding: 34px 16px; color: var(--muted); font-size: 13px; }
+
+        /* MODERN DIALOG MODAL (PENGGANTI ALERT & CONFIRM BROWSER) */
+        .dialog-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.62);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 4000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .dialog-backdrop.active { display: flex; }
+        .dialog-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 420px;
+            padding: 22px 22px 18px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+            animation: dlgPop 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes dlgPop {
+            from { opacity: 0; transform: scale(0.94) translateY(8px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .dialog-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        .dialog-icon {
+            width: 42px; height: 42px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0;
+        }
+        .dialog-icon.danger { background: var(--danger-soft); color: var(--danger); }
+        .dialog-icon.warning { background: var(--amber-soft); color: var(--amber); }
+        .dialog-icon.info { background: var(--blue-soft); color: var(--blue); }
+        .dialog-icon.primary { background: var(--primary-soft); color: var(--primary-dark); }
+        [data-theme="dark"] .dialog-icon.primary { color: #34d399; }
+        .dialog-title { font-size: 16px; font-weight: 800; color: var(--text); }
+        .dialog-msg {
+            font-size: 13.5px;
+            color: var(--muted);
+            line-height: 1.55;
+            white-space: pre-line;
+            margin-bottom: 18px;
+            padding-left: 2px;
+        }
+        .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
+        .btn-confirm-danger { background: #dc2626; color: #fff; border-color: #b91c1c; }
+        .btn-confirm-danger:hover { background: #b91c1c; color: #fff; border-color: #991b1b; }
+
+        /* COMPACT UNIT EXPAND ROW */
+        .btn-expand-units {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 99px;
+            border: 1px solid var(--border-strong);
+            background: var(--bg-soft);
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-expand-units:hover, .btn-expand-units.open {
+            border-color: var(--blue);
+            color: var(--blue);
+            background: var(--blue-soft);
+        }
+        .sub-unit-row td {
+            background: var(--bg-soft) !important;
+            padding: 8px 10px 10px 44px;
+            border-bottom: 1px solid var(--border);
+        }
+        .sub-unit-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .sub-unit-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 10px;
+            border-radius: 9px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
-
-<div class="card">
-    <h2 id="title-form">TAMBAH AGEN BARU</h2>
-    <div class="form-grid">
-        <input type="hidden" id="edit_id">
-        <div class="form-group">
-            <label>NAMA AGEN</label>
-            <input type="text" id="in_nama" placeholder="Nama Agen">
+<div class="wrap">
+    <!-- HEADER -->
+    <div class="page-head">
+        <div class="page-title-box">
+            <h1><i class="fa-solid fa-layer-group" style="color:var(--primary)"></i> Master Data SBR</h1>
+            <p>Pusat manajemen terpadu Harga Agen, Daftar Agen (GPS & Bon), dan Master Barang 3 Satuan</p>
         </div>
-        <div class="form-group">
-            <label>ALAMAT (KOTA)</label>
-            <input type="text" id="in_alamat" placeholder="Contoh: CIKARANG">
-        </div>
-        <div class="form-group">
-            <label>NO. TELEPON</label>
-            <input type="number" id="in_tlp" placeholder="6281...">
-        </div>
-        <div class="form-group">
-            <label>TYPE AGEN</label>
-            <select id="in_type">
-                <option value="NORMAL">NORMAL</option>
-                <option value="KHUSUS">KHUSUS</option>
-            </select>
-        </div>
-        <div class="form-group" style="grid-column: span 2;">
-            <label>SALDO BON AWAL (RP)</label>
-            <input type="number" id="in_saldo" value="0">
+        <div class="head-actions">
+            <button class="btn btn-soft" onclick="exportActiveTabCSV()" title="Ekspor data tab aktif ke Excel CSV">
+                <i class="fa-solid fa-file-excel" style="color:var(--primary)"></i> Export CSV
+            </button>
+            <button class="btn btn-soft" onclick="loadAllData(true)" id="btnRefresh">
+                <i class="fa-solid fa-rotate"></i> Refresh
+            </button>
+            <button class="btn btn-soft" onclick="toggleTheme()" id="btnTheme" title="Ubah Tema">🌙</button>
         </div>
     </div>
-    <button class="btn-save" id="btn-aksi" onclick="simpanAgen()">SIMPAN DATA AGEN</button>
-    <button class="btn-save" id="btn-batal" onclick="resetForm()" style="display:none; background:#555; margin-top:8px;">BATAL EDIT</button>
+
+    <!-- KPI RINGKASAN -->
+    <div class="kpi-grid">
+        <div class="kpi-card" onclick="switchTab('agen')">
+            <div class="kpi-label"><span>Daftar Agen</span><i class="fa-solid fa-users" style="color:var(--blue)"></i></div>
+            <div class="kpi-value" id="kpiAgen">-</div>
+            <div class="kpi-sub" id="kpiAgenSub">Memuat...</div>
+        </div>
+        <div class="kpi-card" onclick="switchTab('agen'); setAgenFilter('bon')">
+            <div class="kpi-label"><span>Total Saldo Bon</span><i class="fa-solid fa-wallet" style="color:var(--danger)"></i></div>
+            <div class="kpi-value" id="kpiBon">-</div>
+            <div class="kpi-sub" id="kpiBonSub">Memuat...</div>
+        </div>
+        <div class="kpi-card" onclick="switchTab('barang')">
+            <div class="kpi-label"><span>Master Barang</span><i class="fa-solid fa-boxes-stacked" style="color:var(--primary)"></i></div>
+            <div class="kpi-value" id="kpiBarang">-</div>
+            <div class="kpi-sub" id="kpiBarangSub">Rasio 3 Satuan aktif</div>
+        </div>
+        <div class="kpi-card" onclick="switchTab('harga'); setHargaFilter('belum')">
+            <div class="kpi-label"><span>Tarif Harga Aktif</span><i class="fa-solid fa-tags" style="color:var(--amber)"></i></div>
+            <div class="kpi-value" id="kpiHarga">-</div>
+            <div class="kpi-sub" id="kpiHargaSub">Memuat...</div>
+        </div>
+    </div>
+
+    <!-- 3 TAB UTAMA -->
+    <div class="tabs-bar" role="tablist">
+        <button class="tab-btn active" id="tabBtn-harga" onclick="switchTab('harga')">
+            <i class="fa-solid fa-comments-dollar"></i> Harga Agen <span class="tab-badge" id="cntHarga">0</span>
+        </button>
+        <button class="tab-btn" id="tabBtn-agen" onclick="switchTab('agen')">
+            <i class="fa-solid fa-users"></i> Daftar Agen <span class="tab-badge" id="cntAgen">0</span>
+        </button>
+        <button class="tab-btn" id="tabBtn-barang" onclick="switchTab('barang')">
+            <i class="fa-solid fa-box-open"></i> Master Barang <span class="tab-badge" id="cntBarang">0</span>
+        </button>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- TAB 1: HARGA AGEN                                         -->
+    <!-- ========================================================= -->
+    <div class="tab-panel active" id="panel-harga">
+        <div class="panel-card">
+            <!-- Baris 1: Pencarian + Urutkan + Toggle Grid/Daftar (1 baris rapi) -->
+            <div class="toolbar-row">
+                <input type="text" id="searchHarga" class="search-inp" placeholder="🔍 Cari nama agen atau alamat..." oninput="renderHargaTab()">
+                <div class="toolbar-right">
+                    <select id="sortHarga" class="sort-select" onchange="setSort('harga', this.value)" title="Urutkan">
+                        <option value="name_asc">Urut: Nama A–Z</option>
+                        <option value="name_desc">Urut: Nama Z–A</option>
+                        <option value="tarif_desc">Urut: Tarif Terbanyak</option>
+                        <option value="tarif_asc">Urut: Belum Ada / Tersedikit</option>
+                        <option value="newest">Urut: Agen Terbaru</option>
+                    </select>
+                    <div class="view-toggle" id="vt-harga">
+                        <button type="button" class="vt-btn active" data-view="grid" onclick="setView('harga', 'grid')" title="Tampilan Grid"><i class="fa-solid fa-table-cells-large"></i> Grid</button>
+                        <button type="button" class="vt-btn" data-view="list" onclick="setView('harga', 'list')" title="Tampilan Daftar"><i class="fa-solid fa-list"></i> Daftar</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Baris 2: Filter Chips di Kiri + 4 Tombol Aksi Sejajar di Kanan -->
+            <div class="toolbar-row" style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+                <div class="chip-bar" id="hargaChips" style="margin-bottom:0;">
+                    <button class="chip active" data-filter="all" onclick="setHargaFilter('all')">Semua Agen</button>
+                    <button class="chip" data-filter="ada" onclick="setHargaFilter('ada')">Sudah Ada Harga</button>
+                    <button class="chip" data-filter="belum" onclick="setHargaFilter('belum')">⚠️ Belum Ada Harga</button>
+                    <button class="chip" data-filter="NORMAL" onclick="setHargaFilter('NORMAL')">NORMAL</button>
+                    <button class="chip" data-filter="KHUSUS" onclick="setHargaFilter('KHUSUS')">KHUSUS</button>
+                </div>
+                <div class="toolbar-right">
+                    <button class="btn btn-primary btn-toolbar" onclick="openHargaInputModal()">
+                        <i class="fa-solid fa-plus"></i> Input Harga
+                    </button>
+                    <button class="btn btn-soft btn-toolbar" style="background:var(--purple-soft);color:var(--purple);border-color:transparent;" onclick="openDistributeItemModal()" title="Set harga 1 barang ke banyak agen sekaligus">
+                        <i class="fa-solid fa-share-nodes"></i> Sebar Barang
+                    </button>
+                    <button class="btn btn-blue btn-toolbar" onclick="openCopyPriceModal()">
+                        <i class="fa-regular fa-copy"></i> Salin Agen
+                    </button>
+                    <button class="btn btn-amber btn-toolbar" onclick="openBulkPriceModal()">
+                        <i class="fa-solid fa-bolt"></i> Update Massal
+                    </button>
+                </div>
+            </div>
+            <div id="hargaAgentContainer">
+                <div class="empty">Memuat daftar harga agen...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- TAB 2: DAFTAR AGEN                                        -->
+    <!-- ========================================================= -->
+    <div class="tab-panel" id="panel-agen">
+        <div class="panel-card">
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <input type="text" id="searchAgen" class="search-inp" placeholder="🔍 Cari nama agen, kota/alamat, atau no. telepon..." oninput="renderAgenTab()">
+                    <select id="sortAgen" class="sort-select" onchange="setSort('agen', this.value)" title="Urutkan">
+                        <option value="newest">Urut: Terbaru Ditambahkan</option>
+                        <option value="name_asc" selected>Urut: Nama A–Z</option>
+                        <option value="name_desc">Urut: Nama Z–A</option>
+                        <option value="bon_desc">Urut: Saldo Bon Terbesar</option>
+                    </select>
+                    <div class="view-toggle" id="vt-agen">
+                        <button type="button" class="vt-btn active" data-view="list" onclick="setView('agen', 'list')" title="Tampilan Daftar"><i class="fa-solid fa-list"></i> Daftar</button>
+                        <button type="button" class="vt-btn" data-view="grid" onclick="setView('agen', 'grid')" title="Tampilan Grid"><i class="fa-solid fa-table-cells-large"></i> Grid</button>
+                    </div>
+                </div>
+                <div class="toolbar-right">
+                    <button class="btn btn-primary" onclick="openAgenModal()">
+                        <i class="fa-solid fa-user-plus"></i> Tambah Agen Baru
+                    </button>
+                </div>
+            </div>
+            <div class="chip-bar" id="agenChips">
+                <button class="chip active" data-filter="all" onclick="setAgenFilter('all')">Semua</button>
+                <button class="chip" data-filter="NORMAL" onclick="setAgenFilter('NORMAL')">NORMAL</button>
+                <button class="chip" data-filter="KHUSUS" onclick="setAgenFilter('KHUSUS')">KHUSUS</button>
+                <button class="chip" data-filter="bon" onclick="setAgenFilter('bon')">💳 Punya Saldo Bon</button>
+                <button class="chip" data-filter="no_harga" onclick="setAgenFilter('no_harga')">⚠️ Belum Ada Harga</button>
+                <button class="chip" data-filter="no_gps" onclick="setAgenFilter('no_gps')">📍 Belum Ada GPS</button>
+            </div>
+            <div id="agenContainer">
+                <div class="empty">Memuat data agen...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- TAB 3: MASTER BARANG                                      -->
+    <!-- ========================================================= -->
+    <div class="tab-panel" id="panel-barang">
+        <div class="panel-card">
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <input type="text" id="searchBarang" class="search-inp" placeholder="🔍 Cari kode atau nama barang..." oninput="renderBarangTab()">
+                    <select id="sortBarang" class="sort-select" onchange="setSort('barang', this.value)" title="Urutkan">
+                        <option value="newest" selected>Urut: Terbaru Ditambahkan</option>
+                        <option value="code_desc">Urut: Kode Terbesar (SBR064→)</option>
+                        <option value="code_asc">Urut: Kode Terkecil (SBR001→)</option>
+                        <option value="name_asc">Urut: Nama A–Z</option>
+                        <option value="name_desc">Urut: Nama Z–A</option>
+                        <option value="used_desc">Urut: Paling Banyak Dipakai</option>
+                    </select>
+                    <div class="view-toggle" id="vt-barang">
+                        <button type="button" class="vt-btn active" data-view="grid" onclick="setView('barang', 'grid')" title="Tampilan Grid"><i class="fa-solid fa-table-cells-large"></i> Grid</button>
+                        <button type="button" class="vt-btn" data-view="list" onclick="setView('barang', 'list')" title="Tampilan Daftar"><i class="fa-solid fa-list"></i> Daftar</button>
+                    </div>
+                </div>
+                <div class="toolbar-right">
+                    <button class="btn btn-primary" onclick="openBarangModal()">
+                        <i class="fa-solid fa-plus"></i> Tambah Barang Baru
+                    </button>
+                </div>
+            </div>
+            <div id="barangContainer">
+                <div class="empty">Memuat master barang...</div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="card">
-    <h2>DATA AGEN TERINPUT</h2>
-    
-    <div class="search-container">
-        <input type="text" id="in_cari" class="search-input" placeholder="🔍 Cari agen..." onkeyup="cariAgen()">
-    </div>
-
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th width="20" class="center">NO</th>
-                    <th>NAMA AGEN</th>
-                    <th>ALAMAT</th>
-                    <th width="45" class="center">TYPE</th>
-                    <th width="65">NO. TLP</th>
-                    <th width="75" class="right">SALDO BON</th>
-                    <th width="60" class="center">AKSI</th>
-                </tr>
-            </thead>
-            <tbody id="list-agen">
-                <tr><td colspan="7" style="text-align: center;">Memuat data...</td></tr>
-            </tbody>
-        </table>
+<!-- ========================================================= -->
+<!-- MODAL 1: DETAIL HARGA PER AGEN (+ MODE EXCEL CEPAT)       -->
+<!-- ========================================================= -->
+<div class="modal-backdrop" id="modalAgentPrices" onclick="closeOnBackdrop(event, 'modalAgentPrices')">
+    <div class="modal-box modal-lg">
+        <div class="modal-head">
+            <div>
+                <h3 id="apTitle">Daftar Harga Agen</h3>
+                <div style="font-size:11.5px; color:var(--muted);" id="apSubtitle">-</div>
+            </div>
+            <button class="modal-close" onclick="closeModal('modalAgentPrices')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="toolbar" style="margin-bottom:10px;">
+                <input type="text" id="apSearch" class="search-inp" placeholder="🔍 Filter nama barang..." oninput="renderAgentPricesModal()">
+                <div class="view-toggle" id="apModeToggle">
+                    <button type="button" class="vt-btn active" data-mode="table" onclick="setAgentPriceMode('table')"><i class="fa-solid fa-list"></i> Tabel</button>
+                    <button type="button" class="vt-btn" data-mode="excel" onclick="setAgentPriceMode('excel')"><i class="fa-solid fa-bolt"></i> Input Cepat (Excel)</button>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="openHargaInputModal(activePriceAgent)">
+                    <i class="fa-solid fa-plus"></i> 3 Satuan
+                </button>
+                <button class="btn btn-blue btn-sm" onclick="openCopyPriceModal(activePriceAgent)">
+                    <i class="fa-regular fa-copy"></i> Salin
+                </button>
+                <button class="btn btn-soft btn-sm" onclick="exportSingleAgentCSV()">
+                    <i class="fa-solid fa-file-csv"></i> CSV
+                </button>
+            </div>
+            <div id="apTableControls" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                <div class="chip-bar" id="apCompactChips" style="margin-bottom:0;">
+                    <button class="chip active" data-cm="compact" onclick="setAgentCompactMode('compact')">📦 Ringkas (Satuan 1)</button>
+                    <button class="chip" data-cm="all" onclick="setAgentCompactMode('all')">📄 Semua Satuan (Ball/Pack/Pcs)</button>
+                </div>
+                <span id="apTableHint" style="font-size:11.5px;color:var(--muted);">💡 Klik tombol <b>+2 satuan ▾</b> untuk melihat rincian Pack & Pcs</span>
+            </div>
+            <div id="apExcelControls" style="display:none;margin-bottom:10px;">
+                <div class="chip-bar" id="apExcelChips" style="margin-bottom:8px;">
+                    <button class="chip active" data-ef="all" onclick="setExcelFilter('all')">Semua Barang</button>
+                    <button class="chip" data-ef="belum" onclick="setExcelFilter('belum')">⚠️ Belum Diisi</button>
+                    <button class="chip" data-ef="ada" onclick="setExcelFilter('ada')">Sudah Ada Harga</button>
+                    <button class="chip" data-ef="changed" onclick="setExcelFilter('changed')">✏️ Diubah (<span id="excelChangedCnt">0</span>)</button>
+                </div>
+                <div class="banner-info" style="margin-bottom:0;">
+                    <span>⚡ Ketik harga <b>Satuan Besar (Ball)</b> lalu tekan <b>Enter</b> untuk loncat cepat ke barang berikutnya — Pack & Pcs terhitung otomatis!</span>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table style="min-width:520px;">
+                    <thead id="apThead"></thead>
+                    <tbody id="apTbody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-foot" id="apExcelFoot" style="display:none;justify-content:space-between;align-items:center;">
+            <span id="apExcelStatus" style="font-size:12px;font-weight:700;color:var(--muted);">Belum ada perubahan.</span>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-soft" onclick="resetExcelDraft()">Reset</button>
+                <button class="btn btn-primary" id="btnSaveExcel" onclick="saveExcelChanges()">💾 Simpan Semua Perubahan</button>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- ========================================================= -->
+<!-- MODAL 2: INPUT / EDIT HARGA 3 SATUAN (+ REFERENSI & GUARD)-->
+<!-- ========================================================= -->
+<div class="modal-backdrop" id="modalHargaForm" onclick="closeOnBackdrop(event, 'modalHargaForm')">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3 id="hfTitle">💰 Atur Harga 3 Satuan</h3>
+            <button class="modal-close" onclick="closeModal('modalHargaForm')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-grid-2">
+                <div class="fg">
+                    <label>Nama Agen</label>
+                    <select id="hfAgen" onchange="syncHargaFormUnits()"></select>
+                </div>
+                <div class="fg">
+                    <label>Nama Barang</label>
+                    <select id="hfBarang" onchange="syncHargaFormUnits()"></select>
+                </div>
+            </div>
+            <div class="banner-info" style="margin-bottom:8px;">
+                <span id="hfRatioText">📦 Pilih barang untuk melihat rasio 3 satuan</span>
+                <span>⚡ Auto-Konversi</span>
+            </div>
+            <div id="hfRefBox" style="display:none;background:var(--primary-soft);color:var(--primary-dark);padding:8px 11px;border-radius:9px;font-size:12px;font-weight:600;margin-bottom:10px;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+                <span id="hfRefText">💡 Referensi harga agen lain: -</span>
+                <button type="button" class="btn btn-primary btn-sm" style="padding:3px 9px;font-size:11px;" onclick="applyRefAvgPrice()">⚡ Pakai Rata-rata</button>
+            </div>
+            <div id="hfTypoWarn" style="display:none;background:var(--danger-soft);color:var(--danger);padding:8px 11px;border-radius:9px;font-size:12px;font-weight:700;margin-bottom:10px;"></div>
+            <div class="form-grid-3" style="margin-bottom:10px;">
+                <div class="unit-box">
+                    <div class="unit-box-head">
+                        <span class="badge b-blue" id="hfLbl1">BALL</span>
+                        <button type="button" class="btn btn-soft btn-sm" style="padding:2px 6px;font-size:10px;" onclick="calcHargaFrom(1)">🔄 Patokan</button>
+                    </div>
+                    <input type="number" id="hfVal1" placeholder="Rp 0" oninput="onHargaInput(1)" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border-strong);background:var(--bg-input);color:var(--text);font-weight:700;">
+                </div>
+                <div class="unit-box">
+                    <div class="unit-box-head">
+                        <span class="badge b-blue" id="hfLbl2">PACK</span>
+                        <button type="button" class="btn btn-soft btn-sm" style="padding:2px 6px;font-size:10px;" onclick="calcHargaFrom(2)">🔄 Patokan</button>
+                    </div>
+                    <input type="number" id="hfVal2" placeholder="Rp 0" oninput="onHargaInput(2)" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border-strong);background:var(--bg-input);color:var(--text);font-weight:700;">
+                </div>
+                <div class="unit-box">
+                    <div class="unit-box-head">
+                        <span class="badge b-blue" id="hfLbl3">PCS</span>
+                        <button type="button" class="btn btn-soft btn-sm" style="padding:2px 6px;font-size:10px;" onclick="calcHargaFrom(3)">🔄 Patokan</button>
+                    </div>
+                    <input type="number" id="hfVal3" placeholder="Rp 0" oninput="onHargaInput(3)" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border-strong);background:var(--bg-input);color:var(--text);font-weight:700;">
+                </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+                <span style="font-size:11.5px;color:var(--muted);">💡 Bisa disesuaikan manual per satuan sebelum simpan.</span>
+                <div style="display:flex;gap:6px;">
+                    <button type="button" class="btn btn-soft btn-sm" onclick="roundHargaForm(100)">✨ Bulatkan 100</button>
+                    <button type="button" class="btn btn-soft btn-sm" onclick="roundHargaForm(500)">✨ Bulatkan 500</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-foot" style="flex-wrap:wrap;">
+            <button class="btn btn-soft" onclick="closeModal('modalHargaForm')">Batal</button>
+            <button class="btn btn-blue" id="btnSaveHargaNext" onclick="saveHarga3Satuan(true)">➕ Simpan & Input Lagi</button>
+            <button class="btn btn-primary" id="btnSaveHarga" onclick="saveHarga3Satuan(false)">💾 Simpan & Tutup</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL 7: SET HARGA 1 BARANG KE BANYAK AGEN SEKALIGUS      -->
+<!-- ========================================================= -->
+<div class="modal-backdrop" id="modalDistributeItem" onclick="closeOnBackdrop(event, 'modalDistributeItem')">
+    <div class="modal-box modal-lg">
+        <div class="modal-head">
+            <h3>📦 Set Harga 1 Barang ke Banyak Agen Sekaligus</h3>
+            <button class="modal-close" onclick="closeModal('modalDistributeItem')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-grid-2">
+                <div class="fg">
+                    <label>Pilih Barang</label>
+                    <select id="diBarang" onchange="renderDistributeAgents()"></select>
+                </div>
+                <div class="fg">
+                    <label>Harga Standar Satuan Besar (Rp)</label>
+                    <div style="display:flex;gap:6px;">
+                        <input type="number" id="diBasePrice" placeholder="Cth: 75000" oninput="syncDistributeBasePrice()">
+                        <button type="button" class="btn btn-soft btn-sm" onclick="applyDistributeRefAvg()" title="Isi dari rata-rata agen lain">💡 Rata2</button>
+                    </div>
+                </div>
+            </div>
+            <div class="banner-info" id="diInfoBanner" style="margin-bottom:8px;">Pilih barang & isi Harga Standar Satuan Besar untuk menyebarkan tarif 3 satuan ke banyak agen.</div>
+            <div class="chip-bar" style="margin-bottom:8px;">
+                <button class="chip" onclick="selectDistributeAgents('ALL')">☑️ Pilih Semua</button>
+                <button class="chip" onclick="selectDistributeAgents('BELUM')">⚠️ Yang Belum Ada Harga</button>
+                <button class="chip" onclick="selectDistributeAgents('NORMAL')">Hanya NORMAL</button>
+                <button class="chip" onclick="selectDistributeAgents('KHUSUS')">Hanya KHUSUS</button>
+                <button class="chip" onclick="selectDistributeAgents('NONE')">☐ Batal Semua</button>
+            </div>
+            <input type="text" id="diSearch" class="search-inp" placeholder="🔍 Filter nama agen..." oninput="filterDistributeTable()" style="width:100%;margin-bottom:8px;">
+            <div class="table-wrap" style="max-height:280px;overflow-y:auto;">
+                <table style="min-width:500px;">
+                    <thead>
+                        <tr>
+                            <th width="36" class="text-center">✓</th>
+                            <th>Agen & Status</th>
+                            <th class="text-center" width="80">Type</th>
+                            <th class="text-right" width="145">Harga Satuan 1 (Rp)</th>
+                            <th class="text-right" width="135">Auto S2 / S3</th>
+                        </tr>
+                    </thead>
+                    <tbody id="diTbody">
+                        <tr><td colspan="5" class="empty">Pilih barang terlebih dahulu.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-foot" style="justify-content:space-between;align-items:center;">
+            <span id="diSelectedInfo" style="font-size:12px;font-weight:700;color:var(--muted);">0 agen dipilih</span>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-soft" onclick="closeModal('modalDistributeItem')">Batal</button>
+                <button class="btn btn-primary" id="btnExecDist" onclick="executeDistributeItem()">🚀 Simpan ke Agen Terpilih</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL 3: SALIN HARGA DARI AGEN LAIN (1-KLIK)              -->
+<!-- ========================================================= -->
+<div class="modal-backdrop" id="modalCopyPrice" onclick="closeOnBackdrop(event, 'modalCopyPrice')">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3>📋 Salin Daftar Harga dari Agen Lain</h3>
+            <button class="modal-close" onclick="closeModal('modalCopyPrice')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="fg">
+                <label>Salin Harga Dari (Agen Sumber)</label>
+                <select id="cpSource" onchange="previewCopyPrice()"></select>
+            </div>
+            <div class="fg">
+                <label>Ke (Agen Tujuan)</label>
+                <select id="cpTarget" onchange="previewCopyPrice()"></select>
+            </div>
+            <div class="fg">
+                <label>Selisih Penyesuaian Opsional per Satuan Besar (Rp, misal 0, 1000, atau -500)</label>
+                <input type="number" id="cpDelta" value="0" oninput="previewCopyPrice()" placeholder="0">
+            </div>
+            <div class="banner-info" id="cpPreview">Pilih Agen Sumber & Tujuan untuk melihat pratinjau.</div>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-soft" onclick="closeModal('modalCopyPrice')">Batal</button>
+            <button class="btn btn-blue" id="btnExecCopy" onclick="executeCopyPrice()">📋 Salin Harga Sekarang</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL 4: UPDATE HARGA MASSAL PER BARANG                   -->
+<!-- ========================================================= -->
+<div class="modal-backdrop" id="modalBulkPrice" onclick="closeOnBackdrop(event, 'modalBulkPrice')">
+    <div class="modal-box modal-lg">
+        <div class="modal-head">
+            <h3>⚡ Update Harga Massal per Barang (3 Satuan Otomatis)</h3>
+            <button class="modal-close" onclick="closeModal('modalBulkPrice')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-grid-3">
+                <div class="fg">
+                    <label>Pilih Barang</label>
+                    <select id="bpBarang" onchange="previewBulkPrice()"></select>
+                </div>
+                <div class="fg">
+                    <label>Target Agen</label>
+                    <select id="bpTargetType" onchange="previewBulkPrice()">
+                        <option value="ALL">Semua Agen</option>
+                        <option value="NORMAL">Hanya Agen NORMAL</option>
+                        <option value="KHUSUS">Hanya Agen KHUSUS</option>
+                    </select>
+                </div>
+                <div class="fg">
+                    <label>Selisih Harga Satuan 1 (+/- Rp)</label>
+                    <input type="number" id="bpDelta" value="0" placeholder="Cth: 2000 atau -1000" oninput="previewBulkPrice()">
+                </div>
+            </div>
+            <div class="banner-info" id="bpSummary">Pilih barang & masukkan selisih (+ / -) untuk melihat pratinjau.</div>
+            <div class="table-wrap" style="max-height:260px;overflow-y:auto;">
+                <table style="min-width:460px;">
+                    <thead>
+                        <tr>
+                            <th>Agen</th>
+                            <th class="text-center">Type</th>
+                            <th class="text-right">Harga Lama (S1)</th>
+                            <th class="text-right">Harga Baru (S1 / S2 / S3)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bpPreviewTbody">
+                        <tr><td colspan="4" class="empty">Belum ada pratinjau.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-soft" onclick="closeModal('modalBulkPrice')">Batal</button>
+            <button class="btn btn-amber" id="btnExecBulk" onclick="executeBulkPrice()">⚡ Terapkan Update Massal</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL 5: TAMBAH / EDIT AGEN (+ GPS + AUTO-SYNC NAMA)      -->
+<!-- ========================================================= -->
+<div class="modal-backdrop" id="modalAgenForm" onclick="closeOnBackdrop(event, 'modalAgenForm')">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3 id="afTitle">Tambah Agen Baru</h3>
+            <button class="modal-close" onclick="closeModal('modalAgenForm')">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="afId">
+            <input type="hidden" id="afOrigName">
+            <div class="form-grid-2">
+                <div class="fg" style="grid-column:1/-1;">
+                    <label>Nama Agen</label>
+                    <input type="text" id="afNama" placeholder="Nama lengkap agen" oninput="checkAgenRenameHint()">
+                </div>
+                <div class="fg">
+                    <label>Alamat / Kota</label>
+                    <input type="text" id="afAlamat" placeholder="Contoh: CIKARANG">
+                </div>
+                <div class="fg">
+                    <label>No. Telepon / WhatsApp</label>
+                    <input type="number" id="afTlp" placeholder="62812...">
+                </div>
+                <div class="fg">
+                    <label>Type Agen</label>
+                    <select id="afType">
+                        <option value="NORMAL">NORMAL</option>
+                        <option value="KHUSUS">KHUSUS</option>
+                    </select>
+                </div>
+                <div class="fg">
+                    <label>Saldo Bon (Rp)</label>
+                    <input type="number" id="afSaldo" value="0">
+                </div>
+            </div>
+            <div style="border-top:1px dashed var(--border);margin:10px 0;padding-top:10px;">
+                <div class="fg">
+                    <label>📍 Tempel Koordinat / Link Google Maps (Opsional — untuk Peta Driver)</label>
+                    <input type="text" id="afGpsPaste" placeholder="Cth: -6.445609, 106.874787 atau URL Maps" oninput="parseGpsPaste(this.value)">
+                </div>
+                <div class="form-grid-2">
+                    <div class="fg">
+                        <label>Latitude</label>
+                        <input type="number" step="any" id="afLat" placeholder="-6.xxxxxx">
+                    </div>
+                    <div class="fg">
+                        <label>Longitude</label>
+                        <input type="number" step="any" id="afLng" placeholder="106.xxxxxx">
+                    </div>
+                </div>
+            </div>
+            <label class="sync-check" id="afSyncWrap" style="display:none;">
+                <input type="checkbox" id="afSyncHarga" checked>
+                <span id="afSyncText">Ikut perbarui nama agen di tabel Harga agar daftar harga tidak terputus.</span>
+            </label>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-soft" onclick="closeModal('modalAgenForm')">Batal</button>
+            <button class="btn btn-primary" id="btnSaveAgen" onclick="saveAgen()">💾 Simpan Agen</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODAL 6: TAMBAH / EDIT BARANG (+ 3 SATUAN + AUTO-SYNC)    -->
+<!-- ========================================================= -->
+<div class="modal-backdrop" id="modalBarangForm" onclick="closeOnBackdrop(event, 'modalBarangForm')">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3 id="bfTitle">Tambah Barang Baru</h3>
+            <button class="modal-close" onclick="closeModal('modalBarangForm')">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="bfId">
+            <input type="hidden" id="bfOrigName">
+            <div class="form-grid-2">
+                <div class="fg">
+                    <label>Kode Barang</label>
+                    <input type="text" id="bfKode" placeholder="Cth: SBR052">
+                </div>
+                <div class="fg">
+                    <label>Nama Barang</label>
+                    <input type="text" id="bfNama" placeholder="Cth: Makroni 2000" oninput="checkBarangRenameHint()">
+                </div>
+            </div>
+            <div class="form-grid-3">
+                <div class="fg">
+                    <label>Satuan 1 (Besar)</label>
+                    <input type="text" id="bfS1" value="Ball" oninput="updateBarangRatioPreview()">
+                </div>
+                <div class="fg">
+                    <label>Satuan 2 (Menengah)</label>
+                    <input type="text" id="bfS2" value="Pack" oninput="updateBarangRatioPreview()">
+                </div>
+                <div class="fg">
+                    <label>Satuan 3 (Eceran)</label>
+                    <input type="text" id="bfS3" value="Pcs" oninput="updateBarangRatioPreview()">
+                </div>
+            </div>
+            <div class="form-grid-2">
+                <div class="fg">
+                    <label id="bfLbl12">1 Ball berapa Pack?</label>
+                    <input type="number" id="bfI12" value="10" min="1" oninput="updateBarangRatioPreview()">
+                </div>
+                <div class="fg">
+                    <label id="bfLbl23">1 Pack berapa Pcs?</label>
+                    <input type="number" id="bfI23" value="10" min="1" oninput="updateBarangRatioPreview()">
+                </div>
+            </div>
+            <div class="banner-info" id="bfRatioPreview">💡 1 Ball = 10 Pack = 100 Pcs</div>
+            <label class="sync-check" id="bfSyncWrap" style="display:none;">
+                <input type="checkbox" id="bfSyncHarga" checked>
+                <span id="bfSyncText">Ikut perbarui nama barang di tabel Harga agar tarif tidak terputus.</span>
+            </label>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-soft" onclick="closeModal('modalBarangForm')">Batal</button>
+            <button class="btn btn-primary" id="btnSaveBarang" onclick="saveBarang()">💾 Simpan Barang</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- MODERN DIALOG MODAL (PENGGANTI ALERT & CONFIRM BROWSER)   -->
+<!-- ========================================================= -->
+<div class="dialog-backdrop" id="sbrDialogBackdrop" onclick="if(event.target===this)resolveSbrDialog(false)">
+    <div class="dialog-card" role="dialog" aria-modal="true">
+        <div class="dialog-head">
+            <div class="dialog-icon info" id="sbrDlgIcon"><i class="fa-solid fa-circle-info"></i></div>
+            <div class="dialog-title" id="sbrDlgTitle">Konfirmasi</div>
+        </div>
+        <div class="dialog-msg" id="sbrDlgMsg"></div>
+        <div class="dialog-actions">
+            <button type="button" class="btn btn-soft" id="sbrDlgCancel" onclick="resolveSbrDialog(false)">Batal</button>
+            <button type="button" class="btn btn-primary" id="sbrDlgOk" onclick="resolveSbrDialog(true)">Ya, Lanjutkan</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toastEl"></div>
 
 <script>
     const SB_URL = "https://wunnynznajgwltzqdvfi.supabase.co";
     const SB_KEY = "sb_publishable_HJGWlUbTi-sT6tpFU4eZ1g_um4hmtVd";
     const _sb = supabase.createClient(SB_URL, SB_KEY);
 
-    let currentAgenData = [];
+    let allAgen = [];
+    let allBarang = [];
+    let allHarga = [];
+    let barangMap = {};
+    let agenMap = {};
 
-    window.onload = () => muatTabelAgen();
+    let activeTab = 'harga';
+    let hargaFilter = 'all';
+    let agenFilter = 'all';
+    let activePriceAgent = '';
+    let pendingBulkRows = [];
 
-    async function muatTabelAgen() {
-        const { data, error } = await _sb.from('agen').select('*').order('nama_agen', { ascending: true });
-        
-        if (error) {
-            document.getElementById('list-agen').innerHTML = `<tr><td colspan="7" style="color:red; text-align:center;">Gagal muat data</td></tr>`;
+    // Preferensi tampilan (Grid / Daftar) & Sortir tersimpan di localStorage
+    const viewPrefs = {
+        harga: localStorage.getItem('sbr_view_harga') || 'grid',
+        agen: localStorage.getItem('sbr_view_agen') || 'list',
+        barang: localStorage.getItem('sbr_view_barang') || 'grid'
+    };
+    const sortPrefs = {
+        harga: localStorage.getItem('sbr_sort_harga') || 'name_asc',
+        agen: localStorage.getItem('sbr_sort_agen') || 'name_asc',
+        barang: localStorage.getItem('sbr_sort_barang') || 'newest'
+    };
+
+    function applySavedControls() {
+        ['harga', 'agen', 'barang'].forEach(tab => {
+            const sel = document.getElementById('sort' + tab[0].toUpperCase() + tab.slice(1));
+            if (sel) sel.value = sortPrefs[tab];
+            document.querySelectorAll(`#vt-${tab} .vt-btn`).forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === viewPrefs[tab]);
+            });
+        });
+    }
+
+    function setView(tab, mode) {
+        viewPrefs[tab] = mode;
+        localStorage.setItem('sbr_view_' + tab, mode);
+        document.querySelectorAll(`#vt-${tab} .vt-btn`).forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === mode);
+        });
+        if (tab === 'harga') renderHargaTab();
+        else if (tab === 'agen') renderAgenTab();
+        else renderBarangTab();
+    }
+
+    function setSort(tab, val) {
+        sortPrefs[tab] = val;
+        localStorage.setItem('sbr_sort_' + tab, val);
+        if (tab === 'harga') renderHargaTab();
+        else if (tab === 'agen') renderAgenTab();
+        else renderBarangTab();
+    }
+
+    function parseCodeNum(kode) {
+        const m = String(kode || '').trim().match(/(\d+)$/);
+        return m ? parseInt(m[1], 10) : 0;
+    }
+
+    function generateNextKodeBarang() {
+        let bestNum = 0;
+        let prefix = 'SBR';
+        let padLen = 3;
+        allBarang.forEach(b => {
+            const code = String(b.kode_barang || '').trim();
+            const m = code.match(/^([A-Za-z_-]*)(\d+)$/);
+            if (m) {
+                const n = parseInt(m[2], 10);
+                if (n > bestNum) {
+                    bestNum = n;
+                    if (m[1]) prefix = m[1].toUpperCase();
+                    padLen = Math.max(3, m[2].length);
+                }
+            }
+        });
+        return prefix + String(bestNum + 1).padStart(padLen, '0');
+    }
+
+    const fmtRp = (n) => 'Rp ' + Math.round(Number(n) || 0).toLocaleString('id-ID');
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+    function showToast(msg) {
+        const el = document.getElementById('toastEl');
+        el.textContent = msg;
+        el.classList.add('show');
+        clearTimeout(window._toastTimer);
+        window._toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+    }
+
+    // ==================== MODERN ALERT & CONFIRM DIALOG ====================
+    let _dlgResolver = null;
+    function openSbrDialog({ title, message, confirmText = 'OK', cancelText = 'Batal', tone = 'info', showCancel = false }) {
+        return new Promise((resolve) => {
+            _dlgResolver = resolve;
+            const iconEl = document.getElementById('sbrDlgIcon');
+            const okBtn = document.getElementById('sbrDlgOk');
+            const cancelBtn = document.getElementById('sbrDlgCancel');
+
+            iconEl.className = 'dialog-icon ' + tone;
+            iconEl.innerHTML = tone === 'danger' ? '<i class="fa-solid fa-trash-can"></i>'
+                : tone === 'warning' ? '<i class="fa-solid fa-triangle-exclamation"></i>'
+                : tone === 'primary' ? '<i class="fa-solid fa-circle-check"></i>'
+                : '<i class="fa-solid fa-circle-info"></i>';
+
+            document.getElementById('sbrDlgTitle').textContent = title || 'Pemberitahuan';
+            document.getElementById('sbrDlgMsg').textContent = message || '';
+            okBtn.textContent = confirmText;
+            okBtn.className = 'btn ' + (tone === 'danger' ? 'btn-confirm-danger' : tone === 'warning' ? 'btn-amber' : 'btn-primary');
+            cancelBtn.textContent = cancelText;
+            cancelBtn.style.display = showCancel ? 'inline-flex' : 'none';
+
+            document.getElementById('sbrDialogBackdrop').classList.add('active');
+            setTimeout(() => okBtn.focus(), 40);
+        });
+    }
+
+    function resolveSbrDialog(val) {
+        document.getElementById('sbrDialogBackdrop').classList.remove('active');
+        if (_dlgResolver) {
+            const fn = _dlgResolver;
+            _dlgResolver = null;
+            fn(val);
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (!document.getElementById('sbrDialogBackdrop').classList.contains('active')) return;
+        if (e.key === 'Escape') resolveSbrDialog(false);
+    });
+
+    function sbrAlert(message, opts = {}) {
+        return openSbrDialog({
+            title: opts.title || 'Perhatian',
+            message,
+            confirmText: opts.confirmText || 'Mengerti',
+            tone: opts.tone || 'warning',
+            showCancel: false
+        });
+    }
+
+    function sbrConfirm(message, opts = {}) {
+        return openSbrDialog({
+            title: opts.title || 'Konfirmasi Tindakan',
+            message,
+            confirmText: opts.confirmText || 'Ya, Lanjutkan',
+            cancelText: opts.cancelText || 'Batal',
+            tone: opts.tone || 'primary',
+            showCancel: true
+        });
+    }
+
+    function toggleTheme() {
+        const cur = document.documentElement.getAttribute('data-theme') || 'light';
+        const next = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('sbr_master_theme', next);
+        document.getElementById('btnTheme').textContent = next === 'dark' ? '☀️' : '🌙';
+    }
+    (function initTheme() {
+        const saved = localStorage.getItem('sbr_master_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', saved);
+        document.getElementById('btnTheme').textContent = saved === 'dark' ? '☀️' : '🌙';
+    })();
+
+    function switchTab(tab) {
+        activeTab = tab;
+        ['harga', 'agen', 'barang'].forEach(t => {
+            document.getElementById('tabBtn-' + t).classList.toggle('active', t === tab);
+            document.getElementById('panel-' + t).classList.toggle('active', t === tab);
+        });
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+    function closeOnBackdrop(e, id) { if (e.target.id === id) closeModal(id); }
+
+    function getKonversi(namaBarang) {
+        const b = barangMap[namaBarang] || {};
+        return {
+            satuan_1: b.satuan_1 || 'Ball',
+            satuan_2: b.satuan_2 || 'Pack',
+            satuan_3: b.satuan_3 || 'Pcs',
+            isi_1_ke_2: Math.max(1, Number(b.isi_1_ke_2) || 10),
+            isi_2_ke_3: Math.max(1, Number(b.isi_2_ke_3) || 10)
+        };
+    }
+
+    async function fetchAllTable(table, orderCol) {
+        let out = [], from = 0, step = 1000;
+        while (true) {
+            let q = _sb.from(table).select('*').range(from, from + step - 1);
+            if (orderCol) q = q.order(orderCol, { ascending: true });
+            const { data, error } = await q;
+            if (error) throw error;
+            if (!data || !data.length) break;
+            out = out.concat(data);
+            if (data.length < step) break;
+            from += step;
+        }
+        return out;
+    }
+
+    async function loadAllData(notify = false) {
+        const btn = document.getElementById('btnRefresh');
+        btn.disabled = true;
+        try {
+            const [agens, barangs, hargas] = await Promise.all([
+                fetchAllTable('agen', 'nama_agen'),
+                fetchAllTable('barang', 'nama_barang'),
+                fetchAllTable('harga', 'nama_agen')
+            ]);
+            allAgen = agens;
+            allBarang = barangs;
+            allHarga = hargas;
+
+            barangMap = {};
+            allBarang.forEach(b => barangMap[b.nama_barang] = b);
+            agenMap = {};
+            allAgen.forEach(a => agenMap[a.nama_agen] = a);
+
+            updateKPIs();
+            populateDropdowns();
+            renderHargaTab();
+            renderAgenTab();
+            renderBarangTab();
+
+            if (activePriceAgent && document.getElementById('modalAgentPrices').classList.contains('active')) {
+                renderAgentPricesModal();
+            }
+            if (notify) showToast('✅ Data Master diperbarui!');
+        } catch (err) {
+            await sbrAlert('Gagal memuat data: ' + err.message, { title: "Terjadi Kesalahan", tone: "danger" });
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    function getHargaCountByAgen() {
+        const map = {};
+        allHarga.forEach(h => {
+            if (!map[h.nama_agen]) map[h.nama_agen] = { rows: 0, skus: new Set() };
+            map[h.nama_agen].rows++;
+            map[h.nama_agen].skus.add(h.nama_barang);
+        });
+        return map;
+    }
+
+    function updateKPIs() {
+        const normal = allAgen.filter(a => (a.type_agen || 'NORMAL').toUpperCase() !== 'KHUSUS').length;
+        const khusus = allAgen.length - normal;
+        const bonAgents = allAgen.filter(a => Number(a.saldo_bon || 0) > 0);
+        const totalBon = bonAgents.reduce((s, a) => s + Number(a.saldo_bon || 0), 0);
+
+        const hMap = getHargaCountByAgen();
+        const belumHarga = allAgen.filter(a => !hMap[a.nama_agen]).length;
+
+        document.getElementById('kpiAgen').textContent = allAgen.length + ' Agen';
+        document.getElementById('kpiAgenSub').textContent = `${normal} Normal • ${khusus} Khusus`;
+        document.getElementById('kpiBon').textContent = fmtRp(totalBon);
+        document.getElementById('kpiBonSub').textContent = `${bonAgents.length} agen memiliki saldo bon`;
+        document.getElementById('kpiBarang').textContent = allBarang.length + ' SKU';
+        document.getElementById('kpiHarga').textContent = allHarga.length.toLocaleString('id-ID') + ' Tarif';
+        document.getElementById('kpiHargaSub').textContent = belumHarga > 0 ? `⚠️ ${belumHarga} agen belum ada harga` : '✅ Semua agen punya harga';
+
+        document.getElementById('cntHarga').textContent = allHarga.length;
+        document.getElementById('cntAgen').textContent = allAgen.length;
+        document.getElementById('cntBarang').textContent = allBarang.length;
+    }
+
+    function populateDropdowns() {
+        const agenOpts = '<option value="">-- Pilih Agen --</option>' +
+            allAgen.map(a => `<option value="${esc(a.nama_agen)}">${esc(a.nama_agen)} (${esc(a.type_agen || 'NORMAL')})</option>`).join('');
+        const barangOpts = '<option value="">-- Pilih Barang --</option>' +
+            allBarang.map(b => `<option value="${esc(b.nama_barang)}">${esc(b.nama_barang)}</option>`).join('');
+
+        ['hfAgen', 'cpSource', 'cpTarget'].forEach(id => {
+            const el = document.getElementById(id);
+            const prev = el.value;
+            el.innerHTML = agenOpts;
+            if (prev) el.value = prev;
+        });
+        ['hfBarang', 'bpBarang', 'diBarang'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const prev = el.value;
+            el.innerHTML = barangOpts;
+            if (prev) el.value = prev;
+        });
+    }
+
+    // ==================== TAB 1: HARGA AGEN ====================
+    function setHargaFilter(f) {
+        hargaFilter = f;
+        document.querySelectorAll('#hargaChips .chip').forEach(c => c.classList.toggle('active', c.dataset.filter === f));
+        renderHargaTab();
+    }
+
+    function renderHargaTab() {
+        const q = (document.getElementById('searchHarga').value || '').toLowerCase().trim();
+        const hMap = getHargaCountByAgen();
+        const container = document.getElementById('hargaAgentContainer');
+
+        const namesSet = new Set(allAgen.map(a => a.nama_agen));
+        allHarga.forEach(h => namesSet.add(h.nama_agen));
+        let list = [...namesSet];
+
+        list = list.filter(name => {
+            const a = agenMap[name] || {};
+            const info = hMap[name];
+            const type = (a.type_agen || 'NORMAL').toUpperCase();
+            if (hargaFilter === 'ada' && !info) return false;
+            if (hargaFilter === 'belum' && info) return false;
+            if ((hargaFilter === 'NORMAL' || hargaFilter === 'KHUSUS') && type !== hargaFilter) return false;
+            if (q && !name.toLowerCase().includes(q) && !(a.alamat || '').toLowerCase().includes(q)) return false;
+            return true;
+        });
+
+        const s = sortPrefs.harga;
+        list.sort((n1, n2) => {
+            const a1 = agenMap[n1] || {}, a2 = agenMap[n2] || {};
+            const c1 = hMap[n1]?.rows || 0, c2 = hMap[n2]?.rows || 0;
+            if (s === 'name_desc') return n2.localeCompare(n1);
+            if (s === 'tarif_desc') return (c2 - c1) || n1.localeCompare(n2);
+            if (s === 'tarif_asc') return (c1 - c2) || n1.localeCompare(n2);
+            if (s === 'newest') return (Number(a2.id || 0) - Number(a1.id || 0)) || n1.localeCompare(n2);
+            return n1.localeCompare(n2);
+        });
+
+        if (!list.length) {
+            container.innerHTML = '<div class="empty">Tidak ada agen yang cocok dengan filter.</div>';
             return;
         }
 
-        currentAgenData = data || [];
-        const listBody = document.getElementById('list-agen');
-        listBody.innerHTML = "";
-
-        if (currentAgenData.length === 0) {
-            listBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Tidak ada data agen.</td></tr>`;
-            return;
-        }
-
-        currentAgenData.forEach((ag, index) => {
-            const tr = document.createElement('tr');
-            const badgeClass = (ag.type_agen || 'NORMAL').toLowerCase() === 'khusus' ? 'badge-khusus' : 'badge-normal';
-
-            tr.innerHTML = `
-                <td align="center" style="color: #64748b;">${index + 1}</td>
-                <td class="text-bold">${ag.nama_agen}</td>
-                <td>${ag.alamat}</td>
-                <td align="center"><span class="badge ${badgeClass}">${ag.type_agen || 'NORMAL'}</span></td>
-                <td class="nowrap">${ag.No_tlp || '-'}</td>
-                <td class="price-text nowrap">Rp ${ag.saldo_bon ? ag.saldo_bon.toLocaleString('id-ID') : 0}</td>
-                <td>
-                    <div class="action-cell">
-                        <button class="btn-action edit" onclick="prepareEdit(${index})" title="Edit">✏️</button>
-                        <button class="btn-action delete" onclick="hapusAgen(${index})" title="Hapus">🗑️</button>
-                    </div>
-                </td>
+        if (viewPrefs.harga === 'list') {
+            container.innerHTML = `
+                <div class="table-wrap">
+                    <table style="min-width:560px;">
+                        <thead>
+                            <tr>
+                                <th width="42" class="text-center">No</th>
+                                <th>Nama Agen</th>
+                                <th>Alamat</th>
+                                <th class="text-center">Type</th>
+                                <th class="text-center">Kelengkapan Harga</th>
+                                <th class="text-center" width="120">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${list.map((name, i) => {
+                                const a = agenMap[name] || {};
+                                const info = hMap[name];
+                                const type = (a.type_agen || 'NORMAL').toUpperCase();
+                                const typeCls = type === 'KHUSUS' ? 'b-amber' : 'b-blue';
+                                const statusHtml = info
+                                    ? `<span class="badge b-green">${info.skus.size} barang (${info.rows} tarif)</span>`
+                                    : `<span class="badge b-red">Belum ada harga</span>`;
+                                const safeName = esc(name).replace(/'/g, "\\'");
+                                return `
+                                    <tr style="cursor:pointer;" onclick="openAgentPricesModal('${safeName}')">
+                                        <td class="text-center" style="color:var(--muted);font-size:11.5px;">${i + 1}</td>
+                                        <td><strong>${esc(name)}</strong></td>
+                                        <td>${esc(a.alamat || '-')}</td>
+                                        <td class="text-center"><span class="badge ${typeCls}">${type}</span></td>
+                                        <td class="text-center">${statusHtml}</td>
+                                        <td class="text-center"><button class="btn btn-soft btn-sm">Kelola ➔</button></td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
             `;
-            listBody.appendChild(tr);
+            return;
+        }
+
+        container.innerHTML = `<div class="agent-grid">${list.map(name => {
+            const a = agenMap[name] || {};
+            const info = hMap[name];
+            const type = (a.type_agen || 'NORMAL').toUpperCase();
+            const typeCls = type === 'KHUSUS' ? 'b-amber' : 'b-blue';
+            const statusHtml = info
+                ? `<span class="badge b-green">${info.skus.size} barang (${info.rows} tarif)</span>`
+                : `<span class="badge b-red">Belum ada harga</span>`;
+            return `
+                <div class="agent-price-card" onclick="openAgentPricesModal('${esc(name).replace(/'/g, "\\'")}')">
+                    <div style="min-width:0;">
+                        <h4>${esc(name)}</h4>
+                        <p style="margin-bottom:6px;">${esc(a.alamat || 'Tanpa alamat')}</p>
+                        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                            <span class="badge ${typeCls}">${type}</span>
+                            ${statusHtml}
+                        </div>
+                    </div>
+                    <div style="color:var(--primary);font-weight:800;font-size:16px;">➔</div>
+                </div>
+            `;
+        }).join('')}</div>`;
+    }
+
+    let agentPriceMode = 'table'; // 'table' | 'excel'
+    let agentCompactMode = localStorage.getItem('sbr_ap_compact') || 'compact'; // 'compact' | 'all'
+    let expandedBarangSet = new Set();
+    let excelFilter = 'all';
+    let excelDraft = {}; // { nama_barang: newS1Number }
+    let currentRefStats = null;
+
+    function setAgentCompactMode(cm) {
+        agentCompactMode = cm;
+        localStorage.setItem('sbr_ap_compact', cm);
+        document.querySelectorAll('#apCompactChips .chip').forEach(c => c.classList.toggle('active', c.dataset.cm === cm));
+        const hint = document.getElementById('apTableHint');
+        if (hint) hint.style.display = cm === 'compact' ? 'inline' : 'none';
+        renderAgentPricesModal();
+    }
+
+    function toggleExpandBarang(barangName) {
+        if (expandedBarangSet.has(barangName)) expandedBarangSet.delete(barangName);
+        else expandedBarangSet.add(barangName);
+        renderAgentPricesModal();
+    }
+
+    function getBarangRefStats(namaBarang) {
+        if (!namaBarang) return null;
+        const k = getKonversi(namaBarang);
+        const vals = allHarga
+            .filter(h => h.nama_barang === namaBarang && (h.satuan || '').toLowerCase() === k.satuan_1.toLowerCase() && Number(h.harga_jual) > 0)
+            .map(h => Number(h.harga_jual));
+        if (!vals.length) return null;
+        const min = Math.min(...vals);
+        const max = Math.max(...vals);
+        const avg = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length / 500) * 500 || Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+        return { min, max, avg, count: vals.length, satuan: k.satuan_1 };
+    }
+
+    function openAgentPricesModal(agenName, initialMode = 'table') {
+        activePriceAgent = agenName;
+        agentPriceMode = initialMode;
+        expandedBarangSet = new Set();
+        excelFilter = 'all';
+        excelDraft = {};
+        const a = agenMap[agenName] || {};
+        document.getElementById('apTitle').textContent = agenName;
+        document.getElementById('apSubtitle').textContent = `${a.alamat || '-'} • Type: ${(a.type_agen || 'NORMAL').toUpperCase()}`;
+        document.getElementById('apSearch').value = '';
+        syncAgentPriceModeUI();
+        renderAgentPricesModal();
+        document.getElementById('modalAgentPrices').classList.add('active');
+    }
+
+    function setAgentPriceMode(mode) {
+        agentPriceMode = mode;
+        syncAgentPriceModeUI();
+        renderAgentPricesModal();
+    }
+
+    function syncAgentPriceModeUI() {
+        document.querySelectorAll('#apModeToggle .vt-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === agentPriceMode));
+        document.getElementById('apTableControls').style.display = agentPriceMode === 'table' ? 'flex' : 'none';
+        document.getElementById('apExcelControls').style.display = agentPriceMode === 'excel' ? 'block' : 'none';
+        document.getElementById('apExcelFoot').style.display = agentPriceMode === 'excel' ? 'flex' : 'none';
+        document.querySelectorAll('#apCompactChips .chip').forEach(c => c.classList.toggle('active', c.dataset.cm === agentCompactMode));
+        const hint = document.getElementById('apTableHint');
+        if (hint) hint.style.display = agentCompactMode === 'compact' ? 'inline' : 'none';
+        updateExcelFooter();
+    }
+
+    function setExcelFilter(f) {
+        excelFilter = f;
+        document.querySelectorAll('#apExcelChips .chip').forEach(c => c.classList.toggle('active', c.dataset.ef === f));
+        renderAgentPricesModal();
+    }
+
+    function resetExcelDraft() {
+        excelDraft = {};
+        renderAgentPricesModal();
+        updateExcelFooter();
+    }
+
+    function updateExcelFooter() {
+        const cnt = Object.keys(excelDraft).length;
+        const cntEl = document.getElementById('excelChangedCnt');
+        if (cntEl) cntEl.textContent = cnt;
+        const st = document.getElementById('apExcelStatus');
+        if (st) st.textContent = cnt > 0 ? `✏️ ${cnt} barang siap disimpan (${cnt * 3} tarif 3 satuan)` : 'Belum ada perubahan.';
+    }
+
+    function onExcelInput(barangName, rawVal, rowIdx) {
+        const k = getKonversi(barangName);
+        const tot = k.isi_1_ke_2 * k.isi_2_ke_3;
+        const existingS1 = allHarga.find(h => h.nama_agen === activePriceAgent && h.nama_barang === barangName && (h.satuan || '').toLowerCase() === k.satuan_1.toLowerCase());
+        const origVal = existingS1 ? Number(existingS1.harga_jual || 0) : 0;
+        const num = Number(rawVal) || 0;
+
+        if (num > 0 && num !== origVal) excelDraft[barangName] = num;
+        else delete excelDraft[barangName];
+
+        const prevEl = document.getElementById('exPrev_' + rowIdx);
+        if (prevEl) {
+            prevEl.textContent = num > 0 ? `${fmtRp(Math.round(num / k.isi_1_ke_2))} / ${fmtRp(Math.round(num / tot))}` : '-';
+        }
+        const tr = document.getElementById('exRow_' + rowIdx);
+        if (tr) {
+            tr.style.background = excelDraft[barangName] ? 'var(--primary-soft)' : '';
+        }
+        updateExcelFooter();
+    }
+
+    function onExcelKeyDown(e, rowIdx) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const next = document.getElementById('exInp_' + (rowIdx + 1));
+            if (next) { next.focus(); next.select(); }
+        }
+    }
+
+    async function saveExcelChanges() {
+        const entries = Object.entries(excelDraft);
+        if (!entries.length) return showToast('Belum ada perubahan harga untuk disimpan.');
+
+        // Anti-typo guard: cek jika ada harga melenceng >40% dari rata-rata agen lain
+        const warnings = [];
+        const payload = [];
+        for (const [bName, s1] of entries) {
+            const k = getKonversi(bName);
+            const tot = k.isi_1_ke_2 * k.isi_2_ke_3;
+            const ref = getBarangRefStats(bName);
+            if (ref && (s1 < ref.avg * 0.6 || s1 > ref.avg * 1.4)) {
+                warnings.push(`• ${bName}: ${fmtRp(s1)} (rata-rata agen lain ${fmtRp(ref.avg)})`);
+            }
+            payload.push({ nama_agen: activePriceAgent, nama_barang: bName, satuan: k.satuan_1, harga_jual: s1 });
+            payload.push({ nama_agen: activePriceAgent, nama_barang: bName, satuan: k.satuan_2, harga_jual: Math.round(s1 / k.isi_1_ke_2) });
+            payload.push({ nama_agen: activePriceAgent, nama_barang: bName, satuan: k.satuan_3, harga_jual: Math.round(s1 / tot) });
+        }
+
+        if (warnings.length) {
+            const ok = await sbrConfirm(`⚠️ Peringatan Harga Tidak Biasa (cek angka nol):\n\n${warnings.join('\n')}\n\nYakin ingin tetap menyimpan?`, { title: "Peringatan Harga", confirmText: "Tetap Simpan", tone: "warning" });
+            if (!ok) return;
+        }
+
+        const btn = document.getElementById('btnSaveExcel');
+        btn.disabled = true; btn.textContent = 'Menyimpan...';
+        try {
+            const { error } = await _sb.from('harga').upsert(payload, { onConflict: 'nama_agen,nama_barang,satuan' });
+            if (error) throw error;
+            excelDraft = {};
+            await loadAllData(false);
+            updateExcelFooter();
+            showToast(`⚡ ${entries.length} barang (${payload.length} tarif) tersimpan untuk ${activePriceAgent}!`);
+        } catch (err) {
+            await sbrAlert('Gagal menyimpan mode cepat: ' + err.message, { title: "Terjadi Kesalahan", tone: "danger" });
+        } finally {
+            btn.disabled = false; btn.textContent = '💾 Simpan Semua Perubahan';
+        }
+    }
+
+    function renderAgentPricesModal() {
+        const q = (document.getElementById('apSearch').value || '').toLowerCase().trim();
+        const thead = document.getElementById('apThead');
+        const tbody = document.getElementById('apTbody');
+
+        if (agentPriceMode === 'excel') {
+            thead.innerHTML = `
+                <tr>
+                    <th width="36" class="text-center">No</th>
+                    <th>Nama Barang & Referensi</th>
+                    <th class="text-right" width="150">Harga Satuan 1 (Rp)</th>
+                    <th class="text-right" width="150">Auto S2 / S3</th>
+                </tr>
+            `;
+            const agentS1Map = {};
+            allHarga.filter(h => h.nama_agen === activePriceAgent).forEach(h => {
+                const k = getKonversi(h.nama_barang);
+                if ((h.satuan || '').toLowerCase() === k.satuan_1.toLowerCase()) {
+                    agentS1Map[h.nama_barang] = Number(h.harga_jual || 0);
+                }
+            });
+
+            const list = [...allBarang]
+                .sort((a, b) => (a.nama_barang || '').localeCompare(b.nama_barang || ''))
+                .filter(b => {
+                    const has = Boolean(agentS1Map[b.nama_barang]);
+                    const isChg = Boolean(excelDraft[b.nama_barang]);
+                    if (excelFilter === 'ada' && !has) return false;
+                    if (excelFilter === 'belum' && has) return false;
+                    if (excelFilter === 'changed' && !isChg) return false;
+                    if (q && !(b.nama_barang || '').toLowerCase().includes(q) && !(b.kode_barang || '').toLowerCase().includes(q)) return false;
+                    return true;
+                });
+
+            if (!list.length) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty">Tidak ada barang pada filter ini.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = list.map((b, i) => {
+                const k = getKonversi(b.nama_barang);
+                const tot = k.isi_1_ke_2 * k.isi_2_ke_3;
+                const curVal = excelDraft[b.nama_barang] !== undefined ? excelDraft[b.nama_barang] : (agentS1Map[b.nama_barang] || '');
+                const ref = getBarangRefStats(b.nama_barang);
+                const refTxt = ref ? `Ref: ${fmtRp(ref.min)}–${fmtRp(ref.max)}` : 'Belum ada referensi';
+                const safeB = esc(b.nama_barang).replace(/'/g, "\\'");
+                const preview = curVal > 0 ? `${fmtRp(Math.round(curVal / k.isi_1_ke_2))} / ${fmtRp(Math.round(curVal / tot))}` : '-';
+                return `
+                    <tr id="exRow_${i}" style="${excelDraft[b.nama_barang] ? 'background:var(--primary-soft);' : ''}">
+                        <td class="text-center" style="color:var(--muted);font-size:11.5px;">${i + 1}</td>
+                        <td>
+                            <div style="font-weight:700;">${esc(b.nama_barang)} <span class="badge b-blue" style="font-size:9.5px;">${esc(k.satuan_1)}</span></div>
+                            <div style="font-size:11px;color:var(--muted);margin-top:2px;">${refTxt}</div>
+                        </td>
+                        <td class="text-right">
+                            <input type="number" id="exInp_${i}" value="${curVal}" placeholder="${ref ? ref.avg : '0'}"
+                                oninput="onExcelInput('${safeB}', this.value, ${i})"
+                                onkeydown="onExcelKeyDown(event, ${i})"
+                                style="width:130px;padding:7px 9px;border-radius:8px;border:1px solid var(--border-strong);background:var(--bg-input);color:var(--text);font-weight:700;text-align:right;">
+                        </td>
+                        <td class="text-right" id="exPrev_${i}" style="font-size:11.5px;color:var(--muted);white-space:nowrap;">${preview}</td>
+                    </tr>
+                `;
+            }).join('');
+            return;
+        }
+
+        const items = allHarga
+            .filter(h => h.nama_agen === activePriceAgent)
+            .filter(h => !q || (h.nama_barang || '').toLowerCase().includes(q) || (h.satuan || '').toLowerCase().includes(q))
+            .sort((a, b) => (a.nama_barang || '').localeCompare(b.nama_barang || ''));
+
+        if (!items.length) {
+            thead.innerHTML = `
+                <tr>
+                    <th width="40" class="text-center">No</th>
+                    <th>Nama Barang</th>
+                    <th class="text-center">Satuan</th>
+                    <th class="text-right">Harga Jual</th>
+                    <th class="text-center" width="110">Aksi</th>
+                </tr>
+            `;
+            tbody.innerHTML = '<tr><td colspan="5" class="empty">Belum ada daftar harga untuk agen ini. Coba klik <b>⚡ Input Cepat (Excel)</b> di atas untuk isi banyak barang sekaligus!</td></tr>';
+            return;
+        }
+
+        if (agentCompactMode === 'compact') {
+            thead.innerHTML = `
+                <tr>
+                    <th width="40" class="text-center">No</th>
+                    <th>Nama Barang</th>
+                    <th class="text-center">Satuan Utama</th>
+                    <th class="text-right">Harga Satuan 1</th>
+                    <th class="text-center" width="120">Aksi</th>
+                </tr>
+            `;
+            const grouped = new Map();
+            items.forEach(h => {
+                if (!grouped.has(h.nama_barang)) grouped.set(h.nama_barang, []);
+                grouped.get(h.nama_barang).push(h);
+            });
+
+            const rowsHtml = [];
+            let idx = 0;
+            for (const [bName, group] of grouped.entries()) {
+                idx++;
+                const k = getKonversi(bName);
+                const primary = group.find(h => (h.satuan || '').toLowerCase() === k.satuan_1.toLowerCase()) || group[0];
+                const others = group.filter(h => h.id !== primary.id);
+                const isOpen = expandedBarangSet.has(bName);
+                const safeAgen = esc(activePriceAgent).replace(/'/g, "\\'");
+                const safeBarang = esc(bName).replace(/'/g, "\\'");
+
+                rowsHtml.push(`
+                    <tr>
+                        <td class="text-center" style="color:var(--muted);font-size:11.5px;">${idx}</td>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                <strong>${esc(bName)}</strong>
+                                ${others.length > 0 ? `
+                                    <button type="button" class="btn-expand-units ${isOpen ? 'open' : ''}" onclick="toggleExpandBarang('${safeBarang}')">
+                                        +${others.length} satuan ${isOpen ? '▴' : '▾'}
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </td>
+                        <td class="text-center"><span class="badge b-blue">${esc(primary.satuan)}</span></td>
+                        <td class="text-right money">${fmtRp(primary.harga_jual)}</td>
+                        <td class="text-center">
+                            <div class="row-actions">
+                                <button class="btn btn-soft btn-sm" onclick="openHargaInputModal('${safeAgen}','${safeBarang}')" title="Edit 3 Satuan">✏️</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteBarangHargaForAgent('${safeAgen}','${safeBarang}')" title="Hapus Semua Satuan Barang Ini">🗑️</button>
+                            </div>
+                        </td>
+                    </tr>
+                `);
+
+                if (isOpen && others.length > 0) {
+                    rowsHtml.push(`
+                        <tr class="sub-unit-row">
+                            <td colspan="5">
+                                <div class="sub-unit-chips">
+                                    <span style="font-size:11px;font-weight:700;color:var(--muted);">Rincian satuan lain:</span>
+                                    ${others.map(o => `
+                                        <span class="sub-unit-pill">
+                                            <span class="badge b-blue">${esc(o.satuan)}</span>
+                                            <strong class="money">${fmtRp(o.harga_jual)}</strong>
+                                            <button type="button" onclick="deleteSingleHarga(${o.id})" title="Hapus hanya ${esc(o.satuan)}" style="border:none;background:transparent;color:var(--danger);cursor:pointer;font-size:12px;padding:0 2px;">✕</button>
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            </td>
+                        </tr>
+                    `);
+                }
+            }
+            tbody.innerHTML = rowsHtml.join('');
+            return;
+        }
+
+        thead.innerHTML = `
+            <tr>
+                <th width="40" class="text-center">No</th>
+                <th>Nama Barang</th>
+                <th class="text-center">Satuan</th>
+                <th class="text-right">Harga Jual</th>
+                <th class="text-center" width="105">Aksi</th>
+            </tr>
+        `;
+        tbody.innerHTML = items.map((h, i) => {
+            const k = getKonversi(h.nama_barang);
+            const isS1 = (h.satuan || '').toLowerCase() === k.satuan_1.toLowerCase();
+            const safeAgen = esc(h.nama_agen).replace(/'/g, "\\'");
+            const safeBarang = esc(h.nama_barang).replace(/'/g, "\\'");
+            return `
+                <tr>
+                    <td class="text-center" style="color:var(--muted);font-size:11.5px;">${i + 1}</td>
+                    <td><strong>${esc(h.nama_barang)}</strong></td>
+                    <td class="text-center"><span class="badge b-blue">${esc(h.satuan)}</span></td>
+                    <td class="text-right money">${fmtRp(h.harga_jual)}</td>
+                    <td class="text-center">
+                        <div class="row-actions">
+                            <button class="btn btn-soft btn-sm" onclick="openHargaInputModal('${safeAgen}','${safeBarang}')" title="Edit 3 Satuan">✏️</button>
+                            <button class="btn btn-danger btn-sm" onclick="${isS1 ? `deleteBarangHargaForAgent('${safeAgen}','${safeBarang}')` : `deleteSingleHarga(${h.id})`}" title="${isS1 ? 'Hapus Semua Satuan Barang Ini' : 'Hapus Satuan Ini'}">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function openHargaInputModal(presetAgen = '', presetBarang = '') {
+        document.getElementById('hfAgen').value = presetAgen || '';
+        document.getElementById('hfBarang').value = presetBarang || '';
+        document.getElementById('hfVal1').value = '';
+        document.getElementById('hfVal2').value = '';
+        document.getElementById('hfVal3').value = '';
+        document.getElementById('hfTitle').textContent = presetBarang ? `✏️ Edit Harga: ${presetBarang}` : '💰 Atur Harga 3 Satuan';
+        syncHargaFormUnits();
+        document.getElementById('modalHargaForm').classList.add('active');
+    }
+
+    function syncHargaFormUnits() {
+        const agen = document.getElementById('hfAgen').value;
+        const barang = document.getElementById('hfBarang').value;
+        const refBox = document.getElementById('hfRefBox');
+        document.getElementById('hfTypoWarn').style.display = 'none';
+        currentRefStats = null;
+
+        if (!barang) {
+            document.getElementById('hfRatioText').textContent = '📦 Pilih barang untuk melihat rasio 3 satuan';
+            refBox.style.display = 'none';
+            return;
+        }
+        const k = getKonversi(barang);
+        document.getElementById('hfLbl1').textContent = k.satuan_1.toUpperCase();
+        document.getElementById('hfLbl2').textContent = k.satuan_2.toUpperCase();
+        document.getElementById('hfLbl3').textContent = k.satuan_3.toUpperCase();
+        document.getElementById('hfRatioText').textContent = `📦 1 ${k.satuan_1} = ${k.isi_1_ke_2} ${k.satuan_2} = ${k.isi_1_ke_2 * k.isi_2_ke_3} ${k.satuan_3}`;
+
+        currentRefStats = getBarangRefStats(barang);
+        if (currentRefStats) {
+            document.getElementById('hfRefText').textContent =
+                `💡 Referensi ${currentRefStats.count} agen lain: ${fmtRp(currentRefStats.min)} – ${fmtRp(currentRefStats.max)} / ${currentRefStats.satuan} (Rata-rata: ${fmtRp(currentRefStats.avg)})`;
+            refBox.style.display = 'flex';
+        } else {
+            refBox.style.display = 'none';
+        }
+
+        if (agen && barang) {
+            const ex = allHarga.filter(h => h.nama_agen === agen && h.nama_barang === barang);
+            const findU = (u) => ex.find(h => (h.satuan || '').toLowerCase() === u.toLowerCase());
+            document.getElementById('hfVal1').value = findU(k.satuan_1)?.harga_jual || '';
+            document.getElementById('hfVal2').value = findU(k.satuan_2)?.harga_jual || '';
+            document.getElementById('hfVal3').value = findU(k.satuan_3)?.harga_jual || '';
+            checkHargaTypoGuard();
+        }
+    }
+
+    function applyRefAvgPrice() {
+        if (!currentRefStats) return;
+        document.getElementById('hfVal1').value = currentRefStats.avg;
+        onHargaInput(1);
+    }
+
+    function checkHargaTypoGuard() {
+        const warn = document.getElementById('hfTypoWarn');
+        const v1 = Number(document.getElementById('hfVal1').value) || 0;
+        if (currentRefStats && v1 > 0 && (v1 < currentRefStats.avg * 0.65 || v1 > currentRefStats.avg * 1.35)) {
+            const arah = v1 < currentRefStats.avg ? 'jauh lebih RENDAH' : 'jauh lebih TINGGI';
+            warn.textContent = `⚠️ Cek angka nol! ${fmtRp(v1)} ${arah} dari rata-rata agen lain (${fmtRp(currentRefStats.avg)}).`;
+            warn.style.display = 'block';
+            return true;
+        }
+        warn.style.display = 'none';
+        return false;
+    }
+
+    function onHargaInput(idx) {
+        const barang = document.getElementById('hfBarang').value;
+        if (!barang) return;
+        const k = getKonversi(barang);
+        const tot = k.isi_1_ke_2 * k.isi_2_ke_3;
+        const i1 = document.getElementById('hfVal1'), i2 = document.getElementById('hfVal2'), i3 = document.getElementById('hfVal3');
+        const v1 = Number(i1.value) || 0, v2 = Number(i2.value) || 0, v3 = Number(i3.value) || 0;
+        if (idx === 1) {
+            i2.value = v1 > 0 ? Math.round(v1 / k.isi_1_ke_2) : '';
+            i3.value = v1 > 0 ? Math.round(v1 / tot) : '';
+        } else if (idx === 2 && v2 > 0) {
+            i3.value = Math.round(v2 / k.isi_2_ke_3);
+            if (!v1) i1.value = Math.round(v2 * k.isi_1_ke_2);
+        } else if (idx === 3 && v3 > 0 && !v1 && !v2) {
+            i2.value = Math.round(v3 * k.isi_2_ke_3);
+            i1.value = Math.round(v3 * tot);
+        }
+        checkHargaTypoGuard();
+    }
+
+    function calcHargaFrom(idx) {
+        const barang = document.getElementById('hfBarang').value;
+        if (!barang) return;
+        const k = getKonversi(barang);
+        const tot = k.isi_1_ke_2 * k.isi_2_ke_3;
+        const i1 = document.getElementById('hfVal1'), i2 = document.getElementById('hfVal2'), i3 = document.getElementById('hfVal3');
+        const v1 = Number(i1.value) || 0, v2 = Number(i2.value) || 0, v3 = Number(i3.value) || 0;
+        if (idx === 1 && v1 > 0) { i2.value = Math.round(v1 / k.isi_1_ke_2); i3.value = Math.round(v1 / tot); }
+        else if (idx === 2 && v2 > 0) { i1.value = Math.round(v2 * k.isi_1_ke_2); i3.value = Math.round(v2 / k.isi_2_ke_3); }
+        else if (idx === 3 && v3 > 0) { i2.value = Math.round(v3 * k.isi_2_ke_3); i1.value = Math.round(v3 * tot); }
+        checkHargaTypoGuard();
+    }
+
+    function roundHargaForm(step) {
+        ['hfVal1', 'hfVal2', 'hfVal3'].forEach(id => {
+            const el = document.getElementById(id);
+            const v = Number(el.value) || 0;
+            if (v > 0) el.value = Math.ceil(v / step) * step;
         });
-        cariAgen();
+        checkHargaTypoGuard();
     }
 
-    function cariAgen() {
-        const input = document.getElementById('in_cari').value.toUpperCase();
-        const tr = document.querySelectorAll("#list-agen tr");
-        tr.forEach(row => {
-            row.style.display = row.innerText.toUpperCase().includes(input) ? "" : "none";
+    async function saveHarga3Satuan(keepOpen = false) {
+        const agen = document.getElementById('hfAgen').value;
+        const barang = document.getElementById('hfBarang').value;
+        if (!agen || !barang) return await sbrAlert('Pilih Agen dan Barang terlebih dahulu!', { title: "Perhatian", tone: "warning" });
+        const k = getKonversi(barang);
+        const v1 = Number(document.getElementById('hfVal1').value) || 0;
+        const v2 = Number(document.getElementById('hfVal2').value) || 0;
+        const v3 = Number(document.getElementById('hfVal3').value) || 0;
+        if (v1 <= 0 && v2 <= 0 && v3 <= 0) return await sbrAlert('Isi minimal 1 harga satuan!', { title: "Perhatian", tone: "warning" });
+
+        if (checkHargaTypoGuard()) {
+            if (!(await sbrConfirm(`⚠️ Harga ${fmtRp(v1)} melenceng jauh dari rata-rata agen lain (${fmtRp(currentRefStats.avg)}). Yakin tetap simpan?`, { title: "Peringatan Harga", confirmText: "Tetap Simpan", tone: "warning" }))) return;
+        }
+
+        const rows = [];
+        if (v1 > 0) rows.push({ nama_agen: agen, nama_barang: barang, satuan: k.satuan_1, harga_jual: v1 });
+        if (v2 > 0) rows.push({ nama_agen: agen, nama_barang: barang, satuan: k.satuan_2, harga_jual: v2 });
+        if (v3 > 0) rows.push({ nama_agen: agen, nama_barang: barang, satuan: k.satuan_3, harga_jual: v3 });
+
+        const btn = document.getElementById('btnSaveHarga');
+        const btnNext = document.getElementById('btnSaveHargaNext');
+        btn.disabled = true; btnNext.disabled = true;
+        try {
+            const { error } = await _sb.from('harga').upsert(rows, { onConflict: 'nama_agen,nama_barang,satuan' });
+            if (error) throw error;
+            await loadAllData(false);
+            showToast(`✅ ${rows.length} tarif (${barang}) tersimpan untuk ${agen}`);
+            if (keepOpen) {
+                document.getElementById('hfAgen').value = agen;
+                document.getElementById('hfBarang').value = '';
+                document.getElementById('hfVal1').value = '';
+                document.getElementById('hfVal2').value = '';
+                document.getElementById('hfVal3').value = '';
+                syncHargaFormUnits();
+                document.getElementById('hfBarang').focus();
+            } else {
+                closeModal('modalHargaForm');
+            }
+        } catch (err) {
+            await sbrAlert('Gagal menyimpan harga: ' + err.message, { title: "Terjadi Kesalahan", tone: "danger" });
+        } finally {
+            btn.disabled = false; btnNext.disabled = false;
+        }
+    }
+
+    // ==================== FITUR 1 BARANG -> BANYAK AGEN ====================
+    function openDistributeItemModal(presetBarang = '') {
+        document.getElementById('diBarang').value = presetBarang || '';
+        document.getElementById('diBasePrice').value = '';
+        document.getElementById('diSearch').value = '';
+        renderDistributeAgents();
+        document.getElementById('modalDistributeItem').classList.add('active');
+    }
+
+    function applyDistributeRefAvg() {
+        const b = document.getElementById('diBarang').value;
+        const ref = getBarangRefStats(b);
+        if (!ref) return showToast('Belum ada referensi harga agen lain untuk barang ini.');
+        document.getElementById('diBasePrice').value = ref.avg;
+        syncDistributeBasePrice();
+    }
+
+    function renderDistributeAgents() {
+        const barang = document.getElementById('diBarang').value;
+        const tbody = document.getElementById('diTbody');
+        const banner = document.getElementById('diInfoBanner');
+        if (!barang) {
+            banner.textContent = 'Pilih barang & isi Harga Standar Satuan Besar untuk menyebarkan tarif 3 satuan ke banyak agen.';
+            tbody.innerHTML = '<tr><td colspan="5" class="empty">Pilih barang terlebih dahulu.</td></tr>';
+            updateDistributeSelectedInfo();
+            return;
+        }
+
+        const k = getKonversi(barang);
+        const tot = k.isi_1_ke_2 * k.isi_2_ke_3;
+        const ref = getBarangRefStats(barang);
+        banner.textContent = `📦 ${barang} (1 ${k.satuan_1} = ${k.isi_1_ke_2} ${k.satuan_2} = ${tot} ${k.satuan_3})` +
+            (ref ? ` • Ref agen lain: ${fmtRp(ref.min)}–${fmtRp(ref.max)}` : ' • Produk baru (belum ada harga)');
+
+        const existingMap = {};
+        allHarga.filter(h => h.nama_barang === barang && (h.satuan || '').toLowerCase() === k.satuan_1.toLowerCase())
+            .forEach(h => existingMap[h.nama_agen] = Number(h.harga_jual || 0));
+
+        const baseVal = Number(document.getElementById('diBasePrice').value) || 0;
+
+        tbody.innerHTML = allAgen.map((a, i) => {
+            const type = (a.type_agen || 'NORMAL').toUpperCase();
+            const ex = existingMap[a.nama_agen] || 0;
+            const val = ex || baseVal || '';
+            const preview = val > 0 ? `${fmtRp(Math.round(val / k.isi_1_ke_2))} / ${fmtRp(Math.round(val / tot))}` : '-';
+            return `
+                <tr class="di-row" data-agen="${esc(a.nama_agen).toLowerCase()}" data-type="${type}" data-has="${ex > 0 ? '1' : '0'}">
+                    <td class="text-center"><input type="checkbox" class="di-chk" data-idx="${i}" data-agen="${esc(a.nama_agen)}" onchange="onDistributeCheckChange(${i})"></td>
+                    <td>
+                        <strong>${esc(a.nama_agen)}</strong>
+                        <div style="font-size:10.5px;color:var(--muted);">${ex > 0 ? `Saat ini: ${fmtRp(ex)}` : '⚠️ Belum ada harga'}</div>
+                    </td>
+                    <td class="text-center"><span class="badge ${type === 'KHUSUS' ? 'b-amber' : 'b-blue'}">${type}</span></td>
+                    <td class="text-right">
+                        <input type="number" class="di-price" id="diPrice_${i}" value="${val}" placeholder="Rp 0"
+                            oninput="onDistributePriceInput(${i})"
+                            style="width:125px;padding:6px 8px;border-radius:7px;border:1px solid var(--border-strong);background:var(--bg-input);color:var(--text);font-weight:700;text-align:right;">
+                    </td>
+                    <td class="text-right" id="diPrev_${i}" style="font-size:11px;color:var(--muted);white-space:nowrap;">${preview}</td>
+                </tr>
+            `;
+        }).join('');
+        updateDistributeSelectedInfo();
+    }
+
+    function syncDistributeBasePrice() {
+        const barang = document.getElementById('diBarang').value;
+        if (!barang) return;
+        const baseVal = Number(document.getElementById('diBasePrice').value) || 0;
+        const k = getKonversi(barang);
+        const tot = k.isi_1_ke_2 * k.isi_2_ke_3;
+        document.querySelectorAll('.di-row').forEach((tr, i) => {
+            const chk = tr.querySelector('.di-chk');
+            const inp = document.getElementById('diPrice_' + i);
+            const hasOld = tr.dataset.has === '1';
+            // Isi otomatis untuk agen yang belum punya harga atau sedang dicentang
+            if (!hasOld || chk.checked) {
+                inp.value = baseVal > 0 ? baseVal : '';
+                const p = document.getElementById('diPrev_' + i);
+                if (p) p.textContent = baseVal > 0 ? `${fmtRp(Math.round(baseVal / k.isi_1_ke_2))} / ${fmtRp(Math.round(baseVal / tot))}` : '-';
+            }
         });
     }
 
-    function prepareEdit(index) {
-        const ag = currentAgenData[index];
-        document.getElementById('title-form').innerText = "EDIT DATA AGEN";
-        document.getElementById('edit_id').value = ag.id;
-        document.getElementById('in_nama').value = ag.nama_agen;
-        document.getElementById('in_alamat').value = ag.alamat;
-        document.getElementById('in_tlp').value = ag.No_tlp;
-        document.getElementById('in_type').value = ag.type_agen || "NORMAL";
-        document.getElementById('in_saldo').value = ag.saldo_bon;
-        
-        const btnAksi = document.getElementById('btn-aksi');
-        btnAksi.innerText = "UPDATE DATA AGEN";
-        btnAksi.style.background = "#2ecc71";
-        document.getElementById('btn-batal').style.display = "block";
+    function onDistributePriceInput(i) {
+        const barang = document.getElementById('diBarang').value;
+        const k = getKonversi(barang);
+        const tot = k.isi_1_ke_2 * k.isi_2_ke_3;
+        const val = Number(document.getElementById('diPrice_' + i).value) || 0;
+        const p = document.getElementById('diPrev_' + i);
+        if (p) p.textContent = val > 0 ? `${fmtRp(Math.round(val / k.isi_1_ke_2))} / ${fmtRp(Math.round(val / tot))}` : '-';
+        if (val > 0) {
+            const chk = document.querySelector(`.di-chk[data-idx="${i}"]`);
+            if (chk && !chk.checked) { chk.checked = true; updateDistributeSelectedInfo(); }
+        }
     }
 
-    async function simpanAgen() {
-        const id = document.getElementById('edit_id').value;
+    function onDistributeCheckChange(i) {
+        const chk = document.querySelector(`.di-chk[data-idx="${i}"]`);
+        const inp = document.getElementById('diPrice_' + i);
+        const baseVal = Number(document.getElementById('diBasePrice').value) || 0;
+        if (chk.checked && !Number(inp.value) && baseVal > 0) {
+            inp.value = baseVal;
+            onDistributePriceInput(i);
+        }
+        updateDistributeSelectedInfo();
+    }
+
+    function selectDistributeAgents(mode) {
+        const baseVal = Number(document.getElementById('diBasePrice').value) || 0;
+        document.querySelectorAll('.di-row').forEach((tr, i) => {
+            const chk = tr.querySelector('.di-chk');
+            let check = false;
+            if (mode === 'ALL') check = true;
+            else if (mode === 'BELUM') check = tr.dataset.has === '0';
+            else if (mode === 'NORMAL') check = tr.dataset.type === 'NORMAL';
+            else if (mode === 'KHUSUS') check = tr.dataset.type === 'KHUSUS';
+            chk.checked = check;
+            if (check) {
+                const inp = document.getElementById('diPrice_' + i);
+                if (!Number(inp.value) && baseVal > 0) {
+                    inp.value = baseVal;
+                    onDistributePriceInput(i);
+                }
+            }
+        });
+        updateDistributeSelectedInfo();
+    }
+
+    function filterDistributeTable() {
+        const q = (document.getElementById('diSearch').value || '').toLowerCase().trim();
+        document.querySelectorAll('.di-row').forEach(tr => {
+            tr.style.display = !q || tr.dataset.agen.includes(q) ? '' : 'none';
+        });
+    }
+
+    function updateDistributeSelectedInfo() {
+        const checked = document.querySelectorAll('.di-chk:checked').length;
+        const el = document.getElementById('diSelectedInfo');
+        if (el) el.textContent = `${checked} agen dipilih (${checked * 3} tarif 3 satuan)`;
+    }
+
+    async function executeDistributeItem() {
+        const barang = document.getElementById('diBarang').value;
+        if (!barang) return await sbrAlert('Pilih barang terlebih dahulu!', { title: "Perhatian", tone: "warning" });
+        const k = getKonversi(barang);
+        const tot = k.isi_1_ke_2 * k.isi_2_ke_3;
+
+        const payload = [];
+        let agenCount = 0;
+        document.querySelectorAll('.di-chk:checked').forEach(chk => {
+            const i = chk.dataset.idx;
+            const agenName = chk.dataset.agen;
+            const s1 = Number(document.getElementById('diPrice_' + i).value) || 0;
+            if (s1 > 0) {
+                agenCount++;
+                payload.push({ nama_agen: agenName, nama_barang: barang, satuan: k.satuan_1, harga_jual: s1 });
+                payload.push({ nama_agen: agenName, nama_barang: barang, satuan: k.satuan_2, harga_jual: Math.round(s1 / k.isi_1_ke_2) });
+                payload.push({ nama_agen: agenName, nama_barang: barang, satuan: k.satuan_3, harga_jual: Math.round(s1 / tot) });
+            }
+        });
+
+        if (!payload.length) return await sbrAlert('Centang minimal 1 agen dan pastikan kolom harganya terisi (> 0)!', { title: 'Perhatian', tone: 'warning' });
+        if (!(await sbrConfirm(`Terapkan harga "${barang}" (3 satuan) ke ${agenCount} agen terpilih (${payload.length} tarif)?`, { title: "Konfirmasi Sebar Harga", confirmText: "Ya, Terapkan", tone: "primary" }))) return;
+
+        const btn = document.getElementById('btnExecDist');
+        btn.disabled = true; btn.textContent = 'Menyimpan...';
+        try {
+            const { error } = await _sb.from('harga').upsert(payload, { onConflict: 'nama_agen,nama_barang,satuan' });
+            if (error) throw error;
+            closeModal('modalDistributeItem');
+            await loadAllData(false);
+            showToast(`🚀 Harga ${barang} berhasil diterapkan ke ${agenCount} agen!`);
+        } catch (err) {
+            await sbrAlert('Gagal menyimpan distribusi harga: ' + err.message, { title: "Terjadi Kesalahan", tone: "danger" });
+        } finally {
+            btn.disabled = false; btn.textContent = '🚀 Simpan ke Agen Terpilih';
+        }
+    }
+
+    async function deleteBarangHargaForAgent(agenName, barangName) {
+        const related = allHarga.filter(h => h.nama_agen === agenName && h.nama_barang === barangName);
+        if (!related.length) return;
+        const satuanList = related.map(r => r.satuan).join(', ');
+        const ok = await sbrConfirm(
+            `Hapus seluruh tarif "${barangName}" (${satuanList} — ${related.length} satuan) untuk agen "${agenName}"?\n\nSemua satuan barang ini akan ikut terhapus sekaligus.`,
+            { title: 'Hapus Tarif Barang', confirmText: `Hapus ${related.length} Satuan`, tone: 'danger' }
+        );
+        if (!ok) return;
+        const { error } = await _sb.from('harga').delete().eq('nama_agen', agenName).eq('nama_barang', barangName);
+        if (error) return await sbrAlert('Gagal menghapus tarif: ' + error.message, { title: 'Gagal', tone: 'danger' });
+        expandedBarangSet.delete(barangName);
+        await loadAllData(false);
+        showToast(`🗑️ ${related.length} satuan "${barangName}" dihapus dari ${agenName}`);
+    }
+
+    async function deleteSingleHarga(id) {
+        const target = allHarga.find(h => h.id === id);
+        if (!target) return;
+        const ok = await sbrConfirm(
+            `Hapus tarif ${target.nama_barang} (${target.satuan}) untuk agen ${target.nama_agen}?`,
+            { title: 'Hapus Tarif Satuan', confirmText: 'Ya, Hapus', tone: 'danger' }
+        );
+        if (!ok) return;
+        const { error } = await _sb.from('harga').delete().eq('id', id);
+        if (error) return await sbrAlert('Gagal menghapus: ' + error.message, { title: 'Gagal', tone: 'danger' });
+        await loadAllData(false);
+        showToast(`🗑️ Tarif ${target.satuan} dihapus`);
+    }
+
+    // ==================== FITUR SALIN HARGA ANTAR AGEN ====================
+    function openCopyPriceModal(presetTarget = '') {
+        document.getElementById('cpSource').value = '';
+        document.getElementById('cpTarget').value = presetTarget || '';
+        document.getElementById('cpDelta').value = '0';
+        previewCopyPrice();
+        document.getElementById('modalCopyPrice').classList.add('active');
+    }
+
+    function previewCopyPrice() {
+        const src = document.getElementById('cpSource').value;
+        const dst = document.getElementById('cpTarget').value;
+        const delta = Number(document.getElementById('cpDelta').value) || 0;
+        const box = document.getElementById('cpPreview');
+
+        if (!src || !dst) { box.textContent = 'Pilih Agen Sumber & Tujuan untuk melihat pratinjau.'; return; }
+        if (src === dst) { box.textContent = '⚠️ Agen Sumber dan Agen Tujuan tidak boleh sama.'; return; }
+        const srcRows = allHarga.filter(h => h.nama_agen === src);
+        const skuCount = new Set(srcRows.map(r => r.nama_barang)).size;
+        if (!srcRows.length) { box.textContent = `⚠️ Agen ${src} belum memiliki daftar harga untuk disalin.`; return; }
+        const deltaTxt = delta !== 0 ? ` dengan selisih ${delta > 0 ? '+' : ''}${fmtRp(delta)} pada Satuan Besar` : '';
+        box.textContent = `✅ Siap menyalin ${skuCount} barang (${srcRows.length} tarif satuan) dari ${src} ➔ ${dst}${deltaTxt}.`;
+    }
+
+    async function executeCopyPrice() {
+        const src = document.getElementById('cpSource').value;
+        const dst = document.getElementById('cpTarget').value;
+        const delta = Number(document.getElementById('cpDelta').value) || 0;
+        if (!src || !dst || src === dst) return await sbrAlert('Pilih Agen Sumber dan Agen Tujuan yang berbeda!', { title: "Perhatian", tone: "warning" });
+
+        const srcRows = allHarga.filter(h => h.nama_agen === src);
+        if (!srcRows.length) return await sbrAlert('Agen sumber belum memiliki daftar harga!', { title: "Perhatian", tone: "warning" });
+
+        // Group per barang agar jika ada delta, S1/S2/S3 tetap sinkron proporsional
+        const byBarang = {};
+        srcRows.forEach(r => {
+            if (!byBarang[r.nama_barang]) byBarang[r.nama_barang] = [];
+            byBarang[r.nama_barang].push(r);
+        });
+
+        const payload = [];
+        for (const [bName, rows] of Object.entries(byBarang)) {
+            const k = getKonversi(bName);
+            const tot = k.isi_1_ke_2 * k.isi_2_ke_3;
+            const s1Row = rows.find(r => (r.satuan || '').toLowerCase() === k.satuan_1.toLowerCase());
+            if (delta !== 0 && s1Row) {
+                const newS1 = Math.max(0, Number(s1Row.harga_jual || 0) + delta);
+                rows.forEach(r => {
+                    const u = (r.satuan || '').toLowerCase();
+                    let val = Number(r.harga_jual || 0);
+                    if (u === k.satuan_1.toLowerCase()) val = newS1;
+                    else if (u === k.satuan_2.toLowerCase()) val = Math.round(newS1 / k.isi_1_ke_2);
+                    else if (u === k.satuan_3.toLowerCase()) val = Math.round(newS1 / tot);
+                    payload.push({ nama_agen: dst, nama_barang: bName, satuan: r.satuan, harga_jual: val });
+                });
+            } else {
+                rows.forEach(r => {
+                    payload.push({ nama_agen: dst, nama_barang: bName, satuan: r.satuan, harga_jual: Number(r.harga_jual || 0) });
+                });
+            }
+        }
+
+        const btn = document.getElementById('btnExecCopy');
+        btn.disabled = true; btn.textContent = 'Menyalin...';
+        try {
+            const { error } = await _sb.from('harga').upsert(payload, { onConflict: 'nama_agen,nama_barang,satuan' });
+            if (error) throw error;
+            closeModal('modalCopyPrice');
+            await loadAllData(false);
+            showToast(`✅ ${payload.length} tarif harga berhasil disalin ke ${dst}!`);
+        } catch (err) {
+            await sbrAlert('Gagal menyalin harga: ' + err.message, { title: "Terjadi Kesalahan", tone: "danger" });
+        } finally {
+            btn.disabled = false; btn.textContent = '📋 Salin Harga Sekarang';
+        }
+    }
+
+    // ==================== FITUR UPDATE HARGA MASSAL ====================
+    function openBulkPriceModal(presetBarang = '') {
+        document.getElementById('bpBarang').value = presetBarang || '';
+        document.getElementById('bpTargetType').value = 'ALL';
+        document.getElementById('bpDelta').value = '0';
+        previewBulkPrice();
+        document.getElementById('modalBulkPrice').classList.add('active');
+    }
+
+    function previewBulkPrice() {
+        const barang = document.getElementById('bpBarang').value;
+        const targetType = document.getElementById('bpTargetType').value;
+        const delta = Number(document.getElementById('bpDelta').value) || 0;
+        const sumEl = document.getElementById('bpSummary');
+        const tbody = document.getElementById('bpPreviewTbody');
+        pendingBulkRows = [];
+
+        if (!barang) {
+            sumEl.textContent = 'Pilih barang & masukkan selisih (+ / -) untuk melihat pratinjau.';
+            tbody.innerHTML = '<tr><td colspan="4" class="empty">Belum ada pratinjau.</td></tr>';
+            return;
+        }
+
+        const k = getKonversi(barang);
+        const tot = k.isi_1_ke_2 * k.isi_2_ke_3;
+        const existingByAgen = {};
+        allHarga.filter(h => h.nama_barang === barang).forEach(h => {
+            if (!existingByAgen[h.nama_agen]) existingByAgen[h.nama_agen] = [];
+            existingByAgen[h.nama_agen].push(h);
+        });
+
+        const previewHtml = [];
+        for (const [agenName, rows] of Object.entries(existingByAgen)) {
+            const a = agenMap[agenName] || {};
+            const type = (a.type_agen || 'NORMAL').toUpperCase();
+            if (targetType !== 'ALL' && type !== targetType) continue;
+
+            const s1Row = rows.find(r => (r.satuan || '').toLowerCase() === k.satuan_1.toLowerCase());
+            if (!s1Row) continue;
+            const oldS1 = Number(s1Row.harga_jual || 0);
+            const newS1 = Math.max(0, oldS1 + delta);
+            const newS2 = Math.round(newS1 / k.isi_1_ke_2);
+            const newS3 = Math.round(newS1 / tot);
+
+            pendingBulkRows.push({ nama_agen: agenName, nama_barang: barang, satuan: k.satuan_1, harga_jual: newS1 });
+            if (rows.some(r => (r.satuan || '').toLowerCase() === k.satuan_2.toLowerCase())) {
+                pendingBulkRows.push({ nama_agen: agenName, nama_barang: barang, satuan: k.satuan_2, harga_jual: newS2 });
+            }
+            if (rows.some(r => (r.satuan || '').toLowerCase() === k.satuan_3.toLowerCase())) {
+                pendingBulkRows.push({ nama_agen: agenName, nama_barang: barang, satuan: k.satuan_3, harga_jual: newS3 });
+            }
+
+            previewHtml.push(`
+                <tr>
+                    <td><strong>${esc(agenName)}</strong></td>
+                    <td class="text-center"><span class="badge ${type === 'KHUSUS' ? 'b-amber' : 'b-blue'}">${type}</span></td>
+                    <td class="text-right" style="color:var(--muted);">${fmtRp(oldS1)}</td>
+                    <td class="text-right money">${fmtRp(newS1)} <span style="font-size:10.5px;color:var(--muted);">/ ${fmtRp(newS2)} / ${fmtRp(newS3)}</span></td>
+                </tr>
+            `);
+        }
+
+        sumEl.textContent = `📦 ${barang} (1 ${k.satuan_1} = ${k.isi_1_ke_2} ${k.satuan_2} = ${tot} ${k.satuan_3}) • ${previewHtml.length} agen akan diperbarui (${pendingBulkRows.length} tarif).`;
+        tbody.innerHTML = previewHtml.length ? previewHtml.join('') : '<tr><td colspan="4" class="empty">Tidak ada agen yang cocok untuk barang ini.</td></tr>';
+    }
+
+    async function executeBulkPrice() {
+        const delta = Number(document.getElementById('bpDelta').value) || 0;
+        if (!pendingBulkRows.length) return await sbrAlert('Tidak ada data agen untuk diperbarui!', { title: "Perhatian", tone: "warning" });
+        if (delta === 0) return await sbrAlert('Masukkan selisih kenaikan/penurunan (misal 2000 atau -1000)!', { title: 'Perhatian', tone: 'warning' });
+        if (!(await sbrConfirm(`Terapkan perubahan harga ${delta > 0 ? '+' : ''}${fmtRp(delta)} pada ${pendingBulkRows.length} tarif satuan?`, { title: "Konfirmasi Update Massal", confirmText: "Ya, Update Massal", tone: "warning" }))) return;
+
+        const btn = document.getElementById('btnExecBulk');
+        btn.disabled = true; btn.textContent = 'Memproses...';
+        try {
+            const { error } = await _sb.from('harga').upsert(pendingBulkRows, { onConflict: 'nama_agen,nama_barang,satuan' });
+            if (error) throw error;
+            closeModal('modalBulkPrice');
+            await loadAllData(false);
+            showToast(`⚡ ${pendingBulkRows.length} tarif harga berhasil di-update massal!`);
+        } catch (err) {
+            await sbrAlert('Gagal update massal: ' + err.message, { title: "Terjadi Kesalahan", tone: "danger" });
+        } finally {
+            btn.disabled = false; btn.textContent = '⚡ Terapkan Update Massal';
+        }
+    }
+
+    // ==================== TAB 2: DAFTAR AGEN ====================
+    function setAgenFilter(f) {
+        agenFilter = f;
+        document.querySelectorAll('#agenChips .chip').forEach(c => c.classList.toggle('active', c.dataset.filter === f));
+        renderAgenTab();
+    }
+
+    function renderAgenTab() {
+        const q = (document.getElementById('searchAgen').value || '').toLowerCase().trim();
+        const hMap = getHargaCountByAgen();
+        const container = document.getElementById('agenContainer');
+
+        let filtered = allAgen.filter(a => {
+            const type = (a.type_agen || 'NORMAL').toUpperCase();
+            const hasGps = a.latitude !== null && a.latitude !== '' && a.longitude !== null && a.longitude !== '';
+            const hasHarga = Boolean(hMap[a.nama_agen]);
+            if ((agenFilter === 'NORMAL' || agenFilter === 'KHUSUS') && type !== agenFilter) return false;
+            if (agenFilter === 'bon' && Number(a.saldo_bon || 0) <= 0) return false;
+            if (agenFilter === 'no_harga' && hasHarga) return false;
+            if (agenFilter === 'no_gps' && hasGps) return false;
+            if (q) {
+                const hay = `${a.nama_agen || ''} ${a.alamat || ''} ${a.No_tlp || ''}`.toLowerCase();
+                if (!hay.includes(q)) return false;
+            }
+            return true;
+        });
+
+        const s = sortPrefs.agen;
+        filtered.sort((a, b) => {
+            if (s === 'newest') return (Number(b.id || 0) - Number(a.id || 0));
+            if (s === 'name_desc') return (b.nama_agen || '').localeCompare(a.nama_agen || '');
+            if (s === 'bon_desc') return (Number(b.saldo_bon || 0) - Number(a.saldo_bon || 0)) || (a.nama_agen || '').localeCompare(b.nama_agen || '');
+            return (a.nama_agen || '').localeCompare(b.nama_agen || '');
+        });
+
+        if (!filtered.length) {
+            container.innerHTML = '<div class="empty">Tidak ada data agen ditemukan.</div>';
+            return;
+        }
+
+        if (viewPrefs.agen === 'grid') {
+            container.innerHTML = `<div class="agen-grid">${filtered.map(a => {
+                const type = (a.type_agen || 'NORMAL').toUpperCase();
+                const bon = Number(a.saldo_bon || 0);
+                const tlp = a.No_tlp && Number(a.No_tlp) > 1000 ? String(a.No_tlp) : '';
+                const hasGps = a.latitude !== null && a.latitude !== '' && a.longitude !== null && a.longitude !== '';
+                const hInfo = hMap[a.nama_agen];
+                const safeName = esc(a.nama_agen).replace(/'/g, "\\'");
+                return `
+                    <div class="agen-card">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+                            <div>
+                                <div style="font-size:14.5px;font-weight:700;">${esc(a.nama_agen)}</div>
+                                <div style="font-size:12px;color:var(--muted);margin-top:2px;">${esc(a.alamat || '-')}</div>
+                            </div>
+                            <span class="badge ${type === 'KHUSUS' ? 'b-amber' : 'b-blue'}">${type}</span>
+                        </div>
+                        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                            ${hInfo ? `<span class="badge b-green">${hInfo.skus.size} harga</span>` : `<span class="badge b-red">Belum ada harga</span>`}
+                            ${hasGps
+                                ? `<a href="https://maps.google.com/?q=${a.latitude},${a.longitude}" target="_blank" class="badge b-purple" style="text-decoration:none;">📍 GPS</a>`
+                                : `<span class="badge b-gray">Tanpa GPS</span>`}
+                            ${tlp ? `<a href="https://wa.me/${tlp}" target="_blank" class="badge b-green" style="text-decoration:none;"><i class="fa-brands fa-whatsapp"></i> ${esc(tlp)}</a>` : ''}
+                        </div>
+                        <div class="agen-card-foot">
+                            <span class="${bon > 0 ? 'money-bon' : 'money'}" style="font-size:13px;">Bon: ${fmtRp(bon)}</span>
+                            <div class="row-actions">
+                                <button class="btn btn-soft btn-sm" onclick="openAgentPricesModal('${safeName}')" title="Kelola Harga Agen">💰</button>
+                                <button class="btn btn-soft btn-sm" onclick="openAgenModal(${a.id})" title="Edit Agen">✏️</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteAgen(${a.id})" title="Hapus Agen">🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('')}</div>`;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th width="42" class="text-center">No</th>
+                            <th>Nama Agen & Status</th>
+                            <th class="text-right">Saldo Bon</th>
+                            <th>Alamat</th>
+                            <th class="text-center">Type</th>
+                            <th>No. Tlp</th>
+                            <th class="text-center" width="150">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filtered.map((a, i) => {
+                            const type = (a.type_agen || 'NORMAL').toUpperCase();
+                            const bon = Number(a.saldo_bon || 0);
+                            const tlp = a.No_tlp && Number(a.No_tlp) > 1000 ? String(a.No_tlp) : '';
+                            const hasGps = a.latitude !== null && a.latitude !== '' && a.longitude !== null && a.longitude !== '';
+                            const hInfo = hMap[a.nama_agen];
+                            return `
+                                <tr>
+                                    <td class="text-center" style="color:var(--muted);font-size:11.5px;">${i + 1}</td>
+                                    <td>
+                                        <div style="font-weight:700;">${esc(a.nama_agen)}</div>
+                                        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;">
+                                            ${hInfo ? `<span class="badge b-green">${hInfo.skus.size} harga</span>` : `<span class="badge b-red">Belum ada harga</span>`}
+                                            ${hasGps
+                                                ? `<a href="https://maps.google.com/?q=${a.latitude},${a.longitude}" target="_blank" class="badge b-purple" style="text-decoration:none;" title="Buka di Google Maps">📍 GPS</a>`
+                                                : `<span class="badge b-gray">Tanpa GPS</span>`}
+                                        </div>
+                                    </td>
+                                    <td class="text-right ${bon > 0 ? 'money-bon' : 'money'}">${fmtRp(bon)}</td>
+                                    <td>${esc(a.alamat || '-')}</td>
+                                    <td class="text-center"><span class="badge ${type === 'KHUSUS' ? 'b-amber' : 'b-blue'}">${type}</span></td>
+                                    <td>${tlp ? `<a href="https://wa.me/${tlp}" target="_blank" style="color:var(--primary-dark);font-weight:600;text-decoration:none;"><i class="fa-brands fa-whatsapp"></i> ${esc(tlp)}</a>` : '-'}</td>
+                                    <td class="text-center">
+                                        <div class="row-actions">
+                                            <button class="btn btn-soft btn-sm" onclick="openAgentPricesModal('${esc(a.nama_agen).replace(/'/g,"\\'")}')" title="Kelola Harga Agen">💰</button>
+                                            <button class="btn btn-soft btn-sm" onclick="openAgenModal(${a.id})" title="Edit Agen">✏️</button>
+                                            <button class="btn btn-danger btn-sm" onclick="deleteAgen(${a.id})" title="Hapus Agen">🗑️</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    function openAgenModal(id = null) {
+        const a = id ? allAgen.find(x => x.id === id) : null;
+        document.getElementById('afId').value = a ? a.id : '';
+        document.getElementById('afOrigName').value = a ? a.nama_agen : '';
+        document.getElementById('afTitle').textContent = a ? `✏️ Edit Agen: ${a.nama_agen}` : '➕ Tambah Agen Baru';
+        document.getElementById('afNama').value = a ? (a.nama_agen || '') : '';
+        document.getElementById('afAlamat').value = a ? (a.alamat || '') : '';
+        document.getElementById('afTlp').value = a && Number(a.No_tlp) > 0 ? a.No_tlp : '';
+        document.getElementById('afType').value = a ? ((a.type_agen || 'NORMAL').toUpperCase()) : 'NORMAL';
+        document.getElementById('afSaldo').value = a ? (a.saldo_bon || 0) : 0;
+        document.getElementById('afLat').value = a && a.latitude !== null ? a.latitude : '';
+        document.getElementById('afLng').value = a && a.longitude !== null ? a.longitude : '';
+        document.getElementById('afGpsPaste').value = '';
+        document.getElementById('afSyncWrap').style.display = 'none';
+        document.getElementById('modalAgenForm').classList.add('active');
+    }
+
+    function parseGpsPaste(val) {
+        const m = String(val || '').match(/(-?\d+\.\d+)\s*[,\s]\s*(-?\d+\.\d+)/);
+        if (m) {
+            document.getElementById('afLat').value = m[1];
+            document.getElementById('afLng').value = m[2];
+            showToast('📍 Koordinat GPS terdeteksi!');
+        }
+    }
+
+    function checkAgenRenameHint() {
+        const orig = document.getElementById('afOrigName').value;
+        const cur = document.getElementById('afNama').value.trim();
+        const wrap = document.getElementById('afSyncWrap');
+        if (orig && cur && orig !== cur) {
+            const cnt = allHarga.filter(h => h.nama_agen === orig).length;
+            if (cnt > 0) {
+                document.getElementById('afSyncText').textContent = `Auto-Sinkron: Ikut ubah nama "${orig}" ➔ "${cur}" pada ${cnt} baris di tabel Harga agar tarif tidak terputus.`;
+                wrap.style.display = 'flex';
+                return;
+            }
+        }
+        wrap.style.display = 'none';
+    }
+
+    async function saveAgen() {
+        const id = document.getElementById('afId').value;
+        const origName = document.getElementById('afOrigName').value;
+        const nama = document.getElementById('afNama').value.trim();
+        if (!nama) return await sbrAlert('Nama agen wajib diisi!', { title: "Perhatian", tone: "warning" });
+
+        const latRaw = document.getElementById('afLat').value.trim();
+        const lngRaw = document.getElementById('afLng').value.trim();
         const payload = {
-            nama_agen: document.getElementById('in_nama').value,
-            alamat: document.getElementById('in_alamat').value.toUpperCase(),
-            No_tlp: parseInt(document.getElementById('in_tlp').value) || 0,
-            type_agen: document.getElementById('in_type').value,
-            saldo_bon: parseFloat(document.getElementById('in_saldo').value) || 0
+            nama_agen: nama,
+            alamat: document.getElementById('afAlamat').value.trim() || '-',
+            No_tlp: Number(document.getElementById('afTlp').value) || 0,
+            type_agen: document.getElementById('afType').value,
+            saldo_bon: Number(document.getElementById('afSaldo').value) || 0,
+            latitude: latRaw !== '' ? Number(latRaw) : null,
+            longitude: lngRaw !== '' ? Number(lngRaw) : null
         };
 
-        if(!payload.nama_agen || !payload.alamat) return alert("Data wajib diisi!");
+        const btn = document.getElementById('btnSaveAgen');
+        btn.disabled = true; btn.textContent = 'Menyimpan...';
+        try {
+            const res = id
+                ? await _sb.from('agen').update(payload).eq('id', id)
+                : await _sb.from('agen').insert([payload]);
+            if (res.error) throw res.error;
 
-        const btnAksi = document.getElementById('btn-aksi');
-        btnAksi.innerText = "MENYIMPAN...";
+            // Auto-sync nama di tabel harga jika nama agen berubah
+            if (id && origName && origName !== nama && document.getElementById('afSyncHarga').checked) {
+                const { error: errSync } = await _sb.from('harga').update({ nama_agen: nama }).eq('nama_agen', origName);
+                if (errSync) console.warn('Sync harga agen warning:', errSync.message);
+            }
 
-        let res;
-        if(id) res = await _sb.from('agen').update(payload).eq('id', id);
-        else res = await _sb.from('agen').insert([payload]);
-
-        if(res.error) alert(res.error.message);
-        else {
-            resetForm();
-            muatTabelAgen();
-        }
-        btnAksi.innerText = id ? "UPDATE DATA AGEN" : "SIMPAN DATA AGEN";
-    }
-
-    async function hapusAgen(index) {
-        const ag = currentAgenData[index];
-        if(confirm(`Hapus agen ${ag.nama_agen}?`)) {
-            const { error } = await _sb.from('agen').delete().eq('id', ag.id);
-            if(error) alert(error.message);
-            else muatTabelAgen();
+            closeModal('modalAgenForm');
+            await loadAllData(false);
+            showToast(id ? `✅ Data agen ${nama} diperbarui!` : `✅ Agen baru ${nama} ditambahkan!`);
+        } catch (err) {
+            await sbrAlert('Gagal menyimpan agen: ' + err.message, { title: "Terjadi Kesalahan", tone: "danger" });
+        } finally {
+            btn.disabled = false; btn.textContent = '💾 Simpan Agen';
         }
     }
 
-    function resetForm() {
-        document.getElementById('title-form').innerText = "TAMBAH AGEN BARU";
-        document.getElementById('edit_id').value = "";
-        document.getElementById('in_nama').value = "";
-        document.getElementById('in_alamat').value = "";
-        document.getElementById('in_tlp').value = "";
-        document.getElementById('in_type').value = "NORMAL";
-        document.getElementById('in_saldo').value = "0";
-        document.getElementById('btn-aksi').innerText = "SIMPAN DATA AGEN";
-        document.getElementById('btn-aksi').style.background = "#3b4c64";
-        document.getElementById('btn-batal').style.display = "none";
+    async function deleteAgen(id) {
+        const a = allAgen.find(x => x.id === id);
+        if (!a) return;
+        const hCnt = allHarga.filter(h => h.nama_agen === a.nama_agen).length;
+        const extraMsg = hCnt > 0 ? `\n\nCatatan: Agen ini memiliki ${hCnt} tarif harga terkait.` : '';
+        if (!(await sbrConfirm(`Yakin ingin menghapus agen "${a.nama_agen}"?${extraMsg}`, { title: "Hapus Data Agen", confirmText: "Ya, Hapus Agen", tone: "danger" }))) return;
+        const { error } = await _sb.from('agen').delete().eq('id', id);
+        if (error) return await sbrAlert('Gagal hapus agen: ' + error.message, { title: "Perhatian", tone: "warning" });
+        await loadAllData(false);
+        showToast(`🗑️ Agen ${a.nama_agen} dihapus`);
     }
+
+    // ==================== TAB 3: MASTER BARANG ====================
+    function renderBarangTab() {
+        const q = (document.getElementById('searchBarang').value || '').toLowerCase().trim();
+        const container = document.getElementById('barangContainer');
+
+        const agenCountByBarang = {};
+        allHarga.forEach(h => {
+            if (!agenCountByBarang[h.nama_barang]) agenCountByBarang[h.nama_barang] = new Set();
+            agenCountByBarang[h.nama_barang].add(h.nama_agen);
+        });
+
+        let filtered = allBarang.filter(b =>
+            !q || (b.nama_barang || '').toLowerCase().includes(q) || (b.kode_barang || '').toLowerCase().includes(q)
+        );
+
+        const s = sortPrefs.barang;
+        filtered.sort((a, b) => {
+            if (s === 'newest') return (Number(b.id || 0) - Number(a.id || 0));
+            if (s === 'code_desc') return (parseCodeNum(b.kode_barang) - parseCodeNum(a.kode_barang)) || (b.kode_barang || '').localeCompare(a.kode_barang || '');
+            if (s === 'code_asc') return (parseCodeNum(a.kode_barang) - parseCodeNum(b.kode_barang)) || (a.kode_barang || '').localeCompare(b.kode_barang || '');
+            if (s === 'name_desc') return (b.nama_barang || '').localeCompare(a.nama_barang || '');
+            if (s === 'used_desc') {
+                const ua = agenCountByBarang[a.nama_barang]?.size || 0;
+                const ub = agenCountByBarang[b.nama_barang]?.size || 0;
+                return (ub - ua) || (a.nama_barang || '').localeCompare(b.nama_barang || '');
+            }
+            return (a.nama_barang || '').localeCompare(b.nama_barang || '');
+        });
+
+        if (!filtered.length) {
+            container.innerHTML = '<div class="empty">Tidak ada barang ditemukan.</div>';
+            return;
+        }
+
+        if (viewPrefs.barang === 'list') {
+            container.innerHTML = `
+                <div class="table-wrap">
+                    <table style="min-width:620px;">
+                        <thead>
+                            <tr>
+                                <th width="42" class="text-center">No</th>
+                                <th width="110">Kode</th>
+                                <th>Nama Barang</th>
+                                <th>Konversi 3 Satuan</th>
+                                <th class="text-center" width="110">Dipakai</th>
+                                <th class="text-center" width="170">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${filtered.map((b, i) => {
+                                const k = getKonversi(b.nama_barang);
+                                const tot = k.isi_1_ke_2 * k.isi_2_ke_3;
+                                const usedAgen = agenCountByBarang[b.nama_barang]?.size || 0;
+                                return `
+                                    <tr>
+                                        <td class="text-center" style="color:var(--muted);font-size:11.5px;">${i + 1}</td>
+                                        <td><span class="badge b-green">🏷️ ${esc(b.kode_barang || '-')}</span></td>
+                                        <td><strong>${esc(b.nama_barang)}</strong></td>
+                                        <td><span class="badge b-blue">📦 1 ${esc(k.satuan_1)} = ${k.isi_1_ke_2} ${esc(k.satuan_2)} = ${tot} ${esc(k.satuan_3)}</span></td>
+                                        <td class="text-center"><b>${usedAgen}</b> agen</td>
+                                        <td class="text-center">
+                                            <div class="row-actions">
+                                                <button class="btn btn-soft btn-sm" onclick="openDistributeItemModal('${esc(b.nama_barang).replace(/'/g,"\\'")}')" title="Set Harga ke Banyak Agen">📦 Sebar</button>
+                                                <button class="btn btn-soft btn-sm" onclick="openBulkPriceModal('${esc(b.nama_barang).replace(/'/g,"\\'")}')" title="Update Harga Massal">⚡ Massal</button>
+                                                <button class="btn btn-soft btn-sm" onclick="openBarangModal(${b.id})" title="Edit Barang">✏️</button>
+                                                <button class="btn btn-danger btn-sm" onclick="deleteBarang(${b.id})" title="Hapus Barang">🗑️</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `<div class="barang-grid">${filtered.map(b => {
+            const k = getKonversi(b.nama_barang);
+            const tot = k.isi_1_ke_2 * k.isi_2_ke_3;
+            const usedAgen = agenCountByBarang[b.nama_barang]?.size || 0;
+            return `
+                <div class="barang-card">
+                    <div class="barang-head">
+                        <div>
+                            <div class="barang-name">${esc(b.nama_barang)}</div>
+                            <div class="barang-badges" style="margin-top:6px;">
+                                <span class="badge b-green">🏷️ ${esc(b.kode_barang || '-')}</span>
+                                <span class="badge b-blue">📦 1 ${esc(k.satuan_1)} = ${k.isi_1_ke_2} ${esc(k.satuan_2)} = ${tot} ${esc(k.satuan_3)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="barang-foot">
+                        <span style="font-size:11.5px;color:var(--muted);">Dipakai di <b>${usedAgen}</b> agen</span>
+                        <div class="row-actions">
+                            <button class="btn btn-soft btn-sm" onclick="openDistributeItemModal('${esc(b.nama_barang).replace(/'/g,"\\'")}')" title="Set Harga ke Banyak Agen">📦 Sebar</button>
+                            <button class="btn btn-soft btn-sm" onclick="openBulkPriceModal('${esc(b.nama_barang).replace(/'/g,"\\'")}')" title="Update Harga Massal">⚡ Massal</button>
+                            <button class="btn btn-soft btn-sm" onclick="openBarangModal(${b.id})" title="Edit Barang">✏️</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteBarang(${b.id})" title="Hapus Barang">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('')}</div>`;
+    }
+
+    function openBarangModal(id = null) {
+        const b = id ? allBarang.find(x => x.id === id) : null;
+        document.getElementById('bfId').value = b ? b.id : '';
+        document.getElementById('bfOrigName').value = b ? b.nama_barang : '';
+        document.getElementById('bfTitle').textContent = b ? `✏️ Edit Barang: ${b.nama_barang}` : '➕ Tambah Barang Baru';
+        document.getElementById('bfKode').value = b ? (b.kode_barang || '') : generateNextKodeBarang();
+        document.getElementById('bfNama').value = b ? (b.nama_barang || '') : '';
+        document.getElementById('bfS1').value = b ? (b.satuan_1 || 'Ball') : 'Ball';
+        document.getElementById('bfS2').value = b ? (b.satuan_2 || 'Pack') : 'Pack';
+        document.getElementById('bfS3').value = b ? (b.satuan_3 || 'Pcs') : 'Pcs';
+        document.getElementById('bfI12').value = b ? (b.isi_1_ke_2 || 10) : 10;
+        document.getElementById('bfI23').value = b ? (b.isi_2_ke_3 || 10) : 10;
+        document.getElementById('bfSyncWrap').style.display = 'none';
+        updateBarangRatioPreview();
+        document.getElementById('modalBarangForm').classList.add('active');
+        setTimeout(() => document.getElementById(b ? 'bfNama' : 'bfNama').focus(), 120);
+    }
+
+    function updateBarangRatioPreview() {
+        const s1 = document.getElementById('bfS1').value.trim() || 'Ball';
+        const s2 = document.getElementById('bfS2').value.trim() || 'Pack';
+        const s3 = document.getElementById('bfS3').value.trim() || 'Pcs';
+        const i12 = Math.max(1, Number(document.getElementById('bfI12').value) || 1);
+        const i23 = Math.max(1, Number(document.getElementById('bfI23').value) || 1);
+        document.getElementById('bfLbl12').textContent = `1 ${s1} berapa ${s2}?`;
+        document.getElementById('bfLbl23').textContent = `1 ${s2} berapa ${s3}?`;
+        document.getElementById('bfRatioPreview').textContent = `💡 1 ${s1} = ${i12} ${s2} = ${i12 * i23} ${s3}`;
+    }
+
+    function checkBarangRenameHint() {
+        const orig = document.getElementById('bfOrigName').value;
+        const cur = document.getElementById('bfNama').value.trim();
+        const wrap = document.getElementById('bfSyncWrap');
+        if (orig && cur && orig !== cur) {
+            const cnt = allHarga.filter(h => h.nama_barang === orig).length;
+            if (cnt > 0) {
+                document.getElementById('bfSyncText').textContent = `Auto-Sinkron: Ikut ubah nama barang "${orig}" ➔ "${cur}" pada ${cnt} baris di tabel Harga.`;
+                wrap.style.display = 'flex';
+                return;
+            }
+        }
+        wrap.style.display = 'none';
+    }
+
+    async function saveBarang() {
+        const id = document.getElementById('bfId').value;
+        const origName = document.getElementById('bfOrigName').value;
+        const kode = document.getElementById('bfKode').value.trim();
+        const nama = document.getElementById('bfNama').value.trim();
+        if (!kode || !nama) return await sbrAlert('Kode Barang dan Nama Barang wajib diisi!', { title: "Perhatian", tone: "warning" });
+
+        const payload = {
+            kode_barang: kode,
+            nama_barang: nama,
+            satuan_1: document.getElementById('bfS1').value.trim() || 'Ball',
+            satuan_2: document.getElementById('bfS2').value.trim() || 'Pack',
+            satuan_3: document.getElementById('bfS3').value.trim() || 'Pcs',
+            isi_1_ke_2: Math.max(1, Number(document.getElementById('bfI12').value) || 1),
+            isi_2_ke_3: Math.max(1, Number(document.getElementById('bfI23').value) || 1)
+        };
+
+        const btn = document.getElementById('btnSaveBarang');
+        btn.disabled = true; btn.textContent = 'Menyimpan...';
+        try {
+            const res = id
+                ? await _sb.from('barang').update(payload).eq('id', id)
+                : await _sb.from('barang').insert([payload]);
+            if (res.error) throw res.error;
+
+            if (id && origName && origName !== nama && document.getElementById('bfSyncHarga').checked) {
+                const { error: errSync } = await _sb.from('harga').update({ nama_barang: nama }).eq('nama_barang', origName);
+                if (errSync) console.warn('Sync harga barang warning:', errSync.message);
+            }
+
+            closeModal('modalBarangForm');
+            await loadAllData(false);
+            showToast(id ? `✅ Barang ${nama} diperbarui!` : `✅ Barang baru ${nama} ditambahkan!`);
+        } catch (err) {
+            await sbrAlert('Gagal menyimpan barang: ' + err.message, { title: "Terjadi Kesalahan", tone: "danger" });
+        } finally {
+            btn.disabled = false; btn.textContent = '💾 Simpan Barang';
+        }
+    }
+
+    async function deleteBarang(id) {
+        const b = allBarang.find(x => x.id === id);
+        if (!b) return;
+        if (!(await sbrConfirm(`Yakin ingin menghapus barang "${b.nama_barang}"?`, { title: "Hapus Master Barang", confirmText: "Ya, Hapus Barang", tone: "danger" }))) return;
+        const { error } = await _sb.from('barang').delete().eq('id', id);
+        if (error) return await sbrAlert('Gagal hapus barang: ' + error.message, { title: "Perhatian", tone: "warning" });
+        await loadAllData(false);
+        showToast(`🗑️ Barang ${b.nama_barang} dihapus`);
+    }
+
+    // ==================== EXPORT CSV ====================
+    function downloadCSV(filename, headers, rows) {
+        const csvCell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+        const lines = [headers.map(csvCell).join(','), ...rows.map(r => r.map(csvCell).join(','))];
+        const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = filename; a.click();
+        URL.revokeObjectURL(url);
+        showToast(`📊 File ${filename} diunduh!`);
+    }
+
+    function exportActiveTabCSV() {
+        const tgl = new Date().toISOString().slice(0, 10);
+        if (activeTab === 'harga') {
+            downloadCSV(`Harga_Agen_SBR_${tgl}.csv`,
+                ['Nama Agen', 'Nama Barang', 'Satuan', 'Harga Jual'],
+                allHarga.map(h => [h.nama_agen, h.nama_barang, h.satuan, h.harga_jual])
+            );
+        } else if (activeTab === 'agen') {
+            downloadCSV(`Daftar_Agen_SBR_${tgl}.csv`,
+                ['Nama Agen', 'Alamat', 'Type', 'No Tlp', 'Saldo Bon', 'Latitude', 'Longitude'],
+                allAgen.map(a => [a.nama_agen, a.alamat, a.type_agen || 'NORMAL', a.No_tlp || '', a.saldo_bon || 0, a.latitude ?? '', a.longitude ?? ''])
+            );
+        } else {
+            downloadCSV(`Master_Barang_SBR_${tgl}.csv`,
+                ['Kode Barang', 'Nama Barang', 'Satuan 1', 'Satuan 2', 'Satuan 3', 'Isi 1 ke 2', 'Isi 2 ke 3'],
+                allBarang.map(b => [b.kode_barang, b.nama_barang, b.satuan_1, b.satuan_2, b.satuan_3, b.isi_1_ke_2, b.isi_2_ke_3])
+            );
+        }
+    }
+
+    function exportSingleAgentCSV() {
+        if (!activePriceAgent) return;
+        const rows = allHarga.filter(h => h.nama_agen === activePriceAgent);
+        const safe = activePriceAgent.replace(/[^a-zA-Z0-9_-]/g, '_');
+        downloadCSV(`Harga_${safe}.csv`,
+            ['Nama Agen', 'Nama Barang', 'Satuan', 'Harga Jual'],
+            rows.map(h => [h.nama_agen, h.nama_barang, h.satuan, h.harga_jual])
+        );
+    }
+
+    applySavedControls();
+    loadAllData(false);
 </script>
+<script src="sbr-nav.js"></script>
 </body>
 </html>
