@@ -75,6 +75,39 @@
         .btn-hapus { width:42px; min-width:42px; border-radius:12px; font-weight:800; }
         .mb-3.p-3.bg-light.rounded-3.border { border:1px solid #d8f0e7!important; border-radius:16px!important; background:linear-gradient(120deg,#e0f7ee,#edf9f5)!important; box-shadow:var(--inset); }
         #inputAcuanBarang { background:#f0fbf7!important; }
+        .filter-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-top:10px; }
+        .filter-pills { display:flex; flex-wrap:wrap; gap:6px; }
+        .filter-actions { display:flex; flex-wrap:wrap; gap:6px; }
+        .pill-btn {
+            border:1px solid #bfe6d7; border-radius:999px; padding:5px 11px;
+            background:#f4fcf9; color:#2b6b57; font-size:.76rem; font-weight:750;
+            cursor:pointer; transition:all .15s ease;
+        }
+        .pill-btn.active { background:linear-gradient(100deg,#31c995,#0fa879); color:#fff; border-color:transparent; box-shadow:0 3px 8px rgba(18,168,121,.22); }
+        .btn-auto-fill, .btn-refresh-nota {
+            border:1px solid #9bd8c1; border-radius:11px; padding:5px 11px;
+            background:#ffffff; color:#0c8560; font-size:.76rem; font-weight:800;
+            cursor:pointer; box-shadow:0 2px 6px rgba(18,168,121,.12);
+        }
+        .btn-auto-fill:hover, .btn-refresh-nota:hover { background:#e7f9f2; }
+        .btn-refresh-nota:disabled { opacity:.6; cursor:wait; }
+        .custom-range-box {
+            display:none; flex-wrap:wrap; align-items:end; gap:8px;
+            margin-top:10px; padding:10px; border:1px solid #c6e8da; border-radius:12px;
+            background:rgba(255,255,255,.72);
+        }
+        .custom-range-box.show { display:flex; }
+        .custom-range-field { flex:1 1 130px; min-width:120px; }
+        .custom-range-field label { display:block; font-size:.7rem; font-weight:750; color:#3d6f5d; margin-bottom:3px; }
+        .custom-range-field input[type="date"] {
+            min-height:38px; padding:6px 9px; font-size:.82rem; border-radius:10px; background:#fff!important;
+        }
+        .btn-apply-range {
+            min-height:38px; border:0; border-radius:10px; padding:0 14px;
+            background:linear-gradient(100deg,#31c995,#0fa879); color:#fff;
+            font-size:.8rem; font-weight:800; cursor:pointer; box-shadow:0 3px 8px rgba(18,168,121,.2);
+        }
+        .nota-status-hint { font-size:.75rem; color:#4f7668; font-weight:600; margin-top:6px; }
         .selisih-box { border:1px solid rgba(255,255,255,.8)!important; border-radius:19px; background:linear-gradient(120deg,#fff4d4,#fff0c1)!important; box-shadow:var(--shadow); }
         .selisih-box .card-body { padding:18px; }
         .selisih-box .fw-bold:first-child { color:#8a6714!important; }
@@ -168,7 +201,33 @@
             <!-- INPUT ACUAN NAMA BARANG DI ATAS -->
             <div class="mb-3 p-3 bg-light rounded-3 border">
                 <label for="inputAcuanBarang" class="form-label text-success fw-bold small mb-1">🏷️ Acuan Nama Barang yang Dicari:</label>
-                <input type="text" class="form-control form-control-sm bg-white" id="inputAcuanBarang" value="Makroni 2000" placeholder="Masukkan nama barang...">
+                <input type="text" class="form-control form-control-sm bg-white" id="inputAcuanBarang" list="listAcuanBarang" value="Makroni 2000" placeholder="Masukkan nama barang...">
+                <datalist id="listAcuanBarang">
+                    <option value="Makroni 2000"></option>
+                </datalist>
+                <div class="filter-toolbar">
+                    <div class="filter-pills" role="group" aria-label="Filter rentang tanggal nota">
+                        <button type="button" class="pill-btn" id="btnFilterHariIni" data-range="today">Hari Ini</button>
+                        <button type="button" class="pill-btn active" id="btnFilter2Hari" data-range="2days">Hari Ini &amp; Kemarin</button>
+                        <button type="button" class="pill-btn" id="btnFilterCustom" data-range="custom">📅 Pilih Rentang</button>
+                    </div>
+                    <div class="filter-actions">
+                        <button type="button" class="btn-refresh-nota" id="btnRefreshNota" title="Ambil nota &amp; armada terbaru tanpa reload halaman">🔄 Refresh</button>
+                        <button type="button" class="btn-auto-fill" id="btnMuatSemuaNota">⚡ Muat Semua Nota</button>
+                    </div>
+                </div>
+                <div class="custom-range-box" id="customRangeBox">
+                    <div class="custom-range-field">
+                        <label for="inputTglMulai">Dari Tanggal</label>
+                        <input type="date" class="form-control form-control-sm" id="inputTglMulai">
+                    </div>
+                    <div class="custom-range-field">
+                        <label for="inputTglSampai">Sampai Tanggal</label>
+                        <input type="date" class="form-control form-control-sm" id="inputTglSampai">
+                    </div>
+                    <button type="button" class="btn-apply-range" id="btnTerapkanRentang">Terapkan</button>
+                </div>
+                <div class="nota-status-hint" id="notaFilterHint">Memuat daftar nota dari database...</div>
             </div>
 
             <!-- TAMBAHAN KOLOM GUDANG -->
@@ -244,55 +303,313 @@
         const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
         elTanggal.textContent = new Date().toLocaleDateString('id-ID', options);
 
-        // 3. AMBIL DATA NOTA DARI SUPABASE (Tanpa Filter yang Bikin Error)
-        let notaOptionsHTML = `<option value="">-- Pilih No Nota & Agen --</option>`;
-
-        if (supabaseClient) {
-            try {
-                const formatLocalDate = (d) => {
-                    const y = d.getFullYear();
-                    const m = String(d.getMonth() + 1).padStart(2, '0');
-                    const day = String(d.getDate()).padStart(2, '0');
-                    return `${y}-${m}-${day}`;
-                };
-                const nowDate = new Date();
-                const tglHariIni = formatLocalDate(nowDate);
-
-                const tglKemarinDate = new Date(nowDate);
-                tglKemarinDate.setDate(tglKemarinDate.getDate() - 2);
-                const tglKemarin = formatLocalDate(tglKemarinDate);
-
-                const { data: dataNota, error } = await supabaseClient
-                    .from('transaksi')
-                    .select('no_nota, nama_agen, tanggal')
-                    .gte('tanggal', tglKemarin)
-                    .lte('tanggal', tglHariIni)
-                    .order('id', { ascending: false });
-
-                if (error) {
-                    console.error("Gagal memuat daftar nota:", error);
-                } else if (dataNota) {
-                    dataNota.forEach(item => {
-                        notaOptionsHTML += `<option value="${item.no_nota}" data-agen="${item.nama_agen}">${item.no_nota} - ${item.nama_agen} (${item.tanggal})</option>`;
-                    });
-                }
-            } catch (err) {
-                console.error("Gagal memuat daftar nota:", err);
-            }
-        }
-
-        const dropdownNotaPertama = document.querySelector(".select-nota");
-        if (dropdownNotaPertama) {
-            dropdownNotaPertama.innerHTML = notaOptionsHTML;
-        }
-
-        // 4. HITUNG SELISIH DAN TOTAL
+        // 3. AMBIL DATA NOTA & DETAIL KIRIM DARI SUPABASE (1x Muat, Filter Instan di Memori)
         const displayTotalBawa = document.getElementById("displayTotalBawa");
         const displayTotalAgen = document.getElementById("displayTotalAgen");
         const displaySelisih = document.getElementById("displaySelisih");
         const inputAcuanBarang = document.getElementById("inputAcuanBarang");
         const inputQtyGudang = document.getElementById("inputQtyGudang");
+        const listAcuanBarang = document.getElementById("listAcuanBarang");
+        const notaFilterHint = document.getElementById("notaFilterHint");
+        const btnFilterHariIni = document.getElementById("btnFilterHariIni");
+        const btnFilter2Hari = document.getElementById("btnFilter2Hari");
+        const btnFilterCustom = document.getElementById("btnFilterCustom");
+        const customRangeBox = document.getElementById("customRangeBox");
+        const inputTglMulai = document.getElementById("inputTglMulai");
+        const inputTglSampai = document.getElementById("inputTglSampai");
+        const btnTerapkanRentang = document.getElementById("btnTerapkanRentang");
+        const btnRefreshNota = document.getElementById("btnRefreshNota");
+        const btnMuatSemuaNota = document.getElementById("btnMuatSemuaNota");
+        const containerAgen = document.getElementById("containerAgen");
+        const btnTambahAgen = document.getElementById("btnTambahAgen");
+        let armadaOptionsHTML = document.querySelector(".select-armada")?.innerHTML || `<option value="">-- Pilih Kendaraan --</option>`;
 
+        const formatLocalDate = (d) => {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        };
+        const nowDate = new Date();
+        const tglHariIni = formatLocalDate(nowDate);
+        const tglKemarinDate = new Date(nowDate);
+        tglKemarinDate.setDate(tglKemarinDate.getDate() - 1);
+        const tglKemarin = formatLocalDate(tglKemarinDate);
+
+        inputTglMulai.value = tglKemarin;
+        inputTglSampai.value = tglHariIni;
+
+        let recentNotas = [];
+        let customNotas = [];
+        const customRangeCache = new Map();
+        const barangSet = new Set(["Makroni 2000"]);
+        // Map: no_nota -> Map(nama_barang_lower -> totalQty)
+        const detailQtyMap = new Map();
+        let activeDateRange = "2days"; // "today" | "2days" | "custom"
+        let filteredNotas = [];
+        let notaOptionsHTML = `<option value="">-- Pilih No Nota & Agen --</option>`;
+
+        function escapeHtml(str) {
+            return String(str ?? "").replace(/[&<>"']/g, ch => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+            }[ch]));
+        }
+
+        function formatTanggalSingkat(tglStr) {
+            if (!tglStr) return "";
+            const parts = String(tglStr).split("-");
+            if (parts.length !== 3) return tglStr;
+            const bulan = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+            const mIdx = parseInt(parts[1], 10) - 1;
+            return `${parseInt(parts[2], 10)} ${bulan[mIdx] || parts[1]}`;
+        }
+
+        function getQtyForNota(noNota, namaBarang) {
+            const itemMap = detailQtyMap.get(noNota);
+            if (!itemMap) return 0;
+            return itemMap.get(String(namaBarang || "").trim().toLowerCase()) || 0;
+        }
+
+        function renderBarangDatalist() {
+            listAcuanBarang.innerHTML = [...barangSet]
+                .sort((a, b) => a.localeCompare(b, 'id'))
+                .map(b => `<option value="${escapeHtml(b)}"></option>`)
+                .join("");
+        }
+
+        async function fetchRangeFromDb(startDate, endDate) {
+            if (!supabaseClient) return [];
+            const { data: dataNota, error } = await supabaseClient
+                .from('transaksi')
+                .select('no_nota, nama_agen, tanggal')
+                .gte('tanggal', startDate)
+                .lte('tanggal', endDate)
+                .order('id', { ascending: false });
+
+            if (error) throw error;
+            const listNota = dataNota || [];
+
+            const missingNotas = [...new Set(listNota.map(n => n.no_nota).filter(no => no && !detailQtyMap.has(no)))];
+            const chunkSize = 100;
+            for (let i = 0; i < missingNotas.length; i += chunkSize) {
+                const chunk = missingNotas.slice(i, i + chunkSize);
+                chunk.forEach(no => {
+                    if (!detailQtyMap.has(no)) detailQtyMap.set(no, new Map());
+                });
+                const { data: dataDetailChunk, error: errDet } = await supabaseClient
+                    .from('transaksi_detail')
+                    .select('no_nota, nama_barang, qty')
+                    .in('no_nota', chunk)
+                    .eq('tipe', 'Kirim');
+
+                if (errDet) {
+                    console.error("Gagal memuat detail barang:", errDet);
+                    continue;
+                }
+                (dataDetailChunk || []).forEach(d => {
+                    const noNota = d.no_nota;
+                    const namaBrg = String(d.nama_barang || "").trim();
+                    const qtyNum = parseFloat(d.qty) || 0;
+                    if (!noNota || !namaBrg) return;
+                    barangSet.add(namaBrg);
+                    if (!detailQtyMap.has(noNota)) detailQtyMap.set(noNota, new Map());
+                    const m = detailQtyMap.get(noNota);
+                    const key = namaBrg.toLowerCase();
+                    m.set(key, (m.get(key) || 0) + qtyNum);
+                });
+            }
+            renderBarangDatalist();
+            return listNota;
+        }
+
+        function filterByBarang(list, namaBarang) {
+            const keyBarang = String(namaBarang || "").trim().toLowerCase();
+            if (!keyBarang) return list;
+            return list.filter(item => getQtyForNota(item.no_nota, keyBarang) > 0);
+        }
+
+        function getFilteredNotas(rangeMode, namaBarang) {
+            let source = recentNotas;
+            if (rangeMode === "today") {
+                source = recentNotas.filter(item => item.tanggal === tglHariIni);
+            } else if (rangeMode === "2days") {
+                source = recentNotas.filter(item => item.tanggal >= tglKemarin && item.tanggal <= tglHariIni);
+            } else if (rangeMode === "custom") {
+                source = customNotas;
+            }
+            return filterByBarang(source, namaBarang);
+        }
+
+        function buildNotaOptionsHTML(list, namaBarang) {
+            const labelBarang = String(namaBarang || "").trim();
+            if (!list.length) {
+                return `<option value="">-- Tidak ada nota ${escapeHtml(labelBarang || "sesuai filter")} --</option>`;
+            }
+            let html = `<option value="">-- Pilih Agen (${list.length} nota ${escapeHtml(labelBarang)}) --</option>`;
+            list.forEach(item => {
+                const agenClean = String(item.nama_agen || "").trim();
+                const qty = getQtyForNota(item.no_nota, labelBarang);
+                let tglLabel = formatTanggalSingkat(item.tanggal);
+                if (item.tanggal === tglHariIni) tglLabel = "Hari ini";
+                else if (item.tanggal === tglKemarin) tglLabel = "Kemarin";
+                html += `<option value="${escapeHtml(item.no_nota)}" data-agen="${escapeHtml(agenClean)}" data-qty="${qty}">${escapeHtml(agenClean)} · Qty ${qty} (${escapeHtml(item.no_nota)} · ${escapeHtml(tglLabel)})</option>`;
+            });
+            return html;
+        }
+
+        async function loadArmadaFromDb() {
+            if (!supabaseClient) return;
+            try {
+                const { data, error } = await supabaseClient
+                    .from('kendaraan')
+                    .select('plat_nomor, tipe_mobil')
+                    .order('plat_nomor', { ascending: true });
+                if (error || !Array.isArray(data) || data.length === 0) return;
+
+                let html = `<option value="">-- Pilih Kendaraan --</option>`;
+                let hasSusulan = false;
+                data.forEach(item => {
+                    const plat = String(item.plat_nomor || "").trim();
+                    const tipe = String(item.tipe_mobil || "").trim();
+                    if (!plat) return;
+                    const label = (plat.includes("(") || !tipe || plat.toLowerCase().includes(tipe.toLowerCase()))
+                        ? plat
+                        : `${plat} ( ${tipe} )`;
+                    if (label.toUpperCase() === "SUSULAN") hasSusulan = true;
+                    html += `<option value="${escapeHtml(label)}">${escapeHtml(label)}</option>`;
+                });
+                if (!hasSusulan) {
+                    html += `<option value="SUSULAN">SUSULAN</option>`;
+                }
+                armadaOptionsHTML = html;
+
+                document.querySelectorAll(".select-armada").forEach(sel => {
+                    const prevVal = sel.value;
+                    sel.innerHTML = armadaOptionsHTML;
+                    if (prevVal) {
+                        if (!Array.from(sel.options).some(o => o.value === prevVal)) {
+                            const extra = document.createElement("option");
+                            extra.value = prevVal;
+                            extra.textContent = prevVal;
+                            sel.appendChild(extra);
+                        }
+                        sel.value = prevVal;
+                    }
+                });
+            } catch (err) {
+                console.error("Gagal memuat daftar armada:", err);
+            }
+        }
+
+        function syncDuplicateNotaOptions() {
+            const selects = Array.from(document.querySelectorAll(".select-nota"));
+            const selectedSet = new Set(selects.map(s => s.value).filter(Boolean));
+            selects.forEach(sel => {
+                const currentVal = sel.value;
+                Array.from(sel.options).forEach(opt => {
+                    if (!opt.value) return;
+                    if (!opt.dataset.baseLabel) {
+                        opt.dataset.baseLabel = opt.textContent;
+                    }
+                    const isUsedElsewhere = opt.value !== currentVal && selectedSet.has(opt.value);
+                    opt.disabled = isUsedElsewhere;
+                    opt.textContent = isUsedElsewhere
+                        ? `${opt.dataset.baseLabel} — ✓ Sudah dipilih`
+                        : opt.dataset.baseLabel;
+                });
+            });
+        }
+
+        function refreshDropdowns(preserveSelection = true, statusPrefix = "") {
+            const namaBarang = inputAcuanBarang.value.trim();
+            filteredNotas = getFilteredNotas(activeDateRange, namaBarang);
+            notaOptionsHTML = buildNotaOptionsHTML(filteredNotas, namaBarang);
+
+            const countToday = getFilteredNotas("today", namaBarang).length;
+            const count2Days = getFilteredNotas("2days", namaBarang).length;
+            btnFilterHariIni.textContent = `Hari Ini (${countToday})`;
+            btnFilter2Hari.textContent = `Hari Ini & Kemarin (${count2Days})`;
+            btnFilterHariIni.classList.toggle("active", activeDateRange === "today");
+            btnFilter2Hari.classList.toggle("active", activeDateRange === "2days");
+            btnFilterCustom.classList.toggle("active", activeDateRange === "custom");
+            customRangeBox.classList.toggle("show", activeDateRange === "custom");
+
+            let rangeLabel = "hari ini & kemarin";
+            if (activeDateRange === "today") {
+                rangeLabel = "hari ini";
+            } else if (activeDateRange === "custom") {
+                const s = inputTglMulai.value || tglKemarin;
+                const e = inputTglSampai.value || tglHariIni;
+                rangeLabel = s === e ? formatTanggalSingkat(s) : `${formatTanggalSingkat(s)} – ${formatTanggalSingkat(e)}`;
+            }
+
+            const baseMsg = filteredNotas.length
+                ? `Menampilkan ${filteredNotas.length} agen dengan barang "${namaBarang || "semua"}" (${rangeLabel}).`
+                : `Belum ada nota dengan barang "${namaBarang || "-"}" (${rangeLabel}).`;
+            notaFilterHint.textContent = statusPrefix ? `${statusPrefix} · ${baseMsg}` : baseMsg;
+
+            document.querySelectorAll(".baris-agen").forEach(row => {
+                const selectNota = row.querySelector(".select-nota");
+                const inputQty = row.querySelector(".input-qty-agen");
+                const prevVal = preserveSelection ? selectNota.value : "";
+
+                selectNota.innerHTML = notaOptionsHTML;
+                if (prevVal && Array.from(selectNota.options).some(opt => opt.value === prevVal)) {
+                    selectNota.value = prevVal;
+                    inputQty.value = getQtyForNota(prevVal, namaBarang);
+                } else if (prevVal) {
+                    inputQty.value = "";
+                }
+            });
+            syncDuplicateNotaOptions();
+            hitungTotalAgen();
+        }
+
+        async function applyCustomDateRange(forceRefresh = false, statusPrefix = "") {
+            let start = inputTglMulai.value || tglKemarin;
+            let end = inputTglSampai.value || tglHariIni;
+            if (start > end) {
+                const tmp = start;
+                start = end;
+                end = tmp;
+                inputTglMulai.value = start;
+                inputTglSampai.value = end;
+            }
+            const cacheKey = `${start}|${end}`;
+            if (!forceRefresh && customRangeCache.has(cacheKey)) {
+                customNotas = customRangeCache.get(cacheKey);
+                refreshDropdowns(true, statusPrefix);
+                return;
+            }
+            notaFilterHint.textContent = `Memuat nota ${formatTanggalSingkat(start)} – ${formatTanggalSingkat(end)}...`;
+            try {
+                const fetched = await fetchRangeFromDb(start, end);
+                customRangeCache.set(cacheKey, fetched);
+                customNotas = fetched;
+                refreshDropdowns(true, statusPrefix);
+            } catch (err) {
+                console.error("Gagal memuat nota rentang tanggal:", err);
+                notaFilterHint.textContent = "Gagal memuat nota untuk rentang tanggal yang dipilih.";
+            }
+        }
+
+        if (supabaseClient) {
+            try {
+                const [fetchedRecent] = await Promise.all([
+                    fetchRangeFromDb(tglKemarin, tglHariIni),
+                    loadArmadaFromDb()
+                ]);
+                recentNotas = fetchedRecent;
+                customRangeCache.set(`${tglKemarin}|${tglHariIni}`, recentNotas);
+                customNotas = recentNotas;
+                refreshDropdowns(false);
+            } catch (err) {
+                console.error("Gagal memuat daftar nota:", err);
+                notaFilterHint.textContent = "Gagal memuat daftar nota dari database.";
+            }
+        }
+
+        // 4. HITUNG SELISIH DAN TOTAL
         function hitungSelisih() {
             const bawa = parseFloat(displayTotalBawa.textContent) || 0;
             const agen = parseFloat(displayTotalAgen.textContent) || 0;
@@ -335,44 +652,25 @@
 
         inputQtyGudang.addEventListener("input", hitungTotalAgen);
 
-        // FUNGSI TARIK QTY BERDASARKAN NOTA YANG DIPILIH
-        async function tarikQtyBerdasarkanNota(row) {
+        // FUNGSI TARIK QTY INSTAN BERDASARKAN NOTA YANG DIPILIH
+        function tarikQtyBerdasarkanNota(row) {
             const selectNota = row.querySelector(".select-nota");
             const inputQty = row.querySelector(".input-qty-agen");
             const noNotaCari = selectNota.value;
 
-            if (noNotaCari !== "" && supabaseClient) {
-                inputQty.placeholder = "Tunggu...";
-                inputQty.value = "";
-
-                try {
-                    const namaBarangAcuan = inputAcuanBarang.value.trim();
-                    const { data: dataDetail, error: errDetail } = await supabaseClient
-                        .from('transaksi_detail')
-                        .select('qty')
-                        .eq('no_nota', noNotaCari)
-                        .eq('nama_barang', namaBarangAcuan)
-                        .eq('tipe', 'Kirim') // PERBAIKAN: Di sinilah filter 'Kirim' bekerja berdasarkan tabel transaksi_detail!
-                        .limit(1);
-
-                    if (errDetail) throw errDetail;
-
-                    if (dataDetail && dataDetail.length > 0) {
-                        inputQty.value = dataDetail[0].qty;
-                    } else {
-                        inputQty.value = 0;
-                    }
-                } catch (err) {
-                    console.error("Gagal menarik qty detail:", err);
-                    inputQty.value = "";
-                } finally {
-                    inputQty.placeholder = "Qty";
-                    hitungTotalAgen();
+            if (noNotaCari !== "") {
+                const selectedOpt = selectNota.options[selectNota.selectedIndex];
+                const cachedQty = selectedOpt ? selectedOpt.getAttribute("data-qty") : null;
+                if (cachedQty !== null && cachedQty !== "") {
+                    inputQty.value = cachedQty;
+                } else {
+                    inputQty.value = getQtyForNota(noNotaCari, inputAcuanBarang.value.trim());
                 }
             } else {
                 inputQty.value = "";
-                hitungTotalAgen();
             }
+            syncDuplicateNotaOptions();
+            hitungTotalAgen();
         }
 
         function pasangEventNota(row) {
@@ -386,13 +684,117 @@
             inputQty.addEventListener("input", hitungTotalAgen);
         }
 
-        inputAcuanBarang.addEventListener("input", function() {
-            document.querySelectorAll(".baris-agen").forEach(baris => {
-                const selectNota = baris.querySelector(".select-nota");
-                if (selectNota.value !== "") {
-                    tarikQtyBerdasarkanNota(baris);
+        function buatBarisNota(isFirst = false, preselectNota = "") {
+            const row = document.createElement("div");
+            row.className = "row mb-3 baris-agen";
+            row.innerHTML = `
+                <div class="col-8 pe-1">
+                    <select class="form-select select-nota">
+                        ${notaOptionsHTML}
+                    </select>
+                </div>
+                <div class="col-4 ps-1${isFirst ? "" : " d-flex gap-1"}">
+                    <input type="number" class="form-control input-qty-agen" placeholder="Qty">
+                    ${isFirst ? "" : `<button type="button" class="btn btn-danger btn-hapus fw-bold">X</button>`}
+                </div>
+            `;
+            containerAgen.insertBefore(row, btnTambahAgen);
+            pasangEventNota(row);
+
+            const btnHapus = row.querySelector(".btn-hapus");
+            if (btnHapus) {
+                btnHapus.addEventListener("click", function() {
+                    row.remove();
+                    syncDuplicateNotaOptions();
+                    hitungTotalAgen();
+                });
+            }
+
+            if (preselectNota) {
+                const sel = row.querySelector(".select-nota");
+                sel.value = preselectNota;
+                tarikQtyBerdasarkanNota(row);
+            } else {
+                syncDuplicateNotaOptions();
+            }
+            return row;
+        }
+
+        btnRefreshNota.addEventListener("click", async function() {
+            if (!supabaseClient) return;
+            const prevText = btnRefreshNota.textContent;
+            btnRefreshNota.disabled = true;
+            btnRefreshNota.textContent = "⏳ Memuat...";
+            notaFilterHint.textContent = "Menyegarkan data nota & armada dari database...";
+            try {
+                customRangeCache.clear();
+                detailQtyMap.clear();
+                const [fetchedRecent] = await Promise.all([
+                    fetchRangeFromDb(tglKemarin, tglHariIni),
+                    loadArmadaFromDb()
+                ]);
+                recentNotas = fetchedRecent;
+                customRangeCache.set(`${tglKemarin}|${tglHariIni}`, recentNotas);
+                const jamSync = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                const prefix = `Diperbarui ${jamSync}`;
+                if (activeDateRange === "custom") {
+                    await applyCustomDateRange(true, prefix);
+                } else {
+                    customNotas = recentNotas;
+                    refreshDropdowns(true, prefix);
                 }
+            } catch (err) {
+                console.error("Gagal menyegarkan data:", err);
+                notaFilterHint.textContent = "Gagal menyegarkan data dari database.";
+            } finally {
+                btnRefreshNota.disabled = false;
+                btnRefreshNota.textContent = prevText;
+            }
+        });
+
+        inputAcuanBarang.addEventListener("input", function() {
+            refreshDropdowns(true);
+        });
+
+        btnFilterHariIni.addEventListener("click", function() {
+            activeDateRange = "today";
+            refreshDropdowns(true);
+        });
+
+        btnFilter2Hari.addEventListener("click", function() {
+            activeDateRange = "2days";
+            refreshDropdowns(true);
+        });
+
+        btnFilterCustom.addEventListener("click", function() {
+            activeDateRange = "custom";
+            refreshDropdowns(true);
+            applyCustomDateRange();
+        });
+
+        btnTerapkanRentang.addEventListener("click", function() {
+            activeDateRange = "custom";
+            applyCustomDateRange();
+        });
+
+        inputTglMulai.addEventListener("change", function() {
+            if (activeDateRange === "custom") applyCustomDateRange();
+        });
+
+        inputTglSampai.addEventListener("change", function() {
+            if (activeDateRange === "custom") applyCustomDateRange();
+        });
+
+        btnMuatSemuaNota.addEventListener("click", function() {
+            if (!filteredNotas.length) {
+                alert("Tidak ada nota yang cocok untuk dimuat.");
+                return;
+            }
+            document.querySelectorAll(".baris-agen").forEach(r => r.remove());
+            filteredNotas.forEach((item, idx) => {
+                buatBarisNota(idx === 0, item.no_nota);
             });
+            hitungTotalAgen();
         });
 
         document.querySelectorAll(".input-qty-bawa").forEach(input => input.addEventListener("input", hitungTotalBawa));
@@ -408,12 +810,12 @@
             row.innerHTML = `
                 <div class="col-8 pe-1">
                     <select class="form-select select-armada">
-                        ${document.querySelector(".select-armada").innerHTML}
+                        ${armadaOptionsHTML}
                     </select>
                 </div>
                 <div class="col-4 ps-1 d-flex gap-1">
                     <input type="number" class="form-control input-qty-bawa" placeholder="Bawa">
-                    <button class="btn btn-danger btn-hapus fw-bold">X</button>
+                    <button type="button" class="btn btn-danger btn-hapus fw-bold">X</button>
                 </div>
             `;
             containerArmada.insertBefore(row, btnTambahArmada);
@@ -426,31 +828,8 @@
         });
 
         // 7. TAMBAH/HAPUS BARIS NOTA
-        const containerAgen = document.getElementById("containerAgen");
-        const btnTambahAgen = document.getElementById("btnTambahAgen");
-
         btnTambahAgen.addEventListener("click", function() {
-            const row = document.createElement("div");
-            row.className = "row mb-3 baris-agen";
-            row.innerHTML = `
-                <div class="col-8 pe-1">
-                    <select class="form-select select-nota">
-                        ${notaOptionsHTML}
-                    </select>
-                </div>
-                <div class="col-4 ps-1 d-flex gap-1">
-                    <input type="number" class="form-control input-qty-agen" placeholder="Qty">
-                    <button class="btn btn-danger btn-hapus fw-bold">X</button>
-                </div>
-            `;
-            containerAgen.insertBefore(row, btnTambahAgen);
-
-            pasangEventNota(row);
-
-            row.querySelector(".btn-hapus").addEventListener("click", function() {
-                row.remove();
-                hitungTotalAgen();
-            });
+            buatBarisNota(false, "");
         });
 
         // 8. KIRIM WHATSAPP
