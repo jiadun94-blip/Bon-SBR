@@ -108,12 +108,9 @@
     const SUPABASE_KEY = "sb_publishable_HJGWlUbTi-sT6tpFU4eZ1g_um4hmtVd";
     const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-window.onload = () => {
-        document.getElementById('welcomeNama').innerText = "HALO, " + userLogin.toUpperCase() + "!";
-        loadRiwayat();
-    };
-	
+    const userLogin = localStorage.getItem("userNama") || "Driver";
     let dataNotaTerakhir = [];
+    let sedangMenyimpan = false;
 
     function formatRibuan(elemen) {
         let val = elemen.value.replace(/[^0-9]/g, "");
@@ -182,6 +179,7 @@ window.onload = () => {
 
     function updateDropdownSumberAgen(detailBundel) {
         const selSumber = document.getElementById('sumber_agen');
+        const prevValue = selSumber.value;
         selSumber.innerHTML = '';
         
         if (detailBundel.length === 0) {
@@ -195,6 +193,10 @@ window.onload = () => {
             opt.text = `${b.agen} [${b.nota}]`; 
             selSumber.appendChild(opt);
         });
+
+        if (prevValue && detailBundel.some(b => b.agen === prevValue)) {
+            selSumber.value = prevValue;
+        }
     }
 
     function hitungOtomatis() {
@@ -232,6 +234,7 @@ window.onload = () => {
     }
 
     async function setorDataHariIni() {
+        if (sedangMenyimpan) return;
         const plat = document.getElementById('selMobil').value;
         const kmRaw = getAngka(document.getElementById('km_input').value);
         const checked = Array.from(document.querySelectorAll('input[name="nota_pilih"]:checked'));
@@ -241,6 +244,10 @@ window.onload = () => {
         if(checked.length === 0) return alert("Pengecekan Gagal: Anda belum memilih Nota harian!");
         if(!pilihanAgen) return alert("Pengecekan Gagal: Silakan pilih Agen sebagai sumber dana pengeluaran!");
         if(kmRaw === 0) return alert("Pengecekan Gagal: Angka Odometer KM kosong atau tidak valid!");
+
+        const btnSetor = document.querySelector('.btn-setor');
+        sedangMenyimpan = true;
+        if (btnSetor) { btnSetor.disabled = true; btnSetor.textContent = "⏳ MENYIMPAN DATA..."; }
 
         const calc = hitungOtomatis();
 
@@ -290,9 +297,10 @@ window.onload = () => {
                 return;
             }
 
-            await _sb.from('monitoring_kendaraan')
+            const { error: errKm } = await _sb.from('monitoring_kendaraan')
                 .update({ km_saat_ini: kmRaw })
                 .eq('plat_nomor', plat);
+            if (errKm) console.warn("Gagal update KM armada:", errKm.message);
 
             const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
             
@@ -310,7 +318,7 @@ window.onload = () => {
             
             pesan += "*RINCIAN BUNDEL CASH:*\n";
             calc.detail.forEach(b => {
-                pesan += "- " + b.agen + " (" + b.nota + "): *Rp " + parseInt(b.cash).toLocaleString('id-ID') + "*\n";
+                pesan += "- " + b.agen + " (" + b.nota + "): *Rp " + parseInt(b.cash || 0).toLocaleString('id-ID') + "*\n";
             });
             pesan += "- *Total Kotor:* Rp " + calc.rawTotal.toLocaleString('id-ID') + "\n\n";
 
@@ -334,10 +342,16 @@ window.onload = () => {
 
         } catch (e) { 
             alert("⚠️ SISTEM SCRIPT ERROR MENDADAK!\n\nAlasan: " + e.message); 
+        } finally {
+            sedangMenyimpan = false;
+            if (btnSetor) { btnSetor.disabled = false; btnSetor.textContent = "🚀 SIMPAN & KIRIM WA"; }
         }
     }
 
-    window.onload = loadArmada;
+    window.onload = () => {
+        document.getElementById('welcomeNama').innerText = "HALO, " + userLogin.toUpperCase() + "!";
+        loadArmada();
+    };
 </script>
 </body>
 </html>
