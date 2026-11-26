@@ -1570,7 +1570,7 @@
     }
 
     function bukaFormEdit() {
-        window.open("edit_nota.html?nota=" + notaAktifAksi + "&sumber=" + tabelAsalAksi, "_blank");
+        window.open("edit_bon.html?nota=" + encodeURIComponent(notaAktifAksi) + "&sumber=" + encodeURIComponent(tabelAsalAksi), "_blank");
         tutupModalAksi();
     }
 
@@ -1619,7 +1619,5 @@
         }
     }
 </script>
-
-    <script src="sbr-nav.js"></script>
 </body>
 </html>

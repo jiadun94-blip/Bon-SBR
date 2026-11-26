@@ -141,13 +141,15 @@
         btn.disabled = true;
 
         try {
-            // Ambil data karyawan berdasarkan nama
-            const { data, error } = await supabaseClient
+            // Ambil data karyawan berdasarkan nama (case-insensitive)
+            const escapedUser = user.replace(/[%_\\]/g, '\\$&');
+            const { data: rows, error } = await supabaseClient
                 .from('karyawan')
                 .select('*')
-                .eq('nama_karyawan', user)
-                .single();
+                .ilike('nama_karyawan', escapedUser)
+                .limit(1);
 
+            const data = rows && rows[0];
             if (error || !data) throw new Error("Nama Karyawan tidak ditemukan!");
             if (!data.aktif) throw new Error("Akun Anda sedang dinonaktifkan Admin!");
             if (data.password !== pass) throw new Error("Password yang Anda masukkan salah!");

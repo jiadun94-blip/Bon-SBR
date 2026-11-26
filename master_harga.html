@@ -993,7 +993,11 @@
         closeActionMenu();
         const targetData = currentData[activeRowIndex];
         if(confirm(`Hapus harga ${targetData.nama_barang} (${targetData.satuan}) untuk agen ${targetData.nama_agen}?`)) {
-            await _sb.from('harga').delete().eq('id', targetData.id);
+            const { error } = await _sb.from('harga').delete().eq('id', targetData.id);
+            if (error) {
+                alert('Gagal menghapus harga: ' + error.message);
+                return;
+            }
             muatDataHarga();
         }
     }

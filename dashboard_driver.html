@@ -108,7 +108,7 @@
 
 <div class="header">
     <div class="logo-box">
-        <img id="logoBrand" src="blogo.png" alt="SBRdigital Lembang Bandung Barat" onerror="this.src='logo.png'">
+        <img id="logoBrand" src="logo.png" alt="SBRdigital Lembang Bandung Barat">
     </div>
     <div class="header-text">
         <h1 id="welcomeNama">HALO, DRIVER!</h1>
@@ -159,7 +159,10 @@
     const SB_KEY = "sb_publishable_HJGWlUbTi-sT6tpFU4eZ1g_um4hmtVd";
     const _sb = supabase.createClient(SB_URL, SB_KEY);
 
-    const userLogin = localStorage.getItem("userNama") || "Ikih";
+    const userLogin = localStorage.getItem("userNama");
+    if (!userLogin) {
+        window.location.replace("index.html");
+    }
     const WAREHOUSE = { lat: -6.829805631327394, lng: 107.64451131743134 };
     let driverMap;
     let driverMarker;
@@ -169,6 +172,7 @@
     let dispatchChannel;
 
     window.onload = () => {
+        if (!userLogin) return;
         document.getElementById('welcomeNama').innerText = "HALO, " + userLogin.toUpperCase() + "!";
         initDriverMap();
         loadRiwayat();

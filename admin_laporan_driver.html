@@ -1388,8 +1388,8 @@
             const [resDriver, resNormal, resDp, resArmada] = await Promise.all([
                 _sb.from('rekap_laporan_driver')
                     .select('*')
-                    .gte('created_at', `${tglMulai}T00:00:00`)
-                    .lte('created_at', `${tglSelesai}T23:59:59`)
+                    .gte('created_at', `${tglMulai}T00:00:00+07:00`)
+                    .lte('created_at', `${tglSelesai}T23:59:59.999+07:00`)
                     .order('created_at', { ascending: false }),
                 _sb.from('transaksi').select('*').gte('tanggal', tglMulaiBuffer).lte('tanggal', tglSelesai),
                 _sb.from('transaksi_dp').select('*').gte('tanggal', tglMulaiBuffer).lte('tanggal', tglSelesai),
@@ -2552,22 +2552,33 @@
         tabelAsalAksi = "";
     }
     function bukaFormEdit() {
-        window.open("edit_nota.html?nota=" + notaAktifAksi + "&sumber=" + tabelAsalAksi, "_blank");
+        window.open("edit_bon.html?nota=" + encodeURIComponent(notaAktifAksi) + "&sumber=" + encodeURIComponent(tabelAsalAksi), "_blank");
         tutupModalAksi();
     }
     async function hapusDataTransaksi() {
         if (confirm(`Yakin ingin menghapus seluruh data nota ${notaAktifAksi}?`)) {
             const tabelDetail = tabelAsalAksi === 'transaksi_dp' ? 'transaksi_detaildp' : 'transaksi_detail';
-            const { data: trxData } = await _sb.from(tabelAsalAksi).select('nama_agen').eq('no_nota', notaAktifAksi).single();
+            const { data: trxData, error: errFind } = await _sb.from(tabelAsalAksi).select('nama_agen').eq('no_nota', notaAktifAksi).maybeSingle();
+            if (errFind) {
+                alert("Gagal membaca data nota: " + errFind.message);
+                return;
+            }
             const namaAgen = trxData?.nama_agen;
 
-            await Promise.all([
+            const [resDelDet, resDelHdr] = await Promise.all([
                 _sb.from(tabelDetail).delete().eq('no_nota', notaAktifAksi),
                 _sb.from(tabelAsalAksi).delete().eq('no_nota', notaAktifAksi)
             ]);
+            if (resDelDet.error || resDelHdr.error) {
+                alert("Gagal menghapus nota: " + (resDelHdr.error?.message || resDelDet.error?.message));
+                return;
+            }
 
             if (namaAgen) {
-                await _sb.from('agen').update({ saldo_bon: 0 }).eq('nama_agen', namaAgen);
+                const { error: errAgen } = await _sb.from('agen').update({ saldo_bon: 0 }).eq('nama_agen', namaAgen);
+                if (errAgen) {
+                    alert("Nota terhapus, tetapi gagal mereset saldo bon agen: " + errAgen.message);
+                }
             }
 
             tampilkanToast(`🗑️ Nota ${notaAktifAksi} berhasil dihapus!`, "warning");
@@ -2581,7 +2592,5 @@
         if (e.target == document.getElementById('modalAksi')) tutupModalAksi();
     };
 </script>
-
-    <script src="sbr-nav.js"></script>
 </body>
 </html>

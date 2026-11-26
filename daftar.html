@@ -100,7 +100,7 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     async function prosesDaftar() {
-        const nama = document.getElementById('regNama').value;
+        const nama = document.getElementById('regNama').value.trim();
         const pass = document.getElementById('regPass').value;
         const confirm = document.getElementById('confirmPass').value;
         const btn = document.getElementById('btnProses');
@@ -113,14 +113,16 @@
         btn.innerText = "Memproses...";
 
         try {
-            // Cek apakah nama sudah terdaftar
-            const { data: cekUser } = await supabaseClient
+            // Cek apakah nama sudah terdaftar (case-insensitive)
+            const escapedNama = nama.replace(/[%_\\]/g, '\\$&');
+            const { data: cekRows, error: errCek } = await supabaseClient
                 .from('karyawan')
                 .select('nama_karyawan')
-                .eq('nama_karyawan', nama)
-                .maybeSingle();
+                .ilike('nama_karyawan', escapedNama)
+                .limit(1);
 
-            if(cekUser) {
+            if (errCek) throw errCek;
+            if(cekRows && cekRows.length > 0) {
                 alert("Nama karyawan ini sudah terdaftar!");
                 btn.disabled = false;
                 btn.innerText = "Daftar Sekarang";

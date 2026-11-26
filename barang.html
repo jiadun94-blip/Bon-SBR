@@ -895,7 +895,8 @@
     // === HAPUS DARI SUPABASE ===
     async function hapusBarang(id) {
         try {
-            await _sb.from('barang').delete().eq('id', id);
+            const { error } = await _sb.from('barang').delete().eq('id', id);
+            if (error) throw error;
             await muatData();
         } catch (err) {
             alert('Gagal menghapus data: ' + err.message);

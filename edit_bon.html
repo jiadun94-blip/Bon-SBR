@@ -350,6 +350,18 @@
             }
 
             resetForm();
+
+            // Auto-load nota jika dibuka dengan parameter URL ?nota=SBR-XXXXXX
+            const urlNota = new URLSearchParams(window.location.search).get('nota');
+            if (urlNota) {
+                const selectNota = document.getElementById('selectNoNota');
+                const exists = Array.from(selectNota.options).some(opt => opt.value === urlNota);
+                if (!exists) {
+                    selectNota.options.add(new Option(`✏️ ${urlNota}`, urlNota));
+                }
+                selectNota.value = urlNota;
+                await muatDataNotaTerpilih();
+            }
         } catch(e) { 
             alert("🚨 KONEKSI DATABASE ERROR:\n" + e.message); 
             console.error("Init Error:", e); 
