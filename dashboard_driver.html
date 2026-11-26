@@ -101,6 +101,9 @@
         .dispatch-action { display:inline-block; margin-top:10px; padding:10px 14px; border:0; border-radius:8px; background:#15803d; color:#fff; text-decoration:none; font:700 13px 'Roboto Condensed',sans-serif; cursor:pointer; }
         .dispatch-action.returning { background:#b45309; }
         #driverLiveMap { height:300px; border-radius:12px; border:1px solid #dbe3ec; background:#e2e8f0; }
+        .btn-logout-driver { width: 100%; margin-top: 20px; padding: 14px; border: none; border-radius: 12px; background: #dc2626; color: #ffffff; font: 700 15px 'Roboto Condensed', sans-serif; letter-spacing: 0.6px; cursor: pointer; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25); text-transform: uppercase; }
+        .btn-logout-driver:active { transform: scale(0.98); background: #b91c1c; }
+        .btn-logout-mini { margin-top: 6px; padding: 5px 10px; border-radius: 7px; border: 1px solid #fecaca; background: #fef2f2; color: #b91c1c; font: 700 11px 'Roboto Condensed', sans-serif; cursor: pointer; }
         @media(max-width:520px) { #driverLiveMap { height:250px; } }
     </style>
 </head>
@@ -113,6 +116,7 @@
     <div class="header-text">
         <h1 id="welcomeNama">HALO, DRIVER!</h1>
         <p>Selamat bekerja & utamakan keselamatan</p>
+        <button type="button" class="btn-logout-mini" onclick="logoutDriver()">🚪 Keluar / Ganti Akun</button>
     </div>
 </div>
 
@@ -154,6 +158,8 @@
     </table>
 </div>
 
+<button type="button" class="btn-logout-driver" onclick="logoutDriver()">🚪 KELUAR / GANTI AKUN DRIVER</button>
+
 <script>
     const SB_URL = "https://wunnynznajgwltzqdvfi.supabase.co";
     const SB_KEY = "sb_publishable_HJGWlUbTi-sT6tpFU4eZ1g_um4hmtVd";
@@ -170,6 +176,16 @@
     let destinationMarkers = [];
     let tripRoute;
     let dispatchChannel;
+
+    function logoutDriver() {
+        if (!confirm('Yakin ingin keluar dan ganti akun driver?')) return;
+        if (dispatchChannel && _sb && _sb.removeChannel) {
+            try { _sb.removeChannel(dispatchChannel); } catch (e) {}
+        }
+        localStorage.removeItem('userNama');
+        localStorage.removeItem('userRole');
+        window.location.replace('index.html');
+    }
 
     window.onload = () => {
         if (!userLogin) return;

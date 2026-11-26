@@ -664,6 +664,15 @@
     </header>
     <div id="notifBon">⚠️ AGEN INI PUNYA BON LAMA!</div>
 
+    <!-- Banner Pemulihan Draf Offline Bon -->
+    <div id="bonDraftBanner" style="display:none; background:#fffbeb; border:2px solid #f59e0b; color:#92400e; padding:12px 14px; border-radius:14px; margin-bottom:12px; font-size:13px; font-weight:800; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+        <span id="bonDraftText">💾 Draf bon belum tersimpan ditemukan.</span>
+        <div style="display:flex; gap:8px;">
+            <button type="button" onclick="pulihkanDrafBon()" style="background:#d97706; color:#fff; border:none; border-radius:8px; padding:7px 12px; font-weight:800; font-size:12px; cursor:pointer;">Pulihkan Draf</button>
+            <button type="button" onclick="hapusDrafBon(true)" style="background:#fff; color:#92400e; border:1px solid #f59e0b; border-radius:8px; padding:7px 10px; font-weight:800; font-size:12px; cursor:pointer;">Buang</button>
+        </div>
+    </div>
+
     <!-- Banner Status Perjalanan Live GPS (Bolak-Balik sampai Laporan Setoran) -->
     <div id="liveTripBanner" style="display:none; background:linear-gradient(135deg,#0f172a,#1e3a8a); color:#fff; padding:14px; border-radius:16px; margin-bottom:14px; border:2px solid #38bdf8; box-shadow:0 8px 20px rgba(14,116,144,0.28);">
         <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
@@ -1416,12 +1425,114 @@
 
             resetForm();
             updateWizardLaunchSummary();
+            cekDrafBonTersimpan();
             await initDriverRealtime();
         } catch(e) { 
             alert("🚨 KONEKSI DATABASE ERROR:\n" + e.message); 
             console.error("Init Error:", e); 
         }
     }
+
+    const BON_DRAFT_KEY = 'sbr_draft_bon_v1';
+    let isRestoringBonDraft = false;
+    let bonInitDone = false;
+
+    function simpanDrafBon() {
+        if (!bonInitDone || isRestoringBonDraft || savedTransactionData) return;
+        try {
+            const ag = document.getElementById('pilihAgen')?.value || '';
+            const mobil = document.getElementById('pilihMobil')?.value || '';
+            const drv2 = document.getElementById('driver2')?.value || '';
+            const tgl = document.getElementById('tglNota')?.value || '';
+            const cash = document.getElementById('inputCash')?.value || '0';
+            const trf = document.getElementById('inputTrf')?.value || '0';
+            const ongkir = document.getElementById('inputOngkir')?.value || '0';
+            const tidakTitip = !!document.getElementById('cbTidakTitip')?.checked;
+
+            const hasContent = ag || itemsKirim.length > 0 || itemsRetur.length > 0;
+            if (!hasContent) {
+                localStorage.removeItem(BON_DRAFT_KEY);
+                return;
+            }
+            localStorage.setItem(BON_DRAFT_KEY, JSON.stringify({
+                savedAt: Date.now(),
+                ag, mobil, drv2, tgl, cash, trf, ongkir, tidakTitip,
+                itemsKirim, itemsRetur
+            }));
+        } catch (e) {}
+    }
+
+    function cekDrafBonTersimpan() {
+        bonInitDone = true;
+        // Jangan tampilkan banner draf jika sedang membuka tugas kirim (?job=...)
+        if (new URLSearchParams(window.location.search).get('job')) return;
+        try {
+            const raw = localStorage.getItem(BON_DRAFT_KEY);
+            if (!raw) return;
+            const d = JSON.parse(raw);
+            if (!d || !d.savedAt || (Date.now() - d.savedAt) > 24 * 60 * 60 * 1000) {
+                localStorage.removeItem(BON_DRAFT_KEY);
+                return;
+            }
+            const totalItem = (d.itemsKirim?.length || 0) + (d.itemsRetur?.length || 0);
+            if (!d.ag && totalItem === 0) return;
+            const jam = new Date(d.savedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('bonDraftText').textContent = `💾 Draf Bon pkl ${jam}: ${d.ag || 'Tanpa Agen'} (${totalItem} item)`;
+            const banner = document.getElementById('bonDraftBanner');
+            if (banner) banner.style.display = 'flex';
+        } catch (e) {
+            localStorage.removeItem(BON_DRAFT_KEY);
+        }
+    }
+
+    function pulihkanDrafBon() {
+        try {
+            const raw = localStorage.getItem(BON_DRAFT_KEY);
+            if (!raw) return;
+            const d = JSON.parse(raw);
+            isRestoringBonDraft = true;
+            const banner = document.getElementById('bonDraftBanner');
+            if (banner) banner.style.display = 'none';
+
+            if (d.tgl) document.getElementById('tglNota').value = d.tgl;
+            if (d.ag) {
+                document.getElementById('pilihAgen').value = d.ag;
+                updateBon();
+            }
+            if (d.mobil) document.getElementById('pilihMobil').value = d.mobil;
+            if (d.drv2) document.getElementById('driver2').value = d.drv2;
+            itemsKirim = Array.isArray(d.itemsKirim) ? d.itemsKirim : [];
+            itemsRetur = Array.isArray(d.itemsRetur) ? d.itemsRetur : [];
+            if (d.ongkir) document.getElementById('inputOngkir').value = d.ongkir;
+            document.getElementById('cbTidakTitip').checked = !!d.tidakTitip;
+            togglePembayaran();
+            if (!d.tidakTitip) {
+                if (d.cash) document.getElementById('inputCash').value = d.cash;
+                if (d.trf) document.getElementById('inputTrf').value = d.trf;
+            }
+            render();
+            hitungTotal();
+            updateWizardLaunchSummary();
+        } catch (e) {
+            alert('Gagal memulihkan draf bon: ' + e.message);
+        } finally {
+            isRestoringBonDraft = false;
+        }
+    }
+
+    function hapusDrafBon(tutupBanner) {
+        try { localStorage.removeItem(BON_DRAFT_KEY); } catch (e) {}
+        if (tutupBanner) {
+            const banner = document.getElementById('bonDraftBanner');
+            if (banner) banner.style.display = 'none';
+        }
+    }
+
+    document.addEventListener('change', (e) => {
+        if (['pilihAgen', 'pilihMobil', 'driver2', 'tglNota'].includes(e.target?.id)) {
+            simpanDrafBon();
+        }
+    });
 
     function resetForm() {
         const today = new Date();
@@ -1726,6 +1837,7 @@
         document.getElementById('txtBon').innerText = (isDeposit ? "-Rp " : "Rp ") + bl_input.toLocaleString('id-ID');
         document.getElementById('txtGrand').innerText = "Rp " + sisa.toLocaleString('id-ID');
         if (typeof updatePayWizardChips === 'function') updatePayWizardChips();
+        if (typeof simpanDrafBon === 'function') simpanDrafBon();
     }
 
     let currentLaporanBlob = null;
@@ -2187,6 +2299,7 @@
             if (typeof tandaiNotaTersimpanLanjutPulang === 'function') {
                 await tandaiNotaTersimpanLanjutPulang(ag, noNota);
             }
+            if (typeof hapusDrafBon === 'function') hapusDrafBon(true);
         } catch (e) {
             updateSaveAnimation('GAGAL', `Gagal: ${e.message || e}`, 100, false, true);
             if (savedTransactionData) {

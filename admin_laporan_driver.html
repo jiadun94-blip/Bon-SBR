@@ -2556,14 +2556,19 @@
         tutupModalAksi();
     }
     async function hapusDataTransaksi() {
-        if (confirm(`Yakin ingin menghapus seluruh data nota ${notaAktifAksi}?`)) {
+        if (confirm(`Yakin ingin menghapus seluruh data nota ${notaAktifAksi}?\nSaldo bon agen akan otomatis dipulihkan ke transaksi sebelumnya.`)) {
             const tabelDetail = tabelAsalAksi === 'transaksi_dp' ? 'transaksi_detaildp' : 'transaksi_detail';
-            const { data: trxData, error: errFind } = await _sb.from(tabelAsalAksi).select('nama_agen').eq('no_nota', notaAktifAksi).maybeSingle();
+            const { data: trxData, error: errFind } = await _sb
+                .from(tabelAsalAksi)
+                .select('nama_agen, bon_lama')
+                .eq('no_nota', notaAktifAksi)
+                .maybeSingle();
             if (errFind) {
                 alert("Gagal membaca data nota: " + errFind.message);
                 return;
             }
             const namaAgen = trxData?.nama_agen;
+            const bonLamaFallback = Number(trxData?.bon_lama || 0);
 
             const [resDelDet, resDelHdr] = await Promise.all([
                 _sb.from(tabelDetail).delete().eq('no_nota', notaAktifAksi),
@@ -2574,14 +2579,21 @@
                 return;
             }
 
+            let infoSaldo = "";
             if (namaAgen) {
-                const { error: errAgen } = await _sb.from('agen').update({ saldo_bon: 0 }).eq('nama_agen', namaAgen);
-                if (errAgen) {
-                    alert("Nota terhapus, tetapi gagal mereset saldo bon agen: " + errAgen.message);
+                const { data: resSaldo, error: errSaldo } = await _sb.rpc('pulihkan_saldo_agen_dari_riwayat', {
+                    p_nama_agen: namaAgen,
+                    p_tabel_asal: tabelAsalAksi,
+                    p_fallback_saldo: bonLamaFallback
+                });
+                if (errSaldo) {
+                    alert("Nota terhapus, tetapi gagal memulihkan saldo bon agen: " + errSaldo.message);
+                } else if (resSaldo && resSaldo.saldo_dipulihkan !== undefined) {
+                    infoSaldo = ` Saldo ${namaAgen} dipulihkan ke Rp ${Number(resSaldo.saldo_dipulihkan).toLocaleString('id-ID')}.`;
                 }
             }
 
-            tampilkanToast(`🗑️ Nota ${notaAktifAksi} berhasil dihapus!`, "warning");
+            tampilkanToast(`🗑️ Nota ${notaAktifAksi} dihapus!${infoSaldo}`, "warning");
             tutupModalAksi();
             muatDataMaster();
         }

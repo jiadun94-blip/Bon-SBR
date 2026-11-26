@@ -1575,12 +1575,12 @@
     }
 
     async function hapusDataTransaksi() {
-        if (confirm(`Peringatan: Anda yakin ingin menghapus SELURUH data untuk nota ${notaAktifAksi}?\nData ini tidak dapat dikembalikan.`)) {
+        if (confirm(`Peringatan: Anda yakin ingin menghapus SELURUH data untuk nota ${notaAktifAksi}?\nData tidak dapat dikembalikan, dan saldo bon agen akan dipulihkan otomatis ke transaksi sebelumnya.`)) {
             
             const tabelDetail = tabelAsalAksi === 'transaksi_dp' ? 'transaksi_detaildp' : 'transaksi_detail';
 
             const { data: trxData, error: errTrxFind } = await _sb.from(tabelAsalAksi)
-                .select('nama_agen')
+                .select('nama_agen, bon_lama')
                 .eq('no_nota', notaAktifAksi)
                 .single();
 
@@ -1590,6 +1590,7 @@
             }
 
             const namaAgenTarget = trxData.nama_agen;
+            const bonLamaFallback = Number(trxData.bon_lama || 0);
 
             const { error: errDetail } = await _sb.from(tabelDetail)
                 .delete()
@@ -1602,17 +1603,22 @@
             if (errTrx || errDetail) {
                 alert("Gagal menghapus data: " + (errTrx ? errTrx.message : errDetail.message));				
             } else {
+                let pesanSaldo = "";
                 if (namaAgenTarget) {
-                    const { error: errAgen } = await _sb.from('agen')
-                        .update({ saldo_bon: 0 })
-                        .eq('nama_agen', namaAgenTarget);
+                    const { data: resSaldo, error: errSaldo } = await _sb.rpc('pulihkan_saldo_agen_dari_riwayat', {
+                        p_nama_agen: namaAgenTarget,
+                        p_tabel_asal: tabelAsalAksi,
+                        p_fallback_saldo: bonLamaFallback
+                    });
 
-                    if (errAgen) {
-                        alert("Nota terhapus, tetapi gagal mereset saldo bon agen: " + errAgen.message);
+                    if (errSaldo) {
+                        alert("Nota terhapus, tetapi gagal memulihkan saldo bon agen: " + errSaldo.message);
+                    } else if (resSaldo && resSaldo.saldo_dipulihkan !== undefined) {
+                        pesanSaldo = `\nSaldo bon ${namaAgenTarget} dipulihkan otomatis ke Rp ${Number(resSaldo.saldo_dipulihkan).toLocaleString('id-ID')}.`;
                     }
                 }
                 
-                alert("Data berhasil dihapus dan saldo bon agen telah di-Nol-kan!");
+                alert("Data nota berhasil dihapus!" + pesanSaldo);
                 tutupModalAksi();
                 muatLaporan();
             }
