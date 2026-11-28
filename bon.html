@@ -271,6 +271,32 @@
             background-position: right 8px center !important;
             font-size: 13px;
         }
+        .modal-satuan.locked {
+            padding: 8px 10px !important;
+            background-image: none !important;
+            background-color: #eaf3ff !important;
+            border-color: #9bc0ec !important;
+            color: #1e3a5f !important;
+            text-align: center;
+            text-align-last: center;
+            cursor: not-allowed;
+            opacity: 1;
+            pointer-events: none;
+        }
+        body.dark-theme .modal-satuan.locked {
+            background-image: none !important;
+            background-color: #1f3347 !important;
+            border-color: rgba(121, 180, 214, 0.45) !important;
+            color: #d6ecff !important;
+        }
+        .modal-harga-info.warn {
+            color: #c2410c;
+            background: rgba(234, 88, 12, 0.12);
+        }
+        body.dark-theme .modal-harga-info.warn {
+            color: #fdba74;
+            background: rgba(251, 146, 60, 0.16);
+        }
         .modal-harga-info {
             display: block;
             margin-top: 4px;
@@ -1635,12 +1661,34 @@
         document.getElementById('modalInput').style.display = "block"; 
     }
 
+    function resolveBallUnitForProduct(ag, namaBarang) {
+        const hargaAgen = database.harga[ag] || {};
+        if (namaBarang) {
+            if (hargaAgen[`${namaBarang}_Ball`] !== undefined) return 'Ball';
+            const prefix = namaBarang + '_';
+            const matchKey = Object.keys(hargaAgen).find(
+                k => k.startsWith(prefix) && k.substring(prefix.length).trim().toLowerCase() === 'ball'
+            );
+            if (matchKey) return matchKey.substring(prefix.length);
+        }
+        return 'Ball';
+    }
+
     function tambahBarisModal() {
         const tbody = document.getElementById('listModalBarang');
         let optionsBarang = '<option value="">-- Pilih Barang --</option>';
         listBarangTersediaGlobal.forEach(b => {
             optionsBarang += `<option value="${b}">${b}</option>`;
         });
+
+        const isKirimMode = currentMode === 'Kirim';
+        const satuanSelectHtml = isKirimMode
+            ? `<select class="modal-satuan locked" disabled title="Satuan Kirim dikunci ke Ball" onchange="updateRowPriceInfo(this)">
+                    <option value="Ball" selected>🔒 Ball</option>
+                </select>`
+            : `<select class="modal-satuan" onchange="updateRowPriceInfo(this)">
+                    <option value="">-</option>
+                </select>`;
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -1650,9 +1698,7 @@
                 </select>
             </td>
             <td style="padding: 6px 3px; vertical-align: top;">
-                <select class="modal-satuan" onchange="updateRowPriceInfo(this)">
-                    <option value="">-</option>
-                </select>
+                ${satuanSelectHtml}
                 <span class="modal-harga-info" style="display:none;">Rp 0</span>
             </td>
             <td style="padding: 6px 3px; vertical-align: top;">
@@ -1673,6 +1719,7 @@
         const priceEl = row.querySelector('.modal-harga-info');
         if (!priceEl) return;
 
+        priceEl.classList.remove('warn');
         if (!b || !u || !database.harga[ag]) {
             priceEl.style.display = 'none';
             return;
@@ -1680,6 +1727,10 @@
         const hrg = database.harga[ag][`${b}_${u}`];
         if (hrg !== undefined) {
             priceEl.textContent = `@Rp ${hrg.toLocaleString('id-ID')}`;
+            priceEl.style.display = 'block';
+        } else if (currentMode === 'Kirim') {
+            priceEl.textContent = `Harga Ball blm ada`;
+            priceEl.classList.add('warn');
             priceEl.style.display = 'block';
         } else {
             priceEl.style.display = 'none';
@@ -1692,6 +1743,20 @@
         const row = selectBarangEl.closest('tr');
         const selectSatuan = row.querySelector('.modal-satuan');
         
+        if (currentMode === 'Kirim') {
+            const ballUnit = resolveBallUnitForProduct(ag, b);
+            selectSatuan.innerHTML = `<option value="${ballUnit}" selected>🔒 ${ballUnit}</option>`;
+            selectSatuan.value = ballUnit;
+            selectSatuan.disabled = true;
+            selectSatuan.classList.add('locked');
+            selectSatuan.title = 'Satuan Kirim dikunci ke Ball';
+            updateRowPriceInfo(selectSatuan);
+            return;
+        }
+
+        selectSatuan.disabled = false;
+        selectSatuan.classList.remove('locked');
+        selectSatuan.title = '';
         selectSatuan.innerHTML = '';
         if (!b || !database.harga[ag]) {
             selectSatuan.innerHTML = '<option value="">-</option>';
@@ -1741,7 +1806,7 @@
             
             if (selectBarang && selectSatuan && inputQty) {
                 const b = selectBarang.value;
-                const s = selectSatuan.value;
+                const s = currentMode === 'Kirim' ? resolveBallUnitForProduct(ag, b) : selectSatuan.value;
                 const q = parseFloat(inputQty.value) || 0;
 
                 if (q > 0 && b && s) {
@@ -2487,9 +2552,11 @@
                 if (!namaBarang) return;
 
                 const prefix = namaBarang + '_';
-                const keyHarga = Object.keys(hargaAgen).find(k => k.startsWith(prefix) && k !== 'bon');
-                const satuan = keyHarga ? keyHarga.substring(prefix.length) : (det.satuan || 'Ball');
-                const hargaSatuan = keyHarga ? (Number(hargaAgen[keyHarga]) || 0) : (Number(det.harga_satuan) || 0);
+                const keyBall = Object.keys(hargaAgen).find(
+                    k => k.startsWith(prefix) && k.substring(prefix.length).trim().toLowerCase() === 'ball'
+                );
+                const satuan = keyBall ? keyBall.substring(prefix.length) : 'Ball';
+                const hargaSatuan = keyBall ? (Number(hargaAgen[keyBall]) || 0) : (Number(det.harga_satuan) || 0);
 
                 hasilItem.push({
                     barang: namaBarang,
