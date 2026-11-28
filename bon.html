@@ -3098,9 +3098,11 @@
         if (actions.customer) jobs.push(['customer', 'Mencetak lembar customer…', 65, () => printToBT(p.replace('[JENIS_CETAKAN]', '=== LEMBAR CUSTOMER ==='))]);
         if (actions.admin) jobs.push(['admin', 'Mencetak lembar admin…', 75, async () => {
             if (actions.customer) {
-                status.textContent = 'Menunggu 3.5 detik sebelum mencetak lembar admin…';
-                updateSaveAnimation('JEDA CETAK', 'Menunggu 3.5 detik untuk lembar admin…', 70);
-                await new Promise(r => setTimeout(r, 3500));
+                for (let detik = 5; detik >= 1; detik--) {
+                    status.textContent = `Menunggu ${detik} detik sebelum mencetak lembar admin…`;
+                    updateSaveAnimation('JEDA CETAK', `Sobek lembar customer… Cetak admin dalam ${detik} detik`, 70);
+                    await new Promise(r => setTimeout(r, 1000));
+                }
             }
             status.textContent = 'Mencetak lembar admin…';
             updateSaveAnimation('CETAK PRINTER', 'Mencetak lembar admin…', 75);
