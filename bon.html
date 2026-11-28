@@ -1491,24 +1491,28 @@
         search.oninput = () => filterHeaderWizardOptions();
         const select = document.getElementById(step.id);
         const options = Array.from(select.options).filter(opt => opt.value !== '');
+        const frag = document.createDocumentFragment();
         if (step.id === 'driver2') {
             const skip = document.createElement('button');
             skip.type = 'button'; skip.className = 'wizard-option' + (!headerWizardDraft.driver2 ? ' selected' : '');
+            skip.dataset.val = '';
             skip.innerHTML = 'Tidak ada driver 2<small>Lanjut tanpa driver pendamping</small>';
-            skip.onclick = () => chooseHeaderWizardOption(step.id, '');
-            optionsBox.appendChild(skip);
+            skip.onclick = () => chooseHeaderWizardOption(step.id, '', skip);
+            frag.appendChild(skip);
         }
         if (!options.length) {
-            const empty = document.createElement('div'); empty.style.padding = '14px'; empty.style.opacity = '.75'; empty.textContent = step.emptyLabel; optionsBox.appendChild(empty);
+            const empty = document.createElement('div'); empty.style.padding = '14px'; empty.style.opacity = '.75'; empty.textContent = step.emptyLabel; frag.appendChild(empty);
         }
         options.forEach(opt => {
             const button = document.createElement('button');
             button.type = 'button'; button.className = 'wizard-option' + (headerWizardDraft[step.id] === opt.value ? ' selected' : '');
+            button.dataset.val = opt.value;
             button.textContent = opt.text;
             button.dataset.searchText = opt.text.toLocaleLowerCase('id-ID');
-            button.onclick = () => chooseHeaderWizardOption(step.id, opt.value);
-            optionsBox.appendChild(button);
+            button.onclick = () => chooseHeaderWizardOption(step.id, opt.value, button);
+            frag.appendChild(button);
         });
+        optionsBox.appendChild(frag);
         document.getElementById('wizardBackBtn').textContent = headerWizardStep === 0 ? 'BATAL' : '← KEMBALI';
         document.getElementById('wizardNextBtn').textContent = headerWizardStep === 2 ? 'SELESAI ✓' : 'LANJUTKAN →';
         filterHeaderWizardOptions();
@@ -1518,14 +1522,23 @@
         const search = document.getElementById('wizardSearch');
         const query = (search?.value || '').trim().toLocaleLowerCase('id-ID');
         document.querySelectorAll('#wizardOptions .wizard-option').forEach(btn => {
-            const text = (btn.dataset.searchText || btn.textContent).toLocaleLowerCase('id-ID');
+            const text = btn.dataset.searchText || btn.textContent.toLocaleLowerCase('id-ID');
             btn.style.display = !query || text.includes(query) ? '' : 'none';
         });
     }
 
-    function chooseHeaderWizardOption(id, value) {
+    function chooseHeaderWizardOption(id, value, clickedBtn) {
         headerWizardDraft[id] = value;
-        renderHeaderWizard();
+        const box = document.getElementById('wizardOptions');
+        if (box) {
+            box.querySelectorAll('.wizard-option.selected').forEach(el => el.classList.remove('selected'));
+            if (clickedBtn) {
+                clickedBtn.classList.add('selected');
+            } else {
+                const match = Array.from(box.querySelectorAll('.wizard-option')).find(el => el.dataset.val === value);
+                if (match) match.classList.add('selected');
+            }
+        }
     }
 
     function wizardBack() {
@@ -1977,89 +1990,156 @@
         }
     }
 
-    async function init() {
-        try {
-            const { data: agen, error: errorAgen } = await clientSupabase.from('agen').select('*');
-            if (errorAgen) throw new Error("Gagal muat AGEN: " + errorAgen.message);
-            
-            if(agen) {
-                const agenNormal = agen.filter(a => a.type_agen !== 'KHUSUS');
-                agenNormal.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen));
-                const selAgen = document.getElementById('pilihAgen');
-                selAgen.innerHTML = '<option value="">-- AGEN --</option>';
-                agenNormal.forEach(a => {
-                    const labelBon = a.saldo_bon > 0 ? ` (!)` : "";
-                    selAgen.options.add(new Option(a.nama_agen + labelBon, a.nama_agen));
-                    database.harga[a.nama_agen] = { "bon": a.saldo_bon || 0 };
-                });
-            }
+    const MASTER_CACHE_KEY = 'sbr_bon_master_cache_v1';
 
-            const { data: harga, error: errorHarga } = await clientSupabase.from('harga').select('*');
-            if (errorHarga) throw new Error("Gagal muat HARGA: " + errorHarga.message);
-            
-            if(harga) {
-                harga.forEach(h => {
-                    if(!database.harga[h.nama_agen]) database.harga[h.nama_agen] = {};
-                    database.harga[h.nama_agen][`${h.nama_barang}_${h.satuan}`] = h.harga_jual;
-                });
-            }
+    function populateSelectFast(selectEl, placeholderText, items, selectedValue) {
+        const frag = document.createDocumentFragment();
+        if (placeholderText !== null) {
+            frag.appendChild(new Option(placeholderText, ''));
+        }
+        for (let i = 0; i < items.length; i++) {
+            frag.appendChild(new Option(items[i].label, items[i].value));
+        }
+        selectEl.innerHTML = '';
+        selectEl.appendChild(frag);
+        if (selectedValue) selectEl.value = selectedValue;
+    }
 
-            const { data: karyawan, error: errorKaryawan } = await clientSupabase
-                .from('karyawan')
-                .select('*')
-                .eq('aktif', true)
-                .eq('bagian', 'Driver'); 
-                
-            if (errorKaryawan) throw new Error("Gagal muat DRIVER: " + errorKaryawan.message);
-            
-            const d1 = document.getElementById('driver1');
-            const d2 = document.getElementById('driver2');
-            
-            d1.innerHTML = '';
-            if(userAktif) {
-                d1.options.add(new Option(userAktif, userAktif));
-                d1.value = userAktif;
-            } else if (karyawan && karyawan.length > 0) {
-                karyawan.forEach(k => {
-                    d1.options.add(new Option(k.nama_karyawan, k.nama_karyawan));
-                });
-                d1.value = karyawan[0].nama_karyawan;
-            } else {
-                d1.options.add(new Option("Driver 1", "Driver 1"));
-                d1.value = "Driver 1";
-            }
+    function applyMasterDataToUI({ agen, harga, karyawan, mobil }, preserveSelection = false) {
+        const selAgen = document.getElementById('pilihAgen');
+        const d1 = document.getElementById('driver1');
+        const d2 = document.getElementById('driver2');
+        const selMobil = document.getElementById('pilihMobil');
 
-            d2.innerHTML = '<option value="">-- DRIVER 2 --</option>';
-            if(karyawan) {
-                karyawan.forEach(k => {
-                    d2.options.add(new Option(k.nama_karyawan, k.nama_karyawan));
-                });
-            }
+        const prevAgen = preserveSelection ? selAgen.value : '';
+        const prevD2 = preserveSelection ? d2.value : '';
+        const prevMobil = preserveSelection ? selMobil.value : '';
 
-            const { data: mobil, error: errorMobil } = await clientSupabase.from('kendaraan').select('*');
-            if (errorMobil) throw new Error("Gagal muat MOBIL: " + errorMobil.message);
-            
-            const selMobil = document.getElementById('pilihMobil');
-            if(mobil) {
-                selMobil.innerHTML = '<option value="">-- MOBIL --</option>';
-                mobil.forEach(m => selMobil.options.add(new Option(m.plat_nomor, m.plat_nomor)));
-            }
+        database.harga = {};
 
-            resetForm();
+        if (Array.isArray(agen)) {
+            const agenNormal = agen.filter(a => a.type_agen !== 'KHUSUS');
+            agenNormal.sort((a, b) => a.nama_agen.localeCompare(b.nama_agen));
+            const agenOpts = agenNormal.map(a => {
+                database.harga[a.nama_agen] = { "bon": a.saldo_bon || 0 };
+                return { label: a.nama_agen + (a.saldo_bon > 0 ? ' (!)' : ''), value: a.nama_agen };
+            });
+            populateSelectFast(selAgen, '-- AGEN --', agenOpts, prevAgen);
+        }
+
+        if (Array.isArray(harga)) {
+            for (let i = 0; i < harga.length; i++) {
+                const h = harga[i];
+                if (!database.harga[h.nama_agen]) database.harga[h.nama_agen] = {};
+                database.harga[h.nama_agen][`${h.nama_barang}_${h.satuan}`] = h.harga_jual;
+            }
+        }
+
+        const driverList = Array.isArray(karyawan) ? karyawan : [];
+        if (userAktif) {
+            populateSelectFast(d1, null, [{ label: userAktif, value: userAktif }], userAktif);
+        } else if (driverList.length > 0) {
+            populateSelectFast(
+                d1,
+                null,
+                driverList.map(k => ({ label: k.nama_karyawan, value: k.nama_karyawan })),
+                driverList[0].nama_karyawan
+            );
+        } else {
+            populateSelectFast(d1, null, [{ label: 'Driver 1', value: 'Driver 1' }], 'Driver 1');
+        }
+
+        populateSelectFast(
+            d2,
+            '-- DRIVER 2 --',
+            driverList.map(k => ({ label: k.nama_karyawan, value: k.nama_karyawan })),
+            prevD2
+        );
+
+        if (Array.isArray(mobil)) {
+            populateSelectFast(
+                selMobil,
+                '-- MOBIL --',
+                mobil.map(m => ({ label: m.plat_nomor, value: m.plat_nomor })),
+                prevMobil
+            );
+        }
+
+        if (preserveSelection && selAgen.value) {
+            updateBon();
             updateWizardLaunchSummary();
-            cekDrafBonTersimpan();
-            await initDriverRealtime();
-        } catch(e) { 
-            alert("🚨 KONEKSI DATABASE ERROR:\n" + e.message); 
-            console.error("Init Error:", e); 
+        }
+    }
+
+    async function init() {
+        let hydratedFromCache = false;
+        try {
+            const rawCache = localStorage.getItem(MASTER_CACHE_KEY);
+            if (rawCache) {
+                const cached = JSON.parse(rawCache);
+                if (cached && Array.isArray(cached.agen) && Array.isArray(cached.harga)) {
+                    applyMasterDataToUI(cached, false);
+                    resetForm();
+                    updateWizardLaunchSummary();
+                    cekDrafBonTersimpan();
+                    hydratedFromCache = true;
+                }
+            }
+        } catch (_) {}
+
+        const netBadge = document.getElementById('netStatusBadge');
+        if (netBadge && navigator.onLine !== false) {
+            netBadge.textContent = '⏳ Sinkron...';
+        }
+
+        try {
+            const [resAgen, resHarga, resKaryawan, resMobil] = await Promise.all([
+                clientSupabase.from('agen').select('nama_agen,saldo_bon,type_agen'),
+                clientSupabase.from('harga').select('nama_agen,nama_barang,satuan,harga_jual'),
+                clientSupabase.from('karyawan').select('nama_karyawan').eq('aktif', true).eq('bagian', 'Driver'),
+                clientSupabase.from('kendaraan').select('plat_nomor')
+            ]);
+
+            if (resAgen.error) throw new Error("Gagal muat AGEN: " + resAgen.error.message);
+            if (resHarga.error) throw new Error("Gagal muat HARGA: " + resHarga.error.message);
+            if (resKaryawan.error) throw new Error("Gagal muat DRIVER: " + resKaryawan.error.message);
+            if (resMobil.error) throw new Error("Gagal muat MOBIL: " + resMobil.error.message);
+
+            const freshMaster = {
+                savedAt: Date.now(),
+                agen: resAgen.data || [],
+                harga: resHarga.data || [],
+                karyawan: resKaryawan.data || [],
+                mobil: resMobil.data || []
+            };
+
+            applyMasterDataToUI(freshMaster, hydratedFromCache);
+            try { localStorage.setItem(MASTER_CACHE_KEY, JSON.stringify(freshMaster)); } catch (_) {}
+
+            if (!hydratedFromCache) {
+                resetForm();
+                updateWizardLaunchSummary();
+                cekDrafBonTersimpan();
+            }
+            updateNetworkStatus();
+            initDriverRealtime().catch(err => console.warn('Realtime init warning:', err));
+        } catch(e) {
+            updateNetworkStatus();
+            if (!hydratedFromCache) {
+                alert("🚨 KONEKSI DATABASE ERROR:\n" + e.message);
+            } else {
+                console.warn("Gagal sinkron data terbaru, memakai cache lokal:", e.message);
+            }
+            console.error("Init Error:", e);
         }
     }
 
     const BON_DRAFT_KEY = 'sbr_draft_bon_v1';
     let isRestoringBonDraft = false;
     let bonInitDone = false;
+    let draftSaveTimer = null;
 
-    function simpanDrafBon() {
+    function tulisDrafBonSekarang() {
         if (!bonInitDone || isRestoringBonDraft || savedTransactionData) return;
         try {
             const ag = document.getElementById('pilihAgen')?.value || '';
@@ -2083,6 +2163,20 @@
             }));
         } catch (e) {}
     }
+
+    function simpanDrafBon() {
+        if (!bonInitDone || isRestoringBonDraft || savedTransactionData) return;
+        if (draftSaveTimer) clearTimeout(draftSaveTimer);
+        draftSaveTimer = setTimeout(() => {
+            draftSaveTimer = null;
+            tulisDrafBonSekarang();
+        }, 450);
+    }
+
+    window.addEventListener('pagehide', tulisDrafBonSekarang);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') tulisDrafBonSekarang();
+    });
 
     function cekDrafBonTersimpan() {
         bonInitDone = true;
@@ -2134,6 +2228,7 @@
             }
             render();
             hitungTotal();
+            if (d.ag) updateNotaSummary(true);
             updateWizardLaunchSummary();
         } catch (e) {
             alert('Gagal memulihkan draf bon: ' + e.message);
@@ -2268,6 +2363,8 @@
             }
         }
         listBarangTersediaGlobal.sort();
+        cachedModalBarangOptionsHtml = '<option value="">-- Pilih Barang --</option>'
+            + listBarangTersediaGlobal.map(b => `<option value="${b}">${b}</option>`).join('');
 
         const tbody = document.getElementById('listModalBarang');
         tbody.innerHTML = '';
@@ -2278,6 +2375,8 @@
 
         document.getElementById('modalInput').style.display = "block"; 
     }
+
+    let cachedModalBarangOptionsHtml = '<option value="">-- Pilih Barang --</option>';
 
     function resolveBallUnitForProduct(ag, namaBarang) {
         const hargaAgen = database.harga[ag] || {};
@@ -2339,10 +2438,7 @@
 
     function tambahBarisModal() {
         const tbody = document.getElementById('listModalBarang');
-        let optionsBarang = '<option value="">-- Pilih Barang --</option>';
-        listBarangTersediaGlobal.forEach(b => {
-            optionsBarang += `<option value="${b}">${b}</option>`;
-        });
+        const optionsBarang = cachedModalBarangOptionsHtml;
 
         const isKirimMode = currentMode === 'Kirim';
         const satuanSelectHtml = isKirimMode
