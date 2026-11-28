@@ -1149,7 +1149,10 @@
         <!-- Logo dan Versi dibungkus dalam brand-wrapper -->
         <div class="brand-wrapper">
             <h2><img id="logoBrand" src="logo.png" alt="SBRdigital" style="height: 55px; width: auto;" onerror="this.src='logo.png'"></h2>
-            <span class="app-version">v1.0.0</span>
+            <div class="brand-meta-row">
+                <span class="app-version">v1.0.0</span>
+                <span id="netStatusBadge" class="net-status online">🟢 Online</span>
+            </div>
         </div>
         <div class="header-actions">
             <button type="button" class="btn-theme" id="btnTheme" onclick="toggleTheme()" aria-label="Ganti tema" title="Ganti tema">🌙</button>
@@ -1159,11 +1162,11 @@
     <div id="notifBon">⚠️ AGEN INI PUNYA BON LAMA!</div>
 
     <!-- Banner Pemulihan Draf Offline Bon -->
-    <div id="bonDraftBanner" style="display:none; background:#fffbeb; border:2px solid #f59e0b; color:#92400e; padding:12px 14px; border-radius:14px; margin-bottom:12px; font-size:13px; font-weight:800; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+    <div id="bonDraftBanner" class="draft-banner">
         <span id="bonDraftText">💾 Draf bon belum tersimpan ditemukan.</span>
         <div style="display:flex; gap:8px;">
-            <button type="button" onclick="pulihkanDrafBon()" style="background:#d97706; color:#fff; border:none; border-radius:8px; padding:7px 12px; font-weight:800; font-size:12px; cursor:pointer;">Pulihkan Draf</button>
-            <button type="button" onclick="hapusDrafBon(true)" style="background:#fff; color:#92400e; border:1px solid #f59e0b; border-radius:8px; padding:7px 10px; font-weight:800; font-size:12px; cursor:pointer;">Buang</button>
+            <button type="button" onclick="pulihkanDrafBon()" class="draft-banner-btn-restore">Pulihkan Draf</button>
+            <button type="button" onclick="hapusDrafBon(true)" class="draft-banner-btn-discard">Buang</button>
         </div>
     </div>
 
@@ -1208,25 +1211,25 @@
     </div>
 
     <div>
-        <div class="section-label"><span>📦 DIKIRIM :</span><button class="btn-action" style="background:#27ae60" onclick="openModal('Kirim')">+ ITEM</button></div>
-        <table id="tabelKirim"><thead><tr><th>BARANG</th><th>QTY</th><th>TOTAL</th><th style="width: 40px; text-align: center;">#</th></tr></thead><tbody></tbody></table>
+        <div class="section-label"><span>📦 DIKIRIM <span id="badgeCountKirim" class="section-count-pill"></span></span><button class="btn-action" style="background:#27ae60" onclick="openModal('Kirim')">+ ITEM</button></div>
+        <table id="tabelKirim"><thead><tr><th>BARANG</th><th style="width: 64px; text-align: center;">QTY</th><th style="text-align: right;">TOTAL</th><th style="width: 36px; text-align: center;">#</th></tr></thead><tbody></tbody></table>
         <div class="sub-display"><span>SUBTOTAL:</span><span id="subKirim">Rp 0</span></div>
 
-        <div class="section-label"><span>🔄 RETUR :</span><button class="btn-action" style="background:#e67e22" onclick="openModal('Retur')">+ ITEM</button></div>
-        <table id="tabelRetur"><thead><tr><th>BARANG</th><th>QTY</th><th>TOTAL</th><th style="width: 40px; text-align: center;">#</th></tr></thead><tbody></tbody></table>
+        <div class="section-label"><span>🔄 RETUR <span id="badgeCountRetur" class="section-count-pill"></span></span><button class="btn-action" style="background:#e67e22" onclick="openModal('Retur')">+ ITEM</button></div>
+        <table id="tabelRetur"><thead><tr><th>BARANG</th><th style="width: 64px; text-align: center;">QTY</th><th style="text-align: right;">TOTAL</th><th style="width: 36px; text-align: center;">#</th></tr></thead><tbody></tbody></table>
         <div class="sub-display"><span>SUBTOTAL:</span><span id="subRetur">Rp 0</span></div>
         
         <div id="boxBonLama" style="display:none;">
             <div class="section-label" id="labelBonUI">📄 BON LAMA :</div>
-            <div style="background:#fffaf0; padding:10px; border-radius:10px; border:2px solid #ed8936;">
-                <input type="text" id="inputBonLama" class="input-manual" style="background:transparent; border:none; height:auto;" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)" onblur="restoreZero(this)">
+            <div class="bon-lama-box">
+                <input type="text" id="inputBonLama" class="input-manual" value="0" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)" onblur="restoreZero(this)">
             </div>
         </div>
 
         <div id="boxOngkir" style="display:none;">
             <div class="section-label">🚚 ONGKIR :</div>
-            <div style="background:#f0f7ff; padding:10px; border-radius:10px; border:2px solid #3182ce;">
-                <input type="text" id="inputOngkir" class="input-manual" style="background:transparent; border:none; height:auto;" value="0" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)" onblur="restoreZero(this)">
+            <div class="ongkir-box">
+                <input type="text" id="inputOngkir" class="input-manual" value="0" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)" onblur="restoreZero(this)">
             </div>
         </div>
     </div>
@@ -1254,30 +1257,50 @@
     </div>
 </div>
 
-<!-- Modal Input Item (Urutan: NAMA BARANG - SATUAN - QTY) -->
+<!-- Sticky Bottom Summary Bar untuk navigasi cepat satu tangan di HP Android -->
+<div id="stickyBottomBar" class="sticky-bottom-bar" aria-live="polite">
+    <div class="sticky-bar-info">
+        <small id="stickyBarMeta">0 Ball · Sisa Akhir</small>
+        <strong id="stickyBarGrand">Rp 0</strong>
+    </div>
+    <button type="button" class="sticky-bar-btn" onclick="openPayWizard()">💳 BAYAR →</button>
+</div>
+
+<!-- Modal Input Item (Urutan: NAMA BARANG - SATUAN - QTY, gaya Bottom-Sheet di Mobile) -->
 <div id="modalInput" class="modal">
-    <div class="modal-content">
-        <h3 id="modalTitle" style="margin-top:0; text-transform:uppercase;">Daftar Barang</h3>
-        
-        <table class="modal-item-table">
-            <thead>
-                <tr>
-                    <th>NAMA BARANG</th>
-                    <th style="width: 76px; text-align: center;">SATUAN</th>
-                    <th style="width: 52px; text-align: center;">QTY</th>
-                    <th style="width: 30px; text-align: center;">#</th>
-                </tr>
-            </thead>
-            <tbody id="listModalBarang">
-                <!-- Baris item dinamis -->
-            </tbody>
-        </table>
+    <div class="modal-content modal-input-sheet">
+        <div class="modal-input-header">
+            <h3 id="modalTitle" style="margin:0; text-transform:uppercase;">Daftar Barang</h3>
+            <button type="button" onclick="closeModal()" aria-label="Tutup" style="border:0; background:transparent; font-size:26px; line-height:1; cursor:pointer; padding:2px 6px;">×</button>
+        </div>
 
-        <button type="button" class="btn-add-row-modal" onclick="tambahBarisModal()">+ Tambah Baris Barang</button>
+        <div class="modal-input-body">
+            <table class="modal-item-table">
+                <thead>
+                    <tr>
+                        <th>NAMA BARANG</th>
+                        <th style="width: 76px; text-align: center;">SATUAN</th>
+                        <th style="width: 52px; text-align: center;">QTY</th>
+                        <th style="width: 30px; text-align: center;">#</th>
+                    </tr>
+                </thead>
+                <tbody id="listModalBarang">
+                    <!-- Baris item dinamis -->
+                </tbody>
+            </table>
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top: 15px;">
-            <button class="btn-modal-cancel" onclick="closeModal()" style="padding:12px; border-radius:8px; border:1px solid #ccc; font-weight:900;">BATAL</button>
-            <button onclick="addAllItems()" style="background:#27ae60; color:white; border:none; border-radius:8px; font-weight:900;">SIMPAN</button>
+            <button type="button" class="btn-add-row-modal" style="margin: 10px 0 4px;" onclick="tambahBarisModal()">+ Tambah Baris Barang</button>
+        </div>
+
+        <div class="modal-input-footer">
+            <div id="modalTempTotal" class="modal-temp-total">
+                <span>Total Sementara:</span>
+                <strong id="modalTempTotalVal">0 Ball · Rp 0</strong>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <button class="btn-modal-cancel" onclick="closeModal()" style="padding:12px; border-radius:10px; border:1px solid #ccc; font-weight:900;">BATAL</button>
+                <button onclick="addAllItems()" style="background:#27ae60; color:white; border:none; border-radius:10px; padding:12px; font-weight:900;">SIMPAN</button>
+            </div>
         </div>
     </div>
 </div>
@@ -1314,7 +1337,8 @@
             <!-- Langkah 1: Pembayaran -->
             <section class="pay-wizard-panel" id="payPanel1">
                 <div class="pay-wizard-summary" style="margin-top:6px;">
-                    <div><span>Sisa Akhir:</span><strong id="payWizardSisa">Rp 0</strong></div>
+                    <div><span>Total Tagihan:</span><strong id="payWizardTagihan">Rp 0</strong></div>
+                    <div><span id="payWizardSisaLabel">Sisa Setelah Bayar:</span><strong id="payWizardSisa">Rp 0</strong></div>
                 </div>
 
                 <div class="section-label">💵 PEMBAYARAN :</div>
@@ -1323,6 +1347,11 @@
                     <input type="checkbox" id="cbTidakTitip" onchange="togglePembayaran()">
                     TIDAK TITIP UANG (BON FULL)
                 </label>
+
+                <div class="quick-pay-row">
+                    <button type="button" class="btn-quick-pay" onclick="isiLunasCepat('cash')">💵 Lunas Cash</button>
+                    <button type="button" class="btn-quick-pay trf" onclick="isiLunasCepat('trf')">🏦 Lunas Transfer</button>
+                </div>
 
                 <div class="pay-row" id="areaPembayaran">
                     <div><label style="font-size:14px; font-weight:900;">CASH</label><input type="text" id="inputCash" class="input-manual" value="0" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" oninput="formatRupiah(this); hitungTotal()" onfocus="clearZero(this)" onblur="restoreZero(this)"></div>
