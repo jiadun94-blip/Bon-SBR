@@ -2150,6 +2150,22 @@
         }
     });
 
+    function generateNoNota() {
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        let randNum = Math.floor(Math.random() * 10000);
+        try {
+            if (window.crypto && window.crypto.getRandomValues) {
+                const buf = new Uint16Array(1);
+                window.crypto.getRandomValues(buf);
+                randNum = buf[0] % 10000;
+            }
+        } catch (_) {}
+        const rand4 = String(randNum).padStart(4, '0');
+        return `SBR-${dd}${mm}${rand4}`;
+    }
+
     function resetForm() {
         const today = new Date();
         const year = today.getFullYear();
@@ -2157,7 +2173,7 @@
         const day = String(today.getDate()).padStart(2, '0');
         document.getElementById('tglNota').value = `${year}-${month}-${day}`;
 
-        document.getElementById('noNota').value = "SBR-" + Date.now().toString().slice(-6);
+        document.getElementById('noNota').value = generateNoNota();
         document.getElementById('pilihAgen').value = "";
         document.getElementById('pilihMobil').value = "";
         document.getElementById('driver2').value = "";
@@ -2184,7 +2200,12 @@
         updateWizardLaunchSummary();
     }
 
-    function resetFormForNewNota() {
+    function resetFormForNewNota(skipConfirm = false) {
+        const adaDataBelumSimpan = !savedTransactionData && (itemsKirim.length > 0 || itemsRetur.length > 0 || !!document.getElementById('pilihAgen')?.value);
+        if (!skipConfirm && adaDataBelumSimpan) {
+            if (!confirm('Nota saat ini belum disimpan. Yakin ingin mengosongkan form untuk membuat NOTA BARU?')) return;
+        }
+        hapusDrafBon(true);
         resetForm();
         const btn = document.getElementById('btnSimpan');
         btn.disabled = false;
@@ -2247,6 +2268,7 @@
         
         tambahBarisModal();
         tambahBarisModal();
+        updateModalSummary();
 
         document.getElementById('modalInput').style.display = "block"; 
     }
@@ -2264,6 +2286,51 @@
         return 'Ball';
     }
 
+    function hapusBarisModal(btnEl) {
+        btnEl.closest('tr')?.remove();
+        updateModalSummary();
+    }
+
+    function updateModalSummary() {
+        const el = document.getElementById('modalTempTotalVal');
+        if (!el) return;
+        const ag = document.getElementById('pilihAgen')?.value || '';
+        const rows = document.querySelectorAll('#listModalBarang tr');
+        let totalQty = 0;
+        let totalRp = 0;
+        let validLines = 0;
+
+        rows.forEach(row => {
+            const b = row.querySelector('.modal-barang')?.value || '';
+            const s = currentMode === 'Kirim'
+                ? resolveBallUnitForProduct(ag, b)
+                : (row.querySelector('.modal-satuan')?.value || '');
+            const q = parseFloat(row.querySelector('.modal-qty')?.value) || 0;
+            if (b && s && q > 0) {
+                const h = database.harga[ag]?.[`${b}_${s}`] || 0;
+                totalQty += q;
+                totalRp += q * h;
+                validLines++;
+            }
+        });
+
+        const unitLabel = currentMode === 'Kirim' ? 'Ball' : 'Qty';
+        el.textContent = `${totalQty} ${unitLabel}${validLines ? ` (${validLines} item)` : ''} · Rp ${totalRp.toLocaleString('id-ID')}`;
+    }
+
+    function onModalSatuanChange(selectSatuanEl) {
+        updateRowPriceInfo(selectSatuanEl);
+        updateModalSummary();
+        const row = selectSatuanEl.closest('tr');
+        const qtyInput = row?.querySelector('.modal-qty');
+        if (qtyInput && selectSatuanEl.value && (qtyInput.value === '0' || qtyInput.value === '')) {
+            setTimeout(() => {
+                qtyInput.focus();
+                clearZero(qtyInput);
+            }, 30);
+        }
+    }
+
     function tambahBarisModal() {
         const tbody = document.getElementById('listModalBarang');
         let optionsBarang = '<option value="">-- Pilih Barang --</option>';
@@ -2273,10 +2340,10 @@
 
         const isKirimMode = currentMode === 'Kirim';
         const satuanSelectHtml = isKirimMode
-            ? `<select class="modal-satuan locked" disabled title="Satuan Kirim dikunci ke Ball" onchange="updateRowPriceInfo(this)">
+            ? `<select class="modal-satuan locked" disabled title="Satuan Kirim dikunci ke Ball" onchange="onModalSatuanChange(this)">
                     <option value="Ball" selected>🔒 Ball</option>
                 </select>`
-            : `<select class="modal-satuan" onchange="updateRowPriceInfo(this)">
+            : `<select class="modal-satuan" onchange="onModalSatuanChange(this)">
                     <option value="">-</option>
                 </select>`;
 
@@ -2292,13 +2359,14 @@
                 <span class="modal-harga-info" style="display:none;">Rp 0</span>
             </td>
             <td style="padding: 6px 3px; vertical-align: top;">
-                <input type="text" class="modal-qty" value="0" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onfocus="clearZero(this)" onblur="restoreZero(this)">
+                <input type="text" class="modal-qty" value="0" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" oninput="this.value=this.value.replace(/[^0-9]/g,''); updateModalSummary();" onfocus="clearZero(this)" onblur="restoreZero(this); updateModalSummary();">
             </td>
             <td style="padding: 6px 3px; text-align: center; vertical-align: top; padding-top: 12px;">
-                <button type="button" class="btn-delete-x" onclick="this.closest('tr').remove()">×</button>
+                <button type="button" class="btn-delete-x" onclick="hapusBarisModal(this)">×</button>
             </td>
         `;
         tbody.appendChild(tr);
+        updateModalSummary();
     }
 
     function updateRowPriceInfo(selectSatuanEl) {
@@ -2332,6 +2400,7 @@
         const b = selectBarangEl.value;
         const row = selectBarangEl.closest('tr');
         const selectSatuan = row.querySelector('.modal-satuan');
+        const qtyInput = row.querySelector('.modal-qty');
         
         if (currentMode === 'Kirim') {
             const ballUnit = resolveBallUnitForProduct(ag, b);
@@ -2341,6 +2410,13 @@
             selectSatuan.classList.add('locked');
             selectSatuan.title = 'Satuan Kirim dikunci ke Ball';
             updateRowPriceInfo(selectSatuan);
+            updateModalSummary();
+            if (b && qtyInput) {
+                setTimeout(() => {
+                    qtyInput.focus();
+                    clearZero(qtyInput);
+                }, 40);
+            }
             return;
         }
 
@@ -2351,6 +2427,7 @@
         if (!b || !database.harga[ag]) {
             selectSatuan.innerHTML = '<option value="">-</option>';
             updateRowPriceInfo(selectSatuan);
+            updateModalSummary();
             return;
         }
 
@@ -2377,6 +2454,13 @@
             }
         }
         updateRowPriceInfo(selectSatuan);
+        updateModalSummary();
+        if (b && qtyInput && selectSatuan.options.length === 1 && selectSatuan.value) {
+            setTimeout(() => {
+                qtyInput.focus();
+                clearZero(qtyInput);
+            }, 40);
+        }
     }
 
     function closeModal() { document.getElementById('modalInput').style.display = "none"; }
@@ -2387,7 +2471,8 @@
         const rows = tbody.getElementsByTagName('tr');
         
         let targetList = currentMode === 'Kirim' ? itemsKirim : itemsRetur;
-        let addedCount = 0;
+        const pendingItems = [];
+        const zeroPriceNames = [];
 
         for (let i = 0; i < rows.length; i++) {
             const selectBarang = rows[i].querySelector('.modal-barang');
@@ -2401,22 +2486,33 @@
 
                 if (q > 0 && b && s) {
                     const h = database.harga[ag]?.[`${b}_${s}`] || 0;
-                    
-                    const existingIndex = targetList.findIndex(item => item.barang === b && item.satuan === s);
-                    if (existingIndex > -1) {
-                        targetList[existingIndex].qty += q;
-                        targetList[existingIndex].total = targetList[existingIndex].qty * h;
-                    } else {
-                        targetList.push({ barang: b, satuan: s, qty: q, harga: h, total: q * h });
-                    }
-                    addedCount++;
+                    if (h <= 0) zeroPriceNames.push(`${b} (${s})`);
+                    pendingItems.push({ barang: b, satuan: s, qty: q, harga: h });
                 }
             }
         }
 
-        if (addedCount === 0) {
+        if (pendingItems.length === 0) {
             return alert("Belum ada item valid yang diisi Qty-nya!");
         }
+
+        if (zeroPriceNames.length > 0) {
+            const okZero = confirm(
+                `⚠️ PERHATIAN: Harga satuan untuk barang berikut masih Rp 0 (belum diatur untuk agen ${ag}):\n- ${zeroPriceNames.join('\n- ')}\n\nTetap simpan dengan harga Rp 0?`
+            );
+            if (!okZero) return;
+        }
+
+        pendingItems.forEach(({ barang: b, satuan: s, qty: q, harga: h }) => {
+            const existingIndex = targetList.findIndex(item => item.barang === b && item.satuan === s);
+            if (existingIndex > -1) {
+                targetList[existingIndex].qty += q;
+                targetList[existingIndex].harga = h;
+                targetList[existingIndex].total = targetList[existingIndex].qty * h;
+            } else {
+                targetList.push({ barang: b, satuan: s, qty: q, harga: h, total: q * h });
+            }
+        });
 
         render(); 
         closeModal(); 
@@ -2433,16 +2529,17 @@
         hitungTotal();
     }
 
-    function editItemQtyInline(idx, mode) {
+    function updateQtyLangsung(idx, mode, inputEl) {
         const list = mode === 'Kirim' ? itemsKirim : itemsRetur;
         const it = list[idx];
         if (!it) return;
-        const inputBaru = prompt(`Edit jumlah (${it.satuan}) untuk ${it.barang}:`, it.qty);
-        if (inputBaru === null) return;
-        const qtyBaru = parseFloat(String(inputBaru).replace(',', '.'));
-        if (isNaN(qtyBaru) || qtyBaru <= 0) {
-            if (confirm(`Qty 0 atau tidak valid. Hapus ${it.barang} dari daftar ${mode}?`)) {
+        const raw = String(inputEl.value || '').trim();
+        const qtyBaru = parseInt(raw, 10);
+        if (!raw || isNaN(qtyBaru) || qtyBaru <= 0) {
+            if (confirm(`Qty 0 atau kosong. Hapus ${it.barang} dari daftar ${mode}?`)) {
                 removeItem(idx, mode);
+            } else {
+                inputEl.value = it.qty;
             }
             return;
         }
@@ -2452,23 +2549,78 @@
         hitungTotal();
     }
 
+    function updateSectionBadges() {
+        const totalBallKirim = itemsKirim.reduce((sum, it) => sum + (Number(it.qty) || 0), 0);
+        const totalQtyRetur = itemsRetur.reduce((sum, it) => sum + (Number(it.qty) || 0), 0);
+
+        const badgeKirim = document.getElementById('badgeCountKirim');
+        if (badgeKirim) {
+            badgeKirim.textContent = `${totalBallKirim} Ball`;
+            badgeKirim.classList.toggle('visible', totalBallKirim > 0);
+        }
+        const badgeRetur = document.getElementById('badgeCountRetur');
+        if (badgeRetur) {
+            badgeRetur.textContent = `${totalQtyRetur} Qty`;
+            badgeRetur.classList.toggle('visible', totalQtyRetur > 0);
+        }
+    }
+
+    let isMainPayBtnVisible = false;
+    function updateStickyBottomBar() {
+        const bar = document.getElementById('stickyBottomBar');
+        if (!bar) return;
+        const hasItems = itemsKirim.length > 0 || itemsRetur.length > 0;
+        const shouldShow = hasItems && !isMainPayBtnVisible;
+        bar.classList.toggle('visible', shouldShow);
+        document.body.classList.toggle('has-sticky-bar', shouldShow);
+
+        if (hasItems) {
+            const totalBall = itemsKirim.reduce((sum, it) => sum + (Number(it.qty) || 0), 0);
+            const totalRetur = itemsRetur.length;
+            const metaParts = [];
+            if (totalBall > 0) metaParts.push(`${totalBall} Ball Kirim`);
+            if (totalRetur > 0) metaParts.push(`${totalRetur} Retur`);
+            metaParts.push('Sisa Akhir');
+            const metaEl = document.getElementById('stickyBarMeta');
+            const grandEl = document.getElementById('stickyBarGrand');
+            if (metaEl) metaEl.textContent = metaParts.join(' · ');
+            if (grandEl) grandEl.textContent = document.getElementById('txtGrand')?.innerText || 'Rp 0';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const payBtn = document.getElementById('btnPayWizard');
+        if (payBtn && 'IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+                isMainPayBtnVisible = entries.some(entry => entry.isIntersecting);
+                updateStickyBottomBar();
+            }, { threshold: 0.15 });
+            observer.observe(payBtn);
+        }
+    });
+
     function render() {
         const draw = (data, id, mode) => {
             const tb = document.getElementById(id).querySelector('tbody'); tb.innerHTML = '';
+            if (data.length === 0) {
+                const emptyRow = tb.insertRow();
+                emptyRow.className = 'table-empty-row';
+                emptyRow.innerHTML = `<td colspan="4">${mode === 'Kirim' ? 'Belum ada barang dikirim — ketuk "+ ITEM"' : 'Tidak ada barang retur'}</td>`;
+                return;
+            }
             data.forEach((it, idx) => {
                 const r = tb.insertRow();
-                r.innerHTML = `<td>${it.barang}<br><small>${it.satuan}@${it.harga.toLocaleString()}</small></td>
-                               <td>
-                                   <div style="display:flex; align-items:center; gap:5px;">
-                                       <span>${it.qty}</span>
-                                       <button type="button" onclick="editItemQtyInline(${idx},'${mode}')" title="Edit Qty Barang" style="background:#3182ce; color:#fff; border:none; border-radius:6px; padding:3px 7px; font-size:12px; font-weight:900; cursor:pointer;">✏️</button>
-                                   </div>
+                r.innerHTML = `<td>${it.barang}<br><small>${it.satuan}@${it.harga.toLocaleString('id-ID')}</small></td>
+                               <td style="text-align: center;">
+                                   <input type="text" class="qty-inline-input" value="${it.qty}" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" aria-label="Edit qty ${it.barang}" onfocus="this.select()" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onchange="updateQtyLangsung(${idx},'${mode}',this)" onkeydown="if(event.key==='Enter'){this.blur();}">
                                </td>
-                               <td>${it.total.toLocaleString()}</td>
+                               <td style="text-align: right; white-space: nowrap;">${it.total.toLocaleString('id-ID')}</td>
                                <td style="text-align: center;"><button class="btn-delete-x" onclick="removeItem(${idx},'${mode}')">×</button></td>`;
             });
         };
         draw(itemsKirim, 'tabelKirim', 'Kirim'); draw(itemsRetur, 'tabelRetur', 'Retur');
+        updateSectionBadges();
+        updateStickyBottomBar();
     }
 
     function formatRupiah(el) { let v = el.value.replace(/[^0-9]/g, ''); el.value = v === "" ? "0" : Number(v).toLocaleString('id-ID'); }
@@ -2492,6 +2644,7 @@
         document.getElementById('txtBon').innerText = (isDeposit ? "-Rp " : "Rp ") + bl_input.toLocaleString('id-ID');
         document.getElementById('txtGrand').innerText = "Rp " + sisa.toLocaleString('id-ID');
         if (typeof updatePayWizardChips === 'function') updatePayWizardChips();
+        if (typeof updateStickyBottomBar === 'function') updateStickyBottomBar();
         if (typeof simpanDrafBon === 'function') simpanDrafBon();
     }
 
@@ -2513,7 +2666,10 @@
                 sEl.innerText = 'Status: Terhubung (' + device.name + ')';
                 sEl.style.color = '#27ae60';
             }
-            // Tidak memilih otomatis agar user selalu memilih manual (Printer Kecil / Printer Besar)
+            const devicePaper = localStorage.getItem('printerSize_' + device.id) || localStorage.getItem('sbrPrinterSize');
+            if (['32', '48'].includes(devicePaper) && typeof pilihUkuranKertas === 'function') {
+                pilihUkuranKertas(devicePaper);
+            }
             updatePayWizardChips();
         } catch (e) {
             if (sEl) {
@@ -2855,7 +3011,7 @@
                 document.getElementById('saveActionModal').style.display = 'none';
                 closePayWizardSuccess();
                 const savedReprint = lastPrintText;
-                resetFormForNewNota();
+                resetFormForNewNota(true);
                 if (savedReprint) {
                     lastPrintText = savedReprint;
                     document.getElementById('btnReprint').disabled = false;
