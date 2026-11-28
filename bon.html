@@ -2631,6 +2631,23 @@
         hitungTotal();
     }
 
+    function onQtyInputLive(idx, mode, inputEl) {
+        const clean = inputEl.value.replace(/[^0-9]/g, '');
+        if (inputEl.value !== clean) inputEl.value = clean;
+        const list = mode === 'Kirim' ? itemsKirim : itemsRetur;
+        const it = list[idx];
+        if (!it) return;
+        const qtyBaru = parseInt(clean, 10);
+        if (!isNaN(qtyBaru) && qtyBaru > 0) {
+            it.qty = qtyBaru;
+            it.total = it.qty * it.harga;
+            const totalCell = inputEl.closest('tr')?.querySelector('.row-total-cell');
+            if (totalCell) totalCell.textContent = it.total.toLocaleString('id-ID');
+            updateSectionBadges();
+            hitungTotal();
+        }
+    }
+
     function updateQtyLangsung(idx, mode, inputEl) {
         const list = mode === 'Kirim' ? itemsKirim : itemsRetur;
         const it = list[idx];
@@ -2642,13 +2659,21 @@
                 removeItem(idx, mode);
             } else {
                 inputEl.value = it.qty;
+                const totalCell = inputEl.closest('tr')?.querySelector('.row-total-cell');
+                if (totalCell) totalCell.textContent = it.total.toLocaleString('id-ID');
+                updateSectionBadges();
+                hitungTotal();
             }
             return;
         }
-        it.qty = qtyBaru;
-        it.total = it.qty * it.harga;
-        render();
-        hitungTotal();
+        if (it.qty !== qtyBaru) {
+            it.qty = qtyBaru;
+            it.total = it.qty * it.harga;
+            const totalCell = inputEl.closest('tr')?.querySelector('.row-total-cell');
+            if (totalCell) totalCell.textContent = it.total.toLocaleString('id-ID');
+            updateSectionBadges();
+            hitungTotal();
+        }
     }
 
     function updateSectionBadges() {
@@ -2703,22 +2728,19 @@
 
     function render() {
         const draw = (data, id, mode) => {
-            const tb = document.getElementById(id).querySelector('tbody'); tb.innerHTML = '';
+            const tb = document.getElementById(id).querySelector('tbody');
             if (data.length === 0) {
-                const emptyRow = tb.insertRow();
-                emptyRow.className = 'table-empty-row';
-                emptyRow.innerHTML = `<td colspan="4">${mode === 'Kirim' ? 'Belum ada barang dikirim — ketuk "+ ITEM"' : 'Tidak ada barang retur'}</td>`;
+                tb.innerHTML = `<tr class="table-empty-row"><td colspan="4">${mode === 'Kirim' ? 'Belum ada barang dikirim — ketuk "+ ITEM"' : 'Tidak ada barang retur'}</td></tr>`;
                 return;
             }
-            data.forEach((it, idx) => {
-                const r = tb.insertRow();
-                r.innerHTML = `<td>${it.barang}<br><small>${it.satuan}@${it.harga.toLocaleString('id-ID')}</small></td>
-                               <td style="text-align: center;">
-                                   <input type="text" class="qty-inline-input" value="${it.qty}" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" aria-label="Edit qty ${it.barang}" onfocus="this.select()" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onchange="updateQtyLangsung(${idx},'${mode}',this)" onkeydown="if(event.key==='Enter'){this.blur();}">
-                               </td>
-                               <td style="text-align: right; white-space: nowrap;">${it.total.toLocaleString('id-ID')}</td>
-                               <td style="text-align: center;"><button class="btn-delete-x" onclick="removeItem(${idx},'${mode}')">×</button></td>`;
-            });
+            tb.innerHTML = data.map((it, idx) => `<tr>
+                <td>${it.barang}<br><small>${it.satuan}@${it.harga.toLocaleString('id-ID')}</small></td>
+                <td style="text-align: center;">
+                    <input type="text" class="qty-inline-input" value="${it.qty}" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" aria-label="Edit qty ${it.barang}" onfocus="this.select()" oninput="onQtyInputLive(${idx},'${mode}',this)" onchange="updateQtyLangsung(${idx},'${mode}',this)" onkeydown="if(event.key==='Enter'){this.blur();}">
+                </td>
+                <td class="row-total-cell" style="text-align: right; white-space: nowrap;">${it.total.toLocaleString('id-ID')}</td>
+                <td style="text-align: center;"><button class="btn-delete-x" onclick="removeItem(${idx},'${mode}')">×</button></td>
+            </tr>`).join('');
         };
         draw(itemsKirim, 'tabelKirim', 'Kirim'); draw(itemsRetur, 'tabelRetur', 'Retur');
         updateSectionBadges();
@@ -3248,7 +3270,7 @@
         if (e.target === this) this.style.display = 'none';
     });
 
-    window.onload = init;
+    document.addEventListener('DOMContentLoaded', init);
 </script>
 <!-- Modal Notifikasi Job Masuk dari Admin -->
 <div id="modalJobMasuk" class="modal" style="z-index: 2500;">
