@@ -12,9 +12,12 @@
     <meta name="application-name" content="SBR Nota">
     <meta name="apple-mobile-web-app-title" content="SBR Nota">
 
+    <link rel="preconnect" href="https://wunnynznajgwltzqdvfi.supabase.co" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     
     <style>
         :root { --p-color: #2c3e50; --s-color: #27ae60; --bg: #f4f7f9; }
@@ -78,12 +81,6 @@
         .btn-reprint { padding: 15px; background: #e67e22; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #b35d15; text-transform: uppercase; }
         .btn-reprint:disabled { background: #cbd5e0; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
         .btn-clear { padding: 15px; background: #718096; color: white; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 16px; box-shadow: 0 4px 0 #4a5568; text-transform: uppercase; }
-        
-        .struk-visual-container { position: fixed; left: -9999px; top: 0; width: 380px; pointer-events: none; }
-        .struk-visual { background: #fff; padding: 25px; color: #000; font-family: 'Courier New', Courier, monospace; font-size: 14px; border: 1px solid #ccc; line-height: 1.4; }
-        .struk-visual .garis { border-top: 1px dashed #000; margin: 8px 0; }
-        .struk-visual .garis-tebal { border-top: 2px dashed #000; margin: 8px 0; }
-        .struk-visual .flex-row { display: flex; justify-content: space-between; }
     
         /* ===== SBR Glossmorphism + Soft Emboss UI refresh ===== */
         :root {
@@ -98,21 +95,25 @@
         }
         * { -webkit-tap-highlight-color: transparent; }
         body {
-            font-family:'Roboto',sans-serif;
-            margin:0; padding:14px;
+            font-family:'Roboto',system-ui,-apple-system,sans-serif;
+            margin:0; padding:14px; min-height:100dvh;
             background:
               radial-gradient(ellipse at 8% 3%, rgba(82,145,255,.20), transparent 35%),
               radial-gradient(ellipse at 92% 16%, rgba(22,210,181,.18), transparent 32%),
               linear-gradient(145deg,#edf2ff 0%,#e4eaf6 48%,#eef8f8 100%);
-            background-attachment:fixed;
             color:var(--ink); font-size:16px;
         }
         .container {
-            background:rgba(245,248,255,.76);
-            backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+            background:rgba(245,248,255,.92);
             padding:16px; border-radius:26px; max-width:600px; margin:8px auto 22px;
             border:1px solid rgba(255,255,255,.9);
             box-shadow:var(--shadow-out);
+        }
+        @media (min-width: 769px) {
+            .container {
+                background:rgba(245,248,255,.76);
+                backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+            }
         }
         header { gap:10px; padding:4px 2px 14px; margin-bottom:16px; border-bottom:1px solid rgba(133,153,190,.2); }
         header h2 { color:#263b68; letter-spacing:-.5px; }
@@ -446,11 +447,14 @@
         .btn-reprint { background:linear-gradient(135deg,#ffb347,#f07828); }
         .btn-clear { background:linear-gradient(135deg,#7285aa,#4a5d83); }
         #notifBon { border-radius:14px; box-shadow:0 5px 14px rgba(197,48,48,.08); }
-        .modal { background:rgba(26,39,69,.48); backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px); }
+        .modal { background:rgba(15,25,48,.62); }
+        @media (min-width: 769px) {
+            .modal { background:rgba(26,39,69,.48); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+        }
         .modal-content {
             background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(234,241,253,.98));
             border:1px solid rgba(255,255,255,.95); border-radius:22px;
-            box-shadow:0 18px 50px rgba(25,43,83,.24),inset 0 1px 1px #fff;
+            box-shadow:0 14px 34px rgba(25,43,83,.22),inset 0 1px 1px #fff;
         }
         .btn-add-row-modal {
             background:linear-gradient(135deg,#fff6e8,#fff) !important; border:1px dashed #f2a24b;
@@ -1072,15 +1076,21 @@
             padding: 10px 14px;
             box-sizing: border-box;
             border-radius: 16px;
-            background: rgba(15, 23, 42, 0.94);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: rgba(15, 23, 42, 0.96);
             border: 1px solid rgba(148, 163, 184, 0.32);
-            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.36);
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.34);
             color: #f8fafc;
-            transition: transform 0.22s ease, opacity 0.22s ease;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            will-change: transform, opacity;
             opacity: 0;
             pointer-events: none;
+        }
+        @media (max-width: 768px) {
+            body { background-attachment: scroll; }
+            .container { box-shadow: 0 6px 18px rgba(70, 92, 135, 0.14); }
+            body.dark-theme .container { background: rgba(16, 29, 42, 0.97); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); }
+            .modal-content { box-shadow: 0 10px 26px rgba(15, 23, 42, 0.28); }
+            button, select, input { touch-action: manipulation; }
         }
         .sticky-bottom-bar.visible {
             transform: translateX(-50%) translateY(0);
@@ -1148,7 +1158,7 @@
     <header>
         <!-- Logo dan Versi dibungkus dalam brand-wrapper -->
         <div class="brand-wrapper">
-            <h2><img id="logoBrand" src="logo.png" alt="SBRdigital" style="height: 55px; width: auto;" onerror="this.src='logo.png'"></h2>
+            <h2><img id="logoBrand" src="logo.png" alt="SBRdigital" decoding="async" style="height: 55px; width: auto;" onerror="this.src='logo.png'"></h2>
             <div class="brand-meta-row">
                 <span class="app-version">V.2.0.1</span>
                 <span id="netStatusBadge" class="net-status online">🟢 Online</span>
