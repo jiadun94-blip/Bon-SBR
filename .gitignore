@@ -1,0 +1,8 @@
+.vercel
+.env*
+.autosync/
+Start-AutoSync.bat
+Stop-AutoSync.bat
+Sync-Now.bat
+Login-GitHub.bat
+
