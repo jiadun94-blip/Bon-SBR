@@ -2238,6 +2238,10 @@
     }
 
     function hapusDrafBon(tutupBanner) {
+        if (draftSaveTimer) {
+            clearTimeout(draftSaveTimer);
+            draftSaveTimer = null;
+        }
         try { localStorage.removeItem(BON_DRAFT_KEY); } catch (e) {}
         if (tutupBanner) {
             const banner = document.getElementById('bonDraftBanner');
