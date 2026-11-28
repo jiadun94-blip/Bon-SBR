@@ -266,13 +266,21 @@
             border:1px solid #cbd5e0; border-radius:10px; font-weight:800; font-size:14px;
             color:#243751; background:linear-gradient(145deg,#fff,#e7effb); box-shadow:var(--shadow-in);
         }
+        .modal-barang {
+            padding: 9px 22px 9px 8px !important;
+            background-position: right 6px center !important;
+            background-size: 11px 11px !important;
+            font-size: 13.5px;
+            text-overflow: ellipsis;
+        }
         .modal-satuan {
-            padding: 8px 26px 8px 8px !important;
-            background-position: right 8px center !important;
-            font-size: 13px;
+            padding: 8px 20px 8px 6px !important;
+            background-position: right 5px center !important;
+            background-size: 11px 11px !important;
+            font-size: 12.5px;
         }
         .modal-satuan.locked {
-            padding: 8px 10px !important;
+            padding: 8px 4px !important;
             background-image: none !important;
             background-color: #eaf3ff !important;
             border-color: #9bc0ec !important;
@@ -282,6 +290,7 @@
             cursor: not-allowed;
             opacity: 1;
             pointer-events: none;
+            font-size: 12.5px;
         }
         body.dark-theme .modal-satuan.locked {
             background-image: none !important;
@@ -292,6 +301,8 @@
         .modal-harga-info.warn {
             color: #c2410c;
             background: rgba(234, 88, 12, 0.12);
+            white-space: normal;
+            line-height: 1.15;
         }
         body.dark-theme .modal-harga-info.warn {
             color: #fdba74;
@@ -300,14 +311,50 @@
         .modal-harga-info {
             display: block;
             margin-top: 4px;
-            padding: 2px 6px;
+            padding: 2px 3px;
             border-radius: 6px;
-            font-size: 11.5px;
+            font-size: 10.5px;
             font-weight: 900;
             color: #0d9488;
             background: rgba(13, 148, 136, 0.1);
             text-align: center;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        #modalInput .modal-content {
+            box-sizing: border-box;
+        }
+        #modalInput table.modal-item-table {
+            width: 100%;
+            table-layout: fixed;
+            margin-bottom: 5px;
+        }
+        #modalInput table.modal-item-table th {
+            font-size: 12px;
+            padding: 8px 4px;
+        }
+        #modalInput table.modal-item-table td {
+            padding: 6px 2px;
+        }
+        #modalInput .btn-delete-x {
+            width: 26px;
+            height: 26px;
+            margin: 0 auto;
+            font-size: 13px;
+        }
+        @media (max-width: 480px) {
+            #modalInput .modal-content {
+                width: 96%;
+                padding: 12px 10px;
+            }
+            .modal-barang {
+                font-size: 13px;
+            }
+            .modal-qty {
+                font-size: 16px;
+                padding: 8px 2px;
+            }
         }
         body.dark-theme .modal-harga-info {
             color: #5eead4;
@@ -791,13 +838,13 @@
     <div class="modal-content">
         <h3 id="modalTitle" style="margin-top:0; text-transform:uppercase;">Daftar Barang</h3>
         
-        <table style="width: 100%; margin-bottom: 5px;">
+        <table class="modal-item-table">
             <thead>
                 <tr>
                     <th>NAMA BARANG</th>
-                    <th style="width: 130px; text-align: center;">SATUAN</th>
-                    <th style="width: 58px; text-align: center;">QTY</th>
-                    <th style="width: 32px; text-align: center;">#</th>
+                    <th style="width: 76px; text-align: center;">SATUAN</th>
+                    <th style="width: 52px; text-align: center;">QTY</th>
+                    <th style="width: 30px; text-align: center;">#</th>
                 </tr>
             </thead>
             <tbody id="listModalBarang">
