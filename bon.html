@@ -3036,6 +3036,11 @@
 
     async function simpanDanPrint() {
         if (!activeSaveActions) return;
+        if (!savedTransactionData && navigator.onLine === false) {
+            document.getElementById('saveActionStatus').textContent = '🔴 Koneksi internet terputus. Draf nota Anda sudah tersimpan aman di HP — coba tekan SIMPAN lagi saat sinyal kembali.';
+            updateSaveAnimation('OFFLINE', 'Menunggu koneksi internet kembali…', 15, false, true);
+            return;
+        }
         const btn = document.getElementById('btnSimpan');
         btn.disabled = true;
         document.getElementById('saveActionGo').disabled = true;
@@ -3196,6 +3201,12 @@
             }
         } catch (_) {}
     }
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && activeTripJobs.length > 0 && gpsWatchId !== null) {
+            requestScreenWakeLock();
+        }
+    });
 
     function updateLiveTripBanner() {
         const banner = document.getElementById('liveTripBanner');
