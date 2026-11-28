@@ -1598,14 +1598,67 @@
     let failedSaveActions = [];
     let activeSaveActions = null;
 
+    function getTagihanBersihSaatIni() {
+        const tk = itemsKirim.reduce((a, b) => a + b.total, 0);
+        const tr = itemsRetur.reduce((a, b) => a + b.total, 0);
+        const bl_input = getAngka('inputBonLama');
+        const bl_actual = isDeposit ? -bl_input : bl_input;
+        const ongkir = getAngka('inputOngkir');
+        return tk - tr - ongkir + bl_actual;
+    }
+
+    function isiLunasCepat(metode) {
+        const tagihan = getTagihanBersihSaatIni();
+        if (tagihan <= 0) {
+            setPayWizardMessage(1, 'Tagihan sudah Rp 0 / Deposit. Tidak perlu isi pembayaran lagi.');
+            return;
+        }
+        const cb = document.getElementById('cbTidakTitip');
+        if (cb && cb.checked) {
+            cb.checked = false;
+            togglePembayaran();
+        }
+        const formatted = Math.round(tagihan).toLocaleString('id-ID');
+        if (metode === 'cash') {
+            document.getElementById('inputCash').value = formatted;
+            document.getElementById('inputTrf').value = '0';
+        } else {
+            document.getElementById('inputTrf').value = formatted;
+            document.getElementById('inputCash').value = '0';
+        }
+        setPayWizardMessage(1, '');
+        hitungTotal();
+    }
+
     function updatePayWizardChips() {
-        const txtGrand = document.getElementById('txtGrand');
+        const tagihanBersih = getTagihanBersihSaatIni();
+        const cash = getAngka('inputCash');
+        const trf = getAngka('inputTrf');
+        const sisa = tagihanBersih - cash - trf;
+
+        const tagihanEl = document.getElementById('payWizardTagihan');
+        if (tagihanEl) {
+            tagihanEl.textContent = (tagihanBersih < 0 ? '-Rp ' : 'Rp ') + Math.abs(tagihanBersih).toLocaleString('id-ID');
+        }
+        const sisaLabelEl = document.getElementById('payWizardSisaLabel');
         const mirror = document.getElementById('payWizardSisa');
-        if (mirror && txtGrand) mirror.innerText = txtGrand.innerText;
+        if (mirror) {
+            mirror.classList.remove('pay-sisa-lunas');
+            if (sisa === 0 && (cash > 0 || trf > 0 || tagihanBersih === 0)) {
+                if (sisaLabelEl) sisaLabelEl.textContent = 'Status:';
+                mirror.textContent = 'Rp 0 (LUNAS ✅)';
+                mirror.classList.add('pay-sisa-lunas');
+            } else if (sisa < 0) {
+                if (sisaLabelEl) sisaLabelEl.textContent = 'Kembalian / Deposit:';
+                mirror.textContent = 'Rp ' + Math.abs(sisa).toLocaleString('id-ID');
+                mirror.classList.add('pay-sisa-lunas');
+            } else {
+                if (sisaLabelEl) sisaLabelEl.textContent = 'Sisa Setelah Bayar:';
+                mirror.textContent = 'Rp ' + sisa.toLocaleString('id-ID');
+            }
+        }
         const payChip = document.getElementById('payStatusChip');
         if (payChip) {
-            const cash = getAngka('inputCash');
-            const trf = getAngka('inputTrf');
             const bonFull = document.getElementById('cbTidakTitip').checked;
             payChip.textContent = bonFull ? 'Bon Full' : ((cash || trf) ? `Cash Rp ${cash.toLocaleString('id-ID')} · Trf Rp ${trf.toLocaleString('id-ID')}` : 'Belum diisi');
         }
@@ -1657,6 +1710,17 @@
         if (payWizardStep === 3) fillPayWizardConfirmation();
     }
 
+    function pilihUkuranKertas(val) {
+        const sel = document.getElementById('ukuranKertas');
+        if (sel) sel.value = val;
+        document.querySelectorAll('#printSettings .paper-choice-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.size === String(val));
+        });
+        simpanUkuranKertas();
+        const message = document.getElementById('payMessage2');
+        if (message && ['32', '48'].includes(String(val))) message.textContent = '';
+    }
+
     function choosePrintRoute(choice) {
         if (printChoice === choice && document.getElementById('printSettings')) { renderPayWizard(); return; }
         printChoice = choice;
@@ -1668,9 +1732,18 @@
             settings.id = 'printSettings';
             choices.after(settings);
         }
-        // Default selalu kosong ("Pilih ukuran kertas…") agar wajib memilih salah satu jika akan print
+        const savedSize = (connectedDeviceId && localStorage.getItem('printerSize_' + connectedDeviceId)) || localStorage.getItem('sbrPrinterSize') || '';
+        const preVal = ['32', '48'].includes(savedSize) ? savedSize : '';
         settings.innerHTML = choice === 'print'
-            ? `<div class="bt-panel" style="margin-top:6px;"><button id="btnConnect" onclick="connectBT()">🔗 HUBUNGKAN PRINTER</button><select id="ukuranKertas" onchange="simpanUkuranKertas()"><option value="" selected>Pilih ukuran kertas…</option><option value="32">Printer Kecil</option><option value="48">Printer Besar</option></select><small id="statusBT" style="color:${btCharacteristic ? '#27ae60' : '#e53e3e'}">Status: ${btCharacteristic ? 'Terhubung' : 'Terputus'}</small></div>`
+            ? `<div class="bt-panel" style="margin-top:6px;">
+                <button id="btnConnect" onclick="connectBT()">🔗 HUBUNGKAN PRINTER</button>
+                <div class="paper-choice-grid">
+                    <button type="button" class="paper-choice-btn ${preVal === '32' ? 'active' : ''}" data-size="32" onclick="pilihUkuranKertas('32')">🖨️ Printer Kecil<small>58mm · 32 kolom</small></button>
+                    <button type="button" class="paper-choice-btn ${preVal === '48' ? 'active' : ''}" data-size="48" onclick="pilihUkuranKertas('48')">🖨️ Printer Besar<small>80mm · 48 kolom</small></button>
+                </div>
+                <select id="ukuranKertas" style="display:none;" onchange="simpanUkuranKertas()"><option value="" ${preVal === '' ? 'selected' : ''}>Pilih ukuran kertas…</option><option value="32" ${preVal === '32' ? 'selected' : ''}>Printer Kecil</option><option value="48" ${preVal === '48' ? 'selected' : ''}>Printer Besar</option></select>
+                <small id="statusBT" style="color:${btCharacteristic ? '#27ae60' : '#e53e3e'}">Status: ${btCharacteristic ? 'Terhubung' : 'Terputus'}</small>
+               </div>`
             : `<div style="padding:22px;text-align:center;font-weight:800;">Nota disimpan tanpa mencetak.</div>`;
         const message = document.getElementById('payMessage2');
         if (message) message.textContent = '';
@@ -1834,7 +1907,27 @@
     let btCharacteristic = null;
     let connectedDeviceId = null; 
 
-    function logout() { localStorage.clear(); window.location.href = "index.html"; }
+    function updateNetworkStatus() {
+        const badge = document.getElementById('netStatusBadge');
+        if (!badge) return;
+        const isOnline = navigator.onLine !== false;
+        badge.className = 'net-status ' + (isOnline ? 'online' : 'offline');
+        badge.textContent = isOnline ? '🟢 Online' : '🔴 Offline';
+    }
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
+    document.addEventListener('DOMContentLoaded', updateNetworkStatus);
+
+    function logout() {
+        const adaItemBelumSimpan = !savedTransactionData && (itemsKirim.length > 0 || itemsRetur.length > 0);
+        const pesan = adaItemBelumSimpan
+            ? 'Masih ada item nota yang belum disimpan. Yakin ingin LOGOUT? (Draf bon & pengaturan printer tetap aman tersimpan di HP.)'
+            : 'Yakin ingin LOGOUT dari akun driver?';
+        if (!confirm(pesan)) return;
+        localStorage.removeItem('userNama');
+        localStorage.removeItem('userRole');
+        window.location.href = "index.html";
+    }
 
     const SUPABASE_URL = "https://wunnynznajgwltzqdvfi.supabase.co";
     const SUPABASE_KEY = "sb_publishable_HJGWlUbTi-sT6tpFU4eZ1g_um4hmtVd";
@@ -1859,13 +1952,13 @@
             inputTrf.value = "0";
             inputCash.disabled = true;
             inputTrf.disabled = true;
-            inputCash.style.backgroundColor = "#edf2f7"; 
-            inputTrf.style.backgroundColor = "#edf2f7";
+            inputCash.classList.add('is-disabled-input');
+            inputTrf.classList.add('is-disabled-input');
         } else {
             inputCash.disabled = false;
             inputTrf.disabled = false;
-            inputCash.style.backgroundColor = "#fff";
-            inputTrf.style.backgroundColor = "#fff";
+            inputCash.classList.remove('is-disabled-input');
+            inputTrf.classList.remove('is-disabled-input');
         }
         hitungTotal();
     }
